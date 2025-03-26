@@ -5,7 +5,7 @@ export default function Home() {
     <div className="h-screen w-screen flex flex-col justify-center items-center">
     <h1 className="text-center text-5xl font-serif ">Solveit</h1>
 
-    <form action="/api/stripe/subscription/checkout" method="POST" className="pt-4">
+    <form action="/api/webhooks/stripe/subscription/checkout" method="POST" className="pt-4">
       <Button type="submit" className="cursor-pointer">
         
       <ShieldCheck/>Stripe subscription Testing 

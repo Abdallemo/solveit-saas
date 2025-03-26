@@ -6,7 +6,8 @@ export const env = createEnv({
         AUTH_GITHUB_ID:z.string(),
         STRIPE_SECRET_KEY:z.string(),
         AUTH_SECRET:z.string(),
-        AUTH_GITHUB_SECRET:z.string()
+        AUTH_GITHUB_SECRET:z.string(),
+        DATABASE_URL:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
