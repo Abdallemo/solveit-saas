@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
-import { getServerUserSession, GithubSignInAction, GithubSignOutAction } from "@/features/users/server/actions";
-import { Github, LogOut, ShieldCheck } from 'lucide-react'
+import { getServerUserSession, GithubSignInAction, GithubSignOutAction, GooogleSignInAction } from "@/features/users/server/actions";
+import { Github, LogOut, Mail, ShieldCheck } from 'lucide-react'
 export default async function Home() {
   const user = await getServerUserSession();
 
@@ -16,13 +16,28 @@ export default async function Home() {
         </Button>
       </form>
       {!user && (
+        <>
+
         <form action={GithubSignInAction}>
           <Button className="cursor-pointer" type='submit'>
 
-            <Github />oAuth Testing
+            <Github />Github oAuth Testing
 
           </Button>
-        </form>)}
+        </form>
+
+        <form action={GooogleSignInAction}>
+          <Button className="cursor-pointer" type='submit'>
+
+            < Mail/>Google oAuth Testing
+
+          </Button>
+        </form>
+
+      </>  
+      )
+        
+        }
       {user && (
         <form action={GithubSignOutAction}>
           <Button className="cursor-pointer" type='submit'>

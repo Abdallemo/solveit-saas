@@ -9,6 +9,10 @@ export async function GithubSignInAction() {
 export async function GithubSignOutAction() {
     await signOut()
 }
+export async function GooogleSignInAction() {
+    await signIn('google')
+}
+
 
 export async function getServerUserSession() {
     const session = await auth()
