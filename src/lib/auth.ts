@@ -14,5 +14,7 @@ export const { handlers, auth ,signIn,signOut  } = NextAuth({
   }),
   providers: [
     GitHub({clientId:env.AUTH_GITHUB_ID,clientSecret:env.AUTH_GITHUB_SECRET})
+
   ],
+  trustHost:true
 })
