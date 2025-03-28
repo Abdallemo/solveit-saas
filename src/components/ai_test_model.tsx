@@ -41,6 +41,7 @@ export default function ChatPage() {
     };
     function resetAll() {
         setResponse(null);
+        setMessage("")
     }
     return (
         <>
