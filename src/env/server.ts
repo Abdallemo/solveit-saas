@@ -10,6 +10,8 @@ export const env = createEnv({
         DATABASE_URL:z.string(),
         AUTH_GOOGLE_ID:z.string(),
         AUTH_GOOGLE_SECRET:z.string(),
+        OPENAI_API_KEY:z.string(),
+        HUGGINGFACE_API_KEY:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
