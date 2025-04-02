@@ -1,7 +1,50 @@
+'use client'
 
-export default async function page() {
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import { EmailRegisterAction} from '@/features/auth/server/actions'
+import { useState } from "react"
+import LoginLoader from "@/components/myLoadingComp"
+import { registerFormSchema, registerInferedTypes } from "@/features/auth/server/auth-types"
+import RegisterCard from "@/features/auth/register/components/regsiterCard"
+export default function Register() {
+  const [isInLoadingState, setLoadingState] = useState(false);
+  const [error,setError] = useState<string>('')
+
+  const submitHandler = async (values: registerInferedTypes) => {
+    console.log(values);
+    myformController.reset();
+    setLoadingState(true);
+    const {error} = await EmailRegisterAction(values);
+    
+    setError(error);
+    if(error){
+      setLoadingState(false);
+    }
+
+  };
+
+
+  const myformController = useForm<registerInferedTypes>({
+    resolver: zodResolver(registerFormSchema),
+    defaultValues: {
+      name:'',
+      email: '',
+      password: ''
+    }
+  })
   return (
-    <div>Regsitration</div>
+    <LoginLoader isLoading={isInLoadingState}>
+
+      <div className="flex w-full h-screen ">
+      <div className="flex bg-neutral-100 w-1/2 h-screen place-content-center items-center"> 
+      
+      <RegisterCard myformController={myformController} submitHandler={submitHandler}  setLoadingState={setLoadingState} error={error}/>
+
+      </div>
+      <div className="bg-neutral-900 w-full h-screen"> </div>
+      </div>
+
+    </LoginLoader>
   )
 }
-

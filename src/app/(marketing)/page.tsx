@@ -1,7 +1,8 @@
 import { Button } from "@/components/ui/button";
-import { getServerUserSession, GithubSignInAction, GithubSignOutAction, GooogleSignInAction } from "@/features/users/server/actions";
-import {  Github, LogOut, Mail, ShieldCheck } from 'lucide-react'
+import {GithubSignOutAction } from "@/features/auth/server/actions";
+import {  LogIn, LogOut, ShieldCheck } from 'lucide-react'
 import ChatPage from "@/components/ai_test_model";
+import {getServerUserSession} from '@/features/users/server/actions' 
 export default async function Home() {
   const user = await getServerUserSession();
 
@@ -20,18 +21,10 @@ export default async function Home() {
       {!user && (
         <>
 
-          <form action={GithubSignInAction}>
+          <form action='/login'>
             <Button className="cursor-pointer" type='submit'>
 
-              <Github />Github oAuth Testing
-
-            </Button>
-          </form>
-
-          <form action={GooogleSignInAction}>
-            <Button className="cursor-pointer" type='submit'>
-
-              < Mail />Google oAuth Testing
+              <LogIn/>Login Testing
 
             </Button>
           </form>

@@ -1,17 +1,7 @@
 "use server"
 
-import { auth, signIn, signOut } from "@/lib/auth"
+import { auth,} from "@/lib/auth"
 
-
-export async function GithubSignInAction() {
-    await signIn('github')
-}
-export async function GithubSignOutAction() {
-    await signOut()
-}
-export async function GooogleSignInAction() {
-    await signIn('google')
-}
 
 
 export async function getServerUserSession() {
