@@ -45,7 +45,7 @@ export default function LoginCard({
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input placeholder="Enter Your Email" {...field} />
+                    <Input placeholder="jonh@gmail.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -61,7 +61,7 @@ export default function LoginCard({
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter your Password"
+                        placeholder="******"
                         {...field}
                       />
                     </FormControl>

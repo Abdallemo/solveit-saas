@@ -70,7 +70,7 @@ export default function RegisterCard({
                     <FormControl>
                       <Input
                         type="email"
-                        placeholder="Enter your Email"
+                        placeholder="jonh@gmail.com"
                         {...field}
                       />
                     </FormControl>
@@ -87,7 +87,7 @@ export default function RegisterCard({
                     <FormControl>
                       <Input
                         type="password"
-                        placeholder="Enter your Password"
+                        placeholder="******"
                         {...field}
                       />
                     </FormControl>
