@@ -32,12 +32,12 @@ export default function LoginCard({
   return (
     <div className="flex flex-col w-100 pt-2 ">
         <p className="text-2xl text-foreground font-sans font-semibold py-10">Welcome Back</p>
-    <Card className="">
+    <Card className="flex gap-4">
       <CardContent>
         <Form {...myformController}>
           <form
             onSubmit={myformController.handleSubmit(submitHandler)}
-            className="flex flex-col  gap-2 ">
+            className="flex flex-col  gap-4 ">
             <FormField
               control={myformController.control}
               name="email"
