@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 
 
@@ -11,7 +12,6 @@ export const loginFormSchema = z.object({
    }),
 })
 export type loginInferedTypes = z.infer<typeof loginFormSchema>
-
 
 export const registerFormSchema = z.object({
   name: z.string().min(4, {

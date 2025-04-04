@@ -14,17 +14,23 @@ import { BackgroundGradientAnimation } from "@/components/ui/background-gradient
 export default function Register() {
   const [isInLoadingState, setLoadingState] = useState(false);
   const [error, setError] = useState<string>("");
+  const [success, setSuccess] = useState<string>("");
 
   const submitHandler = async (values: registerInferedTypes) => {
-    console.log(values);
+    setError("")
+    setSuccess("")
+    
     myformController.reset();
     setLoadingState(true);
-    const { error } = await EmailRegisterAction(values);
+    const { error,success } = await EmailRegisterAction(values);
+  
+    setLoadingState(false);
 
-    setError(error);
-    if (error) {
-      setLoadingState(false);
-    }
+    if (error) setError(error)
+
+    if(success) setSuccess(success)
+
+
   };
 
   const myformController = useForm<registerInferedTypes>({
@@ -44,6 +50,7 @@ export default function Register() {
             submitHandler={submitHandler}
             setLoadingState={setLoadingState}
             error={error}
+            success={success}
           />
         </div>
         <BackgroundGradientAnimation>

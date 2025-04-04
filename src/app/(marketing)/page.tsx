@@ -2,13 +2,15 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Spotlight } from "@/components/Spotlight";
 import { Button } from "@/components/ui/button";
-import { GithubSignOutAction } from "@/features/auth/server/actions";
+import { getServerSession, GithubSignOutAction } from "@/features/auth/server/actions";
 import { LogIn, LogOut, ShieldCheck } from "lucide-react";
 import ChatPage from "@/components/ai_test_model";
-import { getServerUserSession } from "@/features/users/server/actions";
+import { getServerUserSession } from "@/features/auth/server/actions";
 export default async function SpotlightPreview() {
   const user = await getServerUserSession();
+  const session = await getServerSession();
 
+  console.log(session)
   return (
     <div className="relative flex h-screen w-full overflow-hidden rounded-md bg-black/[0.96] antialiased md:items-center md:justify-center">
       <div

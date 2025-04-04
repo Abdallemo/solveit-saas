@@ -20,13 +20,15 @@ import { FcGoogle } from "react-icons/fc";
 import { GithubSignInAction, GooogleSignInAction } from "../../server/actions";
 import { Dispatch, SetStateAction } from "react";
 import Link from "next/link";
-import RegisterFormError from "./loginFormError";
+import FormError from "./loginFormError";
+import FormSuccess from "./loginFormSuccess";
 
 type registerCardProps = {
   myformController: UseFormReturn<registerInferedTypes>;
   submitHandler: (values: z.infer<typeof registerFormSchema>) => Promise<void>;
   setLoadingState: Dispatch<SetStateAction<boolean>>;
   error: string;
+  success:string
 };
 
 export default function RegisterCard({
@@ -34,6 +36,7 @@ export default function RegisterCard({
   submitHandler,
   setLoadingState,
   error,
+  success
 }: registerCardProps) {
   return (
     <div className="flex flex-col w-100 pt-2 ">
@@ -95,9 +98,10 @@ export default function RegisterCard({
                   </FormItem>
                 )}
               />
-              <RegisterFormError message={error} />
+              <FormError message={error} />
+              <FormSuccess message={success}/>
               <Button className="px-28 py-6 mt-4" variant={"default"}>
-                Login
+                Register
               </Button>
             </form>
           </Form>
