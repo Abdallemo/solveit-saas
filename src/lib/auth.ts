@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { accounts, UserRoleType, users } from "@/drizzle/schemas";
+import { accounts, users } from "@/drizzle/schemas";
 import db from "@/drizzle/db";
 import authConfig from "./auth.config";
 import { getUserById } from "@/features/users/server/actions";
@@ -27,7 +27,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         
       }
       if (token.role && session.user) {
-        session.user.role = token.role as UserRoleType;
+        session.user.role = token.role ;
         
       }
   
@@ -41,7 +41,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       if (!user) return token;
 
-    token.role = user.role;
+    token.r = user.role;
     
 
       return {token};
