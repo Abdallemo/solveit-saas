@@ -24,7 +24,6 @@ export async function getUserById(id: string) {
   try {
     const result = await db.query.users.findFirst({
       where: (table, fn) => fn.eq(table.id, id),
-      columns: { id: true },
     });
     return result;
   } catch (error) {

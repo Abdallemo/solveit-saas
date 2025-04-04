@@ -10,6 +10,9 @@ import {
 
 export const UserRole = pgEnum('userRole',['admin','moderator','poster','solver'])
 
+export type UserRoleType = (typeof UserRole.enumValues)[number];
+
+
 export const users = pgTable("user", {
     id: uuid('id').primaryKey().defaultRandom(),
     name: text("name"),
