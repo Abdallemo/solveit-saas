@@ -12,13 +12,11 @@ import { Input } from "@/components/ui/input";
 import { UseFormReturn } from "react-hook-form";
 import { z } from "zod";
 import { loginFormSchema, loginInferedTypes } from "../../server/auth-types";
-import { FaGithub } from "react-icons/fa";
-import { FcGoogle } from "react-icons/fc";
-import { GithubSignInAction, GooogleSignInAction } from "../../server/actions";
 import Link from "next/link";
 import FormError from "../../register/components/loginFormError";
 import FormSuccess from "../../register/components/loginFormSuccess";
 import { Loader2 } from "lucide-react";
+import SocialButtons from "../../components/socialButtons";
 
 type LoginCardProps = {
   myformController: UseFormReturn<loginInferedTypes>;
@@ -86,34 +84,7 @@ export default function LoginCard({
             </form>
           </Form>
           <div className="flex gap-4 mb-4 w-full items-center mt-5">
-            <Button
-              className="py-6 flex-1"
-              variant={"outline"}
-              disabled={isPending}
-              onClick={async () => {
-                
-                try {
-                  await GithubSignInAction();
-                } catch (error) {
-                  console.log(error);
-                }
-              }}>
-              <FaGithub />
-            </Button>
-            <Button
-              variant={"outline"}
-              className="py-6 flex-1"
-              disabled={isPending}
-              onClick={async () => {
-                
-                try {
-                  await GooogleSignInAction();
-                } catch (error) {
-                  console.log(error);
-                }
-              }}>
-              <FcGoogle />
-            </Button>
+              <SocialButtons isPending={isPending}/>
           </div>
         </CardContent>
         <CardFooter className="flex place-content-center">
