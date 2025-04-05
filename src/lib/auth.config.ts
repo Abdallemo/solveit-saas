@@ -11,8 +11,8 @@ import bcrypt from "bcryptjs";
 export default {
   providers: [
     GitHub({
-      clientId: "",
-      clientSecret: "",
+      clientId: env.AUTH_GITHUB_ID,
+      clientSecret: env.AUTH_GITHUB_SECRET,
     }),
     Google({
       clientId: env.AUTH_GOOGLE_ID,
