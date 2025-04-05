@@ -2,7 +2,7 @@ import React from "react";
 import { cn } from "@/lib/utils";
 import { Spotlight } from "@/components/Spotlight";
 import { Button } from "@/components/ui/button";
-import { GithubSignOutAction } from "@/features/auth/server/actions";
+import { SignOutAction } from "@/features/auth/server/actions";
 import { LogIn, LogOut, ShieldCheck } from "lucide-react";
 import ChatPage from "@/components/ai_test_model";
 import { getServerUserSession } from "@/features/auth/server/actions";
@@ -53,7 +53,7 @@ export default async function SpotlightPreview() {
           </>
         )}
         {user && (
-          <form action={GithubSignOutAction}>
+          <form action={SignOutAction}>
             <Button className="cursor-pointer" type="submit">
               <LogOut />
               Logout oAuth Testing
