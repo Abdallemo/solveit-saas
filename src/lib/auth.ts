@@ -19,6 +19,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   },
   trustHost: true,
   ...authConfig,
+  events: {
+    linkAccount({ user }) {
+      UpdateUserField(user.id!, { emailVerified: new Date() });
+    },
+  },
+  pages: {
+    signIn: "/login",
+    error: "/login/error"
+  },
   callbacks: {
     async session({ token, session }) {
       // console.log({ sessiontoke: token });
