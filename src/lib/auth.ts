@@ -4,7 +4,7 @@ import { DrizzleAdapter } from "@auth/drizzle-adapter";
 import { accounts, users } from "@/drizzle/schemas";
 import db from "@/drizzle/db";
 import authConfig from "./auth.config";
-import { getUserById } from "@/features/users/server/actions";
+import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 
 import type { NextAuthConfig } from "next-auth";
 

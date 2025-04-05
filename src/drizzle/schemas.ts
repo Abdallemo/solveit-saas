@@ -8,7 +8,8 @@ import {
     uuid,
 } from "drizzle-orm/pg-core"
 
-export const UserRole = pgEnum('userRole',['admin','moderator','poster','solver'])
+export const UserRole = pgEnum('userRole',['ADMIN','MODERATOR','POSTER','SOLVER'])
+export const TierEnum = pgEnum('tier',['BASIC','PREMIUM'])
 
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 
@@ -18,7 +19,7 @@ export const users = pgTable("user", {
     name: text("name"),
     email: text("email").unique(),
     password:text("password"),
-    role:UserRole("role").default('poster'),
+    role:UserRole("role").default('POSTER'),
     emailVerified: timestamp("emailVerified", { mode: "date" }),
     image: text("image"),
 })
@@ -49,3 +50,12 @@ export const accounts = pgTable(
     ]
 )
 
+export const UserSubscriptionTable = pgTable('subscription',{
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid('userId').notNull()
+    .references(() => users.id, { onDelete: "cascade" }),
+    stripeSubscriptionItemId: text("stripe_subscription_item_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    stripeCustomerId: text("stripe_customer_id"),
+    tier: TierEnum("tier").notNull(),
+})
