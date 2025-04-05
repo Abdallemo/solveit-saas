@@ -15,15 +15,15 @@ import { loginFormSchema, loginInferedTypes } from "../../server/auth-types";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { GithubSignInAction, GooogleSignInAction } from "../../server/actions";
-import { Dispatch, SetStateAction } from "react";
 import Link from "next/link";
 import FormError from "../../register/components/loginFormError";
 import FormSuccess from "../../register/components/loginFormSuccess";
+import { Loader2 } from "lucide-react";
 
 type LoginCardProps = {
   myformController: UseFormReturn<loginInferedTypes>;
   submitHandler: (values: z.infer<typeof loginFormSchema>) => Promise<void>;
-  setLoadingState: Dispatch<SetStateAction<boolean>>;
+  isPending:boolean
   error: string;
   success: string;
 };
@@ -31,7 +31,7 @@ type LoginCardProps = {
 export default function LoginCard({
   myformController,
   submitHandler,
-  setLoadingState,
+  isPending,
   error,
   success,
 }: LoginCardProps) {
@@ -80,8 +80,8 @@ export default function LoginCard({
               }
               <FormError message={error} />
               <FormSuccess message={success} />
-              <Button className="px-28 py-6 mt-4" variant={"default"}>
-                Login
+              <Button className="px-28 py-6 mt-4" variant={"default"} disabled={isPending}>
+                {isPending? (<Loader2 className="animate-spin"/>):'Login'}
               </Button>
             </form>
           </Form>
@@ -89,8 +89,9 @@ export default function LoginCard({
             <Button
               className="py-6 flex-1"
               variant={"outline"}
+              disabled={isPending}
               onClick={async () => {
-                setLoadingState(true);
+                
                 try {
                   await GithubSignInAction();
                 } catch (error) {
@@ -102,8 +103,9 @@ export default function LoginCard({
             <Button
               variant={"outline"}
               className="py-6 flex-1"
+              disabled={isPending}
               onClick={async () => {
-                setLoadingState(true);
+                
                 try {
                   await GooogleSignInAction();
                 } catch (error) {

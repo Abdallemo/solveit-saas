@@ -18,15 +18,15 @@ import {
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
 import { GithubSignInAction, GooogleSignInAction } from "../../server/actions";
-import { Dispatch, SetStateAction } from "react";
 import Link from "next/link";
 import FormError from "./loginFormError";
 import FormSuccess from "./loginFormSuccess";
+import { Loader2 } from "lucide-react";
 
 type registerCardProps = {
   myformController: UseFormReturn<registerInferedTypes>;
   submitHandler: (values: z.infer<typeof registerFormSchema>) => Promise<void>;
-  setLoadingState: Dispatch<SetStateAction<boolean>>;
+  isPending:boolean
   error: string;
   success:string
 };
@@ -34,7 +34,7 @@ type registerCardProps = {
 export default function RegisterCard({
   myformController,
   submitHandler,
-  setLoadingState,
+  isPending,
   error,
   success
 }: registerCardProps) {
@@ -100,8 +100,8 @@ export default function RegisterCard({
               />
               <FormError message={error} />
               <FormSuccess message={success}/>
-              <Button className="px-28 py-6 mt-4" variant={"default"}>
-                Register
+              <Button className="px-28 py-6 mt-4" variant={"default"} disabled={isPending}>
+                {isPending? (<Loader2 className="animate-spin"/>):'Register'}
               </Button>
             </form>
           </Form>
@@ -109,8 +109,8 @@ export default function RegisterCard({
             <Button
               className="py-6 flex-1"
               variant={"outline"}
+              disabled={isPending}
               onClick={async () => {
-                setLoadingState(true);
                 try {
                   await GithubSignInAction();
                 } catch (error) {
@@ -121,9 +121,9 @@ export default function RegisterCard({
             </Button>
             <Button
               variant={"outline"}
+              disabled={isPending}
               className="py-6 flex-1"
               onClick={async () => {
-                setLoadingState(true);
                 try {
                   await GooogleSignInAction();
                 } catch (error) {

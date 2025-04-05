@@ -13,8 +13,8 @@ import { AuthError } from "next-auth";
 export async function GithubSignInAction() {
   await signIn("github");
 }
-export async function GithubSignOutAction() {
-  await signOut();
+export async function SignOutAction() {
+  await signOut({redirectTo:'/login'});
 }
 export async function GooogleSignInAction() {
   await signIn("google");
@@ -61,14 +61,17 @@ export async function EmailRegisterAction(
   if (error) return { error: error.message };
 
   const { email, password, name } = data;
-
+  try{
   const hashedPassword = await bcrypt.hash(password, 10);
 
   const exsistingUser = await getUserByEmail(email)
   if(exsistingUser) return {error:'Email Already in Use'}
 
   await CreateUser({email,password:hashedPassword,name})
-
+  }catch(error){
+    console.log(error)
+    return {error:'Something Went Wrong'}
+  }
   return{success:'Email seccessfully Created '}
 }
 
