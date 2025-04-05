@@ -104,7 +104,7 @@ export default function RegisterCard({
             </form>
           </Form>
           <div className="flex gap-4 mb-4 w-full items-center mt-5">
-            <SocialButtons isPending={isPending}/>
+            <SocialButtons/>
           </div>
         </CardContent>
         <CardFooter className="flex place-content-center">
