@@ -3,7 +3,7 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { EmailSignInAction } from "@/features/auth/server/actions";
-import { Suspense, useState, useTransition } from "react";
+import {  useState, useTransition } from "react";
 import LoginCard from "@/features/auth/login/components/LoginCard";
 import {
   loginFormSchema,
@@ -46,7 +46,7 @@ export default function Login() {
     },
   });
   return (
-    <Suspense fallback={'loading...'}>
+    
       <div className="flex w-full h-screen ">
       <div className="flex bg-neutral-100 w-full h-screen place-content-center items-center">
         <LoginCard
@@ -61,6 +61,6 @@ export default function Login() {
         <div className="absolute z-50 inset-0 flex items-center justify-center text-white font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl"></div>
       </BackgroundGradientAnimation>
     </div>
-    </Suspense>
+    
   );
 }
