@@ -14,7 +14,7 @@ declare module "next-auth/jwt" {
 declare module "next-auth" {
   interface Session extends DefaultSession {
     user: {
-      role: UserRole;
+      role?: UserRole;
     } & DefaultSession["user"];
   }
 }

@@ -6,7 +6,7 @@ import db from "@/drizzle/db";
 import authConfig from "./auth.config";
 import { getUserById } from "@/features/users/server/actions";
 
-import type {NextAuthConfig} from "next-auth"
+import type { NextAuthConfig } from "next-auth";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: DrizzleAdapter(db, {
@@ -21,16 +21,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   callbacks: {
     async session({ token, session }) {
-      console.log({ sessiontoke: token });
+      // console.log({ sessiontoke: token });
       if (token.sub && session.user) {
         session.user.id = token.sub;
-        
       }
-      if (token.role && session.user) {
-        session.user.role = token.role ;
-        
-      }
-  
+
+      session.user.role = token.role;
+
       return session;
     },
     async jwt({ token }) {
@@ -40,13 +37,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       const user = await getUserById(token.sub);
 
       if (!user) return token;
+      if (!user.role) return token;
+      token.role = user.role;
 
-    token.r = user.role;
-    
-
-      return {token};
+      return token;
     },
   },
-} satisfies NextAuthConfig
-
-);
+} satisfies NextAuthConfig);
