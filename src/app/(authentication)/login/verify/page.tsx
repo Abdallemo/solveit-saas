@@ -16,8 +16,7 @@ export default async function VerifyEmailPage({
 }: {
   searchParams: Promise<{ token: string }>;
 }) {
-  
-  const token = (await searchParams).token
+  const token = (await searchParams).token;
 
   console.log("searchParms " + token);
 
@@ -33,14 +32,16 @@ export default async function VerifyEmailPage({
         </CardHeader>
         <CardContent className="">
           {result?.error && (
-            <div className="flex flex-col gap-2 text-destructive/50 bg-destructive/15   w-full ">
+            <div className="flex gap-2 text-destructive/50 bg-destructive/15   w-full ">
               <>
-                {result.error == "EXPIRED" ? (
-                  <div>
-                    <TriangleAlert />
+                {result.error == "INVALID" ? (
+                  <div className="flex p-4 items-center gap-2">
+                    <TriangleAlert  className="h-10 w-10"/>
                     <p>
-                      Your Verification Has expired. Please re-login to
-                      continue.
+                      <span>Your Verification Has expired. Please </span>
+                      <Link href={"/login"} className="font-semibold underline">
+                        re-login to continue.
+                      </Link>
                     </p>
                   </div>
                 ) : (
@@ -56,8 +57,8 @@ export default async function VerifyEmailPage({
           {result?.success == "VERIFIED" && (
             <div className="flex flex-col">
               <div className="flex flex-row">
-              <ShieldCheck /> 
-              <p>You have successfully verified your email.</p>
+                <ShieldCheck />
+                <p>You have successfully verified your email.</p>
               </div>
               <Button asChild variant={"link"}>
                 <Link href={"/dashboard"}>Login Again</Link>
