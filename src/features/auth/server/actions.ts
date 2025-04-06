@@ -7,12 +7,18 @@ import {
   registerInferedTypes,
 } from "./auth-types";
 import bcrypt from "bcryptjs";
-import { CreateUser, getUserByEmail } from "@/features/users/server/actions";
+import {
+  CreateUser,
+  getUserByEmail,
+  UpdateUserField,
+} from "@/features/users/server/actions";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
 import { AuthError } from "next-auth";
 import db from "@/drizzle/db";
 import { generateVerificationToken } from "./auth-uitls";
 import { sendVerificationEmail } from "@/lib/nodemailer";
+// import { verificationTokens } from "@/drizzle/schemas";
+// import { eq } from "drizzle-orm";
 
 export async function GithubSignInAction() {
   await signIn("github");
@@ -36,26 +42,28 @@ export async function EmailSignInAction(
 
   const { email, password } = validateValues.data;
 
-  const exsistingUser = await getUserByEmail(email);
+  try {
+    const exsistingUser = await getUserByEmail(email);
 
-  if (!exsistingUser || !exsistingUser.email || !exsistingUser.password) {
-    return { error: "Email does not exist! " };
-  }
-
-  if (!exsistingUser?.emailVerified) {
-    await generateVerificationToken(exsistingUser?.email);
-    const verificationToken = await getVerificationTokenByEmail(
-      exsistingUser.email
-    );
-
-    if (verificationToken?.token) {
-      await sendVerificationEmail(exsistingUser.email, verificationToken.token);
+    if (!exsistingUser || !exsistingUser.email || !exsistingUser.password) {
+      return { error: "Email does not exist! " };
     }
 
-    return { success: "Confirmation Email Send. please check your mail" };
-  }
+    if (!exsistingUser?.emailVerified) {
+      await generateVerificationToken(exsistingUser?.email);
+      const verificationToken = await getVerificationTokenByEmail(
+        exsistingUser.email
+      );
 
-  try {
+      if (verificationToken?.token) {
+        await sendVerificationEmail(
+          exsistingUser.email,
+          verificationToken.token
+        );
+        return { success: "Confirmation Email Send. please check your mail" };
+      }
+    }
+
     await signIn("credentials", {
       email,
       password,
@@ -92,7 +100,7 @@ export async function EmailRegisterAction(
 
     await CreateUser({ email, password: hashedPassword, name });
     const verificationToken = await generateVerificationToken(email);
-    
+
     //Todo send email to the user
     await sendVerificationEmail(email, verificationToken.token!);
   } catch (error) {
@@ -135,5 +143,42 @@ export async function getVerificationTokenById(id: string) {
   } catch (error) {
     console.error({ verificationError: error });
     return null;
+  }
+}
+
+type verificationTokenReturn =
+  | {
+      error?: "EXPIRED" | "INVALID";
+      success?: "VERIFIED";
+    }
+  | undefined;
+
+export async function verifyVerificationToken(
+  token: string
+): Promise<verificationTokenReturn> {
+  const exsistingToken = await db.query.verificationTokens.findFirst({
+    where: (table, fn) => fn.eq(table.token, token),
+  });
+  console.log({ exsistingToke: exsistingToken });
+
+  const currentDate = new Date(Date.now());
+
+  if (!exsistingToken || !exsistingToken.token) {
+    return { error: "INVALID" };
+  }
+
+  if (currentDate > exsistingToken?.expires) {
+    console.log(`time comparism:  ${currentDate} > ${exsistingToken}`);
+    return { error: "EXPIRED" };
+  }
+  if (exsistingToken.email) {
+    await UpdateUserField({
+      email: exsistingToken.email!,
+      data: { emailVerified: currentDate },
+    });
+    // await db
+    //   .delete(verificationTokens)
+    //   .where(eq(verificationTokens.email, exsistingToken.email!));
+    return { success: "VERIFIED" };
   }
 }

@@ -21,7 +21,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   ...authConfig,
   events: {
     linkAccount({ user }) {
-      UpdateUserField(user.id!, { emailVerified: new Date() });
+      UpdateUserField({ id: user.id!, data: { emailVerified: new Date() } });
     },
   },
   pages: {
