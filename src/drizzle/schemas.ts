@@ -8,7 +8,7 @@ import {
     uuid,
 } from "drizzle-orm/pg-core"
 
-export const UserRole = pgEnum('userRole',['ADMIN','MODERATOR','POSTER','SOLVER'])
+export const UserRole = pgEnum('role',['ADMIN','MODERATOR','POSTER','SOLVER'])
 export const TierEnum = pgEnum('tier',['BASIC','PREMIUM'])
 
 export type UserRoleType = (typeof UserRole.enumValues)[number];
@@ -49,6 +49,24 @@ export const accounts = pgTable(
         },
     ]
 )
+
+export const verificationTokens = pgTable(
+    "verificationToken",
+    {
+      id: uuid().defaultRandom().notNull(),
+      email: text("email"),
+      token: text("token").unique(),
+      expires: timestamp("expires", { mode: "date" }).notNull()
+
+    },
+    (verificationToken) => [
+      {
+        compositePk: primaryKey({
+          columns: [verificationToken.email, verificationToken.token],
+        }),
+      },
+    ]
+  )
 
 export const UserSubscriptionTable = pgTable('subscription',{
     id: uuid("id").primaryKey().defaultRandom(),

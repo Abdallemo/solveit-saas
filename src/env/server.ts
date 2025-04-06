@@ -12,6 +12,8 @@ export const env = createEnv({
         AUTH_GOOGLE_SECRET:z.string(),
         OPENAI_API_KEY:z.string(),
         HUGGINGFACE_API_KEY:z.string(),
+        NEXTAUTH_URL:z.string(),
+        AUTH_GOOGLE_REFRESH_TOKEN:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })

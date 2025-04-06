@@ -1,6 +1,6 @@
 "use client";
 import { cn } from "@/lib/utils";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 export const BackgroundGradientAnimation = ({
   gradientBackgroundStart = "rgb(108, 0, 162)",
@@ -34,12 +34,12 @@ export const BackgroundGradientAnimation = ({
   containerClassName?: string;
 }) => {
   const interactiveRef = useRef<HTMLDivElement>(null);
+  const animationFrameRef = useRef<number>(0);
+  const lastTimeRef = useRef<number>(0);
+  const posRef = useRef({ x: 0, y: 0, tgX: 0, tgY: 0 });
 
-  const [curX, setCurX] = useState(0);
-  const [curY, setCurY] = useState(0);
-  const [tgX, setTgX] = useState(0);
-  const [tgY, setTgY] = useState(0);
-  useEffect(() => {
+  const [isSafari, setIsSafari] = useState(false);
+  const updateCSSVariables = useCallback(() => {
     document.body.style.setProperty(
       "--gradient-background-start",
       gradientBackgroundStart
@@ -70,32 +70,62 @@ export const BackgroundGradientAnimation = ({
   ]);
 
   useEffect(() => {
-    function move() {
+    updateCSSVariables();
+    setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
+
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [updateCSSVariables]);
+
+  useEffect(() => {
+    const animate = (time: number) => {
       if (!interactiveRef.current) {
         return;
       }
-      setCurX(curX + (tgX - curX) / 20);
-      setCurY(curY + (tgY - curY) / 20);
-      interactiveRef.current.style.transform = `translate(${Math.round(
-        curX
-      )}px, ${Math.round(curY)}px)`;
-    }
 
-    move();
-  }, [tgX, tgY, curX, curY]);
+      if (time - lastTimeRef.current < 16) {
+        animationFrameRef.current = requestAnimationFrame(animate);
+        return;
+      }
+      lastTimeRef.current = time;
+
+      const { x, y, tgX, tgY } = posRef.current;
+      const newX = x + (tgX - x) / 20;
+      const newY = y + (tgY - y) / 20;
+
+      if (Math.abs(newX - x) > 0.1 || Math.abs(newY - y) > 0.1) {
+        posRef.current = { ...posRef.current, x: newX, y: newY };
+        interactiveRef.current.style.transform = `translate(${Math.round(
+          newX
+        )}px, ${Math.round(newY)}px)`;
+      }
+
+      animationFrameRef.current = requestAnimationFrame(animate);
+    };
+
+    if (interactive) {
+      animationFrameRef.current = requestAnimationFrame(animate);
+    }
+    return () => {
+      if (animationFrameRef.current) {
+        cancelAnimationFrame(animationFrameRef.current);
+      }
+    };
+  }, [interactive]);
 
   const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
     if (interactiveRef.current) {
       const rect = interactiveRef.current.getBoundingClientRect();
-      setTgX(event.clientX - rect.left);
-      setTgY(event.clientY - rect.top);
+      posRef.current = {
+        ...posRef.current,
+        tgX: event.clientX - rect.left,
+        tgY: event.clientY - rect.top,
+      };
     }
   };
-
-  const [isSafari, setIsSafari] = useState(false);
-  useEffect(() => {
-    setIsSafari(/^((?!chrome|android).)*safari/i.test(navigator.userAgent));
-  }, []);
 
   return (
     <div
