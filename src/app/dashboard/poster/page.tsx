@@ -1,7 +1,11 @@
 
 export default function page() {
   return (
-    <div>poster dashbaord</div>
+    <main>
+      <p>Dashbard</p>
+      
+
+    </main>
   )
 }
 

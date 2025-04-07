@@ -18,3 +18,6 @@ declare module "next-auth" {
     } & DefaultSession["user"];
   }
 }
+export type AppUser = DefaultSession["user"] & {
+  role?: UserRole;
+};
