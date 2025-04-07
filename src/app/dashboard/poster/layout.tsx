@@ -1,6 +1,6 @@
 import PosterDashboardSidebar from "@/features/users/components/PosterDashbaordSidebar";
 import { ReactNode } from "react";
-import { SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 
 export default function PosterDashbaordLayout({
   children,
@@ -8,12 +8,21 @@ export default function PosterDashbaordLayout({
   children: ReactNode;
 }) {
   return (
-    <>
-      <SidebarProvider>
+    <SidebarProvider>
+      <div className="flex h-screen w-full">
         <PosterDashboardSidebar />
-        <SidebarTrigger  className="p-6" />
-          {children}        
-      </SidebarProvider>
-    </>
+        <div className="flex flex-col flex-1 overflow-auto">
+          <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+            <div className="container flex h-14 items-center px-4 sm:px-6">
+              <SidebarTrigger className="mr-2" />
+              
+            </div>
+          </header>
+          <main className="flex-1">
+            {children}
+          </main>
+        </div>
+      </div>
+    </SidebarProvider>
   );
 }

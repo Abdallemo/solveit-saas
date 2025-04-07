@@ -19,21 +19,21 @@ export default function PosterAccount() {
   const { setTheme, theme } = useTheme();
 
   return (
-    <main className="flex-1 p-8 flex justify-center  " suppressHydrationWarning >
-      <div className="max-w-3xl w-full p-10">
-        <div className="space-y-8">
+    <main className="flex-1 p-4 lg:p-8 flex justify-center items-center" suppressHydrationWarning >
+      <div className="max-w-3xl w-full p-4 sm:p-6 md:p-8 lg:p-10">
+        <div className="space-y-6 md:space-y-8">
           
           <div>
-            <h1 className="text-2xl font-bold">User Preferences</h1>
-            <p className="text-muted-foreground">
+            <h1 className="text-xl sm:text-2xl font-bold">User Preferences</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Manage your profiles, account settings, and preferences for your
               experience.
             </p>
           </div>
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Profile Information</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-3 md:space-y-4">
+            <h2 className="text-base md:text-lg font-semibold">Profile Information</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
               <div className="space-y-2">
                 <Label htmlFor="firstName">First name</Label>
                 <Input
