@@ -54,7 +54,7 @@ export default function Register() {
             success={success}
           />
         </div>
-        <div className=" inset-0 flex items-center justify-center text-white  bg-primary font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl w-full">
+        <div className=" inset-0 md:flex items-center justify-center text-white  bg-primary font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl w-full hidden">
           
           </div>
       </div>
