@@ -20,7 +20,7 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 const MenuItems =[
   {
     title:'Home',
-    url:'#',
+    url:'/dashboard/poster',
     icon:Home,
 
   },
@@ -44,7 +44,7 @@ export default function PosterDashboardSidebar() {
 
   
   return (
-    <Sidebar variant="floating">
+    <Sidebar variant="sidebar">
 
       <SidebarHeader />
       <SidebarContent>
@@ -70,7 +70,7 @@ export default function PosterDashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter >
-        <NavUser email={user?.email} name={user?.name} image={user?.image}/>
+        <NavUser email={user?.email} name={user?.name} image={user?.image} role={user?.role}/>
       </SidebarFooter>
     </Sidebar>
   );

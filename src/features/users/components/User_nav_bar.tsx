@@ -25,11 +25,11 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { Button } from "@/components/ui/button";
 import { signOut } from "next-auth/react";
 import { AppUser } from "../../../../types/next-auth";
+import Link from "next/link";
 
-export function NavUser({ image, name, email }: AppUser) {
+export function NavUser({ image, name, email, role }: AppUser) {
   const { isMobile } = useSidebar();
 
   return (
@@ -50,7 +50,9 @@ export function NavUser({ image, name, email }: AppUser) {
                 <span className="truncate font-semibold text-foreground">
                   {name}
                 </span>
-                <span className="truncate text-xs text-white">{email}</span>
+                <span className="truncate text-xs text-foreground">
+                  {email}
+                </span>
               </div>
               <ChevronsUpDown className="ml-auto size-4" />
             </SidebarMenuButton>
@@ -77,17 +79,21 @@ export function NavUser({ image, name, email }: AppUser) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <Sparkles />
-                Upgrade to Pro
-              </DropdownMenuItem>
+              {role === "POSTER" ? (
+                <DropdownMenuItem>
+                  <Sparkles />
+                  Upgrade to Pro
+                </DropdownMenuItem>
+              ) : null}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem>
-                <BadgeCheck />
-                Account
-              </DropdownMenuItem>
+              <Link href={"/dashboard/poster/account"}>
+                <DropdownMenuItem>
+                  <BadgeCheck />
+                  Account
+                </DropdownMenuItem>
+              </Link>
               <DropdownMenuItem>
                 <CreditCard />
                 Billing
@@ -98,11 +104,9 @@ export function NavUser({ image, name, email }: AppUser) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => signOut()}>
               <LogOut />
-              <Button variant={"ghost"} onClick={() => signOut()}>
-                Log out
-              </Button>
+              Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
