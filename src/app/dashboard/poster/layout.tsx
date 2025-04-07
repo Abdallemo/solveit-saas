@@ -1,6 +1,6 @@
 import PosterDashboardSidebar from "@/features/users/components/PosterDashbaordSidebar";
 import { ReactNode } from "react";
-import { SidebarProvider} from "@/components/ui/sidebar";
+import { SidebarProvider, SidebarTrigger} from "@/components/ui/sidebar";
 
 export default function PosterDashbaordLayout({
   children,
@@ -9,8 +9,9 @@ export default function PosterDashbaordLayout({
 }) {
   return (
     <>
-      <SidebarProvider open={true}>
+      <SidebarProvider>
         <PosterDashboardSidebar />
+        <SidebarTrigger  className="p-6" />
           {children}        
       </SidebarProvider>
     </>
