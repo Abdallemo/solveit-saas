@@ -5,11 +5,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ShieldCheck, TriangleAlert } from "lucide-react";
 
 import { verifyVerificationToken } from "@/features/auth/server/actions";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import FormError from "@/features/auth/register/components/loginFormError";
+import FormSuccess from "@/features/auth/register/components/loginFormSuccess";
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -32,22 +33,21 @@ export default async function VerifyEmailPage({
         </CardHeader>
         <CardContent className="">
           {result?.error && (
-            <div className="flex gap-2 text-destructive/50 bg-destructive/15   w-full ">
+            <div className="flex gap-2 w-full ">
               <>
-                {result.error == "INVALID" ? (
-                  <div className="flex p-4 items-center gap-2">
-                    <TriangleAlert  className="h-10 w-10"/>
-                    <p>
-                      <span>Your Verification Has expired. Please </span>
-                      <Link href={"/login"} className="font-semibold underline">
-                        re-login to continue.
-                      </Link>
-                    </p>
+                {result.error == "EXPIRED" ? (
+                  <div className="flex w-full flex-col p-4 items-center gap-2">
+                    <FormError message="Your Verification Has expired." />
+                    <Link href={"/login"} className="font-semibold underline">
+                      Please re-login to continue.
+                    </Link>
                   </div>
                 ) : (
-                  <div className="flex p-4">
-                    <TriangleAlert />
-                    <span className="">Invalid Verification</span>
+                  <div className="flex w-full flex-col p-4 items-center gap-2">
+                    <FormError message="Invalid Verification." />
+                    {/* <Link href={"/login"} className="font-semibold underline">
+                      Please re-login to continue.
+                    </Link> */}
                   </div>
                 )}
               </>
@@ -55,11 +55,8 @@ export default async function VerifyEmailPage({
           )}
 
           {result?.success == "VERIFIED" && (
-            <div className="flex flex-col">
-              <div className="flex flex-row">
-                <ShieldCheck />
-                <p>You have successfully verified your email.</p>
-              </div>
+            <div className="flex flex-col w-full">
+              <FormSuccess message="You have successfully verified your email." />
               <Button asChild variant={"link"}>
                 <Link href={"/dashboard"}>Login Again</Link>
               </Button>

@@ -1,15 +1,17 @@
+"use client";
+
 import React from "react";
 import { cn } from "@/lib/utils";
 import { Spotlight } from "@/components/Spotlight";
 import { Button } from "@/components/ui/button";
-import { SignOutAction } from "@/features/auth/server/actions";
+import { signOut } from "next-auth/react";
 import { LogIn, LogOut, ShieldCheck } from "lucide-react";
 import ChatPage from "@/components/ai_test_model";
-import { getServerUserSession } from "@/features/auth/server/actions";
-export default async function SpotlightPreview() {
-  const user = await getServerUserSession();
+import useCurrentUser from "@/hooks/useCurrentUser";
+import Link from "next/link";
 
-
+export default function HomePage() {
+  const user = useCurrentUser();
   return (
     <div className="relative flex h-screen w-full overflow-hidden rounded-md bg-black/[0.96] antialiased md:items-center md:justify-center">
       <div
@@ -18,11 +20,10 @@ export default async function SpotlightPreview() {
           "[background-image:linear-gradient(to_right,#171717_1px,transparent_1px),linear-gradient(to_bottom,#171717_1px,transparent_1px)]"
         )}
       />
-
       <Spotlight
         className="-top-40 left-0 md:-top-20 md:left-60"
-        fill="white"
-      />
+        fill="white"/>
+
       <div className="relative z-10 mx-auto w-full max-w-7xl p-4 pt-20 md:pt-0">
         <h1 className="bg-opacity-50 bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-center text-4xl font-bold text-transparent md:text-7xl line-clamp-3">
           SolveIt <br /> The Future of Task Collaboration & Payments.
@@ -44,25 +45,22 @@ export default async function SpotlightPreview() {
         </form>
         {!user && (
           <>
-            <form action="/login">
-              <Button className="cursor-pointer" type="submit">
+            <Button className="cursor-pointer" asChild>
+              <Link href={"/login"}>
                 <LogIn />
                 Login Testing
-              </Button>
-            </form>
+              </Link>
+            </Button>
           </>
         )}
         {user && (
-          <form action={SignOutAction}>
-            <Button className="cursor-pointer" type="submit">
-              <LogOut />
-              Logout oAuth Testing
-            </Button>
-          </form>
+          <Button className="cursor-pointer" onClick={() => signOut()}>
+            <LogOut />
+            Logout oAuth Testing
+          </Button>
         )}
         <ChatPage />
       </div>
-      
     </div>
   );
 }
