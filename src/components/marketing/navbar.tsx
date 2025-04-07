@@ -30,7 +30,7 @@ export default function Navbar() {
         <NavigationMenu className="flex-1">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="/features" legacyBehavior passHref>
+              <Link href="#features" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Features
                 </NavigationMenuLink>
@@ -44,7 +44,7 @@ export default function Navbar() {
               </Link>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/pricing" legacyBehavior passHref>
+              <Link href="#pricing" legacyBehavior passHref>
                 <NavigationMenuLink className={navigationMenuTriggerStyle()}>
                   Pricing
                 </NavigationMenuLink>

@@ -8,7 +8,7 @@ import Pricing from "@/components/marketing/pricing";
 
 export default function Home() {
   return (
-    <div className="h-screen w-full flex flex-col place-items-center">
+    <div className="min-h-screen w-full flex flex-col items-center">
       <MouseMoveEffect />
 
       <div className="pointer-events-none fixed inset-0">
@@ -17,15 +17,12 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
       </div>
 
-      <div className=" z-10 ">
+      <div className="z-10 w-full max-w-7xl px-4">
         <Navbar />
-
         <Hero />
         <Features />
         <CTA />
         <Pricing />
-
-
         <Footer />
       </div>
     </div>
