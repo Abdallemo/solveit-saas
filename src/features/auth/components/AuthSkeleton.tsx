@@ -7,11 +7,6 @@ export default function AuthSkeleton() {
       {/* Left side - Form */}
       <div className="flex flex-1 items-center justify-center">
         <div className="w-full max-w-md p-6">
-          {/* Square Tabs */}
-          <div className="grid w-full grid-cols-2 mb-6 border rounded-md overflow-hidden">
-            <div className="py-2 px-4 text-center bg-gray-100 border-r">Login</div>
-            <div className="py-2 px-4 text-center">Register</div>
-          </div>
 
           <Card>
             <CardHeader className="space-y-2">

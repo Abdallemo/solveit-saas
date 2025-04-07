@@ -1,65 +1,32 @@
-"use client";
+import Hero from "@/components/marketing/hero";
+import Features from "@/components/marketing/features";
+import CTA from "@/components/marketing/cta";
+import Footer from "@/components/marketing/footer";
+import MouseMoveEffect from "@/components/marketing/mouse-move-effect";
+import Navbar from "@/components/marketing/navbar";
+import Pricing from "@/components/marketing/pricing";
 
-import React from "react";
-import { cn } from "@/lib/utils";
-import { Spotlight } from "@/components/Spotlight";
-import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
-import { LogIn, LogOut, ShieldCheck } from "lucide-react";
-import ChatPage from "@/components/ai_test_model";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import Link from "next/link";
-
-export default function HomePage() {
-  const user = useCurrentUser();
+export default function Home() {
   return (
-    <div className="relative flex h-screen w-full overflow-hidden rounded-md bg-black/[0.96] antialiased md:items-center md:justify-center">
-      <div
-        className={cn(
-          "pointer-events-none absolute inset-0 [background-size:40px_40px] select-none",
-          "[background-image:linear-gradient(to_right,#171717_1px,transparent_1px),linear-gradient(to_bottom,#171717_1px,transparent_1px)]"
-        )}
-      />
-      <Spotlight
-        className="-top-40 left-0 md:-top-20 md:left-60"
-        fill="white"/>
+    <div className="h-screen w-full flex flex-col place-items-center">
+      <MouseMoveEffect />
 
-      <div className="relative z-10 mx-auto w-full max-w-7xl p-4 pt-20 md:pt-0">
-        <h1 className="bg-opacity-50 bg-gradient-to-b from-neutral-50 to-neutral-400 bg-clip-text text-center text-4xl font-bold text-transparent md:text-7xl line-clamp-3">
-          SolveIt <br /> The Future of Task Collaboration & Payments.
-        </h1>
-        <p className=" mx-auto mt-4 max-w-lg text-center text-base font-normal text-neutral-300">
-          A powerful SaaS platform designed to streamline task management,
-          connect skilled solvers with posters, and ensure secure, escrow-backed
-          payments. Say goodbye to disputes—experience seamless collaboration
-          today.
-        </p>
-        <form
-          action="/api/webhooks/stripe/subscription/checkout"
-          method="POST"
-          className="pt-4">
-          <Button type="submit" className="cursor-pointer">
-            <ShieldCheck />
-            Stripe subscription Testing
-          </Button>
-        </form>
-        {!user && (
-          <>
-            <Button className="cursor-pointer" asChild>
-              <Link href={"/login"}>
-                <LogIn />
-                Login Testing
-              </Link>
-            </Button>
-          </>
-        )}
-        {user && (
-          <Button className="cursor-pointer" onClick={() => signOut()}>
-            <LogOut />
-            Logout oAuth Testing
-          </Button>
-        )}
-        <ChatPage />
+      <div className="pointer-events-none fixed inset-0">
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+        <div className="absolute right-0 top-0 h-[500px] w-[500px] bg-blue-500/10 blur-[100px]" />
+        <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
+      </div>
+
+      <div className=" z-10 ">
+        <Navbar />
+
+        <Hero />
+        <Features />
+        <CTA />
+        <Pricing />
+
+
+        <Footer />
       </div>
     </div>
   );

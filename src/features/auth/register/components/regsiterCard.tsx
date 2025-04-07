@@ -39,8 +39,8 @@ export default function RegisterCard({
   return (
     <div className="flex flex-col w-100 pt-2 ">
       <div className="text-start mb-8">
-        <h1 className="text-2xl font-semibold text-gray-900">Get started</h1>
-        <p className="mt-2 text-gray-500">Create your account in minutes</p>
+        <h1 className="text-2xl font-semibold text-foreground">Get started</h1>
+        <p className="mt-2 text-foreground">Create your account in minutes</p>
       </div>
       <Card className="">
         <CardContent>
@@ -107,8 +107,8 @@ export default function RegisterCard({
             <SocialButtons/>
           </div>
         </CardContent>
-        <CardFooter className="flex place-content-center">
-          <p className="text-sm text-neutral-700 ">
+        <CardFooter className="flex place-content-center text-foreground">
+          <p className="text-sm  ">
             {"Have an account? "}
             <Link className="font-semibold " href={"/login"}>
               Sign In Now

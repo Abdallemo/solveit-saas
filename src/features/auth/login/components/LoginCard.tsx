@@ -38,7 +38,7 @@ export default function LoginCard({
       <p className="text-2xl text-foreground font-sans font-semibold py-10">
         Welcome Back
       </p>
-      <Card className="flex gap-4">
+      <Card className="flex gap-4 ">
         <CardContent>
           <Form {...myformController}>
             <form
@@ -87,8 +87,8 @@ export default function LoginCard({
               <SocialButtons />
           </div>
         </CardContent>
-        <CardFooter className="flex place-content-center">
-          <p className="text-sm text-neutral-700 ">
+        <CardFooter className="flex place-content-center text-foreground">
+          <p className="text-sm  ">
             {"Don't have an account? "}
             <Link className="font-semibold " href={"/register"}>
               Sign Up Now
