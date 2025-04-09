@@ -44,15 +44,19 @@ export async function EmailSignInAction(
 
   try {
     const exsistingUser = await getUserByEmail(email);
-    const passwordMacth = await bcrypt.compare(password,exsistingUser?.password!)
-    
+
     if (!exsistingUser || !exsistingUser.email || !exsistingUser.password) {
       return { error: "Email does not exist! " };
     }
+    const passwordMacth = await bcrypt.compare(
+      password,
+      exsistingUser?.password!
+    );
 
     if (!passwordMacth) {
       return { error: "Incorrect Password " };
     }
+
     if (!exsistingUser?.emailVerified) {
       await generateVerificationToken(exsistingUser?.email);
       const verificationToken = await getVerificationTokenByEmail(
