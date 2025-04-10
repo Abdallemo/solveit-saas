@@ -48,7 +48,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     async jwt({ token }) {
-      console.log({ tokenpart: token });
       if (!token.sub) return token;
 
       const user = await getUserById(token.sub);
