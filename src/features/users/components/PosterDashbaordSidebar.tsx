@@ -1,5 +1,5 @@
 'use client'
-import React from "react";
+import React, { Suspense } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,6 +16,7 @@ import { Home, Inbox, Search } from "lucide-react"
 import Link from "next/link";
 import { NavUser } from "./User_nav_bar";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import ProfileSkeleton from "@/components/profile-loading-skeleton";
 
 const MenuItems =[
   {
@@ -40,7 +41,7 @@ const MenuItems =[
 
 
 export default function PosterDashboardSidebar() {
-  const user = useCurrentUser();
+  const {user,state} = useCurrentUser();
 
   
   return (
@@ -70,7 +71,10 @@ export default function PosterDashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter >
-        <NavUser email={user?.email} name={user?.name} image={user?.image} role={user?.role}/>
+        {state=='loading' ? <ProfileSkeleton/> :
+        <Suspense fallback={<ProfileSkeleton/>}>
+          <NavUser email={user?.email} name={user?.name} image={user?.image} role={user?.role}/>
+          </Suspense>}
       </SidebarFooter>
     </Sidebar>
   );

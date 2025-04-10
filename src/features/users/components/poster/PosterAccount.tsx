@@ -13,8 +13,8 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { AppUser } from "../../../../../types/next-auth";
 
 export default function PosterAccount() {
-  const Currentuser = useCurrentUser();
-  const [user, setUser] = useState<AppUser | undefined>(Currentuser );
+  const {user,state} = useCurrentUser();
+  const [CurrentUser, setUser] = useState<AppUser | undefined>( user);
 
   const { setTheme, theme } = useTheme();
 
@@ -38,14 +38,14 @@ export default function PosterAccount() {
                 <Label htmlFor="firstName">First name</Label>
                 <Input
                   id="firstName"
-                  defaultValue={user?.name ?? ''}
+                  defaultValue={CurrentUser?.name ?? ''}
                 />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="lastName">Last name</Label>
                 <Input
                   id="lastName"
-                  defaultValue={user?.name?.split(" ")}
+                  defaultValue={CurrentUser?.name?.split(" ")}
                 />
               </div>
               <div className="space-y-2 md:col-span-2">
@@ -53,7 +53,7 @@ export default function PosterAccount() {
                 <Input
                   id="email"
                   type="email"
-                  defaultValue={user?.email ?? ""}
+                  defaultValue={CurrentUser?.email ?? ""}
                 />
               </div>
             </div>
@@ -63,7 +63,7 @@ export default function PosterAccount() {
                 id="bio"
                 className="min-h-[100px]"
                 placeholder="Tell us about yourself"
-                value={user.bio}
+                value={CurrentUser.bio}
                 onChange={(e) => setUser({ ...user, bio: e.target.value })}
               /> */}
             </div>
@@ -75,12 +75,12 @@ export default function PosterAccount() {
             <h2 className="text-lg font-semibold">Account Identities</h2>
             <div className="flex items-center gap-3 p-4 border rounded-lg">
               <div className="flex items-center justify-center h-10 w-10 rounded-full bg-primary text-primary-foreground">
-                <span>{user?.name?.split("")[0]}</span>
+                <span>{CurrentUser?.name?.split("")[0]}</span>
               </div>
               <div>
-                <p className="font-medium">{user?.name?.split(' ')[0]}</p>
+                <p className="font-medium">{CurrentUser?.name?.split(' ')[0]}</p>
                 <p className="text-sm text-muted-foreground">
-                  {user?.name} • {user?.email}
+                  {CurrentUser?.name} • {CurrentUser?.email}
                 </p>
               </div>
             </div>
