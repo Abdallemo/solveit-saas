@@ -1,5 +1,5 @@
 {
-  "id": "89d6c5a7-2dd3-45b8-9487-7e17c2756ef9",
+  "id": "d7316aa8-93b7-429c-a178-356522f05e9f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -44,7 +44,8 @@
           "type": "tier",
           "typeSchema": "public",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'POSTER'"
         }
       },
       "indexes": {},
@@ -280,8 +281,8 @@
       "name": "tier",
       "schema": "public",
       "values": [
-        "BASIC",
-        "PREMIUM"
+        "POSTER",
+        "SOLVER"
       ]
     },
     "public.role": {

@@ -1,7 +1,7 @@
 "use server";
 
-import db, {  } from "@/drizzle/db";
-import { users } from "@/drizzle/schemas";
+import db from "@/drizzle/db";
+import { users, UserSubscriptionTable } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
 
@@ -69,8 +69,6 @@ export async function UpdateUserField(parms: UpdateUserParams) {
   }
 }
 
-
-
 // export async function DeleteUserField(id:string , email:string,field:Schemas) {
 //   field.
 //   try {
@@ -87,3 +85,20 @@ export async function UpdateUserField(parms: UpdateUserParams) {
 //   }
 // }
 // DeleteUserField("dsdssd",'dssdsdsd',)
+
+export async function getServerUserRoleById({ id }: { id: string }) {}
+
+export async function getServerUserSubscriptionById( id:string ) {
+  const subscription = await db.query.UserSubscriptionTable.findFirst({
+    where : (table, fn) => (fn.eq(table.userId,id)),
+  })
+  return subscription;
+}
+
+export async function getServerUserRoleByEmail({ email }: { email: string }) {}
+
+export async function getServerUserSubscriptionByEmail({
+  email,
+}: {
+  email: string;
+}) {}

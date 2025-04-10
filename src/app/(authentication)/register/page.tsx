@@ -9,6 +9,7 @@ import {
   registerInferedTypes,
 } from "@/features/auth/server/auth-types";
 import RegisterCard from "@/features/auth/register/components/regsiterCard";
+import Logo from "@/components/marketing/logo";
 export default function Register() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
@@ -25,12 +26,9 @@ export default function Register() {
 
         if (error) setError(error);
         if (success) setSuccess(success);
-
       } catch (error) {
-        console.log(error)
+        console.log(error);
       }
-
-      
     });
   };
 
@@ -43,21 +41,21 @@ export default function Register() {
     },
   });
   return (
-   
-      <div className="flex w-full h-screen ">
-        <div className="flex bg-background w-full h-screen place-content-center items-center">
-          <RegisterCard
-            myformController={myformController}
-            submitHandler={submitHandler}
-            isPending={isPending}
-            error={error}
-            success={success}
-          />
+    <div className="flex w-full h-screen ">
+      <div className="flex bg-background w-full h-screen justify-center items-center relative">
+        <div className="absolute top-6 left-6">
+          <Logo />
         </div>
-        <div className=" inset-0 md:flex items-center justify-center text-white  bg-primary font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl w-full hidden">
-          
-          </div>
+
+        <RegisterCard
+          myformController={myformController}
+          submitHandler={submitHandler}
+          isPending={isPending}
+          error={error}
+          success={success}
+        />
       </div>
-    
+      <div className=" inset-0 md:flex items-center justify-center text-white  bg-primary font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl w-full hidden"></div>
+    </div>
   );
 }

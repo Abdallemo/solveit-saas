@@ -1,4 +1,4 @@
-CREATE TYPE "public"."tier" AS ENUM('BASIC', 'PREMIUM');--> statement-breakpoint
+CREATE TYPE "public"."tier" AS ENUM('POSTER', 'SOLVER');--> statement-breakpoint
 CREATE TYPE "public"."role" AS ENUM('ADMIN', 'MODERATOR', 'POSTER', 'SOLVER');--> statement-breakpoint
 CREATE TABLE "subscription" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
@@ -6,7 +6,7 @@ CREATE TABLE "subscription" (
 	"stripe_subscription_item_id" text,
 	"stripe_subscription_id" text,
 	"stripe_customer_id" text,
-	"tier" "tier" NOT NULL
+	"tier" "tier" DEFAULT 'POSTER' NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "account" (

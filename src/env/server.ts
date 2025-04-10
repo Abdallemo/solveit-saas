@@ -14,6 +14,7 @@ export const env = createEnv({
         HUGGINGFACE_API_KEY:z.string(),
         NEXTAUTH_URL:z.string(),
         AUTH_GOOGLE_REFRESH_TOKEN:z.string(),
+        STRIPE_PREMIUM_PRODUCT_ID:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
