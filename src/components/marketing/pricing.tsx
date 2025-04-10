@@ -54,10 +54,10 @@ export default async function Pricing() {
 
               <CardFooter>
                 <form
-                  action={
-                    plan.teir === "BASIC"
-                      ? createCancelSession
-                      : createStripeCheckoutSession.bind(null, plan.teir)
+                  action={""
+                    // plan.teir === "BASIC"
+                    //   ? createCancelSession
+                    //   : createStripeCheckoutSession.bind(null, plan.teir)
                   }>
                   {
                    userSubscription?.tier == plan.teir ? ( <Button
