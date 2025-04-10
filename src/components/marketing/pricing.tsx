@@ -17,10 +17,10 @@ import { getServerUserSession } from "@/features/auth/server/actions";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 
 export default async function Pricing() {
-  const currentUser = await getServerUserSession();
-  const userSubscription = await getServerUserSubscriptionById(
-    currentUser?.id!
-  );
+  // const currentUser = await getServerUserSession();
+  // const userSubscription = await getServerUserSubscriptionById(
+  //   currentUser?.id!
+  // );
 
   return (
     <section id="pricing" className="py-20">
@@ -59,7 +59,7 @@ export default async function Pricing() {
                     //   ? createCancelSession
                     //   : createStripeCheckoutSession.bind(null, plan.teir)
                   }>
-                  {
+                  {/* {
                    userSubscription?.tier == plan.teir ? ( <Button
                     type="submit"
                     className="w-full"
@@ -77,7 +77,7 @@ export default async function Pricing() {
                         ? "Subscribe Now"
                         : "Get Started"}
                     </Button>
-                  }
+                  } */}
                 </form>
               </CardFooter>
             </Card>
