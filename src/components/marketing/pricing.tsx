@@ -56,11 +56,7 @@ export default async function Pricing() {
               </CardContent>
 
               <CardFooter>
-                {!currentUser ? (
-                  <Button disabled className="w-full">
-                    Sign in to subscribe
-                  </Button>
-                ) : (
+                {(
                   <form
                     action={
                       plan.teir === "BASIC"
@@ -70,6 +66,7 @@ export default async function Pricing() {
                     <Button
                       type="submit"
                       className="w-full"
+                      disabled={userSubscription?.tier===plan.teir}
                       variant={
                         userSubscription?.tier === plan.teir
                           ? "default"
