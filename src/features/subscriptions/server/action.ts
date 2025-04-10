@@ -39,6 +39,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
+    
     console.log("session url" + session.url);
     redirect(session.url);
   } catch (error) {

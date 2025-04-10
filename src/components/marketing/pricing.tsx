@@ -18,11 +18,13 @@ import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 
 export default async function Pricing() {
   const currentUser = await getServerUserSession();
-  const userSubscription = await getServerUserSubscriptionById(
-    currentUser?.id!
-  );
-  console.log("bug: CurrentUser " + currentUser);
+  const userSubscription = currentUser 
+    ? await getServerUserSubscriptionById(currentUser.id)
+    : null;
+
+  console.log("bug: CurrentUser " + currentUser?.id);
   console.log("bug: userSubscription " + userSubscription);
+
   return (
     <section id="pricing" className="py-20">
       <div className="mx-auto max-w-7xl px-4">
@@ -54,35 +56,35 @@ export default async function Pricing() {
               </CardContent>
 
               <CardFooter>
-                <form
-                  action={
-                    ""
-                    // plan.teir === "BASIC"
-                    //   ? createCancelSession
-                    //   : createStripeCheckoutSession.bind(null, plan.teir)
-                  }>
-                  {userSubscription?.tier == plan.teir ? (
+                {!currentUser ? (
+                  <Button disabled className="w-full">
+                    Sign in to subscribe
+                  </Button>
+                ) : (
+                  <form
+                    action={
+                      plan.teir === "BASIC"
+                        ? createCancelSession
+                        : createStripeCheckoutSession.bind(null, plan.teir)
+                    }>
                     <Button
                       type="submit"
                       className="w-full"
                       variant={
-                        userSubscription?.tier == plan.teir
+                        userSubscription?.tier === plan.teir
+                          ? "default"
+                          : plan.teir === "PREMIUM"
                           ? "default"
                           : "outline"
                       }>
-                      {userSubscription?.tier == plan.teir ? "Current" : "Swap"}
-                    </Button>
-                  ) : (
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      variant={plan.teir === "PREMIUM" ? "default" : "outline"}>
-                      {plan.teir === "PREMIUM"
+                      {userSubscription?.tier === plan.teir
+                        ? "Current Plan"
+                        : plan.teir === "PREMIUM"
                         ? "Subscribe Now"
                         : "Get Started"}
                     </Button>
-                  )}
-                </form>
+                  </form>
+                )}
               </CardFooter>
             </Card>
           ))}
