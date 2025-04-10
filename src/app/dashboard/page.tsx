@@ -1,27 +1,23 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { UserRole } from "../../../types/next-auth";
 
 export default async function page() {
   const session = await auth();
-  const useRole = session?.user.role
-  if(!useRole){
-    return null
+  const useRole = session?.user.role;
+  if (!useRole) {
+    return null;
   }
-  switch (useRole) {
-    case 'POSTER':
-    redirect('/dashboard/poster')
-    case 'SOLVER' :
-    redirect('/dashboard/solver')
-    case 'MODERATOR' :
-    redirect('/dashboard/moderator')
-    case 'ADMIN' :
-    redirect('/dashboard/admin')
+  const roleRedirectMap: Record<UserRole, string> = {
+    POSTER: '/dashboard/poster',
+    SOLVER: '/dashboard/solver',
+    MODERATOR: '/dashboard/moderator',
+    ADMIN: '/dashboard/admin'
+  };
   
-    default:
-      break;
+  if (useRole && roleRedirectMap[useRole]) {
+    return redirect(roleRedirectMap[useRole]);
   }
-  return (
-    <>
-    </>
-  );
+  
+  
 }

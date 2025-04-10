@@ -18,7 +18,7 @@ import { ModeToggle } from "../toggle";
 import { Menu } from "lucide-react";
 import {useState} from 'react'
 export default function Navbar() {
-  const session = useCurrentUser();
+  const {user} = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
@@ -89,7 +89,7 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          {!session ? (
+          {!user ? (
             <Button size="sm">
               <Link href={"/login"}>SignIn</Link>
             </Button>
@@ -136,7 +136,7 @@ export default function Navbar() {
               </Button>
             </Link>
             
-            {!session ? (
+            {!user ? (
               <Button size="sm" className="flex-1">
                 <Link href={"/login"}>SignIn</Link>
               </Button>

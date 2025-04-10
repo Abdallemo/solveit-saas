@@ -11,6 +11,7 @@ import {
 export const UserRole = pgEnum('role',['ADMIN','MODERATOR','POSTER','SOLVER'])
 export const TierEnum = pgEnum('tier',['BASIC','PREMIUM'])
 
+export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 
 

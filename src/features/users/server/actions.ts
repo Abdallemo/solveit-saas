@@ -88,10 +88,10 @@ export async function UpdateUserField(parms: UpdateUserParams) {
 
 export async function getServerUserRoleById({ id }: { id: string }) {}
 
-export async function getServerUserSubscriptionById( id:string ) {
+export async function getServerUserSubscriptionById(id: string) {
   const subscription = await db.query.UserSubscriptionTable.findFirst({
-    where : (table, fn) => (fn.eq(table.userId,id)),
-  })
+    where: (table, fn) => fn.eq(table.userId, id),
+  });
   return subscription;
 }
 

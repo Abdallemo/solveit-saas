@@ -1,14 +1,15 @@
-'use client'
 import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
+import { isAuthorized, SignOutAction } from "@/features/auth/server/actions";
 
-export default function page() {
+export default async function page() {
+  await isAuthorized("ADMIN");
+  
   return (
-    <div>Admin Dashbaord
-      <Button variant={"ghost"} onClick={() => signOut()}>Signout</Button>
-
-
+    <div>
+      Admin Dashbaord
+      <form action={SignOutAction}>
+        <Button variant={"ghost"}>Signout</Button>
+      </form>
     </div>
-  )
+  );
 }
-

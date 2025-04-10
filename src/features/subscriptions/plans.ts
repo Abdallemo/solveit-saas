@@ -1,3 +1,5 @@
+import { TierType } from "@/drizzle/schemas";
+import { env } from "@/env/server";
 
 export type Plan = {
     name: string;
@@ -5,6 +7,7 @@ export type Plan = {
     priceInCents: number;
     stripePriceId: string;
     features: string[];
+    teir: TierType,
   };
   
   export const plans: Plan[] = [
@@ -20,12 +23,13 @@ export type Plan = {
         "View solver profiles & reviews",
         "Real-time notification system",
       ],
+      teir:'BASIC'
     },
     {
       name: "Solver",
       price: "RM15",
       priceInCents: 1500, 
-      stripePriceId: "",
+      stripePriceId: env.STRIPE_PREMIUM_PRODUCT_ID,
       features: [
         "Access to all posted tasks",
         "Earn money by completing tasks",
@@ -34,6 +38,8 @@ export type Plan = {
         "Task filtering and smart recommendations",
         "Priority support & verification badge",
       ],
+      teir:'PREMIUM'
     },
+
   ];
   

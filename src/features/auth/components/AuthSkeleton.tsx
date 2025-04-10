@@ -78,7 +78,7 @@ export default function AuthSkeleton() {
       </div>
 
       {/* Right side - Gradient Background */}
-      <div className="hidden lg:block lg:w-1/2 bg-gradient-to-br from-purple-900 via-purple-600 to-blue-400" />
+      <div className="hidden lg:block lg:w-1/2 dark:bg-foreground bg-background" />
     </div>
   )
 }

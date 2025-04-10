@@ -9,8 +9,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { plans } from "@/features/subscriptions/plans";
+import {
+  createStripeCheckoutSession,
+  createCancelSession,
+} from "@/features/subscriptions/server/action";
+import { getServerUserSession } from "@/features/auth/server/actions";
+import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 
-export default function Pricing() {
+export default async function Pricing() {
+  const currentUser = await getServerUserSession();
+  const userSubscription = await getServerUserSubscriptionById(
+    currentUser?.id!
+  );
+
   return (
     <section id="pricing" className="py-20">
       <div className="mx-auto max-w-7xl px-4">
@@ -42,11 +53,32 @@ export default function Pricing() {
               </CardContent>
 
               <CardFooter>
-                <Button
-                  className="w-full"
-                  variant={index === 1 ? "default" : "outline"}>
-                  {index === 1 ? "Subscribe Now" : "Get Started"}
-                </Button>
+                <form
+                  action={
+                    plan.teir === "BASIC"
+                      ? createCancelSession
+                      : createStripeCheckoutSession.bind(null, plan.teir)
+                  }>
+                  {
+                   userSubscription?.tier == plan.teir ? ( <Button
+                    type="submit"
+                    className="w-full"
+                    variant={userSubscription?.tier == plan.teir  ? "default" : "outline"}>
+                    {userSubscription?.tier == plan.teir 
+                      ? "Current"
+                      : "Swap"}
+                  </Button>
+                  ):
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      variant={plan.teir === "PREMIUM" ? "default" : "outline"}>
+                      {plan.teir === "PREMIUM"
+                        ? "Subscribe Now"
+                        : "Get Started"}
+                    </Button>
+                  }
+                </form>
               </CardFooter>
             </Card>
           ))}

@@ -1,54 +1,60 @@
-// "use server"
-// import { getServerUserSession } from "@/features/auth/server/actions";
-// import { getServerUserSubscriptionById } from "@/features/users/server/actions";
-// import { stripe } from "@/lib/stripe";
-// import { subscription_tier, subscriptionTiers } from "../plans";
-// import { AppUser } from "../../../../types/next-auth";
-// import { redirect } from "next/navigation";
-// import { headers } from "next/headers";
+"use server";
 
-// export async function createStripeCheckoutSeesion(tier: subscription_tier) {
-//   const currentUser = await getServerUserSession();
-//   if (!currentUser || !currentUser.id || currentUser == null) return;
-//   const UserSubscption = await getServerUserSubscriptionById(currentUser.id);
+import { getServerUserSession } from "@/features/auth/server/actions";
+import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import { stripe } from "@/lib/stripe";
+import { plans } from "@/features/subscriptions/plans";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { TierType } from "@/drizzle/schemas";
 
-//   if (UserSubscption == null) return { error: "no user Subscrption" };
+export async function createStripeCheckoutSession(tier: TierType) {
+  try {
+    const currentUser = await getServerUserSession();
+    if (!currentUser?.id) redirect("/login");
+    const userSubscription = await getServerUserSubscriptionById(
+      currentUser?.id!
+    );
+    const selectedPlan = plans.find((plan) => plan.teir === tier);
+    if (!selectedPlan) throw new Error("Plan not found");
 
-//   if (UserSubscption.stripeCustomerId == null) {
-//     const url  = await getCheckoutSession(tier,currentUser)
-//     if( url == null) return {error:"url is null"}
-//     redirect(url)
-//   } else {
-//   }
-// }
+    const headersList = headers();
+    const origin = (await headersList).get("origin") || "";
 
-// async function getCheckoutSession(
-//   tier: subscription_tier,
-//   user: AppUser
-// ) {
-//      const headersList = await headers()
-//         const origin = headersList.get('origin')
-      
-//     const session = await stripe.checkout.sessions.create({
-//         mode: "subscription",
-//         customer_email:user.email!,
-//         success_url: `${origin}/dashboard/`,
-  
-//         cancel_url: `${origin}/?canceled=true`,
-//         line_items: [
-//           {
-//             price: subscriptionTiers[tier].stripePriceId,
-//             quantity: 1,
-//           },
-//         ],
-//         subscription_data: {
-//             metadata:{
-//                 userId:user.id!
-//             }
-//         },
-//       });
-//       return session.url;
-// }
+    if (!currentUser.email || !currentUser!.id) return;
 
-// export async function createCancelSession (){}
-// export async function createUserPortelSession (){}
+    const session = await stripe.checkout.sessions.create({
+      mode: "subscription",
+      customer_email: currentUser!.email,
+      success_url: `${origin}/dashboard/`,
+      cancel_url: `${origin}/subscription-error/?canceled=true`,
+      line_items: [
+        {
+          price: selectedPlan.stripePriceId,
+          quantity: 1,
+        },
+      ],
+      subscription_data: {
+        metadata: {
+          userId: currentUser!.id,
+        },
+      },
+    });
+
+    if (!session.url) throw new Error("Failed to create checkout session");
+    console.log("session url" + session.url);
+    redirect(session.url);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}
+
+export async function createCancelSession() {
+  try {
+    return;
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
+}

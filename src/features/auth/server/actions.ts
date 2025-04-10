@@ -17,6 +17,8 @@ import { AuthError } from "next-auth";
 import db from "@/drizzle/db";
 import { generateVerificationToken } from "./auth-uitls";
 import { sendVerificationEmail } from "@/lib/nodemailer";
+import { UserRole } from "../../../../types/next-auth";
+import { redirect } from "next/navigation";
 // import { verificationTokens } from "@/drizzle/schemas";
 // import { eq } from "drizzle-orm";
 
@@ -129,6 +131,12 @@ export async function getServerSession() {
   const session = await auth();
   return session;
 }
+export async function userRoleSession() {
+  const r = await getServerSession();
+  const role = r?.user.role;
+  return role;
+}
+
 
 //* Auth Db Calls
 
@@ -189,4 +197,20 @@ export async function verifyVerificationToken(
     //   .where(eq(verificationTokens.email, exsistingToken.email!));
     return { success: "VERIFIED" };
   }
+}
+
+
+export async function isAuthorized(whichRole:UserRole | undefined){
+  const role = await userRoleSession()
+
+  if(!whichRole ) return null;
+  if(!role ) return null;
+
+  if(whichRole==role){
+    return {authorized:true}
+  }else{
+    redirect('/dashboard/')
+  }
+  
+
 }
