@@ -1,3 +1,13 @@
+import React from 'react'
+
+export default function pricing() {
+  return (
+    <div>pricing</div>
+  )
+}
+
+
+
 // import { Check } from "lucide-react";
 // import { Button } from "@/components/ui/button";
 // import {
