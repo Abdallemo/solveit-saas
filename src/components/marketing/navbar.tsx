@@ -15,13 +15,20 @@ import {
 } from "@/components/ui/navigation-menu";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { ModeToggle } from "../toggle";
-import { Menu } from "lucide-react";
+import { Loader2, Menu } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 export default function Navbar() {
   const { user } = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
+  const [isNavigating, setIsNavigating] = useState(false);
+  const router = useRouter();
 
+  const handleNavigation = (path: string) => {
+    setIsNavigating(true);
+    router.push(path);
+  };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -117,8 +124,9 @@ export default function Navbar() {
       </div>
 
       {mobileMenuOpen && (
-      
-        <div ref={mobileMenuRef} className="md:hidden absolute top-full left-0 right-0 bg-background border-t border-border/40 p-4 space-y-2">
+        <div
+          ref={mobileMenuRef}
+          className="md:hidden absolute top-full left-0 right-0 bg-background border-t border-border/40 p-4 space-y-2">
           <Link
             href="#features"
             className="block py-2 px-4 rounded hover:bg-accent">
@@ -163,12 +171,16 @@ export default function Navbar() {
             </Link>
 
             {!user ? (
-              <Button size="sm" className="flex-1">
-                <Link href={"/login"}>SignIn</Link>
+              <Button
+                size="sm"
+                className="flex-1"
+                disabled={isNavigating}
+                onClick={() => handleNavigation("/login")}>
+                {isNavigating ? <Loader2 className="animate-spin" /> : "SignIn"}
               </Button>
             ) : (
-              <Button size="sm" className="flex-1">
-                <Link href={"/dashboard"}>dashboard</Link>
+              <Button size="sm" className="flex-1" onClick={() => handleNavigation("/dashboard")}>
+              {isNavigating ? <Loader2 className="animate-spin" /> : "dashboard"}
               </Button>
             )}
             <ModeToggle />

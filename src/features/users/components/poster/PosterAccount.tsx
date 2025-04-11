@@ -228,9 +228,9 @@ export default function AccountComponent() {
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <form action={DeleteUserAccount}>
+                  <form action={DeleteUserAccount} className="">
                     <AlertDialogAction
-                      className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
+                      className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-full"
                       type="submit">
                       Continue
                     </AlertDialogAction>
