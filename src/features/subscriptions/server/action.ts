@@ -6,10 +6,12 @@ import { stripe } from "@/lib/stripe";
 import { plans } from "@/features/subscriptions/plans";
 import { redirect } from "next/navigation";
 
-import { TierType, UserSubscriptionTable } from "@/drizzle/schemas";
+import { TierType, users, UserSubscriptionTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import db from "@/drizzle/db";
-import { SQL } from "drizzle-orm";
+import { eq, SQL } from "drizzle-orm";
+import { UserRole } from "../../../../types/next-auth";
+
 export async function createStripeCheckoutSession(tier: TierType) {
   try {
     const currentUser = await getServerUserSession();
@@ -21,7 +23,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     if (!selectedPlan) throw new Error("Plan not found");
 
     if (!currentUser.email || !currentUser!.id) return;
-
+    if (userSubscription?.tier == "PREMIUM") return; //chnaged here to test
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: currentUser!.email,
@@ -50,15 +52,22 @@ export async function createStripeCheckoutSession(tier: TierType) {
   }
 }
 
-export async function createCancelSession() {
-  try {
-    return;
-  } catch (error) {
-    console.error(error);
-    throw error;
-  }
-}
 export async function updateUserSubscription(
+  values: typeof UserSubscriptionTable.$inferInsert,
+  role: UserRole = "SOLVER",
+  id: string
+) {
+  await db.transaction(async (dx) => {
+    await dx
+      .update(UserSubscriptionTable)
+      .set(values)
+      .where(eq(UserSubscriptionTable.userId, id));
+    await dx.update(users).set({ role: role }).where(eq(users.id, id));
+  });
+}
+export async function createCancelSession() {}
+
+export async function CreateUserSubsciption(
   values: typeof UserSubscriptionTable.$inferInsert
 ) {
   await db.insert(UserSubscriptionTable).values(values);
