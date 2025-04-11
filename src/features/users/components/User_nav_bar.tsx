@@ -28,6 +28,7 @@ import {
 import { signOut } from "next-auth/react";
 import { AppUser } from "../../../../types/next-auth";
 import Link from "next/link";
+import { createStripeCheckoutSession } from "@/features/subscriptions/server/action";
 
 export function NavUser({ image, name, email, role }: AppUser) {
   const { isMobile } = useSidebar();
@@ -80,7 +81,9 @@ export function NavUser({ image, name, email, role }: AppUser) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {role === "POSTER" ? (
-                <DropdownMenuItem>
+                <DropdownMenuItem onSelect={async()=>{
+                  await createStripeCheckoutSession('PREMIUM')
+                }}>
                   <Sparkles />
                   Upgrade to Pro
                 </DropdownMenuItem>
@@ -88,16 +91,12 @@ export function NavUser({ image, name, email, role }: AppUser) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href={"/dashboard/poster/account"}>
+              <Link href={`/dashboard/${role?.toLocaleLowerCase()}/account`}>
                 <DropdownMenuItem>
                   <BadgeCheck />
                   Account
                 </DropdownMenuItem>
               </Link>
-              <DropdownMenuItem>
-                <CreditCard />
-                Billing
-              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Bell />
                 Notifications
