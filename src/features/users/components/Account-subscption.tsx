@@ -23,7 +23,6 @@ const subscription = {
 export default function AccountSubscption() {
   return (
     <>
-      <Separator />
 
       <div className="space-y-4">
         <h2 className="text-lg font-semibold">Subscription</h2>
@@ -109,7 +108,6 @@ export default function AccountSubscption() {
         </div>
       </div>
 
-      <Separator />
     </>
   );
 }

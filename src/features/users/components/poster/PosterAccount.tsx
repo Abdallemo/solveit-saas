@@ -211,7 +211,7 @@ export default function AccountComponent() {
 
           <AccountSubscption />
 
-          <Separator />
+          
 
           <div className="flex justify-end gap-2">
             <AlertDialog>
