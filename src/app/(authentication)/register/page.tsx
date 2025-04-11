@@ -42,7 +42,7 @@ export default function Register() {
   });
   return (
     <div className="flex w-full h-screen ">
-      <div className="flex bg-background w-full h-screen justify-center items-center relative">
+      <div className="flex bg-sidebar w-full h-screen justify-center items-center relative">
         <div className="absolute top-6 left-6">
           <Logo />
         </div>

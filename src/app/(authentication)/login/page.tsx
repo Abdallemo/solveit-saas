@@ -47,7 +47,7 @@ export default function Login() {
   return (
    
       <div className="flex w-full h-screen ">
-        <div className="relative bg-background w-full h-screen flex  justify-center items-center">
+        <div className="relative bg-sidebar w-full h-screen flex  justify-center items-center">
           <div className=" absolute top-6 left-6">
             <Logo />
           </div>

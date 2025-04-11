@@ -2,7 +2,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 
 export default function DashboardSkeleton() {
   return (
-    <div className="flex h-screen w-full bg-background">
+    <div className="flex h-screen w-full bg-sidebar">
       
       <div className="hidden w-64 flex-col border-r bg-card md:flex">
         
