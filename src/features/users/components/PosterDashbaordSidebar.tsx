@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import React, { Suspense } from "react";
 import {
   Sidebar,
@@ -12,69 +12,93 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-import { Home, Inbox, Search } from "lucide-react"
+import { Home, Inbox, Search ,Bug,Newspaper} from "lucide-react";
 import Link from "next/link";
 import { NavUser } from "./User_nav_bar";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
 
-const MenuItems =[
+const MenuItemsPoster = [
   {
-    title:'Home',
-    url:'/dashboard/poster',
-    icon:Home,
-
+    title: "Home",
+    url: "/dashboard",
+    icon: Home,
   },
   {
-    title:'Inbox',
-    url:'#',
-    icon:Inbox,
+    title: "Post",
+    url: "#",
+    icon: Newspaper,
+  },
 
+];
+
+const MenuItemsSolver = [
+  {
+    title: "Home",
+    url: "/dashboard",
+    icon: Home,
   },
   {
-    title:'Search',
-    url:'#',
-    icon:Search,
-
+    title:"Issues",
+    url:"/dashboard",
+    icon:Bug
   },
-]
 
+];
 
 export default function PosterDashboardSidebar() {
-  const {user,state} = useCurrentUser();
+  const { user, state } = useCurrentUser();
 
-  
   return (
     <Sidebar variant="sidebar">
-
       <SidebarHeader />
       <SidebarContent>
-        <SidebarGroup >
-          <SidebarGroupLabel>poster</SidebarGroupLabel>
+        <SidebarGroup>
+          <SidebarGroupLabel>{user?.role}</SidebarGroupLabel>
           <SidebarGroupContent>
-
             <SidebarMenu>
-            {MenuItems.map((item)=>(
+              {user?.role === "POSTER" &&
+                MenuItemsPoster.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link href={item.url}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))
+                
+          }{
+            user?.role=='SOLVER' && 
+            MenuItemsSolver.map((item) => (
               <SidebarMenuItem key={item.title}>
                 <SidebarMenuButton asChild>
                   <Link href={item.url}>
-                  <item.icon/>
-                  <span>{item.title}</span>
+                    <item.icon />
+                    <span>{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            ))}
+            ))
+          }
             </SidebarMenu>
-          
           </SidebarGroupContent>
-
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter >
-        {state=='loading' ? <ProfileSkeleton/> :
-        <Suspense fallback={<ProfileSkeleton/>}>
-          <NavUser email={user?.email} name={user?.name} image={user?.image} role={user?.role}/>
-          </Suspense>}
+      <SidebarFooter>
+        {state == "loading" ? (
+          <ProfileSkeleton />
+        ) : (
+          <Suspense fallback={<ProfileSkeleton />}>
+            <NavUser
+              email={user?.email}
+              name={user?.name}
+              image={user?.image}
+              role={user?.role}
+            />
+          </Suspense>
+        )}
       </SidebarFooter>
     </Sidebar>
   );

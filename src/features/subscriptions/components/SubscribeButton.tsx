@@ -4,12 +4,13 @@
 import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
+import { TierType } from "@/drizzle/schemas";
 
 export function SubscribeButton({
   tier,
   currentTier,
 }: {
-  tier: "BASIC" | "PREMIUM";
+  tier: TierType;
   currentTier?: string;
 }) {
   const { pending } = useFormStatus();
@@ -18,13 +19,10 @@ export function SubscribeButton({
     <Button
       type="submit"
       className="w-full"
-      disabled={pending || currentTier === tier}
+      disabled={pending || currentTier === tier }
       variant={
-        currentTier === tier
-          ? "default"
-          : tier === "PREMIUM"
-          ? "default"
-          : "outline"
+        currentTier === tier ? "default" : tier === "PREMIUM" ? "default" : "outline"
+          
       }>
       {pending ? (
         <>
@@ -34,7 +32,7 @@ export function SubscribeButton({
       ) : currentTier === tier ? (
         "Current Plan"
       ) : tier === "PREMIUM" ? (
-        "Subscribe Now"
+        "Get Started"
       ) : (
         "Get Started"
       )}
