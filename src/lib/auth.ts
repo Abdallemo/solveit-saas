@@ -7,8 +7,15 @@ import authConfig from "./auth.config";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 
 import type { NextAuthConfig } from "next-auth";
+import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const {
+  handlers,
+  auth,
+  signIn,
+  signOut,
+  unstable_update: update,
+} = NextAuth({
   adapter: DrizzleAdapter(db, {
     usersTable: users,
     accountsTable: accounts,
@@ -22,6 +29,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   events: {
     linkAccount({ user }) {
       UpdateUserField({ id: user.id!, data: { emailVerified: new Date() } });
+    },
+    async createUser({ user }) {
+      await CreateUserSubsciption({ tier: "BASIC", userId: user.id! });
     },
   },
   pages: {
