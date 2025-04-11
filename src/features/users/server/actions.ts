@@ -1,9 +1,12 @@
 "use server";
 
-import db from "@/drizzle/db";
-import { users, UserSubscriptionTable } from "@/drizzle/schemas";
+import { users } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
+import { UserRole } from "../../../../types/next-auth";
+import { getServerUserSession } from "@/features/auth/server/actions";
+import db from "@/drizzle/db";
+
 
 //* User Types
 
@@ -13,6 +16,10 @@ type UserUpdateData = Partial<typeof users.$inferInsert>;
 
 export async function CreateUser(values: registerInferedTypes) {
   await db.insert(users).values(values);
+}
+export async function DeleteUserFromDb(id:string) {
+  if(id )
+  await db.delete(users).where(eq(users.id,id))
 }
 export async function getUserByEmail(email: string) {
   try {
@@ -69,6 +76,7 @@ export async function UpdateUserField(parms: UpdateUserParams) {
   }
 }
 
+
 // export async function DeleteUserField(id:string , email:string,field:Schemas) {
 //   field.
 //   try {
@@ -88,12 +96,12 @@ export async function UpdateUserField(parms: UpdateUserParams) {
 
 export async function getServerUserRoleById({ id }: { id: string }) {}
 
-export async function getServerUserSubscriptionById(id: string |undefined) {
-  if(id === undefined) return
+export async function getServerUserSubscriptionById(id: string | undefined) {
+  if (id === undefined) return;
   const subscription = await db.query.UserSubscriptionTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, id),
   });
-  if(subscription==undefined) return null
+  if (subscription == undefined) return null;
   return subscription;
 }
 
@@ -104,3 +112,6 @@ export async function getServerUserSubscriptionByEmail({
 }: {
   email: string;
 }) {}
+export async function updateUserRole(role: UserRole = "SOLVER", id: string) {
+  await db.update(users).set({ role: role }).where(eq(users.id, id));
+}
