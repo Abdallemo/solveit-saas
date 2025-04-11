@@ -15,10 +15,11 @@ import {
 } from "@/features/subscriptions/server/action";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import { SubscribeButton } from "@/features/subscriptions/components/SubscribeButton";
 
 export default async function Pricing() {
   const currentUser = await getServerUserSession();
-  const userSubscription = currentUser 
+  const userSubscription = currentUser
     ? await getServerUserSubscriptionById(currentUser.id)
     : null;
 
@@ -56,32 +57,19 @@ export default async function Pricing() {
               </CardContent>
 
               <CardFooter>
-                {(
+                {
                   <form
                     action={
                       plan.teir === "BASIC"
                         ? createCancelSession
                         : createStripeCheckoutSession.bind(null, plan.teir)
                     }>
-                    <Button
-                      type="submit"
-                      className="w-full"
-                      disabled={userSubscription?.tier===plan.teir}
-                      variant={
-                        userSubscription?.tier === plan.teir
-                          ? "default"
-                          : plan.teir === "PREMIUM"
-                          ? "default"
-                          : "outline"
-                      }>
-                      {userSubscription?.tier === plan.teir
-                        ? "Current Plan"
-                        : plan.teir === "PREMIUM"
-                        ? "Subscribe Now"
-                        : "Get Started"}
-                    </Button>
+                    <SubscribeButton
+                      tier={plan.teir}
+                      currentTier={userSubscription?.tier}
+                    />
                   </form>
-                )}
+                }
               </CardFooter>
             </Card>
           ))}

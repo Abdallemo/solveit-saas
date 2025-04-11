@@ -6,8 +6,10 @@ import { stripe } from "@/lib/stripe";
 import { plans } from "@/features/subscriptions/plans";
 import { redirect } from "next/navigation";
 
-import { TierType } from "@/drizzle/schemas";
+import { TierType, UserSubscriptionTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
+import db from "@/drizzle/db";
+import { SQL } from "drizzle-orm";
 export async function createStripeCheckoutSession(tier: TierType) {
   try {
     const currentUser = await getServerUserSession();
@@ -24,7 +26,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
       mode: "subscription",
       customer_email: currentUser!.email,
       success_url: `${env.NEXTAUTH_URL}/dashboard/`,
-      cancel_url: `${env.NEXTAUTH_URL}/subscription-error/?canceled=true`,
+      cancel_url: `${env.NEXTAUTH_URL}/dashboard/?canceled=true`,
       line_items: [
         {
           price: selectedPlan.stripePriceId,
@@ -39,7 +41,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
-    
+
     console.log("session url" + session.url);
     redirect(session.url);
   } catch (error) {
@@ -55,4 +57,9 @@ export async function createCancelSession() {
     console.error(error);
     throw error;
   }
+}
+export async function updateUserSubscription(
+  values: typeof UserSubscriptionTable.$inferInsert
+) {
+  await db.insert(UserSubscriptionTable).values(values);
 }
