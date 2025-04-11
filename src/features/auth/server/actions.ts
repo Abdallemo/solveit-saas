@@ -9,7 +9,9 @@ import {
 import bcrypt from "bcryptjs";
 import {
   CreateUser,
+  DeleteUserFromDb,
   getUserByEmail,
+  getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
 import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
@@ -137,7 +139,6 @@ export async function userRoleSession() {
   return role;
 }
 
-
 //* Auth Db Calls
 
 export async function getVerificationTokenByEmail(email: string) {
@@ -199,18 +200,29 @@ export async function verifyVerificationToken(
   }
 }
 
+export async function isAuthorized(whichRole: UserRole | undefined) {
+  const role = await userRoleSession();
 
-export async function isAuthorized(whichRole:UserRole | undefined){
-  const role = await userRoleSession()
+  if (!whichRole) return null;
+  if (!role) return null;
 
-  if(!whichRole ) return null;
-  if(!role ) return null;
-
-  if(whichRole==role){
-    return {authorized:true}
-  }else{
-    redirect('/dashboard/')
+  if (whichRole == role) {
+    return { authorized: true };
+  } else {
+    redirect("/dashboard/");
   }
-  
+}
 
+export async function DeleteUserAccount() {
+  console.log("delete trigered");
+  const user = await getServerUserSession();
+
+  if (!user || !user.id) return;
+
+  const existingUser = await getUserById(user.id);
+
+  if (!existingUser || !existingUser.id) return;
+
+  await DeleteUserFromDb(user.id);
+  await signOut();
 }
