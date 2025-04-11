@@ -5,32 +5,34 @@ import {
   authRoutes,
   apiAuthPrefix,
   DEFAULT_LOGIN_REDIRECT,
+  apiStripePrefix,
 } from "@/routes";
 
 const { auth } = NextAuth(authConfig);
 export default auth((req) => {
-  const {nextUrl} = req;
+  const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix) 
-  const isPublicRoutes = publicRoutes.includes(nextUrl.pathname)
-  const isAuthRoutes = authRoutes.includes(nextUrl.pathname)
+  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
+  const isApiStripePrefix = nextUrl.pathname.startsWith(apiStripePrefix);
+  const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
+  const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
 
-  if( isApiAuthRoute) return 
+  if (isApiAuthRoute) return;
+  if (isApiStripePrefix) return;
 
-  if(isAuthRoutes) {
-    if(isLoggedIn) return Response.redirect(new URL( DEFAULT_LOGIN_REDIRECT,nextUrl))
-    
-    return 
+  if (isAuthRoutes) {
+    if (isLoggedIn)
+      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+
+    return;
   }
 
-  if(!isLoggedIn && !isPublicRoutes){
-    return Response.redirect(new URL('/login',nextUrl))
+  if (!isLoggedIn && !isPublicRoutes) {
+    return Response.redirect(new URL("/login", nextUrl));
   }
 
-  return 
-
-
+  return;
 });
 
 export const config = {
