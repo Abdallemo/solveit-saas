@@ -1,11 +1,11 @@
-'use client'
-import { Button } from "@/components/ui/button";
-import { signOut } from "next-auth/react";
+import { isAuthorized } from "@/features/auth/server/actions"
 
-export default function page() {
+export  default async function page() {
+   await isAuthorized('SOLVER')
+  
   return (
     <div>Solver Dashbaord
-      <Button variant={"ghost"} onClick={() => signOut()}>Signout</Button>
+      
 
 
     </div>
