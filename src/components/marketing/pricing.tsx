@@ -32,9 +32,9 @@ export default async function Pricing() {
         <h2 className="text-3xl font-bold text-center mb-12">
           Choose Your Plan
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
           {plans.map((plan, index) => (
-            <Card key={index} className="flex flex-col justify-between">
+            <Card key={index} className="flex flex-col justify-between h-full">
               <CardHeader>
                 <CardTitle className="text-2xl">{plan.name}</CardTitle>
                 <CardDescription className="text-3xl font-bold mt-2">
@@ -56,20 +56,13 @@ export default async function Pricing() {
                 </ul>
               </CardContent>
 
-              <CardFooter>
-                {
-                  <form
-                    action={
-                      plan.teir === "BASIC"
-                        ? createCancelSession
-                        : createStripeCheckoutSession.bind(null, plan.teir)
-                    }>
-                    <SubscribeButton
-                      tier={plan.teir}
-                      currentTier={userSubscription?.tier}
-                    />
-                  </form>
-                }
+              <CardFooter className="mt-auto">
+                <form className="w-full">
+                  <SubscribeButton
+                    tier={plan.teir}
+                    currentTier={userSubscription?.tier}
+                  />
+                </form>
               </CardFooter>
             </Card>
           ))}
