@@ -15,6 +15,7 @@ export const env = createEnv({
         NEXTAUTH_URL:z.string(),
         AUTH_GOOGLE_REFRESH_TOKEN:z.string(),
         STRIPE_PREMIUM_PRODUCT_ID:z.string(),
+        STRIPE_WEBHOOK_SECRET:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
