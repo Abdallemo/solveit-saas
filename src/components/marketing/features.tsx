@@ -55,7 +55,7 @@ export default function Features() {
         {features.map((feature) => (
           <div
             key={feature.name}
-            className="relative overflow-hidden rounded-lg border bg-background p-8">
+            className="relative overflow-hidden rounded-lg border bg-sidebar p-8">
             <div className="flex items-center gap-4">
               <feature.icon className="h-8 w-8" />
               <h3 className="font-bold">{feature.name}</h3>
