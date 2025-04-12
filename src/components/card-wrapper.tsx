@@ -20,6 +20,7 @@ interface CardWrapperProps {
   sections: SectionProps[];
   footer?: React.ReactNode | string;
   className?: string;
+  footerClassName?: string;
 }
 
 export function CardWrapper({
@@ -28,6 +29,7 @@ export function CardWrapper({
   sections,
   footer,
   className,
+  footerClassName,
 }: CardWrapperProps) {
   return (
     <div className={cn("w-full max-w-4xl", className)}>
@@ -59,16 +61,11 @@ export function CardWrapper({
 
         {typeof footer !== "string" ? (
           <CardFooter
-            className={cn("flex justify-end space-x-2 px-4 py-0", {
-              className,
-            })}>
+            className={cn("flex justify-end space-x-2 px-4 py-0",footerClassName)}>
             {footer}
           </CardFooter>
         ) : (
-          <CardFooter
-            className={cn("text-start text-sm", {
-              className,
-            })}>
+          <CardFooter className={cn("text-start text-sm", footerClassName)}>
             {footer}
           </CardFooter>
         )}

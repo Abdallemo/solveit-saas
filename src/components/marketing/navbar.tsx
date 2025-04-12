@@ -31,10 +31,14 @@ export default function Navbar() {
   };
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+
       if (
         mobileMenuOpen &&
-        mobileMenuRef.current &&
-        !mobileMenuRef.current.contains(event.target as Node)
+        !mobileMenuRef.current?.contains(target) &&
+        !document
+          .querySelector("[data-radix-popper-content-wrapper]")
+          ?.contains(target)
       ) {
         setMobileMenuOpen(false);
       }
@@ -179,8 +183,15 @@ export default function Navbar() {
                 {isNavigating ? <Loader2 className="animate-spin" /> : "SignIn"}
               </Button>
             ) : (
-              <Button size="sm" className="flex-1" onClick={() => handleNavigation("/dashboard")}>
-              {isNavigating ? <Loader2 className="animate-spin" /> : "dashboard"}
+              <Button
+                size="sm"
+                className="flex-1"
+                onClick={() => handleNavigation("/dashboard")}>
+                {isNavigating ? (
+                  <Loader2 className="animate-spin" />
+                ) : (
+                  "dashboard"
+                )}
               </Button>
             )}
             <ModeToggle />

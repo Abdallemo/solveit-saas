@@ -27,16 +27,17 @@ import {
 } from "@/components/ui/alert-dialog";
 import { DeleteUserAccount } from "@/features/auth/server/actions";
 
-
 export default function AccountComponent() {
   const { user, state } = useCurrentUser();
   const [CurrentUser, setUser] = useState<AppUser | undefined>(user);
+  const [emailNotification, SetEmailNotification] = useState<boolean>(false);
+  const [pushNotification, setPushNotification] = useState<boolean>(false);
 
   const { setTheme, theme } = useTheme();
 
   return (
     <main
-      className="flex-1 p-4 lg:p-8 flex justify-center items-center"
+      className="p-4 lg:p-8 flex justify-center items-center"
       suppressHydrationWarning>
       <div className="max-w-3xl w-full p-4 sm:p-6 md:p-8 lg:p-10">
         <div className="space-y-6 md:space-y-8">
@@ -86,7 +87,13 @@ export default function AccountComponent() {
                           Email Notifications
                         </Label>
                       </div>
-                      <Switch id="email-notifications" checked={true} />
+                      <Switch
+                        id="email-notifications"
+                        checked={emailNotification}
+                        onCheckedChange={() =>
+                          SetEmailNotification((prev) => !prev)
+                        }
+                      />
                     </div>
 
                     <div className="space-y-4">
@@ -97,13 +104,25 @@ export default function AccountComponent() {
                             Push Notifications
                           </Label>
                         </div>
-                        <Switch id="push-notifications" checked={true} />
+                        <Switch
+                          id="push-notifications"
+                          checked={pushNotification}
+                          onCheckedChange={() =>
+                            setPushNotification((prev) => !prev)
+                          }
+                        />
                       </div>
                     </div>
                   </div>
                 ),
               },
             ]}
+            footer={
+              <>
+                <Button variant={"secondary"}>cancel</Button>
+                <Button variant={"success"}>save</Button>
+              </>
+            }
           />
           <CardWrapper
             title="Appearance"
@@ -182,6 +201,12 @@ export default function AccountComponent() {
                 ),
               },
             ]}
+            footer={
+              <>
+                <Button variant={"secondary"}>cancel</Button>
+                <Button variant={"success"}>save</Button>
+              </>
+            }
           />
 
           <div className="space-y-4">
@@ -210,8 +235,6 @@ export default function AccountComponent() {
           </div>
 
           <AccountSubscption />
-
-          
 
           <div className="flex justify-end gap-2">
             <AlertDialog>

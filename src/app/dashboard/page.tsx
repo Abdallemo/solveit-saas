@@ -1,9 +1,9 @@
-import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { UserRole } from "../../../types/next-auth";
+import { getServerSession } from "@/features/auth/server/actions";
 
 export default async function page() {
-  const session = await auth();
+  const session = await getServerSession();
   const useRole = session?.user.role;
   if (!useRole) {
     return null;
