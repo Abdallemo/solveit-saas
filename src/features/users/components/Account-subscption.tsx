@@ -1,11 +1,9 @@
 import { CardWrapper } from "@/components/card-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Progress } from "@/components/ui/progress";
-import { Separator } from "@/components/ui/separator";
 import { UserRoleType } from "@/drizzle/schemas";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { AlertCircle, ArrowRight, Calendar, CheckCircle } from "lucide-react";
+import { AlertCircle, ArrowRight, Calendar } from "lucide-react";
 import React from "react";
 const subscription = {
   name: "Pro Plan",
@@ -20,6 +18,8 @@ const subscription = {
 export default function AccountSubscption() {
   const { user } = useCurrentUser();
   const { email, id, image, name, role } = user!;
+ 
+  
   return (
     <CardWrapper
       title="Subscription"
@@ -33,7 +33,7 @@ export default function AccountSubscption() {
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">{subscription.name}</p>
                     <Badge variant="outline" className="text-xs">
-                      {subscription.status === "active" ? "Active" : "Inactive"}
+                      {role !=='POSTER' ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   <p className="text-xs text-muted-foreground">

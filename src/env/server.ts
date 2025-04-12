@@ -16,6 +16,8 @@ export const env = createEnv({
         AUTH_GOOGLE_REFRESH_TOKEN:z.string(),
         STRIPE_PREMIUM_PRODUCT_ID:z.string(),
         STRIPE_WEBHOOK_SECRET:z.string(),
+        SENTRY_DSN:z.string(),
+        SENTRY_ENVIRONMENT:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
