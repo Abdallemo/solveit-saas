@@ -21,6 +21,7 @@ import { generateVerificationToken } from "./auth-uitls";
 import { sendVerificationEmail } from "@/lib/nodemailer";
 import { UserRole } from "../../../../types/next-auth";
 import { redirect } from "next/navigation";
+import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 // import { verificationTokens } from "@/drizzle/schemas";
 // import { eq } from "drizzle-orm";
 
@@ -110,7 +111,13 @@ export async function EmailRegisterAction(
     const exsistingUser = await getUserByEmail(email);
     if (exsistingUser) return { error: "Email Already in Use" };
 
-    await CreateUser({ email, password: hashedPassword, name });
+    const { userId } = await CreateUser({
+      email,
+      password: hashedPassword,
+      name,
+    });
+    await CreateUserSubsciption({ tier: "BASIC", userId: userId });
+
     const verificationToken = await generateVerificationToken(email);
 
     //Todo send email to the user
@@ -176,7 +183,6 @@ export async function verifyVerificationToken(
   const exsistingToken = await db.query.verificationTokens.findFirst({
     where: (table, fn) => fn.eq(table.token, token),
   });
-  console.log({ exsistingToke: exsistingToken });
 
   const currentDate = new Date(Date.now());
 

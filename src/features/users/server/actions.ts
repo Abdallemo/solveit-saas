@@ -7,7 +7,6 @@ import { UserRole } from "../../../../types/next-auth";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import db from "@/drizzle/db";
 
-
 //* User Types
 
 type UserUpdateData = Partial<typeof users.$inferInsert>;
@@ -15,11 +14,11 @@ type UserUpdateData = Partial<typeof users.$inferInsert>;
 //*End
 
 export async function CreateUser(values: registerInferedTypes) {
-  await db.insert(users).values(values);
+  const [user] =  await db.insert(users).values(values).returning({ userId: users.id });
+  return user
 }
-export async function DeleteUserFromDb(id:string) {
-  if(id )
-  await db.delete(users).where(eq(users.id,id))
+export async function DeleteUserFromDb(id: string) {
+  if (id) await db.delete(users).where(eq(users.id, id));
 }
 export async function getUserByEmail(email: string) {
   try {
@@ -75,7 +74,6 @@ export async function UpdateUserField(parms: UpdateUserParams) {
     console.log(error);
   }
 }
-
 
 // export async function DeleteUserField(id:string , email:string,field:Schemas) {
 //   field.
