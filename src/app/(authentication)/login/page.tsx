@@ -9,8 +9,9 @@ import {
   loginFormSchema,
   loginInferedTypes,
 } from "@/features/auth/server/auth-types";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Logo from "@/components/marketing/logo";
+import { signIn } from "next-auth/react";
 
 export default function Login() {
   const searchParms = useSearchParams();
@@ -22,7 +23,7 @@ export default function Login() {
   const [error, setError] = useState<string>("");
   const [success, setSuccess] = useState<string>("");
   const [isPending, startTransition] = useTransition();
-
+  const router = useRouter()
   const submitHandler = async (values: loginInferedTypes) => {
     startTransition(async () => {
       setError("");
@@ -32,8 +33,22 @@ export default function Login() {
 
       const { error, success } = await EmailSignInAction(values);
 
-      if (error) setError(error);
-      if (success) setSuccess(success);
+      if (error) return setError(error);
+      if (success && success !== "OK") return setSuccess(success); 
+  
+      
+      const res = await signIn("credentials", {
+        email: values.email,
+        password: values.password,
+        redirect: false,
+      });
+  
+      if (res?.error) {
+        setError("Login failed: " + res.error);
+      } else {
+        router.push("/dashboard");
+      }
+    ;
     });
   };
 

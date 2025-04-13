@@ -77,11 +77,6 @@ export async function EmailSignInAction(
       }
     }
 
-    await signIn("credentials", {
-      email,
-      password,
-      redirectTo: DEFAULT_LOGIN_REDIRECT,
-    });
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -95,7 +90,7 @@ export async function EmailSignInAction(
     throw error;
   }
 
-  return { error: "" };
+  return { success:'OK' };
 }
 
 export async function EmailRegisterAction(
