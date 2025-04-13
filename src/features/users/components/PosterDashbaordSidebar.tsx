@@ -50,7 +50,7 @@ export default function PosterDashboardSidebar() {
   const { user, state } = useCurrentUser();
 
   return (
-    <Sidebar variant="sidebar">
+    <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader />
       <SidebarContent>
         <SidebarGroup>

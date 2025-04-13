@@ -25,7 +25,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DeleteUserAccount } from "@/features/auth/server/actions";
-
+import { toast } from "sonner"
 export default function AccountComponent() {
   const { user, state } = useCurrentUser();
   const [CurrentUser, setUser] = useState<AppUser | undefined>(user);
@@ -36,7 +36,7 @@ export default function AccountComponent() {
 
   return (
     <main
-      className="p-4 lg:p-8 flex justify-center items-center"
+      className="min-h-screen overflow-x-hidden overflow-y-auto p-4 lg:p-8 flex justify-center items-start"
       suppressHydrationWarning>
       <div className="max-w-3xl w-full p-4 sm:p-6 md:p-8 lg:p-10">
         <div className="space-y-6 md:space-y-8">
@@ -46,8 +46,8 @@ export default function AccountComponent() {
               experience."
             footer={
               <>
-                <Button variant={"secondary"}>cancel</Button>
-                <Button variant={"success"}>save</Button>
+                <Button variant={"secondary" } onClick={()=>toast.error('cancled')}>cancel</Button>
+                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
               </>
             }
             sections={[
@@ -118,8 +118,8 @@ export default function AccountComponent() {
             ]}
             footer={
               <>
-                <Button variant={"secondary"}>cancel</Button>
-                <Button variant={"success"}>save</Button>
+                <Button variant={"secondary"} onClick={()=>toast.error('cancled')}>cancel</Button>
+                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
               </>
             }
           />
@@ -202,8 +202,8 @@ export default function AccountComponent() {
             ]}
             footer={
               <>
-                <Button variant={"secondary"}>cancel</Button>
-                <Button variant={"success"}>save</Button>
+                <Button variant={"secondary"} onClick={()=>toast.error('cancled')}>cancel</Button>
+                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
               </>
             }
           />
