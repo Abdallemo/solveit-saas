@@ -57,7 +57,14 @@ export default async function Pricing() {
               </CardContent>
 
               <CardFooter className="mt-auto">
-                <form className="w-full">
+                <form
+                  className="w-full"
+                  action={async () => {
+                    "use server";
+                    plan.teir == "BASIC"
+                      ? await createCancelSession()
+                      : await createStripeCheckoutSession("PREMIUM");
+                  }}>
                   <SubscribeButton
                     tier={plan.teir}
                     currentTier={userSubscription?.tier}
