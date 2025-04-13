@@ -1,6 +1,6 @@
 "use server";
 
-import { users } from "@/drizzle/schemas";
+import { users, UserSubscriptionTable } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
@@ -14,11 +14,19 @@ type UserUpdateData = Partial<typeof users.$inferInsert>;
 //*End
 
 export async function CreateUser(values: registerInferedTypes) {
-  const [user] =  await db.insert(users).values(values).returning({ userId: users.id });
-  return user
+  const [user] = await db
+    .insert(users)
+    .values(values)
+    .returning({ userId: users.id });
+  return user;
 }
 export async function DeleteUserFromDb(id: string) {
-  if (id) await db.delete(users).where(eq(users.id, id));
+  if (id) {
+    await db.delete(users).where(eq(users.id, id));
+    await db
+      .delete(UserSubscriptionTable)
+      .where(eq(UserSubscriptionTable.userId, id));
+  }
 }
 export async function getUserByEmail(email: string) {
   try {
