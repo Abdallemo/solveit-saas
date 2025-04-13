@@ -1,11 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { LogOut, Mail, Bell, CreditCard } from "lucide-react";
+import { Mail, Bell, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTheme } from "next-themes";
@@ -208,31 +207,40 @@ export default function AccountComponent() {
               </>
             }
           />
+          <CardWrapper
+            title="Payment Methods"
+            sections={[
+              {
+                children: (
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="h-10 w-16 rounded bg-muted flex items-center justify-center">
+                        <CreditCard className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">
+                          •••• •••• •••• 4242
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          Expires 12/24
+                        </p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      Edit
+                    </Button>
+                  </div>
+                ),
+              },
+            ]}
+            footer={
+              <Button variant="outline" className="w-full">
+                Add Payment Method
+              </Button>
+            }
+            footerClassName="flex flex-col"
+          />
 
-          <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Payment Methods</h2>
-            <div className="rounded-lg border p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-16 rounded bg-muted flex items-center justify-center">
-                    <CreditCard className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">•••• •••• •••• 4242</p>
-                    <p className="text-xs text-muted-foreground">
-                      Expires 12/24
-                    </p>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">
-                  Edit
-                </Button>
-              </div>
-            </div>
-            <Button variant="outline" className="w-full">
-              Add Payment Method
-            </Button>
-          </div>
 
           <AccountSubscption />
 
