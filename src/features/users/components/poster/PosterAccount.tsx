@@ -38,7 +38,7 @@ export default function AccountComponent() {
     <main
       className="min-h-screen overflow-x-hidden overflow-y-auto p-4 lg:p-8 flex justify-center items-start"
       suppressHydrationWarning>
-      <div className="max-w-3xl w-full p-4 sm:p-6 md:p-8 lg:p-10">
+      <div className="max-w-3xl w-full h-full p-4 sm:p-6 md:p-8 lg:p-10">
         <div className="space-y-6 md:space-y-8">
           <CardWrapper
             title="User Preferences"

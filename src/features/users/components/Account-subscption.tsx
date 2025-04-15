@@ -55,26 +55,8 @@ export default function AccountSubscption() {
                     </p>
                   )}
                 </div>
-
-                {role !== "POSTER" ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() =>
-                      startTransition(async () => {
-                        const url = (await CreateUserSessionPortal())!;
-                        router.push(url);
-                      })
-                    }>
-                    {isPending ? (
-                      <Loader2 className="animate-spin" />
-                    ) : (
-                      "Manage"
-                    )}
-                  </Button>
-                ) : null}
               </div>
-              <Billings />
+              <Billings role={role} />
             </div>
           ),
         },
@@ -86,20 +68,22 @@ export default function AccountSubscption() {
   );
 }
 
-function Billings() {
+function Billings({ role }: { role: UserRoleType | undefined }) {
   const { cancelAt, isCancelScheduled, status, nextBilling } =
     useStripeSubscription();
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          {isCancelScheduled ? (
-            <span>billing Ends date</span>
-          ) : (
-            <span>Next billing date</span>
-          )}
-        </div>
+        {role !== "POSTER" && (
+          <div className="flex items-center gap-2">
+            <Calendar className="h-4 w-4 text-muted-foreground" />
+            {isCancelScheduled ? (
+              <span>subscription ends on</span>
+            ) : (
+              <span>Next billing date</span>
+            )}
+          </div>
+        )}
         {isCancelScheduled ? (
           <span>{cancelAt?.toLocaleDateString()}</span>
         ) : (
@@ -116,40 +100,17 @@ function PlanChange({ role }: { role: UserRoleType | undefined }) {
 
   return (
     <div className="flex flex-col space-y-2 w-full">
-      {role == "POSTER" ||
-        (cancelAt !== null && (
-          <Button
-            variant="outline"
-            className="w-full justify-between"
-            onClick={() =>
-              startTransition(async () => {
-                const url = (await createStripeCheckoutSession("PREMIUM"))!;
-                router.push(url);
-              })
-            }>
-            <span>Upgrade plan</span>
-            {isPending ? (
-              <Loader2 className="animate-spin" />
-            ) : (
-              <ArrowRight className="h-4 w-4" />
-            )}
-          </Button>
-        ))}
-      {!cancelAt ? (
+      {role !== "POSTER" ? (
         <Button
           variant="outline"
-          className="w-full justify-between text-muted-foreground"
+          size="sm"
           onClick={() =>
             startTransition(async () => {
-              await createCancelSession();
+              const url = (await CreateUserSessionPortal())!;
+              router.push(url);
             })
           }>
-          <span>Cancel subscription</span>
-          {isPending ? (
-            <Loader2 className="animate-spin" />
-          ) : (
-            <AlertCircle className="h-4 w-4" />
-          )}
+          {isPending ? <Loader2 className="animate-spin" /> : "Manage"}
         </Button>
       ) : null}
     </div>

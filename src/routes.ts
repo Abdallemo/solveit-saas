@@ -22,6 +22,6 @@ export const authRoutes =[
 ]
 
 export const apiAuthPrefix = '/api/auth'
-export const apiStripePrefix = '/api/webhooks/stripe/subscription/checkout'
+export const apiStripePrefix = '/api/webhooks/stripe/subscription'
 
 export const DEFAULT_LOGIN_REDIRECT = '/dashboard'
