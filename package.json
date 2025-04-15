@@ -7,11 +7,12 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:g": "npx drizzle-kit generate",
-    "db:m": "npx drizzle-kit migrate",
-    "db:d": "npx drizzle-kit drop",
-    "db:p": "npx drizzle-kit push",
-    "db:std": "npx drizzle-kit studio"
+    "db:g": "pnpm dlx drizzle-kit generate",
+    "db:m": "pnpm dlx drizzle-kit migrate",
+    "db:d": "pnpm dlx drizzle-kit drop",
+    "db:p": "pnpm dlx drizzle-kit push",
+    "db:std": "pnpm dlx drizzle-kit studio",
+    "stripe":"stripe listen --forward-to localhost:3000/api/webhooks/stripe/subscription"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.8.0",
