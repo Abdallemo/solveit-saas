@@ -6,14 +6,25 @@ import { stripe } from "@/lib/stripe";
 import { plans } from "@/features/subscriptions/plans";
 import { redirect } from "next/navigation";
 
-import { TierType, users, UserSubscriptionTable } from "@/drizzle/schemas";
+import { TierType } from "@/drizzle/schemas";
 import { env } from "@/env/server";
-import db from "@/drizzle/db";
-import { eq, SQL } from "drizzle-orm";
-import { UserRole } from "../../../../types/next-auth";
 import { headers } from "next/headers";
+import * as db from "@/features/subscriptions/server/db";
+export const {
+  CancelUserSubscription,
+  CreateUserSubsciption,
+  updateUserSubscription,
+} = db;
+
+export async function getServerReturnUrl() {
+  const headersList = await headers();
+  const referer =
+    headersList.get("referer") ?? `${env.NEXTAUTH_URL}/dashboard/`;
+  return referer;
+}
 
 export async function createStripeCheckoutSession(tier: TierType) {
+  const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
     if (!currentUser?.id) redirect("/login");
@@ -28,8 +39,8 @@ export async function createStripeCheckoutSession(tier: TierType) {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: currentUser!.email,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/`,
-      cancel_url: `${env.NEXTAUTH_URL}/dashboard/?canceled=true`,
+      success_url: referer,
+      cancel_url: referer,
       line_items: [
         {
           price: selectedPlan.stripePriceId,
@@ -53,39 +64,13 @@ export async function createStripeCheckoutSession(tier: TierType) {
   }
 }
 
-export async function updateUserSubscription(
-  values: typeof UserSubscriptionTable.$inferInsert,
-  role: UserRole = "SOLVER",
-  id: string
-) {
-  await db.transaction(async (dx) => {
-    await dx
-      .update(UserSubscriptionTable)
-      .set(values)
-      .where(eq(UserSubscriptionTable.userId, id));
-    await dx.update(users).set({ role: role }).where(eq(users.id, id));
-  });
-}
-export async function CancelUserSubscription(
-  where: SQL,
-  values: typeof UserSubscriptionTable.$inferInsert,
-  id?: string
-) {
-  await db.transaction(async (dx) => {
-    await dx.update(UserSubscriptionTable).set(values).where(where);
-
-    await dx.update(users).set({ role: "POSTER" }).where(eq(users.id, id!));
-  });
-}
-
 export async function createCancelSession() {
   const user = await getServerUserSession();
-  const headersList = await headers()
-  const referer = headersList.get('referer') ?? `${env.NEXTAUTH_URL}/dashboard/`
+  const referer = await getServerReturnUrl();
 
-  console.log("Hee referer : "+referer)
+  console.log("Hee referer : " + referer);
 
-  if (!user) redirect('/login')
+  if (!user) redirect("/login");
 
   const { id } = user;
 
@@ -107,13 +92,9 @@ export async function createCancelSession() {
   redirect(portalSession.url);
 }
 
-export async function CreateUserSubsciption(
-  values: typeof UserSubscriptionTable.$inferInsert
-) {
-  await db.insert(UserSubscriptionTable).values(values);
-}
 export async function CreateUserSessionPortal() {
   const { id } = (await getServerUserSession())!;
+  const referer = await getServerReturnUrl();
 
   if (id == null) return;
   const subscription = await getServerUserSubscriptionById(id);
@@ -122,7 +103,7 @@ export async function CreateUserSessionPortal() {
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: subscription.stripeCustomerId,
-    return_url: `${env.NEXTAUTH_URL}/dashboard/`,
+    return_url: referer,
   });
   return portalSession.url;
 }
