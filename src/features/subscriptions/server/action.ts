@@ -10,6 +10,7 @@ import { TierType } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { headers } from "next/headers";
 import * as db from "@/features/subscriptions/server/db";
+import Stripe from "stripe";
 export const {
   CancelUserSubscription,
   CreateUserSubsciption,
@@ -31,6 +32,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     const userSubscription = await getServerUserSubscriptionById(
       currentUser?.id!
     );
+
     const selectedPlan = plans.find((plan) => plan.teir === tier);
     if (!selectedPlan) throw new Error("Plan not found");
 
@@ -68,27 +70,42 @@ export async function createCancelSession() {
   const user = await getServerUserSession();
   const referer = await getServerReturnUrl();
 
-  console.log("Hee referer : " + referer);
-
   if (!user) redirect("/login");
 
   const { id } = user;
-
+  console.log('before user id')
   const subscription = await getServerUserSubscriptionById(id);
+  
+  
+  if (!subscription?.stripeCustomerId || !subscription.stripeSubscriptionId)
+    return;
 
-  if (subscription?.stripeCustomerId == null) return;
-
-  const portalSession = await stripe.billingPortal.sessions.create({
-    customer: subscription.stripeCustomerId,
-    return_url: referer,
-    flow_data: {
-      type: "subscription_cancel",
-      subscription_cancel: {
-        subscription: subscription.stripeSubscriptionId!,
+  let portalSession:Stripe.Response<Stripe.BillingPortal.Session>;
+  try {
+    portalSession = await stripe.billingPortal.sessions.create({
+      customer: subscription.stripeCustomerId,
+      return_url: referer,
+      flow_data: {
+        type: "subscription_cancel",
+        subscription_cancel: {
+          subscription: subscription.stripeSubscriptionId,
+        },
       },
-    },
-  });
+    });
+  } catch (error) {
+    if (
+      error instanceof Stripe.errors.StripeInvalidRequestError &&
+      error.message?.includes("No such subscription")
+    ) {
+      console.warn("Subscription does not exist on Stripe.");
+      return {error:"already subscriped"};
+    }
 
+    console.error("Stripe error:", error);
+    return;
+  }
+
+  
   redirect(portalSession.url);
 }
 
