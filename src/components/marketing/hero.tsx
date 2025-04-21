@@ -1,5 +1,6 @@
-import { Button } from "@/components/ui/button"
-import { ArrowRight } from "lucide-react"
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
+import Link from "next/link";
 
 export default function Hero() {
   return (
@@ -11,7 +12,12 @@ export default function Hero() {
           The Future of Task Collaboration & Payments.
         </h1>
         <p className="mx-auto max-w-[42rem] leading-normal text-muted-foreground sm:text-xl sm:leading-8">
-          A powerful SaaS platform designed to streamline task management, connect skilled solvers with task posters, and ensure secure, escrow-backed payments. Experience seamless collaboration, task categorization, and fair pricing—all powered by AI. Say goodbye to disputes and hello to a more organized, efficient way of handling academic-related tasks.
+          A powerful SaaS platform designed to streamline task management,
+          connect skilled solvers with task posters, and ensure secure,
+          escrow-backed payments. Experience seamless collaboration, task
+          categorization, and fair pricing—all powered by AI. Say goodbye to
+          disputes and hello to a more organized, efficient way of handling
+          academic-related tasks.
         </p>
       </div>
       <div className="flex gap-4">
@@ -19,10 +25,10 @@ export default function Hero() {
           Explore SolveIt
           <ArrowRight className="ml-2 h-4 w-4" />
         </Button>
-        <Button variant="outline" size="lg">
-          Get Started
+        <Button variant="outline" size="lg" asChild>
+          <Link href={"/dashboard"}>Get Started</Link>
         </Button>
       </div>
     </section>
-  )
+  );
 }
