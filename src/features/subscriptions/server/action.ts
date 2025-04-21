@@ -11,6 +11,7 @@ import { env } from "@/env/server";
 import db from "@/drizzle/db";
 import { eq, SQL } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
+import { headers } from "next/headers";
 
 export async function createStripeCheckoutSession(tier: TierType) {
   try {
@@ -78,16 +79,23 @@ export async function CancelUserSubscription(
 }
 
 export async function createCancelSession() {
-  const { id } = (await getServerUserSession())!;
+  const user = await getServerUserSession();
+  const headersList = await headers()
+  const referer = headersList.get('referer') ?? `${env.NEXTAUTH_URL}/dashboard/`
 
-  if (id == null) return;
+  console.log("Hee referer : "+referer)
+
+  if (!user) redirect('/login')
+
+  const { id } = user;
+
   const subscription = await getServerUserSubscriptionById(id);
 
   if (subscription?.stripeCustomerId == null) return;
 
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: subscription.stripeCustomerId,
-    return_url: `${env.NEXTAUTH_URL}/dashboard/`,
+    return_url: referer,
     flow_data: {
       type: "subscription_cancel",
       subscription_cancel: {
