@@ -21,12 +21,12 @@ import ProfileSkeleton from "@/components/profile-loading-skeleton";
 const MenuItemsPoster = [
   {
     title: "Home",
-    url: "/dashboard",
+    url: "/dashboard/poster",
     icon: Home,
   },
   {
     title: "Post",
-    url: "#",
+    url: "/dashboard/tasks",
     icon: Newspaper,
   },
 
@@ -35,12 +35,12 @@ const MenuItemsPoster = [
 const MenuItemsSolver = [
   {
     title: "Home",
-    url: "/dashboard",
+    url: "/dashboard/solver",
     icon: Home,
   },
   {
     title:"Issues",
-    url:"/dashboard",
+    url:"/dashboard/tasks",
     icon:Bug
   },
 
