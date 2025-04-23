@@ -4,7 +4,7 @@ import TaskPostingEditor from "@/features/tasks/components/Tiptap";
 import { FormEvent, Suspense, useState } from "react";
 import { toast } from "sonner";
 
-export default function page() {
+export default function Taskpage() {
   const [content, setContent] = useState<string>("");
   const handleSave = () => {
     console.log("Content to save:", content);
