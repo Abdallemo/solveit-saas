@@ -1,20 +1,39 @@
-'use client'
+"use client";
 import { Button } from "@/components/ui/button";
 import TaskPostingEditor from "@/features/tasks/components/Tiptap";
-import { useState } from "react";
+import { FormEvent, Suspense, useState } from "react";
+import { toast } from "sonner";
 
 export default function page() {
-  const [inputValue,setInputValue] = useState<string>("")
+  const [content, setContent] = useState<string>("");
+  const handleSave = () => {
+    console.log("Content to save:", content);
+    toast.success(`Saved ${content}`);
 
+  };
+  const onChange = (e:string) => {
+    setContent(e);
+    console.log(e);
+  };
   return (
-    <div className="max-w-3xl mx-auto flex flex-col ">
-      <h1>Task/Job posting Page</h1>
+    <div className="mx-auto flex flex-col h-full">
+      <div className="max-w-5xl mx-auto mt-8 px-6">
+        <h2 className="text-2xl font-semibold">Post a Task</h2>
+        <p className="text-muted-foreground text-sm mt-1">
+          Describe the task clearly so students can understand and solve it
+          effectively.
+        </p>
+      </div>
 
-      <TaskPostingEditor inputValue={inputValue} setInputValue={setInputValue} />
-    <div className="flex mt-3 justify-end">
-    <Button variant={'success'}>Save</Button>
+      <div className="max-w-5xl mx-auto px-6 flex-1">
+        <Suspense fallback={"Loading "}>
+          <TaskPostingEditor content={content} onChange = {onChange} />
+        </Suspense>
 
-    </div>
+        <div className="flex justify-end mt-4">
+          <Button onClick={handleSave}>Save Task</Button>
+        </div>
+      </div>
     </div>
   );
 }
