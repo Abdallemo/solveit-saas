@@ -120,4 +120,13 @@
     @apply bg-sidebar text-foreground ;
     @apply scroll-smooth
   }
+  h1{
+    @apply text-2xl font-bold
+  }
+  h2{
+    @apply text-xl font-bold
+  }
+  .tiptap-codeblock {
+    @apply block whitespace-pre font-mono bg-zinc-900 text-white text-sm px-4 py-3 rounded-md overflow-x-auto;
+  }
 }
