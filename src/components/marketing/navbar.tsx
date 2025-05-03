@@ -56,7 +56,7 @@ export default function Navbar() {
         <Link
           href="/"
           className="mr-6 flex items-center space-x-2 flex-shrink-0">
-          <span className="font-bold">SolveIT</span>
+          <span className="font-bold">SolveIt</span>
         </Link>
 
         <NavigationMenu className="flex-1 hidden md:flex">
