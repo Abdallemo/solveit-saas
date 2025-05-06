@@ -53,6 +53,7 @@
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.41.0",
     "google-auth-library": "^9.15.1",
+    "highlight.js": "^11.11.1",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.484.0",
     "motion": "^12.6.3",

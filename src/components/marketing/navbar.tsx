@@ -116,11 +116,11 @@ export default function Navbar() {
           </Link>
 
           {!user ? (
-            <Button size="sm">
+            <Button size="sm" asChild>
               <Link href={"/login"}>SignIn</Link>
             </Button>
           ) : (
-            <Button size="sm">
+            <Button size="sm" asChild>
               <Link href={"/dashboard"}>dashboard</Link>
             </Button>
           )}
