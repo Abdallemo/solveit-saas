@@ -40,10 +40,6 @@ function toggleMergedCodeBlock(editor: Editor) {
 }
 
 export default function MenuBar({ editor }: { editor: Editor | null }) {
-  if (!editor) {
-    return null;
-  }
-
   const fileInputRef = useRef<HTMLInputElement>(null);
   const handleImageUpload = () => {
     fileInputRef.current?.click();
@@ -54,9 +50,13 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
     if (!file) return;
 
     const url = URL.createObjectURL(file);
-    editor.chain().focus().setImage({ src: url }).run();
+    editor!.chain().focus().setImage({ src: url }).run();
     e.target.value = "";
   };
+  if (!editor) {
+    return null;
+  }
+
 
   const options = [
     {
@@ -155,6 +155,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
         ref={fileInputRef}
         onChange={handleFileChange}
         hidden
+        alt="input"
       />
     </>
   );
