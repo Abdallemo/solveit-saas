@@ -11,18 +11,53 @@ import {
   Heading2,
   Heading3,
   Highlighter,
+  Image,
   Italic,
   List,
   ListOrdered,
   Strikethrough,
 } from "lucide-react";
-import React from "react";
-import { FaParagraph } from "react-icons/fa";
+import React, { useRef } from "react";
+
+function toggleMergedCodeBlock(editor: Editor) {
+  const { state, commands } = editor;
+  const { from, to } = state.selection;
+
+  const selectedText = state.doc.textBetween(from, to, "\n");
+
+  commands.insertContentAt(
+    { from, to },
+    {
+      type: "codeBlock",
+      content: [
+        {
+          type: "text",
+          text: selectedText,
+        },
+      ],
+    }
+  );
+}
 
 export default function MenuBar({ editor }: { editor: Editor | null }) {
   if (!editor) {
     return null;
   }
+
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const handleImageUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const url = URL.createObjectURL(file);
+    editor.chain().focus().setImage({ src: url }).run();
+    e.target.value = "";
+  };
+
   const options = [
     {
       icon: <Heading1 className="size-4" />,
@@ -56,7 +91,7 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
     },
     {
       icon: <Code2Icon className="size-4" />,
-      onclick: () => editor.chain().focus().toggleCodeBlock().run(),
+      onclick: () => editor && toggleMergedCodeBlock(editor),
       onPresed: editor.isActive("codeBlock"),
     },
     {
@@ -94,19 +129,90 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
       onclick: () => editor.chain().focus().toggleHighlight().run(),
       onPresed: editor.isActive("highlight"),
     },
+    {
+      icon: <Image className="size-4" />,
+      onclick: handleImageUpload,
+      onPresed: false,
+    },
   ];
 
   return (
-    <div className=" flex justify-center gap-2 px-4 py-2 border-b border-muted bg-muted/60 backdrop-blur-sm rounded-t-xl sticky top-0 z-10">
-      {options.map((opt, index) => (
-        <Toggle
-          onClick={opt.onclick}
-          pressed={opt.onPresed}
-          key={index}
-          className="cursor-pointer">
-          {opt.icon}
-        </Toggle>
-      ))}
-    </div>
+    <>
+      <div className=" flex justify-center gap-2 px-4 py-2 border-b border-muted bg-muted/60 backdrop-blur-sm rounded-t-xl sticky top-0 z-10">
+        {options.map((opt, index) => (
+          <Toggle
+            onClick={opt.onclick}
+            pressed={opt.onPresed}
+            key={index}
+            className="cursor-pointer">
+            {opt.icon}
+          </Toggle>
+        ))}
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        hidden
+      />
+    </>
   );
 }
+/**
+ * 
+ * const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file || !editor) return;
+
+  // Generate a unique ID for the image
+  const uniqueId = `upload-${Date.now()}`;
+
+  // Insert placeholder image into the editor with the unique data-id
+  editor
+    .chain()
+    .focus()
+    .insertContent({
+      type: "image",
+      attrs: {
+        src: "placeholder.jpg", // Could be a local spinner image
+        "data-id": uniqueId,
+      },
+    })
+    .run();
+
+  try {
+    // Upload the file to S3 (your custom logic)
+    const uploadedUrl = await uploadToS3(file);
+
+    // Find the placeholder image in the document and update its src
+    editor.state.doc.descendants((node, pos) => {
+      if (
+        node.type.name === "image" &&
+        node.attrs.src === "placeholder.jpg" &&
+        node.attrs["data-id"] === uniqueId
+      ) {
+        editor
+          .chain()
+          .focus()
+          .command(({ tr }) => {
+            tr.setNodeMarkup(pos, undefined, {
+              ...node.attrs,
+              src: uploadedUrl,
+            });
+            return true;
+          })
+          .run();
+        return false; // stop traversal
+      }
+      return true;
+    });
+  } catch (err) {
+    console.error("Upload failed:", err);
+    // Optionally show an error or remove the placeholder
+  }
+
+  // Clear the input so user can re-upload the same file if needed
+  e.target.value = "";
+};
+ */

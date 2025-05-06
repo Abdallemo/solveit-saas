@@ -1,37 +1,37 @@
 "use client";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import Image from '@tiptap/extension-image';
 import TextAlign from "@tiptap/extension-text-align";
-import { all, createLowlight } from 'lowlight'
-import CodeBlockLowlight from '@tiptap/extension-code-block-lowlight'
-import Highlight from '@tiptap/extension-highlight'
+import { common, createLowlight } from "lowlight";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import Highlight from "@tiptap/extension-highlight";
 import MenuBar from "./MenuBar";
 type EditorProp = {
   content: string;
-  onChange:(e: string) => void
+  onChange: (e: string) => void;
 };
 export default function TaskPostingEditor({ content, onChange }: EditorProp) {
-  const lowlight = createLowlight(all)
+  const lowlight = createLowlight(common);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-
         // codeBlock:{
 
         //   HTMLAttributes:{
         //     class: 'block whitespace-pre bg-zinc-900 text-white font-mono text-sm px-2 rounded-md'
         //   }
         // },
-        bulletList:{
-          HTMLAttributes:{
-            class:'list-disc ml-3'
-          }
+        bulletList: {
+          HTMLAttributes: {
+            class: "list-disc ml-3",
+          },
         },
-        orderedList:{
-          HTMLAttributes:{
-            class:'list-decimal ml-3'
-          }
-        }
+        orderedList: {
+          HTMLAttributes: {
+            class: "list-decimal ml-3",
+          },
+        },
       }),
       TextAlign.configure({
         types: ["heading", "paragraph"],
@@ -39,14 +39,16 @@ export default function TaskPostingEditor({ content, onChange }: EditorProp) {
       Highlight,
       CodeBlockLowlight.configure({
         lowlight,
-        HTMLAttributes:{
-          class:'tiptap-codeblock'
-        }
-      })
-      
+
+        HTMLAttributes: {
+          class: "tiptap-codeblock",
+
+        },
+      }),
+      Image,
     ],
-    onUpdate({editor}) {
-        onChange(editor.getHTML())
+    onUpdate({ editor }) {
+      onChange(editor.getHTML());
     },
     content: content,
     immediatelyRender: false,
