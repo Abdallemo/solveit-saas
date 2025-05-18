@@ -73,14 +73,13 @@ export async function createCancelSession() {
   if (!user) redirect("/login");
 
   const { id } = user;
-  console.log('before user id')
+  console.log("before user id");
   const subscription = await getServerUserSubscriptionById(id);
-  
-  
+
   if (!subscription?.stripeCustomerId || !subscription.stripeSubscriptionId)
     return;
 
-  let portalSession:Stripe.Response<Stripe.BillingPortal.Session>;
+  let portalSession: Stripe.Response<Stripe.BillingPortal.Session>;
   try {
     portalSession = await stripe.billingPortal.sessions.create({
       customer: subscription.stripeCustomerId,
@@ -98,14 +97,13 @@ export async function createCancelSession() {
       error.message?.includes("No such subscription")
     ) {
       console.warn("Subscription does not exist on Stripe.");
-      return {error:"already subscriped"};
+      return { error: "already subscriped" };
     }
 
     console.error("Stripe error:", error);
     return;
   }
 
-  
   redirect(portalSession.url);
 }
 

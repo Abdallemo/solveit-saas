@@ -1,6 +1,21 @@
 import nodemailer from "nodemailer";
-import { OAuth2Client } from "google-auth-library";
 import { env } from "@/env/server";
+
+// ✅ Simpler and more reliable with Gmail App Password
+export const createTransporter = async () => {
+  return nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: env.GMAIL_APP_EMAIL,
+      pass: env.GMAIL_APP_PASSWORD, 
+    },
+  });
+};
+
+/*
+// ❌ Old OAuth2 version (commented out)
+/*
+import { OAuth2Client } from "google-auth-library";
 
 export const createTransporter = async () => {
   const oauth2Client = new OAuth2Client(
@@ -16,7 +31,8 @@ export const createTransporter = async () => {
   const accessToken = await new Promise<string>((resolve, reject) => {
     oauth2Client.getAccessToken((err, token) => {
       if (err || !token) {
-        reject("Failed to refresh access token");
+        console.error("OAuth Access Token Error:", err);
+        reject("Failed to refresh access token to send Emails");
         return;
       }
       resolve(token);
@@ -35,3 +51,4 @@ export const createTransporter = async () => {
     },
   });
 };
+*/

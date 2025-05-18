@@ -18,6 +18,8 @@ export const env = createEnv({
         STRIPE_WEBHOOK_SECRET:z.string(),
         SENTRY_DSN:z.string(),
         SENTRY_ENVIRONMENT:z.string(),
+        GMAIL_APP_PASSWORD:z.string(),
+        GMAIL_APP_EMAIL:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
