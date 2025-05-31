@@ -1,6 +1,6 @@
 "use server";
 
-import { users, UserSubscriptionTable } from "@/drizzle/schemas";
+import { UserTable, UserSubscriptionTable } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
@@ -9,20 +9,20 @@ import db from "@/drizzle/db";
 
 //* User Types
 
-type UserUpdateData = Partial<typeof users.$inferInsert>;
+type UserUpdateData = Partial<typeof UserTable.$inferInsert>;
 
 //*End
 
 export async function CreateUser(values: registerInferedTypes) {
   const [user] = await db
-    .insert(users)
+    .insert(UserTable)
     .values(values)
-    .returning({ userId: users.id });
+    .returning({ userId: UserTable.id });
   return user;
 }
 export async function DeleteUserFromDb(id: string) {
   if (id) {
-    await db.delete(users).where(eq(users.id, id));
+    await db.delete(UserTable).where(eq(UserTable.id, id));
     await db
       .delete(UserSubscriptionTable)
       .where(eq(UserSubscriptionTable.userId, id));
@@ -69,13 +69,13 @@ export async function UpdateUserField(parms: UpdateUserParams) {
   try {
     if (parms.email) {
       await db
-        .update(users)
+        .update(UserTable)
         .set(parms.data)
-        .where(eq(users.email, parms.email));
+        .where(eq(UserTable.email, parms.email));
       return;
     }
     if (parms.id) {
-      await db.update(users).set(parms.data).where(eq(users.id, parms.id));
+      await db.update(UserTable).set(parms.data).where(eq(UserTable.id, parms.id));
       return;
     }
   } catch (error) {
@@ -119,5 +119,5 @@ export async function getServerUserSubscriptionByEmail({
   email: string;
 }) {}
 export async function updateUserRole(role: UserRole = "SOLVER", id: string) {
-  await db.update(users).set({ role: role }).where(eq(users.id, id));
+  await db.update(UserTable).set({ role: role }).where(eq(UserTable.id, id));
 }
