@@ -1,7 +1,7 @@
 import db from "@/drizzle/db";
 import { eq, SQL } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
-import {  users, UserSubscriptionTable } from "@/drizzle/schemas";
+import {  UserTable, UserSubscriptionTable } from "@/drizzle/schemas";
 
 export async function updateUserSubscription(
   values: typeof UserSubscriptionTable.$inferInsert,
@@ -13,7 +13,7 @@ export async function updateUserSubscription(
       .update(UserSubscriptionTable)
       .set(values)
       .where(eq(UserSubscriptionTable.userId, id));
-    await dx.update(users).set({ role: role }).where(eq(users.id, id));
+    await dx.update(UserTable).set({ role: role }).where(eq(UserTable.id, id));
   });
 }
 
@@ -25,7 +25,7 @@ export async function CancelUserSubscription(
   await db.transaction(async (dx) => {
     await dx.update(UserSubscriptionTable).set(values).where(where);
 
-    await dx.update(users).set({ role: "POSTER" }).where(eq(users.id, id!));
+    await dx.update(UserTable).set({ role: "POSTER" }).where(eq(UserTable.id, id!));
   });
 }
 

@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 
 import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { accounts, users } from "@/drizzle/schemas";
+import { AccountTable, UserTable } from "@/drizzle/schemas";
 import db from "@/drizzle/db";
 import authConfig from "./auth.config";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
@@ -17,8 +17,8 @@ export const {
   unstable_update: update,
 } = NextAuth({
   adapter: DrizzleAdapter(db, {
-    usersTable: users,
-    accountsTable: accounts,
+    usersTable: UserTable,
+    accountsTable: AccountTable,
   }),
 
   session: {
