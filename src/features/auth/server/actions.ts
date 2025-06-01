@@ -145,7 +145,7 @@ export async function userRoleSession() {
 
 export async function getVerificationTokenByEmail(email: string) {
   try {
-    return await db.query.verificationTokens.findFirst({
+    return await db.query.VerificationTokenTable.findFirst({
       where: (table, fn) => fn.eq(table.email, email),
     });
   } catch (error) {
@@ -156,7 +156,7 @@ export async function getVerificationTokenByEmail(email: string) {
 
 export async function getVerificationTokenById(id: string) {
   try {
-    return await db.query.verificationTokens.findFirst({
+    return await db.query.VerificationTokenTable.findFirst({
       where: (table, fn) => fn.eq(table.id, id),
     });
   } catch (error) {
@@ -175,7 +175,7 @@ type verificationTokenReturn =
 export async function verifyVerificationToken(
   token: string
 ): Promise<verificationTokenReturn> {
-  const exsistingToken = await db.query.verificationTokens.findFirst({
+  const exsistingToken = await db.query.VerificationTokenTable.findFirst({
     where: (table, fn) => fn.eq(table.token, token),
   });
 
