@@ -1,3 +1,4 @@
+import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm"
 import {
     timestamp,
     pgTable,
@@ -7,6 +8,8 @@ import {
     pgEnum,
     uuid,
     boolean,
+    check,
+    numeric
 } from "drizzle-orm/pg-core"
 
 export const UserRole = pgEnum('role',['ADMIN','MODERATOR','POSTER','SOLVER'])
@@ -20,6 +23,7 @@ export const PaymentStatus = pgEnum('payment_status', [
   'REFUNDED'
 ])
 export const TaskStatusEnum = pgEnum('task_status', ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']);
+export const FeedbackType = pgEnum('feedback_category', ['TASK', 'MENTORING']);
 
 
 export type TierType = (typeof TierEnum.enumValues)[number];
@@ -90,7 +94,18 @@ export const UserSubscriptionTable = pgTable('subscription',{
     tier: TierEnum("tier").notNull(),
 })
 
+export const SolverProfileTable = pgTable('solver_profile',{
+  userId:uuid('user_id').primaryKey().references(()=>UserTable.id,{onDelete:'cascade'}),
+  protfolioUrl:text('portfolio_url'),
+  skills:text('skills').array().default([]),
+  avgRating:numeric("avg_rating",{precision:3,scale:1}).default('0o0').notNull(),
+  taskSolved:integer('task_solved').default(0),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 
+  
+
+})
 export const PaymentTable = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => UserTable.id), 
@@ -100,8 +115,26 @@ export const PaymentTable = pgTable("payments", {
   stripeChargeId: text("stripe_charge_id"),
   purpose: text("purpose"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  releaseDate: timestamp("release_date", { mode: "date" }),
 });
 
+export const FeedbackTable = pgTable("feedback",{
+  id: uuid("id").primaryKey().defaultRandom(),
+  posterId: uuid("poster_id").references(() => UserTable.id).notNull(),
+  solverId: uuid("solver_id").references(() => UserTable.id).notNull(),
+  feedbackType : FeedbackType("feedback_type").notNull(),
+  mentorBookingId: uuid("mentor_booking_id").references(()=>MentorshipBookingTable.id),
+  taskId: uuid("task_id").references(()=>TaskTable.id),
+  rating: integer('rating').default(0).notNull(),
+  comment: text('comment'),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+
+}, (table) => ({
+  feedbackSourceCheck: check("feedback_source_check", 
+    sql`(feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR 
+        (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)`
+  )
+}))
 
 export const TaskTable = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -111,19 +144,32 @@ export const TaskTable = pgTable("tasks", {
   posterId: uuid("poster_id").references(() => UserTable.id).notNull(),
   solverId: uuid("solver_id").references(() => UserTable.id),
   isPublic: boolean("is_public").default(true), 
-  category: TaskCatagory("category"),
+  categoryId: uuid("category_id").references(() => TaskCategoryTable.id).notNull(),
   paymentId: uuid("payment_id").references(() => PaymentTable.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
   deadline: timestamp("deadline", { mode: "date" }),
 });
 export const TaskFileTable = pgTable("task_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id").notNull().references(() => TaskTable.id),
-  fileUrl: text("file_url").notNull(),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageLocation: text("file_location").notNull(),
+  filePath: text("file_path").notNull(),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
 });
+/* 
+
+*/
+export const TaskCategoryTable = pgTable("task_categories", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").unique().notNull(), 
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
 
 export const RefundTable = pgTable("refunds", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -155,8 +201,11 @@ export const WorkspaceFilesTable = pgTable("workspace_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id").notNull().references(() => WorkspaceTable.id),
   uploadedById: uuid("uploaded_by_id").notNull().references(() => UserTable.id),
-  fileUrl: text("file_url").notNull(),
-  fileName: text("file_name"),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageLocation: text("file_location").notNull(),
+  filePath: text("file_path").notNull(),
   isDraft: boolean("is_draft").default(true),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
@@ -187,8 +236,7 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
 
 export const MentorshipChatTable = pgTable("mentorship_chats", {
   id: uuid("id").primaryKey().defaultRandom(),
-  mentorId: uuid("mentor_id").notNull().references(() => UserTable.id,{onDelete:'cascade'}),
-  posterId: uuid("poster_id").notNull().references(() => UserTable.id,{onDelete:'cascade'}),
+  seesionId: uuid("seesion_id").notNull().references(() => MentorSessionTable.id,{onDelete:'cascade'}),
   message: text("message"),
   sentBy: uuid("sent_by").notNull().references(() => UserTable.id),
   readAt: timestamp("read_at", { mode: "date" }),
@@ -199,16 +247,14 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
 export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   chatId: uuid("chat_id").notNull().references(() => MentorshipChatTable.id, { onDelete: "cascade" }),
-  fileUrl: text("file_url").notNull(),
+  filePath: text("file_Path").notNull(),
   fileName: text("file_name"),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
 });
 
 export const MentorSessionTable = pgTable("mentor_session", {
   id: uuid("id").primaryKey().defaultRandom(),
-  taskId: uuid("task_id").notNull().references(() => TaskTable.id),
-  posterId: uuid("poster_id").notNull().references(() => UserTable.id),
-  solverId: uuid("solver_id").notNull().references(() => UserTable.id),
+  bookingId: uuid("booking_id").notNull().references(() => MentorshipBookingTable.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -224,6 +270,6 @@ export const MentorshipBookingTable = pgTable("mentorship_bookings", {
 });
 export const RulesTable = pgTable("ai_rules", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ruleList:text('rule_list').notNull(),
+  ruleList:text('rule_list').array().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });

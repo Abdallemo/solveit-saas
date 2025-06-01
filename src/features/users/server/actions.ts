@@ -30,7 +30,7 @@ export async function DeleteUserFromDb(id: string) {
 }
 export async function getUserByEmail(email: string) {
   try {
-    const result = await db.query.users.findFirst({
+    const result = await db.query.UserTable.findFirst({
       where: (table, fn) => fn.eq(table.email, email),
     });
     return result;
@@ -41,7 +41,7 @@ export async function getUserByEmail(email: string) {
 }
 export async function getUserById(id: string) {
   try {
-    const result = await db.query.users.findFirst({
+    const result = await db.query.UserTable.findFirst({
       where: (table, fn) => fn.eq(table.id, id),
     });
     return result;
