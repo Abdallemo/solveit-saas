@@ -1,46 +1,59 @@
-"use client";
+import { Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import TaskPostingEditor from "@/features/tasks/components/Tiptap";
-import { FormEvent, Suspense, useState } from "react";
-import { toast } from "sonner";
-import Loading from "../loading";
+import { Input } from "@/components/ui/input";
+import { tasksDumyData } from "@/features/tasks/lib/utils";
+import { getServerUserSession } from "@/features/auth/server/actions";
+import TasksComponent from "@/features/tasks/components/TasksComponent";
 
-export default function Taskpage() {
-  const [content, setContent] = useState<string>("");
-  const handleSave = () => {
-    console.log("Content to save:", content);
-    toast.success(`Saved ${content}`);
-    const imageUrls = Array.from(
-      content.matchAll(/<img[^>]*src="([^"]+)"[^>]*>/g)
-    ).map(([, src]) => src);
+export default async function BrowseTasks() {
+  const currentUser = await getServerUserSession();
+  if ( !currentUser || !currentUser.role) return
 
-    console.log("Extracted image URLs:", imageUrls);
-    imageUrls.forEach(imgeUrl => {
-      toast.success(`Saved ${imgeUrl} `);
-      console.log(imgeUrl)
-    });
-  };
-  const onChange = (e: string) => {
-    setContent(e);
-    console.log(e);
-  };
   return (
-    <div className="mx-auto flex flex-col h-full">
-      <div className="max-w-5xl mx-auto mt-8 px-6">
-        <h2 className="text-2xl font-semibold">Post a Task</h2>
-        <p className="text-muted-foreground text-sm mt-1">
-          Describe the task clearly so students can understand and solve it
-          effectively.
-        </p>
+    <div className="min-h-screen">
+      
+      <div className="flex ">
+        <div className="max-w-6xl mx-auto px-6 py-6">
+          <div className="flex items-left justify-between mb-6">
+            <div>
+              <h1 className="text-4xl font-bold text-foreground">
+                Browse Tasks
+              </h1>
+              <p className="text-foreground mt-1">
+                Find tasks to help with and earn while learning
+              </p>
+            </div>
+          </div>
+
+          
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search tasks, skills, keywords..."
+                className="pl-10"
+              />
+            </div>
+            <Button variant="outline">All Categories</Button>
+            {currentUser?.role == "SOLVER" && (
+              <>
+                <Button variant="outline">Status</Button>
+                <Button variant="outline">Deadline</Button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
 
-      <div className="max-w-5xl mx-auto px-6 flex-1">
-        <Suspense fallback={<Loading />}>
-          <TaskPostingEditor content={content} onChange={onChange} />
-        </Suspense>
+      <div className="max-w-6xl mx-auto px-6 py-8">
+        
 
-        <div className="flex justify-end mt-4">
-          <Button onClick={handleSave}>Save Task</Button>
+        <TasksComponent  tasks={tasksDumyData} userRole={currentUser.role}/>
+
+        <div className="text-center mt-8">
+          <Button variant="outline" size="lg">
+            Load More Tasks
+          </Button>
         </div>
       </div>
     </div>
