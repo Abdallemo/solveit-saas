@@ -1,5 +1,6 @@
 "use client";
 import React, { Suspense } from "react";
+import { LuClipboardList, LuClipboardPlus ,LuListChecks} from "react-icons/lu";
 import {
   Sidebar,
   SidebarContent,
@@ -15,11 +16,12 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Home,Bug,Newspaper, Send } from "lucide-react";
+import { Home, Bug, Send, LifeBuoy } from "lucide-react";
 import Link from "next/link";
 import { NavUser } from "./User_nav_bar";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
+import { NavSecondary } from "./NavSecondary";
 const MenuItemsPoster = [
   {
     title: "Home",
@@ -27,9 +29,34 @@ const MenuItemsPoster = [
     icon: Home,
   },
   {
-    title: "Post",
+    title: "Tasks & Jobs",
     url: "/dashboard/tasks",
-    icon: Newspaper,
+    icon: LuClipboardList,
+    child: [
+      {
+        title: "New Task/Job",
+        url: "/dashboard/poster/newTask",
+        icon: LuClipboardPlus,
+      },
+      {
+        title: "Your Tasks/Jobs",
+        url: "/dashboard/poster/yourTasks",
+        icon: LuListChecks,
+      },
+
+    ],
+  },
+];
+const navSecondary = [
+  {
+    title: "Support",
+    url: "#",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Feedback",
+    url: "#",
+    icon: Send,
   },
 ];
 
@@ -40,7 +67,7 @@ const MenuItemsSolver = [
     icon: Home,
   },
   {
-    title: "Issues",
+    title: "Tasks & Jobs",
     url: "/dashboard/solver",
     icon: Bug,
     child: {
@@ -70,8 +97,24 @@ export default function PosterDashboardSidebar() {
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+
+                    {item.child && (
+                      <SidebarMenuSub>
+                        {item.child.map((cld) => (
+                          <SidebarMenuSubItem key={cld.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link href={cld.url ?? item.url}>
+                                <cld.icon />
+                                <span>{cld.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    )}
                   </SidebarMenuItem>
                 ))}
+
               {user?.role == "SOLVER" &&
                 MenuItemsSolver.map((item) => (
                   <SidebarMenuItem key={item.title}>
@@ -100,6 +143,7 @@ export default function PosterDashboardSidebar() {
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter>
+        <NavSecondary items={navSecondary} />
         {state == "loading" ? (
           <ProfileSkeleton />
         ) : (
