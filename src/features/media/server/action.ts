@@ -28,6 +28,6 @@ export async function getPresignedUploadUrl(fileName: string, fileType: string) 
   return {
     uploadUrl: url,
     filePath: key,
-    publicUrl: `https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev/${key}`,
+    publicUrl: `https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev/solveit/${key}`,
   };
 }
