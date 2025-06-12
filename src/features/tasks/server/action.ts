@@ -5,6 +5,7 @@ import { TaskFileTable, TaskTable } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
 import { parseDeadline } from "@/lib/utils";
+import { and, asc, count, eq, ilike } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
@@ -16,12 +17,20 @@ export async function getAllTaskCatagories() {
   });
   return catagoryName;
 }
-export async function getTaskCatagory(name: string) {
+export async function getTaskCatagoryId(name: string) {
   const catagoryId = await db.query.TaskCategoryTable.findFirst({
     where: (table, fn) => fn.eq(table.name, name),
     columns: { id: true },
   });
   return catagoryId;
+}
+
+export async function getAllCategoryMap(): Promise<Record<string, string>> {
+  const categories = await db.query.TaskCategoryTable.findMany({
+    columns: { id: true, name: true },
+  });
+
+  return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
 
 export async function createTaskAction(formData: FormData) {
@@ -62,7 +71,7 @@ export async function createTaskAction(formData: FormData) {
 
   console.log("ROW DATA");
   console.log(rawData);
-  const categoryId = await getTaskCatagory(category);
+  const categoryId = await getTaskCatagoryId(category);
   if (!categoryId || categoryId == undefined) return;
 
   const [taskId] = await db.insert(TaskTable).values({
@@ -94,4 +103,52 @@ export async function createTaskAction(formData: FormData) {
   console.log("Task created successfully!");
 
   
+}
+
+export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>
+export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>
+
+export async function getUserTasksbyId(userId:string) {
+  const userTasks = await db.query.TaskTable.findMany({
+    where: (table,fn)=> fn.eq(table.posterId,userId),
+    orderBy: [asc(TaskTable.title)]
+  })
+  return userTasks
+}
+export async function getAllTasksbyId() {
+  const allTasksFiltred = db.query.TaskTable.findMany({
+    where: (table,fn)=> fn.and(fn.not(fn.eq(table.status,"IN_PROGRESS")),fn.not(fn.eq(table.status,"ASSIGNED")))
+  })
+  return allTasksFiltred
+}
+
+export async function getUserTasksbyIdPaginated(
+  userId: string,
+  {
+    search,
+    limit,
+    offset,
+  }: { search?: string; limit: number; offset: number }
+) {
+  const where = and(
+    eq(TaskTable.posterId, userId),
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+  );
+
+  const [tasks, totalCountResult] = await Promise.all([
+    db.query.TaskTable.findMany({
+      where,
+      limit,
+      offset,
+      orderBy: (table) => table.createdAt,
+    }),
+    db
+      .select({ count: count() })
+      .from(TaskTable)
+      .where(where),
+  ]);
+
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
+  return { tasks, totalCount };
 }
