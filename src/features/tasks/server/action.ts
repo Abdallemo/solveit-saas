@@ -115,6 +115,13 @@ export async function getUserTasksbyId(userId:string) {
   })
   return userTasks
 }
+export async function getTasksbyId(id:string) {
+  const Task = await db.query.TaskTable.findFirst({
+    where: (table,fn)=> fn.eq(table.id,id),
+  })
+  if (!Task|| !Task.id) return
+  return Task
+}
 export async function getAllTasksbyId() {
   const allTasksFiltred = db.query.TaskTable.findMany({
     where: (table,fn)=> fn.and(fn.not(fn.eq(table.status,"IN_PROGRESS")),fn.not(fn.eq(table.status,"ASSIGNED")))
@@ -151,4 +158,12 @@ export async function getUserTasksbyIdPaginated(
   const totalCount = totalCountResult[0]?.count ?? 0;
 
   return { tasks, totalCount };
+}
+export async function getTaskFilesById(taskId:string) {
+  const files = await db.query.TaskFileTable.findMany({
+    where: (table,fn)=> fn.eq(table.taskId,taskId)
+
+  })
+  return files
+  
 }
