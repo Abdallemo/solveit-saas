@@ -3,7 +3,7 @@ import TaskPostingEditor from "@/features/tasks/components/richTextEdito/Tiptap"
 import {  Suspense } from "react";
 import { toast } from "sonner";
 import Loading from "@/app/loading";
-import FileUploadUi from "@/features/media/components/FileUpload";
+import FileUploadUi from "@/features/media/components/FileUploadUi";
 import { useTask } from "@/contexts/TaskContext";
 
 export default function NewTaskpage() {

@@ -1,12 +1,14 @@
 "use server";
 import { TaskFormSchema } from "./auth-types";
-import { z } from "zod";
-
 import db from "@/drizzle/db";
-import { TaskTable } from "@/drizzle/schemas";
+import { TaskFileTable, TaskTable } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
+import { UploadedFileMeta } from "@/features/media/server/action";
+import { parseDeadline } from "@/lib/utils";
+import { redirect } from "next/navigation";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
+
 
 export async function getAllTaskCatagories() {
   const catagoryName = await db.query.TaskCategoryTable.findMany({
@@ -14,13 +16,18 @@ export async function getAllTaskCatagories() {
   });
   return catagoryName;
 }
+export async function getTaskCatagory(name: string) {
+  const catagoryId = await db.query.TaskCategoryTable.findFirst({
+    where: (table, fn) => fn.eq(table.name, name),
+    columns: { id: true },
+  });
+  return catagoryId;
+}
 
-export async function createTaskAction(formData: FormData): Promise<void> {
-  const currentUser = await getServerUserSession()
-  if (!currentUser) return
+export async function createTaskAction(formData: FormData) {
+  const currentUser = await getServerUserSession();
+  if (!currentUser) return;
 
-  
-  const files: File[] = [];
   const rawData = {
     deadline: formData.get("deadline"),
     visibility: formData.get("visibility"),
@@ -29,36 +36,62 @@ export async function createTaskAction(formData: FormData): Promise<void> {
     content: formData.get("taskContent"),
     title: formData.get("title"),
     description: formData.get("description"),
-    files
   };
+  const uploadedFiles = JSON.parse(formData.get('uploadedFiles')?.toString()||"[]") as UploadedFileMeta[]
 
 
   const result = TaskFormSchema.safeParse(rawData);
 
   if (!result.success) {
-    console.log("Validation failed", result.error.flatten().fieldErrors);
-    return;
-  }
-    for (const [key, value] of formData.entries()) {
-    if (key === "files" && value instanceof File) {
-      files.push(value);
-    }
+    const fieldErrors = result.error.flatten().fieldErrors;
+    return { error: true, fieldErrors };
   }
 
-  console.log("ROW DATA")
-  console.log(rawData)
 
-  // const insertResult = await db.insert(TaskTable).values({
-  //   title: "",
-  //   categoryId: "",
-  //   posterId: "",
-  //   content: "",
-  //   deadline: "",
-  //   description: "",
-  //   isPublic: "",
-  //   paymentId: "",
-  //   status: "OPEN",
-  // });
+  const {
+    category,
+    content,
+    deadline: deadlineStr,
+    description,
+    price,
+    title,
+    visibility,
+  } = result.data;
 
-  console.log("✅ Task created successfully!");
+  const deadline = parseDeadline(deadlineStr);
+
+  console.log("ROW DATA");
+  console.log(rawData);
+  const categoryId = await getTaskCatagory(category);
+  if (!categoryId || categoryId == undefined) return;
+
+  const [taskId] = await db.insert(TaskTable).values({
+    categoryId: categoryId.id,
+    posterId:currentUser.id!,
+    title: title,
+    content:content,
+    description: description,
+    price: Number(price),
+    status:'OPEN',
+    visibility: visibility =='public' ?  "public" : "private", 
+    deadline:deadline,
+
+  }).returning({taskId:TaskTable.id})
+
+  if (uploadedFiles.length > 0) {
+  await db.insert(TaskFileTable).values(
+    uploadedFiles.map((file) => ({
+      taskId: taskId.taskId, 
+      fileName: file.fileName,
+      fileType: file.fileType,
+      fileSize: file.fileSize,
+      filePath: file.filePath,
+      storageLocation: file.storageLocation,
+    }))
+  );
+}
+
+  console.log("Task created successfully!");
+
+  
 }
