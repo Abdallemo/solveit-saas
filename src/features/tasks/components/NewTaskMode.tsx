@@ -11,23 +11,25 @@ import {
 import { NewTaskForm } from "./NewTaskForm";
 import { useTask } from "@/contexts/TaskContext";
 import { useState } from "react";
+import { truncateText } from "@/lib/utils";
 
 export default function NewTaskModel() {
   const { content, selectedFiles } = useTask();
   const doc = new DOMParser().parseFromString(content, "text/html");
-  const [onopen,setOnOpen] = useState(false)
+  const [onopen, setOnOpen] = useState(false);
   const textContent = doc.body.textContent || "";
   const isDisabled = textContent.trim().length < 5;
 
   const titleEl = doc.querySelector("h1, h2, p");
-  const title = titleEl?.textContent?.trim() || "";
+  const rawTitle = titleEl?.textContent?.trim() || "";
+  const title = truncateText(rawTitle, 80);
 
   let description = "";
   const paragraphs = doc.querySelectorAll("p");
   for (const p of paragraphs) {
     const text = p.textContent?.trim() || "";
     if (text && text !== title) {
-      description = text;
+      description = truncateText(text, 160);
       break;
     }
   }

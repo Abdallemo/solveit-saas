@@ -28,6 +28,7 @@ export type taskTableType = typeof TaskTable.$inferInsert
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect
+export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number]
 
 export const UserTable = pgTable("user", {
     id: uuid('id').primaryKey().defaultRandom(),
