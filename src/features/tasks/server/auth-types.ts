@@ -9,6 +9,7 @@ export const TaskFormSchema = z.object({
   visibility: z.string().min(1, 'Please select visibility'),
   price: z.string().min(1, 'Please enter price'),
   deadline: z.string().min(1, 'Please select a deadline'),
+
 })
 
 export type TaskFormValues = z.infer<typeof TaskFormSchema>

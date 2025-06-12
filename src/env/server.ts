@@ -20,6 +20,9 @@ export const env = createEnv({
         SENTRY_ENVIRONMENT:z.string(),
         GMAIL_APP_PASSWORD:z.string(),
         GMAIL_APP_EMAIL:z.string(),
+        S3_SECRTE_ACCESS_KEY_ID:z.string(),
+        S3_ACCESS_KEY_ID:z.string(),
+        S3_ENDPOINT:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })

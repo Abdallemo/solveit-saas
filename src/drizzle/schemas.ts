@@ -23,8 +23,8 @@ export const PaymentStatus = pgEnum('payment_status', [
 ])
 export const TaskStatusEnum = pgEnum('task_status', ['OPEN', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'CANCELED']);
 export const FeedbackType = pgEnum('feedback_category', ['TASK', 'MENTORING']);
-
-
+export const TaskVisibility = pgEnum('visibility', ['public','private']);
+export type taskTableType = typeof TaskTable.$inferInsert
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect
@@ -137,12 +137,13 @@ export const FeedbackTable = pgTable("feedback",{
 
 export const TaskTable = pgTable("tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title"),
+  title: text("title").notNull(),
   description: text("description"),
   content: text('content'),
+  price: integer('price'),
   posterId: uuid("poster_id").references(() => UserTable.id).notNull(),
   solverId: uuid("solver_id").references(() => UserTable.id),
-  isPublic: boolean("is_public").default(true), 
+  visibility: TaskVisibility('visibility'), 
   categoryId: uuid("category_id").references(() => TaskCategoryTable.id).notNull(),
   paymentId: uuid("payment_id").references(() => PaymentTable.id),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),

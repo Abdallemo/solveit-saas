@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/dialog";
 import { NewTaskForm } from "./NewTaskForm";
 import { useTask } from "@/contexts/TaskContext";
+import { useState } from "react";
 
 export default function NewTaskModel() {
   const { content, selectedFiles } = useTask();
   const doc = new DOMParser().parseFromString(content, "text/html");
-
+  const [onopen,setOnOpen] = useState(false)
   const textContent = doc.body.textContent || "";
   const isDisabled = textContent.trim().length < 5;
 
@@ -32,7 +33,7 @@ export default function NewTaskModel() {
   }
 
   return (
-    <Dialog>
+    <Dialog onOpenChange={setOnOpen}>
       <DialogTrigger asChild disabled={isDisabled}>
         <Button>Procceed Publishing</Button>
       </DialogTrigger>
