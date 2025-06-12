@@ -1,8 +1,8 @@
+
 import { Toggle } from "@/components/ui/toggle";
 import { Editor } from "@tiptap/react";
 import {
   AlignCenter,
-  AlignJustify,
   AlignLeft,
   AlignRight,
   Bold,
@@ -18,6 +18,8 @@ import {
   Strikethrough,
 } from "lucide-react";
 import React, { useRef } from "react";
+import NewTaskModel from "../NewTaskMode";
+import { useTask } from "@/contexts/TaskContext";
 
 function toggleMergedCodeBlock(editor: Editor) {
   const { state, commands } = editor;
@@ -38,9 +40,13 @@ function toggleMergedCodeBlock(editor: Editor) {
     }
   );
 }
-
-export default function MenuBar({ editor }: { editor: Editor | null }) {
+type menuBarProp = {
+  editor: Editor | null;
+};
+export default function MenuBar({ editor,}: menuBarProp) {
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { content, selectedFiles } = useTask();
+
   const handleImageUpload = () => {
     fileInputRef.current?.click();
   };
@@ -56,7 +62,6 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
   if (!editor) {
     return null;
   }
-
 
   const options = [
     {
@@ -138,17 +143,24 @@ export default function MenuBar({ editor }: { editor: Editor | null }) {
 
   return (
     <>
-      <div className=" flex justify-center gap-2 px-4 py-2 border-b border-muted bg-muted/60 backdrop-blur-sm rounded-t-xl sticky top-0 z-10">
-        {options.map((opt, index) => (
-          <Toggle
-            onClick={opt.onclick}
-            pressed={opt.onPresed}
-            key={index}
-            className="cursor-pointer">
-            {opt.icon}
-          </Toggle>
-        ))}
+      <div className="flex justify-between items-center  border-b border-muted bg-muted/60 backdrop-blur-sm rounded-t-xl sticky top-0 z-10 w-full">
+        <div></div>
+        <div className="flex justify-center gap-2 px-4 py-2">
+          {options.map((opt, index) => (
+            <Toggle
+              onClick={opt.onclick}
+              pressed={opt.onPresed}
+              key={index}
+              className="cursor-pointer">
+              {opt.icon}
+            </Toggle>
+          ))}
+        </div>
+        <div className="pr-4">
+          <NewTaskModel  />
+        </div>
       </div>
+
       <input
         type="file"
         accept="image/*"

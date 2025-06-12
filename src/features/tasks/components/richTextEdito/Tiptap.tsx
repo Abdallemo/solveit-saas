@@ -7,21 +7,16 @@ import { common, createLowlight } from "lowlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
 import MenuBar from "./MenuBar";
-type EditorProp = {
-  content: string;
-  onChange: (e: string) => void;
-};
-export default function TaskPostingEditor({ content, onChange }: EditorProp) {
+import { useTask } from "@/contexts/TaskContext";
+
+export default function TaskPostingEditor() {
+  const { content,setContent } = useTask();
+
   const lowlight = createLowlight(common);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-        // codeBlock:{
 
-        //   HTMLAttributes:{
-        //     class: 'block whitespace-pre bg-zinc-900 text-white font-mono text-sm px-2 rounded-md'
-        //   }
-        // },
         bulletList: {
           HTMLAttributes: {
             class: "list-disc ml-3",
@@ -48,7 +43,7 @@ export default function TaskPostingEditor({ content, onChange }: EditorProp) {
       Image,
     ],
     onUpdate({ editor }) {
-      onChange(editor.getHTML());
+      setContent(editor.getHTML());
     },
     content: content,
     immediatelyRender: false,

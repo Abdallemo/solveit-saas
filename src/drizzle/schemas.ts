@@ -14,7 +14,6 @@ import {
 
 export const UserRole = pgEnum('role',['ADMIN','MODERATOR','POSTER','SOLVER'])
 export const TierEnum = pgEnum('tier',['BASIC','PREMIUM'])
-export const TaskCatagory = pgEnum('catagory',['mathematics','technology','....'])//will add other catagories later
 export const PaymentStatus = pgEnum('payment_status', [
   'PENDING',
   'SUCCEEDED',
@@ -28,7 +27,7 @@ export const FeedbackType = pgEnum('feedback_category', ['TASK', 'MENTORING']);
 
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
-
+export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect
 
 export const UserTable = pgTable("user", {
     id: uuid('id').primaryKey().defaultRandom(),

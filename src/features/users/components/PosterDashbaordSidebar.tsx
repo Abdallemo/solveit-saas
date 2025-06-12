@@ -1,6 +1,10 @@
 "use client";
 import React, { Suspense } from "react";
-import { LuClipboardList, LuClipboardPlus ,LuListChecks} from "react-icons/lu";
+import {
+  LuClipboardList,
+  LuClipboardPlus,
+  LuListChecks,
+} from "react-icons/lu";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +26,8 @@ import { NavUser } from "./User_nav_bar";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
 import { NavSecondary } from "./NavSecondary";
+import { usePathname } from "next/navigation";
+
 const MenuItemsPoster = [
   {
     title: "Home",
@@ -43,20 +49,7 @@ const MenuItemsPoster = [
         url: "/dashboard/poster/yourTasks",
         icon: LuListChecks,
       },
-
     ],
-  },
-];
-const navSecondary = [
-  {
-    title: "Support",
-    url: "#",
-    icon: LifeBuoy,
-  },
-  {
-    title: "Feedback",
-    url: "#",
-    icon: Send,
   },
 ];
 
@@ -70,16 +63,38 @@ const MenuItemsSolver = [
     title: "Tasks & Jobs",
     url: "/dashboard/solver",
     icon: Bug,
-    child: {
-      title: "Explore Issues",
-      url: "/dashboard/tasks",
-      icon: Send,
-    },
+    child: [
+      {
+        title: "Explore Issues",
+        url: "/dashboard/tasks",
+        icon: Send,
+      },
+    ],
+  },
+];
+
+const navSecondary = [
+  {
+    title: "Support",
+    url: "#",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Feedback",
+    url: "#",
+    icon: Send,
   },
 ];
 
 export default function PosterDashboardSidebar() {
   const { user, state } = useCurrentUser();
+  const pathname = usePathname();
+
+  const isActive = (url: string, exact = false) => {
+    if (exact) return pathname === url;
+    return pathname === url || pathname.startsWith(`${url}/`);
+  };
+
   return (
     <Sidebar variant="sidebar" collapsible="icon">
       <SidebarHeader />
@@ -92,7 +107,14 @@ export default function PosterDashboardSidebar() {
                 MenuItemsPoster.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <Link href={item.url}>
+                      <Link
+                        href={item.url}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                          isActive(item.url, true)
+                            ? "bg-foreground/10 text-foreground"
+                            : ""
+                        }`}
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -103,7 +125,14 @@ export default function PosterDashboardSidebar() {
                         {item.child.map((cld) => (
                           <SidebarMenuSubItem key={cld.title}>
                             <SidebarMenuSubButton asChild>
-                              <Link href={cld.url ?? item.url}>
+                              <Link
+                                href={cld.url}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                                  isActive(cld.url)
+                                    ? "bg-foreground/10 text-foreground"
+                                    : ""
+                                }`}
+                              >
                                 <cld.icon />
                                 <span>{cld.title}</span>
                               </Link>
@@ -115,25 +144,42 @@ export default function PosterDashboardSidebar() {
                   </SidebarMenuItem>
                 ))}
 
-              {user?.role == "SOLVER" &&
+              {user?.role === "SOLVER" &&
                 MenuItemsSolver.map((item) => (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
-                      <Link href={item.url}>
+                      <Link
+                        href={item.url}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                          isActive(item.url, true)
+                            ? "bg-foreground/10 text-foreground"
+                            : ""
+                        }`}
+                      >
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
                     </SidebarMenuButton>
+
                     {item.child && (
                       <SidebarMenuSub>
-                        <SidebarMenuSubItem key={item.child.title}>
-                          <SidebarMenuSubButton asChild>
-                            <Link href={item.child.url ?? item.url}>
-                              <item.child.icon />
-                              <span>{item.child.title}</span>
-                            </Link>
-                          </SidebarMenuSubButton>
-                        </SidebarMenuSubItem>
+                        {item.child.map((cld) => (
+                          <SidebarMenuSubItem key={cld.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                                href={cld.url}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                                  isActive(cld.url)
+                                    ? "bg-foreground/10 text-foreground"
+                                    : ""
+                                }`}
+                              >
+                                <cld.icon />
+                                <span>{cld.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
                       </SidebarMenuSub>
                     )}
                   </SidebarMenuItem>
@@ -142,9 +188,10 @@ export default function PosterDashboardSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+
       <SidebarFooter>
         <NavSecondary items={navSecondary} />
-        {state == "loading" ? (
+        {state === "loading" ? (
           <ProfileSkeleton />
         ) : (
           <Suspense fallback={<ProfileSkeleton />}>
