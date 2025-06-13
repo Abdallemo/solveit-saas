@@ -1,22 +1,35 @@
 "use client";
 import { useEditor, EditorContent } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import Image from '@tiptap/extension-image';
+import Image from "@tiptap/extension-image";
 import TextAlign from "@tiptap/extension-text-align";
 import { common, createLowlight } from "lowlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
 import MenuBar from "./MenuBar";
 import { useTask } from "@/contexts/TaskContext";
+import { useEffect } from "react";
+import { autoSaveDraftTask, getDraftTask } from "../../server/action";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
 export default function TaskPostingEditor() {
-  const { content,setContent } = useTask();
+  const { content, setContent } = useTask();
+  const { user } = useCurrentUser();
+
+  useEffect(() => {
+    async function autoDraftSave() {
+      await autoSaveDraftTask(content, user?.id!);
+    }
+    setTimeout(() => {
+      autoDraftSave();
+     
+    }, 500);
+  }, [content, user, setContent]);
 
   const lowlight = createLowlight(common);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
-
         bulletList: {
           HTMLAttributes: {
             class: "list-disc ml-3",
@@ -37,7 +50,6 @@ export default function TaskPostingEditor() {
 
         HTMLAttributes: {
           class: "tiptap-codeblock",
-
         },
       }),
       Image,

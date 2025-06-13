@@ -11,7 +11,7 @@ import {
   Heading2,
   Heading3,
   Highlighter,
-  Image,
+  Image as ImageIcon,
   Italic,
   List,
   ListOrdered,
@@ -135,7 +135,7 @@ export default function MenuBar({ editor,}: menuBarProp) {
       onPresed: editor.isActive("highlight"),
     },
     {
-      icon: <Image className="size-4" />,
+      icon: <ImageIcon className="size-4"  />,
       onclick: handleImageUpload,
       onPresed: false,
     },

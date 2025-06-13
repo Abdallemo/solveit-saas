@@ -11,8 +11,8 @@ type TaskContextType = {
 
 const TaskContext = createContext<TaskContextType | undefined>(undefined);
 
-export const TaskProvider = ({ children }: { children: ReactNode }) => {
-  const [content, setContent] = useState("");
+export const TaskProvider = ({ children ,dbContent}: { children: ReactNode ,dbContent:string}) => {
+  const [content, setContent] = useState(dbContent);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
 
   return (

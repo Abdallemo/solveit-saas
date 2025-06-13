@@ -1,7 +1,7 @@
 "use server";
 import { TaskFormSchema } from "./auth-types";
 import db from "@/drizzle/db";
-import { TaskFileTable, TaskTable } from "@/drizzle/schemas";
+import { TaskDraftTable, TaskFileTable, TaskTable } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -165,7 +165,8 @@ export async function getAllTasksbyIdPaginated(
 ) {
   const where = and(
     and(
-      not(eq(TaskTable.posterId, userId)), not(eq(TaskTable.status, 'ASSIGNED'))
+      not(eq(TaskTable.posterId, userId)),
+      not(eq(TaskTable.status, "ASSIGNED"))
     ),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined
   );
@@ -191,8 +192,7 @@ export async function getTaskFilesById(taskId: string) {
   return files;
 }
 
-
-export async function createStripeCheckoutSession(price:number) {
+export async function createStripeCheckoutSession(price: number) {
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
@@ -201,39 +201,68 @@ export async function createStripeCheckoutSession(price:number) {
       currentUser?.id!
     );
 
-   
     if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier == "PREMIUM") return; 
+    if (userSubscription?.tier == "PREMIUM") return;
 
     const session = await stripe.checkout.sessions.create({
-     mode:'payment',
-     customer_email:currentUser.email,
-     line_items:[
-      {
-        price_data:{
-          currency:'myr',
-          product_data:{
-            name:`Task Payment`,
+      mode: "payment",
+      customer_email: currentUser.email,
+      line_items: [
+        {
+          price_data: {
+            currency: "myr",
+            product_data: {
+              name: `Task Payment`,
+            },
+            unit_amount: price * 100,
           },
-          unit_amount:price*100
-        },
 
-        quantity:1
-      }
-      
-     ],
-     metadata:{
-      userId:currentUser.id,
-      type: "task_payment",
-     }
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        userId: currentUser.id,
+        type: "task_payment",
+      },
+      cancel_url: referer,
+      success_url: referer,
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
 
     console.log("session url" + session.url);
-    redirect(session.url);
+    return session.url;
   } catch (error) {
     console.error(error);
     throw error;
   }
+}
+export async function autoSaveDraftTask(content: string, userId: string) {
+  try {
+    const oldTask = await db.query.TaskDraftTable.findFirst({
+      where: (table, fn) => fn.eq(table.userId, userId),
+    });
+
+    if (oldTask) {
+      await db
+        .update(TaskDraftTable)
+        .set({
+          content,
+        })
+        .where(eq(TaskDraftTable.userId, userId));
+    } else {
+      await db.insert(TaskDraftTable).values({
+        userId,
+        content,
+      });
+    }
+  } catch (e) {
+    await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
+  }
+}
+export async function getDraftTask(userId: string) {
+  const oldTask = await db.query.TaskDraftTable.findFirst({
+    where: (table, fn) => fn.eq(table.userId, userId),
+  });
+  return [oldTask][0]?.content ?? "";
 }
