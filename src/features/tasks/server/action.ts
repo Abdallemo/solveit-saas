@@ -4,6 +4,9 @@ import db from "@/drizzle/db";
 import { TaskFileTable, TaskTable } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
+import { getServerReturnUrl } from "@/features/subscriptions/server/action";
+import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import { stripe } from "@/lib/stripe";
 import { parseDeadline } from "@/lib/utils";
 import { and, asc, count, eq, ilike, not } from "drizzle-orm";
 import { redirect } from "next/navigation";
@@ -186,4 +189,51 @@ export async function getTaskFilesById(taskId: string) {
     where: (table, fn) => fn.eq(table.taskId, taskId),
   });
   return files;
+}
+
+
+export async function createStripeCheckoutSession(price:number) {
+  const referer = await getServerReturnUrl();
+  try {
+    const currentUser = await getServerUserSession();
+    if (!currentUser?.id) redirect("/login");
+    const userSubscription = await getServerUserSubscriptionById(
+      currentUser?.id!
+    );
+
+   
+    if (!currentUser.email || !currentUser!.id) return;
+    if (userSubscription?.tier == "PREMIUM") return; 
+
+    const session = await stripe.checkout.sessions.create({
+     mode:'payment',
+     customer_email:currentUser.email,
+     line_items:[
+      {
+        price_data:{
+          currency:'myr',
+          product_data:{
+            name:`Task Payment`,
+          },
+          unit_amount:price*100
+        },
+
+        quantity:1
+      }
+      
+     ],
+     metadata:{
+      userId:currentUser.id,
+      type: "task_payment",
+     }
+    });
+
+    if (!session.url) throw new Error("Failed to create checkout session");
+
+    console.log("session url" + session.url);
+    redirect(session.url);
+  } catch (error) {
+    console.error(error);
+    throw error;
+  }
 }
