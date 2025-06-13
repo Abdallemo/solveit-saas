@@ -21,23 +21,23 @@ import {
 } from "@/features/tasks/server/action";
 import Link from "next/link";
 
-type Props = {
-  searchParams: {
-    q?: string;
-    page?: string;
-  };
-};
 
-export default async function PosterPublishedTasks({ searchParams }: Props) {
+
+
+export default async function PosterPublishedTasks({
+  searchParams,
+}: {searchParams:Promise<{q:string,page:string}>}) {
+
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
 
-  const search = searchParams.q ?? "";
-  const page = Number.parseInt(searchParams.page ?? "1");
+  const {q,page} = await searchParams
+  const search = q ?? "";
+  const pages = Number.parseInt(page ?? "1");
   const limit = 3;
-  const offset = (page - 1) * limit;
+  const offset = (pages - 1) * limit;
 
   const { tasks, totalCount } = await getUserTasksbyIdPaginated(
     currentUser.id,
@@ -49,8 +49,8 @@ export default async function PosterPublishedTasks({ searchParams }: Props) {
   );
 
   const totalPages = Math.ceil(totalCount / limit);
-  const hasPrevious = page > 1;
-  const hasNext = page < totalPages;
+  const hasPrevious = pages > 1;
+  const hasNext = pages < totalPages;
 
   const getStatusBadge = (status: TaskStatusType) => {
     switch (status) {
@@ -189,14 +189,14 @@ export default async function PosterPublishedTasks({ searchParams }: Props) {
                 {hasPrevious && (
                   <PaginationItem>
                     <PaginationPrevious
-                      href={`?q=${search}&page=${page - 1}`}
+                      href={`?q=${search}&page=${pages - 1}`}
                     />
                   </PaginationItem>
                 )}
 
                 <PaginationItem>
-                  <PaginationLink href={`?q=${search}&page=${page}`} isActive>
-                    {page}
+                  <PaginationLink href={`?q=${search}&page=${pages}`} isActive>
+                    {pages}
                   </PaginationLink>
                 </PaginationItem>
 
@@ -206,7 +206,7 @@ export default async function PosterPublishedTasks({ searchParams }: Props) {
                       <PaginationEllipsis />
                     </PaginationItem>
                     <PaginationItem>
-                      <PaginationNext href={`?q=${search}&page=${page + 1}`} />
+                      <PaginationNext href={`?q=${search}&page=${pages + 1}`} />
                     </PaginationItem>
                   </>
                 )}
