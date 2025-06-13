@@ -7,7 +7,7 @@ import FileUploadUi from "@/features/media/components/FileUploadUi";
 import { useTask } from "@/contexts/TaskContext";
 
 export default function NewTaskpage() {
-  const { content, setSelectedFiles} = useTask();
+  const { content, setSelectedFiles,setContent,selectedFiles} = useTask();
 
 
   const handleFilesChange = (files: File[]) => {

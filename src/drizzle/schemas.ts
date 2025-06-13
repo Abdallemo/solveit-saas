@@ -9,7 +9,8 @@ import {
     uuid,
     boolean,
     check,
-    numeric
+    numeric,
+    json
 } from "drizzle-orm/pg-core"
 
 export const UserRole = pgEnum('role',['ADMIN','MODERATOR','POSTER','SOLVER'])
@@ -152,6 +153,16 @@ export const TaskTable = pgTable("tasks", {
   status: TaskStatusEnum("status").default("OPEN"),
   deadline: timestamp("deadline", { mode: "date" }),
 });
+export const TaskDraftTable = pgTable("task_drafts", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => UserTable.id),
+  title: text("title"),
+  content: text("content"),
+  description: text("description"),
+  selectedFiles: json("selected_files"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const TaskFileTable = pgTable("task_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id").notNull().references(() => TaskTable.id),

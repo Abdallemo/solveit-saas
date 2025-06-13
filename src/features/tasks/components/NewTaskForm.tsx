@@ -12,7 +12,7 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { createTaskAction } from "../server/action";
+import { createStripeCheckoutSession, createTaskAction } from "../server/action";
 import {
   getPresignedUploadUrl,
   UploadedFileMeta,
@@ -44,6 +44,9 @@ export function NewTaskForm({
     formData.append("description", taskDescription);
 
     const uploadedFileMeta: UploadedFileMeta[] = [];
+    const price = Number(formData.get("price"))
+    const stpUrl = await  createStripeCheckoutSession(price)
+    router.push(stpUrl!);
 
     for (const file of selectedFiles) {
       const presigned = await getPresignedUploadUrl(file.name, file.type);
@@ -77,7 +80,7 @@ export function NewTaskForm({
     <form onSubmit={handleSubmit} className="w-2/3 space-y-6">
       <div>
         <Label>Deadline</Label>
-        <Select name="deadline" required>
+        <Select name="deadline" >
           <SelectTrigger>
             <SelectValue placeholder="Select time task takes to be completed" />
           </SelectTrigger>
