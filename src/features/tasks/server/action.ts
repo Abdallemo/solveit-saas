@@ -5,11 +5,10 @@ import { TaskFileTable, TaskTable } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
 import { parseDeadline } from "@/lib/utils";
-import { and, asc, count, eq, ilike } from "drizzle-orm";
+import { and, asc, count, eq, ilike, not } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
-
 
 export async function getAllTaskCatagories() {
   const catagoryName = await db.query.TaskCategoryTable.findMany({
@@ -46,8 +45,9 @@ export async function createTaskAction(formData: FormData) {
     title: formData.get("title"),
     description: formData.get("description"),
   };
-  const uploadedFiles = JSON.parse(formData.get('uploadedFiles')?.toString()||"[]") as UploadedFileMeta[]
-
+  const uploadedFiles = JSON.parse(
+    formData.get("uploadedFiles")?.toString() || "[]"
+  ) as UploadedFileMeta[];
 
   const result = TaskFormSchema.safeParse(rawData);
 
@@ -55,7 +55,6 @@ export async function createTaskAction(formData: FormData) {
     const fieldErrors = result.error.flatten().fieldErrors;
     return { error: true, fieldErrors };
   }
-
 
   const {
     category,
@@ -74,68 +73,68 @@ export async function createTaskAction(formData: FormData) {
   const categoryId = await getTaskCatagoryId(category);
   if (!categoryId || categoryId == undefined) return;
 
-  const [taskId] = await db.insert(TaskTable).values({
-    categoryId: categoryId.id,
-    posterId:currentUser.id!,
-    title: title,
-    content:content,
-    description: description,
-    price: Number(price),
-    status:'OPEN',
-    visibility: visibility =='public' ?  "public" : "private", 
-    deadline:deadline,
-
-  }).returning({taskId:TaskTable.id})
+  const [taskId] = await db
+    .insert(TaskTable)
+    .values({
+      categoryId: categoryId.id,
+      posterId: currentUser.id!,
+      title: title,
+      content: content,
+      description: description,
+      price: Number(price),
+      status: "OPEN",
+      visibility: visibility == "public" ? "public" : "private",
+      deadline: deadline,
+    })
+    .returning({ taskId: TaskTable.id });
 
   if (uploadedFiles.length > 0) {
-  await db.insert(TaskFileTable).values(
-    uploadedFiles.map((file) => ({
-      taskId: taskId.taskId, 
-      fileName: file.fileName,
-      fileType: file.fileType,
-      fileSize: file.fileSize,
-      filePath: file.filePath,
-      storageLocation: file.storageLocation,
-    }))
-  );
-}
+    await db.insert(TaskFileTable).values(
+      uploadedFiles.map((file) => ({
+        taskId: taskId.taskId,
+        fileName: file.fileName,
+        fileType: file.fileType,
+        fileSize: file.fileSize,
+        filePath: file.filePath,
+        storageLocation: file.storageLocation,
+      }))
+    );
+  }
 
   console.log("Task created successfully!");
-
-  
 }
 
-export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>
-export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>
+export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
+export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
 
-export async function getUserTasksbyId(userId:string) {
+export async function getUserTasksbyId(userId: string) {
   const userTasks = await db.query.TaskTable.findMany({
-    where: (table,fn)=> fn.eq(table.posterId,userId),
-    orderBy: [asc(TaskTable.title)]
-  })
-  return userTasks
+    where: (table, fn) => fn.eq(table.posterId, userId),
+    orderBy: [asc(TaskTable.title)],
+  });
+  return userTasks;
 }
-export async function getTasksbyId(id:string) {
+export async function getTasksbyId(id: string) {
   const Task = await db.query.TaskTable.findFirst({
-    where: (table,fn)=> fn.eq(table.id,id),
-  })
-  if (!Task|| !Task.id) return
-  return Task
+    where: (table, fn) => fn.eq(table.id, id),
+  });
+  if (!Task || !Task.id) return;
+  return Task;
 }
 export async function getAllTasksbyId() {
   const allTasksFiltred = db.query.TaskTable.findMany({
-    where: (table,fn)=> fn.and(fn.not(fn.eq(table.status,"IN_PROGRESS")),fn.not(fn.eq(table.status,"ASSIGNED")))
-  })
-  return allTasksFiltred
+    where: (table, fn) =>
+      fn.and(
+        fn.not(fn.eq(table.status, "IN_PROGRESS")),
+        fn.not(fn.eq(table.status, "ASSIGNED"))
+      ),
+  });
+  return allTasksFiltred;
 }
 
 export async function getUserTasksbyIdPaginated(
   userId: string,
-  {
-    search,
-    limit,
-    offset,
-  }: { search?: string; limit: number; offset: number }
+  { search, limit, offset }: { search?: string; limit: number; offset: number }
 ) {
   const where = and(
     eq(TaskTable.posterId, userId),
@@ -149,21 +148,42 @@ export async function getUserTasksbyIdPaginated(
       offset,
       orderBy: (table) => table.createdAt,
     }),
-    db
-      .select({ count: count() })
-      .from(TaskTable)
-      .where(where),
+    db.select({ count: count() }).from(TaskTable).where(where),
   ]);
 
   const totalCount = totalCountResult[0]?.count ?? 0;
 
   return { tasks, totalCount };
 }
-export async function getTaskFilesById(taskId:string) {
-  const files = await db.query.TaskFileTable.findMany({
-    where: (table,fn)=> fn.eq(table.taskId,taskId)
 
-  })
-  return files
-  
+export async function getAllTasksbyIdPaginated(
+  userId: string,
+  { search, limit, offset }: { search?: string; limit: number; offset: number }
+) {
+  const where = and(
+    and(
+      not(eq(TaskTable.posterId, userId)), not(eq(TaskTable.status, 'ASSIGNED'))
+    ),
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+  );
+
+  const [tasks, totalCountResult] = await Promise.all([
+    db.query.TaskTable.findMany({
+      where,
+      limit,
+      offset,
+      orderBy: (table) => table.createdAt,
+    }),
+    db.select({ count: count() }).from(TaskTable).where(where),
+  ]);
+
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
+  return { tasks, totalCount };
+}
+export async function getTaskFilesById(taskId: string) {
+  const files = await db.query.TaskFileTable.findMany({
+    where: (table, fn) => fn.eq(table.taskId, taskId),
+  });
+  return files;
 }
