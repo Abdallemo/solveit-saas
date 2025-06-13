@@ -12,7 +12,10 @@ import {
   SelectContent,
   SelectItem,
 } from "@/components/ui/select";
-import { createStripeCheckoutSession, createTaskAction } from "../server/action";
+import {
+  createStripeCheckoutSession,
+  createTaskAction,
+} from "../server/action";
 import {
   getPresignedUploadUrl,
   UploadedFileMeta,
@@ -42,33 +45,10 @@ export function NewTaskForm({
     formData.append("taskContent", taskContent);
     formData.append("title", taskTitle);
     formData.append("description", taskDescription);
-
-    const uploadedFileMeta: UploadedFileMeta[] = [];
-    const price = Number(formData.get("price"))
-    const stpUrl = await  createStripeCheckoutSession(price)
-    router.push(stpUrl!);
-
-    for (const file of selectedFiles) {
-      const presigned = await getPresignedUploadUrl(file.name, file.type);
-      setFilebeignUploaded(true);
-      await fetch(presigned.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-
-      uploadedFileMeta.push({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        filePath: presigned.filePath,
-        storageLocation: presigned.publicUrl,
-      });
-    }
-
-    formData.append("uploadedFiles", JSON.stringify(uploadedFileMeta));
+    const price = Number(formData.get("price"));
+    const stpUrl = await createStripeCheckoutSession(price);
+ 
+    // formData.append("uploadedFiles", JSON.stringify(uploadedFileMeta));
     setFilebeignUploaded(false);
 
     const res = await createTaskAction(formData);
@@ -80,7 +60,7 @@ export function NewTaskForm({
     <form onSubmit={handleSubmit} className="w-2/3 space-y-6">
       <div>
         <Label>Deadline</Label>
-        <Select name="deadline" >
+        <Select name="deadline">
           <SelectTrigger>
             <SelectValue placeholder="Select time task takes to be completed" />
           </SelectTrigger>
@@ -109,7 +89,7 @@ export function NewTaskForm({
       <div>
         <Label>Category</Label>
         <Suspense fallback={<SelectLoadingSkeleton />}>
-          <CategorySelectWrapper />
+          {/* <CategorySelectWrapper /> */}
         </Suspense>
       </div>
 
@@ -123,7 +103,7 @@ export function NewTaskForm({
           required
         />
       </div>
-      
+
       {filebeignUploaded && (
         <div className="flex items-center gap-2 text-muted-foreground text-sm">
           <Loader2Icon className="animate-spin w-4 h-4" />
@@ -135,7 +115,7 @@ export function NewTaskForm({
   );
 }
 
-function SelectLoadingSkeleton() {
+export function SelectLoadingSkeleton() {
   return (
     <Select disabled>
       <SelectTrigger>
@@ -148,4 +128,26 @@ function SelectLoadingSkeleton() {
       </SelectContent>
     </Select>
   );
+}
+async function uploadSelectedFiles(selectedFiles: File[], state: boolean) {
+  const uploadedFileMeta: UploadedFileMeta[] = [];
+  for (const file of selectedFiles) {
+    const presigned = await getPresignedUploadUrl(file.name, file.type);
+    await fetch(presigned.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type,
+      },
+      body: file,
+    });
+
+    uploadedFileMeta.push({
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      filePath: presigned.filePath,
+      storageLocation: presigned.publicUrl,
+    });
+  }
+  return JSON.stringify(uploadedFileMeta)
 }

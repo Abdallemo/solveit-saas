@@ -237,7 +237,14 @@ export async function createStripeCheckoutSession(price: number) {
     throw error;
   }
 }
-export async function autoSaveDraftTask(content: string, userId: string) {
+export async function autoSaveDraftTask(
+  content: string,
+  userId: string,
+  category: string,
+  price: number,
+  visibility: "public" | "private",
+  deadline:string
+) {
   try {
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
@@ -248,12 +255,20 @@ export async function autoSaveDraftTask(content: string, userId: string) {
         .update(TaskDraftTable)
         .set({
           content,
+          category,
+          price,
+          visibility,
+          deadline
         })
         .where(eq(TaskDraftTable.userId, userId));
     } else {
       await db.insert(TaskDraftTable).values({
         userId,
         content,
+        category,
+        price,
+        visibility,
+        deadline
       });
     }
   } catch (e) {
@@ -264,5 +279,5 @@ export async function getDraftTask(userId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
   });
-  return [oldTask][0]?.content ?? "";
+  return oldTask;
 }

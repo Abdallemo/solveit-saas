@@ -14,16 +14,6 @@ import useCurrentUser from "@/hooks/useCurrentUser"
 
 export default function TaskPostingEditor() {
   const { content, setContent } = useTask()
-  const { user } = useCurrentUser()
-
-  useEffect(() => {
-    async function autoDraftSave() {
-      await autoSaveDraftTask(content, user?.id!)
-    }
-    setTimeout(() => {
-      autoDraftSave()
-    }, 500)
-  }, [content, user, setContent])
 
   const lowlight = createLowlight(common)
   const editor = useEditor({
@@ -65,7 +55,7 @@ export default function TaskPostingEditor() {
   })
 
   return (
-    <div className="border rounded-md flex flex-col lg:h-[800px] sm:h-[500px] md:h-[500px]" >
+    <div className="border rounded-md flex flex-col h-[500px] lg:h-[600px]" >
       <MenuBar editor={editor} />
       <div className="flex-1 overflow-hidden">
         <EditorContent editor={editor} className="h-full overflow-y-auto" />
