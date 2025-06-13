@@ -1,108 +1,138 @@
-"use client"
+"use client";
 
-import type React from "react"
-
-import { useState, useRef } from "react"
-import { Upload, X, File } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { toast } from "sonner"
+import type React from "react";
+import { useState, useRef } from "react";
+import { Upload, X, File } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { ScrollArea } from "@radix-ui/react-scroll-area";
 
 interface FileUploadProps {
-  onFilesChange?: (files: File[]) => void
-  maxFiles?: number
-  className?: string
+  onFilesChange?: (files: File[]) => void;
+  maxFiles?: number;
+  className?: string;
 }
 
-export default function FileUploadUi({ onFilesChange, maxFiles = 5, className }: FileUploadProps) {
-  const [files, setFiles] = useState<File[]>([])
-  const [isDragging, setIsDragging] = useState(false)
-  const inputRef = useRef<HTMLInputElement>(null)
+export default function FileUploadUi({
+  onFilesChange,
+  maxFiles = 5,
+  className,
+}: FileUploadProps) {
+  const [files, setFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (newFiles: FileList | null) => {
-    if (!newFiles) return
+    if (!newFiles) return;
 
-    const fileArray = Array.from(newFiles).slice(0, maxFiles - files.length)
-    const updatedFiles = [...files, ...fileArray]
-    setFiles(updatedFiles)
-    onFilesChange?.(updatedFiles)
-  }
+    const fileArray = Array.from(newFiles).slice(0, maxFiles - files.length);
+    const updatedFiles = [...files, ...fileArray];
+    setFiles(updatedFiles);
+    onFilesChange?.(updatedFiles);
+  };
 
   const removeFile = (index: number) => {
-    const updatedFiles = files.filter((_, i) => i !== index)
-    setFiles(updatedFiles)
-    onFilesChange?.(updatedFiles)
-  }
+    const updatedFiles = files.filter((_, i) => i !== index);
+    setFiles(updatedFiles);
+    onFilesChange?.(updatedFiles);
+  };
 
   const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(true)
-  }
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
   const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-  }
+    e.preventDefault();
+    setIsDragging(false);
+  };
 
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault()
-    setIsDragging(false)
-    handleFiles(e.dataTransfer.files)
-  }
+    e.preventDefault();
+    setIsDragging(false);
+    handleFiles(e.dataTransfer.files);
+  };
 
   const showFiles = () => {
     if (files.length === 0) {
-      toast.info("No files selected")
-      return
+      toast.info("No files selected");
+      return;
     }
 
-    const fileList = files.map((file) => `• ${file.name} (${(file.size / 1024).toFixed(1)} KB)`).join("\n")
-    toast.success(`Selected Files (${files.length}):\n${fileList}`)
-  }
+    const fileList = files
+      .map((file) => `• ${file.name} (${(file.size / 1024).toFixed(1)} KB)`)
+      .join("\n");
+    toast.success(`Selected Files (${files.length}):\n${fileList}`);
+  };
+
+  const handleButtonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    inputRef.current?.click();
+  };
 
   return (
-    <div className={cn("w-full max-w-md", className)}>
+    <div className={cn("w-full", className)}>
       <div
-        className={cn(
-          "border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors",
-          isDragging ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50",
-        )}
+        className={`border-2 border-dashed rounded-md p-4 text-center ${
+          isDragging ? "border-primary bg-primary/5" : "border-muted"
+        }`}
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => inputRef.current?.click()}
-      >
-        <Input ref={inputRef} type="file" multiple className="hidden" onChange={(e) => handleFiles(e.target.files)} />
-        <Upload className="mx-auto h-8 w-8 text-muted-foreground mb-2" />
-        <p className="text-sm font-medium">Drop files here or click to browse</p>
-        <p className="text-xs text-muted-foreground mt-1">
-          {files.length}/{maxFiles} files selected
-        </p>
-      </div>
-
-      {files.length > 0 && (
-        <Button onClick={showFiles} className="w-full mt-3" variant="outline">
-          Show Selected Files
-        </Button>
-      )}
-
-      {files.length > 0 && (
-        <div className="mt-4 space-y-2">
-          {files.map((file, index) => (
-            <div key={`${file.name}-${index}`} className="flex items-center gap-3 p-2 bg-muted rounded-md">
-              <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">{file.name}</p>
-                <p className="text-xs text-muted-foreground">{(file.size).toFixed(1)} </p>
-              </div>
-              <Button variant="ghost" size="sm" onClick={() => removeFile(index)} className="h-6 w-6 p-0">
-                <X className="h-3 w-3" />
-              </Button>
-            </div>
-          ))}
+        onDrop={handleDrop}>
+        <Input
+          ref={inputRef}
+          type="file"
+          multiple
+          className="hidden"
+          onChange={(e) => handleFiles(e.target.files)}
+        />
+        <div className="flex flex-col items-center gap-2">
+          <div className="p-2 rounded-full bg-muted">
+            <Upload className="h-4 w-4 text-muted-foreground" />
+          </div>
+          <div className="text-sm font-medium">
+            Drop files here or click to browse
+          </div>
+          <div className="text-xs text-muted-foreground">
+            PDF, DOC, JPG, PNG up to 10MB • {files.length}/{maxFiles} files
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={handleButtonClick}>
+            Select Files
+          </Button>
         </div>
+      </div>
+      {files.length > 0 && (
+        <ScrollArea className="flex-1 ">
+          <div className="mt-2 space-y-2  bg-amber-40 h-[200px] overflow-scroll p-2">
+            {files.map((file, index) => (
+              <div
+                key={`${file.name}-${index}`}
+                className="flex items-center gap-3 p-2 bg-muted rounded-md ">
+                <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{file.name}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {(file.size / 1024).toFixed(1)} KB
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => removeFile(index)}
+                  className="h-6 w-6 p-0">
+                  <X className="h-3 w-3" />
+                </Button>
+              </div>
+            ))}
+          </div>
+        </ScrollArea>
       )}
     </div>
-  )
+  );
 }
