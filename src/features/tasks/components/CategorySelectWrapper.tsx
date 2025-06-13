@@ -14,7 +14,7 @@ import {
   getAllTaskCatagories,
 } from "@/features/tasks/server/action";
 
-export function CategorySelectWrapper() {
+export function CategorySelectWrapper({category,setCategorie}:{setCategorie:(value: string)=>void,category:string}) {
   const [categories, setCategories] = useState<catagoryType>([]);
   const [loading, setLoading] = useState(true);
   useEffect(() => {
@@ -33,7 +33,7 @@ export function CategorySelectWrapper() {
   }, []);
 
   return (
-    <Select name="category" required disabled={loading}>
+    <Select name="category" required disabled={loading} value={category} onValueChange={setCategorie} >
       <SelectTrigger>
         <SelectValue
           placeholder={loading ? "Loading..." : "Choose a category"}

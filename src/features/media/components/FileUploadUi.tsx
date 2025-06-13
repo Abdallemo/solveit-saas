@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { useTask } from "@/contexts/TaskContext";
 
 interface FileUploadProps {
   onFilesChange?: (files: File[]) => void;
@@ -20,22 +21,23 @@ export default function FileUploadUi({
   maxFiles = 5,
   className,
 }: FileUploadProps) {
-  const [files, setFiles] = useState<File[]>([]);
+  const {selectedFiles  ,setSelectedFiles} = useTask()
+
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFiles = (newFiles: FileList | null) => {
     if (!newFiles) return;
 
-    const fileArray = Array.from(newFiles).slice(0, maxFiles - files.length);
-    const updatedFiles = [...files, ...fileArray];
-    setFiles(updatedFiles);
+    const fileArray = Array.from(newFiles).slice(0, maxFiles - selectedFiles.length);
+    const updatedFiles = [...selectedFiles, ...fileArray];
+    setSelectedFiles(updatedFiles);
     onFilesChange?.(updatedFiles);
   };
 
   const removeFile = (index: number) => {
-    const updatedFiles = files.filter((_, i) => i !== index);
-    setFiles(updatedFiles);
+    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
+    setSelectedFiles(updatedFiles);
     onFilesChange?.(updatedFiles);
   };
 
@@ -56,15 +58,15 @@ export default function FileUploadUi({
   };
 
   const showFiles = () => {
-    if (files.length === 0) {
+    if (selectedFiles.length === 0) {
       toast.info("No files selected");
       return;
     }
 
-    const fileList = files
+    const fileList = selectedFiles
       .map((file) => `• ${file.name} (${(file.size / 1024).toFixed(1)} KB)`)
       .join("\n");
-    toast.success(`Selected Files (${files.length}):\n${fileList}`);
+    toast.success(`Selected Files (${selectedFiles.length}):\n${fileList}`);
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
@@ -96,7 +98,7 @@ export default function FileUploadUi({
             Drop files here or click to browse
           </div>
           <div className="text-xs text-muted-foreground">
-            PDF, DOC, JPG, PNG up to 10MB • {files.length}/{maxFiles} files
+            PDF, DOC, JPG, PNG up to 10MB • {selectedFiles.length}/{maxFiles} files
           </div>
           <Button
             variant="outline"
@@ -107,10 +109,10 @@ export default function FileUploadUi({
           </Button>
         </div>
       </div>
-      {files.length > 0 && (
+      {selectedFiles.length > 0 && (
         <ScrollArea className="flex-1 ">
           <div className="mt-2 space-y-2  bg-amber-40 h-[200px] overflow-scroll p-2">
-            {files.map((file, index) => (
+            {selectedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
                 className="flex items-center gap-3 p-2 bg-muted rounded-md ">
