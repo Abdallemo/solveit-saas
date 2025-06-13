@@ -23,6 +23,7 @@ import {
   Copy,
 } from "lucide-react"
 import { formatDistanceToNow } from "date-fns"
+import { toast } from "sonner"
 
 interface FileData {
   id: string
@@ -57,7 +58,7 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
-function handleFileAction(action: string, file: FileData) {
+async function  handleFileAction(action: string, file: FileData) {
   switch (action) {
     case "view":
       window.open(file.storageLocation, "_blank")
@@ -71,7 +72,8 @@ function handleFileAction(action: string, file: FileData) {
       document.body.removeChild(link)
       break
     case "copy":
-      navigator.clipboard.writeText(file.storageLocation)
+     await navigator.clipboard.writeText(file.storageLocation)
+      toast.success("Link copied to clipboard",{duration:2000})
       break
     case "delete":
       console.log("Delete file:", file.id)
