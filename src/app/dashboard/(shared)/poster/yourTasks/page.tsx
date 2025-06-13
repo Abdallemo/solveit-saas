@@ -28,7 +28,7 @@ type Props = {
   };
 };
 
-export default async function BrowseTasks({ searchParams }: Props) {
+export default async function PosterPublishedTasks({ searchParams }: Props) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
