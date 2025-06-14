@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
         } = draftTasks;
 
         if (!category || !content || !deadline || !price || !visibility)
-          return { error: { messgae: "somefield arent met the regulation " } };
+          return 
 
         const { title, description } = generateTitleAndDescription(content);
         console.log("starting creat Task prosess");
