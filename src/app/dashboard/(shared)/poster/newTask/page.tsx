@@ -1,15 +1,8 @@
 import { TaskProvider } from "@/contexts/TaskContext";
 import { getServerUserSession } from "@/features/auth/server/actions";
-import NewTaskpage from "@/features/tasks/components/NewTaskPage";
+import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
 import { getDraftTask } from "@/features/tasks/server/action";
-type DraftTask = {
-  content: string;
-  category: string;
-  deadline: string;
-  visibility: "public" | "private";
-  price: number;
-  updatedAt?: Date;
-};
+import { TaskSchema } from "@/features/tasks/server/task-types";
 
 export default async function Page() {
   const currentUser = await getServerUserSession();
@@ -23,22 +16,32 @@ export default async function Page() {
     deadline = "12h",
     visibility = "public",
     price = 10,
-    title,
-    description,
-    updatedAt
+    title = "",
+    description = "",
+    updatedAt,
   } = draft ?? {};
+  
+  const defaultValues: TaskSchema = {
+    title: title ?? "",
+    description: description ?? "",
+    content: content ?? "",
+    deadline: deadline ?? "12h",
+    visibility: visibility ?? "public",
+    category: category ?? "",
+    price: price ?? 10,
+  };
+
   return (
     <TaskProvider
-      dbContent={content ?? ""}
-      dbCategory={category ?? ""}
-      dbDeadline={deadline ?? "12h"}
-      dbPrice={price ?? 10}
-      dbVisibility={visibility ?? "public"}
-      dbDescription={description ?? ""}
-      dbTitle={title ?? ""}
-      updatedAt={updatedAt}
-      >
-      <NewTaskpage />
+      dbContent={content!}
+      dbCategory={category!}
+      dbDeadline={deadline!}
+      dbPrice={price!}
+      dbVisibility={visibility!}
+      dbDescription={description!}
+      dbTitle={title}
+      updatedAt={updatedAt}>
+      <TaskCreationPage defaultValues={defaultValues} />
     </TaskProvider>
   );
 }

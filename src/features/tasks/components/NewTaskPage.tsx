@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useMemo, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm, FormProvider } from "react-hook-form";
 import TaskPostingEditor from "./richTextEdito/Tiptap";
@@ -20,7 +20,11 @@ import { toast } from "sonner";
 import { CircleAlert, Loader } from "lucide-react";
 import useCurrentUser from "@/hooks/useCurrentUser";
 
-export default function TaskCreationPage() {
+export default function TaskCreationPage({
+  defaultValues,
+}: {
+  defaultValues: TaskSchema;
+}) {
   const {
     category,
     deadline,
@@ -31,10 +35,18 @@ export default function TaskCreationPage() {
     description,
     title,
   } = useTask();
-  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
-  const doc = new DOMParser().parseFromString(content, "text/html");
-  const textContent = doc.body.textContent || "";
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const doc = new DOMParser().parseFromString(content, "text/html");
+    const text = doc.body.textContent?.trim() || "";
+
+    setIsDisabled(text.length < 5);
+  }, [content]);
 
   async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
     const uploadedFileMeta: UploadedFileMeta[] = [];
@@ -58,10 +70,14 @@ export default function TaskCreationPage() {
     }
     return JSON.stringify(uploadedFileMeta);
   }
-  const isDisabled = textContent.trim().length < 5;
 
-  const defaultValues = useMemo(
-    () => ({
+  const form = useForm<TaskSchema>({
+    resolver: zodResolver(taskSchema),
+    defaultValues,
+  });
+
+  useEffect(() => {
+    form.reset({
       title,
       description,
       content,
@@ -69,14 +85,17 @@ export default function TaskCreationPage() {
       visibility,
       category,
       price,
-    }),
-    [title, description, content, deadline, visibility, category, price]
-  );
-
-  const form = useForm({
-    resolver: zodResolver(taskSchema),
-    defaultValues,
-  });
+    });
+  }, [
+    form,
+    title,
+    description,
+    content,
+    deadline,
+    visibility,
+    category,
+    price,
+  ]);
 
   const currentUser = useCurrentUser();
   const { user } = currentUser;
