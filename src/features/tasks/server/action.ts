@@ -7,6 +7,7 @@ import {
   TaskDraftTable,
   TaskFileTable,
   TaskTable,
+  UserRoleType,
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
@@ -170,17 +171,37 @@ export async function getUserTasksbyIdPaginated(
   return { tasks, totalCount };
 }
 
-export async function getAllTasksbyIdPaginated(
+export async function getAllTasksByRolePaginated(
   userId: string,
-  { search, limit, offset }: { search?: string; limit: number; offset: number }
+  role: UserRoleType,
+  {
+    search,
+    limit,
+    offset,
+  }: {
+    search?: string;
+    limit: number;
+    offset: number;
+  }
 ) {
-  const where = and(
-    and(
+  let where;
+
+  if (role === "POSTER") {
+   
+    where = and(
       not(eq(TaskTable.posterId, userId)),
-      not(eq(TaskTable.status, "ASSIGNED"))
-    ),
-    search ? ilike(TaskTable.title, `%${search}%`) : undefined
-  );
+
+      not(eq(TaskTable.visibility, "private")),
+      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    );
+  } else if (role === "SOLVER") {
+    
+    where = and(
+      not(eq(TaskTable.posterId, userId)),
+      not(eq(TaskTable.status, "ASSIGNED")),
+      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    );
+  }
 
   const [tasks, totalCountResult] = await Promise.all([
     db.query.TaskTable.findMany({
@@ -196,6 +217,7 @@ export async function getAllTasksbyIdPaginated(
 
   return { tasks, totalCount };
 }
+
 export async function getTaskFilesById(taskId: string) {
   const files = await db.query.TaskFileTable.findMany({
     where: (table, fn) => fn.eq(table.taskId, taskId),
