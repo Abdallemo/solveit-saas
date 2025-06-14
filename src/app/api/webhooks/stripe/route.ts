@@ -64,6 +64,8 @@ export async function POST(request: NextRequest) {
 
         if (!draftTasks) return;
         const {
+          title,
+          description,
           category,
           content,
           deadline,
@@ -72,10 +74,16 @@ export async function POST(request: NextRequest) {
           visibility,
         } = draftTasks;
 
-        if (!category || !content || !deadline || !price || !visibility)
-          return 
+        if (
+          !category ||
+          !content ||
+          !deadline ||
+          !price ||
+          !visibility ||
+          !description
+        )
+          return;
 
-        const { title, description } = generateTitleAndDescription(content);
         console.log("starting creat Task prosess");
 
         await createTaskAction(

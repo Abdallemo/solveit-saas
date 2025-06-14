@@ -104,7 +104,7 @@ export default function FileUploadUi({
           </div>
           <div className="text-xs text-muted-foreground">
             PDF, DOC, JPG, PNG up to 10MB • {selectedFiles.length}/{maxFiles} files
-          </div>
+          </div> 
           <Button
             variant="outline"
             size="sm"
@@ -116,7 +116,7 @@ export default function FileUploadUi({
       </div>
       {selectedFiles.length > 0 && (
         <ScrollArea className="flex-1 ">
-          <div className="mt-2 space-y-2  bg-amber-40 h-[200px] overflow-scroll p-2">
+          <div className="mt-2 space-y-2  bg-amber-40 h-[100px] overflow-scroll p-2">
             {selectedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
