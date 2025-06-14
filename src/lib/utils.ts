@@ -12,13 +12,13 @@ export function parseDeadline(value: string): Date | null {
   const now = new Date();
   console.log('deadline Values: '+value)
   switch (value) {
-    case "24h":
+    case "12h":
       return new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    case "48h":
+    case "24h":
       return new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    case "3days":
+    case "48":
       return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
-    case "7days":
+    case "3days":
       return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
     default:
       return null;

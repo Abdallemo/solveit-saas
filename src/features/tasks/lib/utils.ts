@@ -1,137 +1,28 @@
-import { parseHTML } from 'linkedom';
-export type taskDataType = typeof tasksDumyData
-export const tasksDumyData = [
-    {
-      id: 1,
-      title: "Need help fixing 404 errors on my website",
-      description: "My portfolio website is showing 404 errors on several pages and I can't figure out why.",
-      content: "I've been working on my portfolio website for a class project...",
-      posterId: "user-1",
-      posterName: "Sarah Chen",
-      solverId: null,
-      isPublic: true,
-      categoryId: "cat-1",
-      categoryName: "Coding",
-      categoryColor: "bg-blue-100 text-blue-800",
-      status: "OPEN",
-      deadline: "2024-01-15",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: 2,
-      title: "3D model rigging for animation project",
-      description: "I have a 3D character model that needs proper rigging for animation in Blender.",
-      content: "I've created a character model in Blender but I'm struggling with the rigging process...",
-      posterId: "user-2",
-      posterName: "Mike Johnson",
-      solverId: "user-5",
-      isPublic: true,
-      categoryId: "cat-2",
-      categoryName: "3D Modeling",
-      categoryColor: "bg-purple-100 text-purple-800",
-      status: "IN_PROGRESS",
-      deadline: "2024-01-20",
-      createdAt: "2024-01-08",
-    },
-    {
-      id: 3,
-      title: "Help with calculus integration problems",
-      description: "Struggling with integration by parts and substitution methods for my calculus exam.",
-      content: "I have several practice problems that I can't solve...",
-      posterId: "user-3",
-      posterName: "Emma Davis",
-      solverId: null,
-      isPublic: true,
-      categoryId: "cat-3",
-      categoryName: "Mathematics",
-      categoryColor: "bg-green-100 text-green-800",
-      status: "OPEN",
-      deadline: "2024-01-12",
-      createdAt: "2024-01-09",
-    },
-    {
-      id: 4,
-      title: "Python data analysis script optimization",
-      description: "My pandas script is running too slowly on large datasets, need optimization help.",
-      content: "I'm working with a 50MB CSV file and my current script takes forever to process...",
-      posterId: "user-4",
-      posterName: "Alex Rodriguez",
-      solverId: null,
-      isPublic: true,
-      categoryId: "cat-4",
-      categoryName: "Data Science",
-      categoryColor: "bg-orange-100 text-orange-800",
-      status: "OPEN",
-      deadline: "2024-01-18",
-      createdAt: "2024-01-11",
-    },
-    {
-      id: 5,
-      title: "React component state management issue",
-      description: "Having trouble with state updates not triggering re-renders in my React app.",
-      content: "I'm building a todo app and the state isn't updating properly when I add new items...",
-      posterId: "user-6",
-      posterName: "Lisa Wang",
-      solverId: null,
-      isPublic: true,
-      categoryId: "cat-1",
-      categoryName: "Coding",
-      categoryColor: "bg-blue-100 text-blue-800",
-      status: "OPEN",
-      deadline: null,
-      createdAt: "2024-01-11",
-    },
-  ]
-
-
-export const ownTasksDumyData =  [
-    {
-      id: 1,
-      title: "Need help fixing 404 errors on my website",
-      description: "My portfolio website is showing 404 errors on several pages and I can't figure out why.",
-      content: "I've been working on my portfolio website for a class project...",
-      posterId: "user-1",
-      posterName: "Sarah Chen",
-      solverId: null,
-      isPublic: true,
-      categoryId: "cat-1",
-      categoryName: "Coding",
-      categoryColor: "bg-blue-100 text-blue-800",
-      status: "OPEN",
-      deadline: "2024-01-15",
-      createdAt: "2024-01-10",
-    },
-    {
-      id: 2,
-      title: "3D model rigging for animation project",
-      description: "I have a 3D character model that needs proper rigging for animation in Blender.",
-      content: "I've created a character model in Blender but I'm struggling with the rigging process...",
-      posterId: "user-2",
-      posterName: "Mike Johnson",
-      solverId: "user-5",
-      isPublic: true,
-      categoryId: "cat-2",
-      categoryName: "3D Modeling",
-      categoryColor: "bg-purple-100 text-purple-800",
-      status: "IN_PROGRESS",
-      deadline: "2024-01-20",
-      createdAt: "2024-01-08",
-    },]
+import { JSDOM } from "jsdom";
+import { truncateText } from '@/lib/utils';
 
 
 
-export function generateTitleAndDescription(html: string) {
-  const { document } = parseHTML(html);
-  const titleEl = document.querySelector("h1, h2, p");
-  const title = titleEl?.textContent?.trim().slice(0, 80) || "";
-  const isDisabled = document.textContent?.trim().length!  < 5
+
+export function generateTitleAndDescription(content: string) {
+  const dom = new JSDOM(content);
+  const doc = dom.window.document;
+
+  const titleEl = doc.querySelector("h1, h2, p");
+  const rawTitle = titleEl?.textContent?.trim() || "";
+  const title = truncateText(rawTitle, 80);
+  const isDisabled = doc.textContent?.trim().length!< 5
+  
+
   let description = "";
-  document.querySelectorAll("p").forEach(p => {
-    const text = p.textContent?.trim();
-    if (text && text !== title && !description) {
-      description = text.slice(0, 160);
+  const paragraphs = doc.querySelectorAll("p");
+  for (const p of paragraphs) {
+    const text = p.textContent?.trim() || "";
+    if (text && text !== title) {
+      description = truncateText(text, 160);
+      break;
     }
-  });
+  }
 
   return { title, description ,isDisabled};
 }

@@ -65,6 +65,7 @@ export async function taskPaymentInsetion(
 }
 
 export async function createTaskAction(
+   userId: string,
   title: string,
   description: string,
   category: string,
@@ -74,9 +75,10 @@ export async function createTaskAction(
   price: number,
   uploadedFiles: UploadedFileMeta[],
   paymentId: string
+ 
 ) {
-  const currentUser = await getServerUserSession();
-  if (!currentUser) return;
+  console.log("inside a createTaskAcrion Yoo")
+ 
 
   const deadline = parseDeadline(deadlineStr);
   const categoryId = await getTaskCatagoryId(category);
@@ -87,7 +89,7 @@ export async function createTaskAction(
     .insert(TaskTable)
     .values({
       categoryId: categoryId.id,
-      posterId: currentUser.id!,
+      posterId: userId,
       title: title,
       content: content,
       description: description,
