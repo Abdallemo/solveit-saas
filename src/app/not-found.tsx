@@ -1,9 +1,25 @@
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { FileQuestion, Home, MoveLeft } from "lucide-react"
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { FileQuestion, Home, MoveLeft } from "lucide-react";
 
 export default function NotFound() {
+  const [referrer, setReferrer] = useState("/");
+
+  useEffect(() => {
+    const fallback = document.referrer || "/";
+    setReferrer(fallback);
+  }, []);
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="mx-auto max-w-md text-center shadow-lg">
@@ -20,7 +36,7 @@ export default function NotFound() {
           <p className="text-muted-foreground">Oops! The page you're looking for doesn't exist or has been moved.</p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
             <Button asChild variant="outline" size="lg" className="gap-2 w-full sm:w-auto">
-              <Link href="/">
+              <Link href={referrer}>
                 <MoveLeft className="h-4 w-4" />
                 Go back
               </Link>
@@ -38,5 +54,5 @@ export default function NotFound() {
         </CardFooter>
       </Card>
     </div>
-  )
+  );
 }

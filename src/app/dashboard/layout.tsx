@@ -1,4 +1,4 @@
-// app/dashboard/layout.tsx (or wherever your layout lives)
+
 import React, { ReactNode } from "react";
 
 import { getServerUserSession } from "@/features/auth/server/actions";

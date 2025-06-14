@@ -134,6 +134,45 @@ export default function DashboardSidebar() {
                     )}
                   </SidebarMenuItem>
                 ))}
+
+              {user?.role === "ADMIN" &&
+                MenuItemsAdmin.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link
+                        href={item.url}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                          isActive(item.url, true)
+                            ? "bg-foreground/10 text-foreground"
+                            : ""
+                        }`}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
+
+                    {item.child && (
+                      <SidebarMenuSub>
+                        {item.child.map((cld) => (
+                          <SidebarMenuSubItem key={cld.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                                href={cld.url}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                                  isActive(cld.url)
+                                    ? "bg-foreground/10 text-foreground"
+                                    : ""
+                                }`}>
+                                <cld.icon />
+                                <span>{cld.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    )}
+                  </SidebarMenuItem>
+                ))}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
