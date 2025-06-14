@@ -1,15 +1,10 @@
-import { Button } from "@/components/ui/button";
-import { isAuthorized, SignOutAction } from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
+import AdminDashboardComponent from "@/features/users/components/admin/AdminHomePageComponent";
 
 export default async function page() {
   await isAuthorized("ADMIN");
   
   return (
-    <div>
-      Admin Dashbaord
-      <form action={SignOutAction}>
-        <Button variant={"ghost"}>Signout</Button>
-      </form>
-    </div>
+    <AdminDashboardComponent/>
   );
 }

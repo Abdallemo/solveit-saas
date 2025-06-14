@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import {
   LuArrowUpRight,
+  LuBadgeDollarSign,
   LuBrain,
   LuCalendar,
   LuClipboardCheck,
@@ -39,11 +40,6 @@ export const MenuItemsAdmin = [
     icon: LuUsers,
     child: [
       {
-        title: "All Users",
-        url: "/dashboard/admin/users",
-        icon: LuUsers,
-      },
-      {
         title: "Moderators",
         url: "/dashboard/admin/users/moderators",
         icon: LuShieldCheck,
@@ -56,31 +52,14 @@ export const MenuItemsAdmin = [
     ],
   },
   {
-    title: "Task Oversight",
-    url: "/dashboard/admin/tasks",
-    icon: LuClipboardList,
-    child: [
-      {
-        title: "All Tasks",
-        url: "/dashboard/admin/tasks",
-        icon: LuClipboardList,
-      },
-      {
-        title: "Disputed Tasks",
-        url: "/dashboard/admin/tasks/disputes",
-        icon: LucideAlertTriangle,
-      },
-    ],
-  },
-  {
     title: "AI Management",
     url: "/dashboard/admin/ai",
-    icon: LuBrain, 
+    icon: LuBrain,
     child: [
       {
         title: "AI Rules",
         url: "/dashboard/admin/ai/rules",
-        icon: LuListChecks, 
+        icon: LuListChecks,
       },
       {
         title: "Moderation Logs",
@@ -93,6 +72,11 @@ export const MenuItemsAdmin = [
         icon: LuStar,
       },
     ],
+  },
+  {
+    title: "Subscription Management",
+    url: "/dashboard/admin/subscriptions",
+    icon: LuBadgeDollarSign,
   },
   {
     title: "Payment Management",

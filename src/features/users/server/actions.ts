@@ -1,6 +1,6 @@
 "use server";
 
-import { UserTable, UserSubscriptionTable } from "@/drizzle/schemas";
+import { UserTable, UserSubscriptionTable, UserRoleType } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
@@ -22,10 +22,13 @@ export async function CreateUser(values: registerInferedTypes) {
 }
 export async function DeleteUserFromDb(id: string) {
   if (id) {
-    await db.delete(UserTable).where(eq(UserTable.id, id));
-    await db
-      .delete(UserSubscriptionTable)
-      .where(eq(UserSubscriptionTable.userId, id));
+    db.transaction(async (tx)=>{
+      await tx.delete(UserTable).where(eq(UserTable.id, id));
+      await tx
+        .delete(UserSubscriptionTable)
+        .where(eq(UserSubscriptionTable.userId, id));
+
+    })
   }
 }
 export async function getUserByEmail(email: string) {
@@ -38,6 +41,19 @@ export async function getUserByEmail(email: string) {
     console.error(error);
     return null;
   }
+}
+export type allUsersType = Awaited<ReturnType<typeof getAllUsers>>
+
+export async function getAllUsers() {
+  const allUsers = await db.query.UserTable.findMany();
+  return allUsers;
+  
+}
+export async function updatUserRoleByid(userId:string,role:UserRoleType) {
+  await db.update(UserTable).set({
+    role,
+  }).where(eq(UserTable.id,userId))
+  
 }
 export async function getUserById(id: string) {
   try {
