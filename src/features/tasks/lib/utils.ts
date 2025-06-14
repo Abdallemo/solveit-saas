@@ -1,3 +1,4 @@
+import { parseHTML } from 'linkedom';
 export type taskDataType = typeof tasksDumyData
 export const tasksDumyData = [
     {
@@ -116,3 +117,21 @@ export const ownTasksDumyData =  [
       deadline: "2024-01-20",
       createdAt: "2024-01-08",
     },]
+
+
+
+export function generateTitleAndDescription(html: string) {
+  const { document } = parseHTML(html);
+  const titleEl = document.querySelector("h1, h2, p");
+  const title = titleEl?.textContent?.trim().slice(0, 80) || "";
+  const isDisabled = document.textContent?.trim().length!  < 5
+  let description = "";
+  document.querySelectorAll("p").forEach(p => {
+    const text = p.textContent?.trim();
+    if (text && text !== title && !description) {
+      description = text.slice(0, 160);
+    }
+  });
+
+  return { title, description ,isDisabled};
+}

@@ -41,6 +41,7 @@ export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
+export type PaymentStatusType = (typeof PaymentStatus.enumValues)[number]
 
 export const UserTable = pgTable("user", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -190,8 +191,9 @@ export const TaskDraftTable = pgTable("task_drafts", {
   category: text("category"),
   deadline: text("deadline"),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  uploadedFiles:json("uploadedFiles"),
   visibility: TaskVisibility("visibility"),
-  price:integer("price")
+  price:integer("price"),
 });
 
 export const TaskFileTable = pgTable("task_files", {

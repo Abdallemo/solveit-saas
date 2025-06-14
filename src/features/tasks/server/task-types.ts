@@ -13,3 +13,13 @@ export const TaskFormSchema = z.object({
 })
 
 export type TaskFormValues = z.infer<typeof TaskFormSchema>
+
+export const taskSchema = z.object({
+  deadline: z.string().nonempty("Deadline is required"),
+  visibility: z.enum(["public", "private"]),
+  category: z.string().nonempty("Category is required"),
+  price: z.coerce.number().min(10, "Minimum price is 10"),
+  content: z.string().min(4, "Content is too short"),
+});
+
+export type TaskSchema = z.infer<typeof taskSchema>;

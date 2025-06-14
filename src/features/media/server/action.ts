@@ -31,3 +31,25 @@ export async function getPresignedUploadUrl(fileName: string, fileType: string) 
     publicUrl: `https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev/solveit/${key}`,
   };
 }
+export async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
+  const uploadedFileMeta: UploadedFileMeta[] = [];
+  for (const file of selectedFiles) {
+    const presigned = await getPresignedUploadUrl(file.name, file.type);
+    await fetch(presigned.uploadUrl, {
+      method: "PUT",
+      headers: {
+        "Content-Type": file.type,
+      },
+      body: file,
+    });
+
+    uploadedFileMeta.push({
+      fileName: file.name,
+      fileType: file.type,
+      fileSize: file.size,
+      filePath: presigned.filePath,
+      storageLocation: presigned.publicUrl,
+    });
+  }
+  return JSON.stringify(uploadedFileMeta)
+}

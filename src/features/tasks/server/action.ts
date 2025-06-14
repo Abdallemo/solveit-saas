@@ -1,7 +1,13 @@
 "use server";
-import { TaskFormSchema } from "./auth-types";
+import { TaskFormSchema } from "./task-types";
 import db from "@/drizzle/db";
-import { TaskDraftTable, TaskFileTable, TaskTable } from "@/drizzle/schemas";
+import {
+  PaymentStatusType,
+  PaymentTable,
+  TaskDraftTable,
+  TaskFileTable,
+  TaskTable,
+} from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -34,48 +40,49 @@ export async function getAllCategoryMap(): Promise<Record<string, string>> {
 
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
+export async function taskPaymentInsetion(
+  status: PaymentStatusType,
+  amount: number,
+  userId: string,
+  purpose?: string,
+  stripePaymentIntentId?: string,
+  releaseDate?: Date,
+  stripeChargeId?: string
+) {
+  const payment = await db
+    .insert(PaymentTable)
+    .values({
+      amount,
+      userId,
+      purpose,
+      releaseDate,
+      status,
+      stripeChargeId,
+      stripePaymentIntentId,
+    })
+    .returning({ paymentId: PaymentTable.id });
+  return [payment][0][0].paymentId;
+}
 
-export async function createTaskAction(formData: FormData) {
+export async function createTaskAction(
+  title: string,
+  description: string,
+  category: string,
+  content: string,
+  visibility: string,
+  deadlineStr: string,
+  price: number,
+  uploadedFiles: UploadedFileMeta[],
+  paymentId: string
+) {
   const currentUser = await getServerUserSession();
   if (!currentUser) return;
 
-  const rawData = {
-    deadline: formData.get("deadline"),
-    visibility: formData.get("visibility"),
-    category: formData.get("category"),
-    price: formData.get("price"),
-    content: formData.get("taskContent"),
-    title: formData.get("title"),
-    description: formData.get("description"),
-  };
-  const uploadedFiles = JSON.parse(
-    formData.get("uploadedFiles")?.toString() || "[]"
-  ) as UploadedFileMeta[];
-
-  const result = TaskFormSchema.safeParse(rawData);
-
-  if (!result.success) {
-    const fieldErrors = result.error.flatten().fieldErrors;
-    return { error: true, fieldErrors };
-  }
-
-  const {
-    category,
-    content,
-    deadline: deadlineStr,
-    description,
-    price,
-    title,
-    visibility,
-  } = result.data;
-
   const deadline = parseDeadline(deadlineStr);
-
-  console.log("ROW DATA");
-  console.log(rawData);
   const categoryId = await getTaskCatagoryId(category);
-  if (!categoryId || categoryId == undefined) return;
 
+  if (!categoryId || categoryId == undefined) return;
+  console.log("inserting into taks table")
   const [taskId] = await db
     .insert(TaskTable)
     .values({
@@ -84,14 +91,16 @@ export async function createTaskAction(formData: FormData) {
       title: title,
       content: content,
       description: description,
-      price: Number(price),
+      price: price,
       status: "OPEN",
       visibility: visibility == "public" ? "public" : "private",
       deadline: deadline,
+      paymentId,
     })
     .returning({ taskId: TaskTable.id });
 
   if (uploadedFiles.length > 0) {
+    console.log('inserting into Task files Table')
     await db.insert(TaskFileTable).values(
       uploadedFiles.map((file) => ({
         taskId: taskId.taskId,
@@ -117,6 +126,7 @@ export async function getUserTasksbyId(userId: string) {
   });
   return userTasks;
 }
+
 export async function getTasksbyId(id: string) {
   const Task = await db.query.TaskTable.findFirst({
     where: (table, fn) => fn.eq(table.id, id),
@@ -124,6 +134,7 @@ export async function getTasksbyId(id: string) {
   if (!Task || !Task.id) return;
   return Task;
 }
+
 export async function getAllTasksbyId() {
   const allTasksFiltred = db.query.TaskTable.findMany({
     where: (table, fn) =>
@@ -192,7 +203,7 @@ export async function getTaskFilesById(taskId: string) {
   return files;
 }
 
-export async function createStripeCheckoutSession(price: number) {
+export async function createTaksPaymentCheckoutSession(price: number) {
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
@@ -243,7 +254,8 @@ export async function autoSaveDraftTask(
   category: string,
   price: number,
   visibility: "public" | "private",
-  deadline:string
+  deadline: string,
+  uploadedFiles?: string
 ) {
   try {
     const oldTask = await db.query.TaskDraftTable.findFirst({
@@ -258,7 +270,8 @@ export async function autoSaveDraftTask(
           category,
           price,
           visibility,
-          deadline
+          deadline,
+          uploadedFiles,
         })
         .where(eq(TaskDraftTable.userId, userId));
     } else {
@@ -268,7 +281,7 @@ export async function autoSaveDraftTask(
         category,
         price,
         visibility,
-        deadline
+        deadline,
       });
     }
   } catch (e) {
@@ -280,4 +293,7 @@ export async function getDraftTask(userId: string) {
     where: (table, fn) => fn.eq(table.userId, userId),
   });
   return oldTask;
+}
+export async function deleteDraftTask(userId: string) {
+  await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
 }

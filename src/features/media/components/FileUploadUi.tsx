@@ -28,7 +28,7 @@ export default function FileUploadUi({
 
   const handleFiles = (newFiles: FileList | null) => {
     if (!newFiles) return;
-
+    console.log('files: '+newFiles)
     const fileArray = Array.from(newFiles).slice(0, maxFiles - selectedFiles.length);
     const updatedFiles = [...selectedFiles, ...fileArray];
     setSelectedFiles(updatedFiles);
@@ -70,6 +70,7 @@ export default function FileUploadUi({
   };
 
   const handleButtonClick = (e: React.MouseEvent) => {
+    e.preventDefault()
     e.stopPropagation();
     inputRef.current?.click();
   };
@@ -88,7 +89,11 @@ export default function FileUploadUi({
           type="file"
           multiple
           className="hidden"
-          onChange={(e) => handleFiles(e.target.files)}
+          onChange={(e) => {
+            e.preventDefault()
+            handleFiles(e.target.files)
+            e.target.value = "";
+          }}
         />
         <div className="flex flex-col items-center gap-2">
           <div className="p-2 rounded-full bg-muted">

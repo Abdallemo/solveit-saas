@@ -21,11 +21,18 @@ import {
 import { Button } from "@/components/ui/button";
 import { FormEventHandler, Suspense, useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { CategorySelectWrapper } from "./CategorySelectWrapper";
+import { ExampleCombobox } from "./CategorySelectWrapper";
 import { SelectLoadingSkeleton } from "./NewTaskForm";
 import { useTask } from "@/contexts/TaskContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { autoSaveDraftTask } from "../server/action";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 
 export default function NewTaskSidebar() {
   const [open, setOpen] = useState(false);
@@ -81,78 +88,111 @@ function SideBarForm() {
 
   useEffect(() => {
     async function autoDraftSave() {
-      await autoSaveDraftTask(content, user?.id!, category, price, visibility,deadline);
+      await autoSaveDraftTask(
+        content,
+        user?.id!,
+        category,
+        price,
+        visibility,
+        deadline
+      );
     }
     setTimeout(() => {
       autoDraftSave();
     }, 500);
-  }, [content, user, setContent, category, price, visibility,deadline]);
+  }, [content, user, setContent, category, price, visibility, deadline]);
 
   return (
-    <div className="p-4 space-y-6">
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="deadline">Deadline</Label>
-        </div>
-        <Select value={deadline} onValueChange={(val) => setDeadline(val)}>
-          <SelectTrigger id="deadline">
-            <SelectValue placeholder="Select time task takes to be completed" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="12h">12h</SelectItem>
-            <SelectItem value="24h">24h</SelectItem>
-            <SelectItem value="48h">48h</SelectItem>
-            <SelectItem value="3days">3 days</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+    <div className="p-4 space-y-6 full">
+      <FormField
+        name="deadline"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Deadline</FormLabel>
+            <Select
+              value={field.value}
+              onValueChange={(val) => {
+                field.onChange(val);
+                setDeadline(val);
+              }}>
+              <FormControl>
+                <SelectTrigger className=" w-full">
+                  <SelectValue placeholder="Select time task takes to be completed" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="12h">12h</SelectItem>
+                <SelectItem value="24h">24h</SelectItem>
+                <SelectItem value="48h">48h</SelectItem>
+                <SelectItem value="3days">3 days</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Eye className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="visibility">Visibility</Label>
-        </div>
-        <Select onValueChange={setVisibility} value={visibility}>
-          <SelectTrigger id="visibility">
-            <SelectValue placeholder="Choose task visibility" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="public" defaultChecked>
-              Public
-            </SelectItem>
-            <SelectItem value="private">Private</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <FormField
+        name="visibility"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Visibility</FormLabel>
+            <Select
+              value={field.value}
+              onValueChange={(val) => {
+                field.onChange(val);
+                setVisibility(val as "public" | "private");
+              }}>
+              <FormControl>
+                <SelectTrigger className=" w-full">
+                  <SelectValue placeholder="Choose task visibility" />
+                </SelectTrigger>
+              </FormControl>
+              <SelectContent>
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="private">Private</SelectItem>
+              </SelectContent>
+            </Select>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="category">Category</Label>
-        </div>
-        <Suspense fallback={<SelectLoadingSkeleton />}>
-          <CategorySelectWrapper
-            setCategorie={setCategory}
-            category={category}
-          />
-        </Suspense>
-      </div>
+      <FormField
+        name="category"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Category</FormLabel>
+            <FormControl>
+              <ExampleCombobox value={field.value} onChange={field.onChange} />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-4 w-4 text-muted-foreground" />
-          <Label htmlFor="price">Price</Label>
-        </div>
-        <Input
-          id="price"
-          placeholder="Enter price"
-          type="number"
-          min={10}
-          onChange={(e) => setPrice(Number(e.target.value))}
-          value={price}
-        />
-      </div>
+      <FormField
+        name="price"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Price</FormLabel>
+            <FormControl>
+              <Input
+                type="number"
+                min={10}
+                placeholder="Enter price"
+                {...field}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  field.onChange(val);
+                  setPrice(val);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
 
       <Separator />
 
