@@ -12,7 +12,7 @@
     "db:d": "pnpm  drizzle-kit drop",
     "db:p": "pnpm  drizzle-kit push",
     "db:std": "pnpm  drizzle-kit studio",
-    "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe/subscription"
+    "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.8.0",
@@ -59,11 +59,15 @@
     "cmdk": "^1.1.1",
     "cobe": "^0.6.3",
     "date-fns": "^4.1.0",
+    "domhandler": "^5.0.3",
     "dotenv": "^16.4.7",
     "drizzle-orm": "^0.43.1",
     "google-auth-library": "^9.15.1",
     "highlight.js": "^11.11.1",
+    "html-to-text": "^9.0.5",
+    "htmlparser2": "^10.0.0",
     "jsdom": "^26.1.0",
+    "linkedom": "^0.18.11",
     "lowlight": "^3.3.0",
     "lucide-react": "^0.484.0",
     "motion": "^12.6.3",

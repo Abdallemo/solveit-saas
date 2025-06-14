@@ -9,9 +9,10 @@ export function generateTitleAndDescription(content: string) {
   const doc = dom.window.document;
 
   const titleEl = doc.querySelector("h1, h2, p");
+  const anyTetx = doc.querySelector("body");
+  console.log(`one lats time text`,anyTetx?.textContent)
   const rawTitle = titleEl?.textContent?.trim() || "";
   const title = truncateText(rawTitle, 80);
-  const isDisabled = doc.textContent?.trim().length!< 5
   
 
   let description = "";
@@ -24,5 +25,5 @@ export function generateTitleAndDescription(content: string) {
     }
   }
 
-  return { title, description ,isDisabled};
+  return { title, description };
 }
