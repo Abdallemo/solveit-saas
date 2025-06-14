@@ -1,4 +1,4 @@
-import DashboardCheckingComponent from "@/components/dashboard/dashboardCheckingComponent";
+import DashboardCheckingComponent from "@/components/dashboard/DashboardCheckingComponent";
 import { Suspense } from "react";
 
 export default function page() {

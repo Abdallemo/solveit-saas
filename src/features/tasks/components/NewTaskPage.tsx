@@ -125,6 +125,7 @@ export default function TaskCreationPage({
       toast.error(`${(<CircleAlert />)}something Went Wrong`);
     }
   }
+  console.log(content)
   return (
     <div className="flex h-full bg-background">
       <div className="flex-1 flex flex-col overflow-hidden">
