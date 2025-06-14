@@ -160,7 +160,7 @@ export async function getUserTasksbyIdPaginated(
       where,
       limit,
       offset,
-      orderBy: (table) => table.createdAt,
+      orderBy: (table,fn) => fn.desc(table.createdAt),
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
