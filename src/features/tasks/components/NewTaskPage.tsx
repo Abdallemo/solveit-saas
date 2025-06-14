@@ -1,34 +1,55 @@
 "use client";
-import { Suspense } from "react";
+import { Suspense, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
-import {
-  useForm,
-  FormProvider,
-  useFormContext,
-  Controller,
-} from "react-hook-form";
+import { useForm, FormProvider } from "react-hook-form";
 import TaskPostingEditor from "./richTextEdito/Tiptap";
 import NewTaskSidebar from "./newTaskSidebar";
 import { useTask } from "@/contexts/TaskContext";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TaskSchema, taskSchema } from "../server/task-types";
-import { uploadSelectedFiles } from "@/features/media/server/action";
+import {
+  getPresignedUploadUrl,
+  UploadedFileMeta,
+} from "@/features/media/server/action";
 import {
   autoSaveDraftTask,
   createTaksPaymentCheckoutSession,
 } from "../server/action";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { CircleAlert } from "lucide-react";
+import { CircleAlert, Loader } from "lucide-react";
 import useCurrentUser from "@/hooks/useCurrentUser";
 
 export default function TaskCreationPage() {
   const { category, deadline, price, visibility, content, selectedFiles } =
     useTask();
+  const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
-
   const doc = new DOMParser().parseFromString(content, "text/html");
   const textContent = doc.body.textContent || "";
+
+  async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
+    const uploadedFileMeta: UploadedFileMeta[] = [];
+    for (const file of selectedFiles) {
+      const presigned = await getPresignedUploadUrl(file.name, file.type);
+      await fetch(presigned.uploadUrl, {
+        method: "PUT",
+        headers: {
+          "Content-Type": file.type,
+        },
+        body: file,
+      });
+
+      uploadedFileMeta.push({
+        fileName: file.name,
+        fileType: file.type,
+        fileSize: file.size,
+        filePath: presigned.filePath,
+        storageLocation: presigned.publicUrl,
+      });
+    }
+    return JSON.stringify(uploadedFileMeta);
+  }
   const isDisabled = textContent.trim().length < 5;
   const form = useForm({
     resolver: zodResolver(taskSchema),
@@ -42,11 +63,12 @@ export default function TaskCreationPage() {
   });
   const currentUser = useCurrentUser();
   if (!currentUser) return;
-  const {user} = currentUser
+  const { user } = currentUser;
 
   async function onSubmit(data: TaskSchema) {
     try {
       console.log(data);
+      setIsUploading(true)
       const uploadedFiles = await uploadSelectedFiles(selectedFiles);
 
       await autoSaveDraftTask(
@@ -57,8 +79,8 @@ export default function TaskCreationPage() {
         visibility,
         deadline,
         uploadedFiles
-
       );
+      setIsUploading(false)
 
       const url = await createTaksPaymentCheckoutSession(price);
       router.push(url!);
@@ -72,8 +94,8 @@ export default function TaskCreationPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b p-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Post a Task</h1>
-          <Button type="submit" form="task-form" disabled={isDisabled}>
-            Publish Task
+          <Button type="submit" form="task-form" disabled={isDisabled || isUploading} className="hover:cursor-pointer" >
+          {isUploading ? <Loader className="animate-spin"/>:"Publish Task"}
           </Button>
         </header>
         <FormProvider {...form}>
