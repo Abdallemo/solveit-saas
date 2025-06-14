@@ -65,7 +65,7 @@ export async function taskPaymentInsetion(
 }
 
 export async function createTaskAction(
-   userId: string,
+  userId: string,
   title: string,
   description: string,
   category: string,
@@ -75,16 +75,14 @@ export async function createTaskAction(
   price: number,
   uploadedFiles: UploadedFileMeta[],
   paymentId: string
- 
 ) {
-  console.log("inside a createTaskAcrion Yoo")
- 
+  console.log("inside a createTaskAcrion Yoo");
 
   const deadline = parseDeadline(deadlineStr);
   const categoryId = await getTaskCatagoryId(category);
 
   if (!categoryId || categoryId == undefined) return;
-  console.log("inserting into taks table")
+  console.log("inserting into taks table");
   const [taskId] = await db
     .insert(TaskTable)
     .values({
@@ -102,7 +100,7 @@ export async function createTaskAction(
     .returning({ taskId: TaskTable.id });
 
   if (uploadedFiles.length > 0) {
-    console.log('inserting into Task files Table')
+    console.log("inserting into Task files Table");
     await db.insert(TaskFileTable).values(
       uploadedFiles.map((file) => ({
         taskId: taskId.taskId,
@@ -251,6 +249,8 @@ export async function createTaksPaymentCheckoutSession(price: number) {
   }
 }
 export async function autoSaveDraftTask(
+  title: string,
+  description: string,
   content: string,
   userId: string,
   category: string,
@@ -268,6 +268,8 @@ export async function autoSaveDraftTask(
       await db
         .update(TaskDraftTable)
         .set({
+          title,
+          description,
           content,
           category,
           price,
@@ -278,6 +280,8 @@ export async function autoSaveDraftTask(
         .where(eq(TaskDraftTable.userId, userId));
     } else {
       await db.insert(TaskDraftTable).values({
+        title,
+        description,
         userId,
         content,
         category,

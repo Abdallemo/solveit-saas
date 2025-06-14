@@ -32,6 +32,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import TextareaAutosize from "react-textarea-autosize";
+import { useFormContext } from "react-hook-form";
+import { TaskSchema } from "@/features/tasks/server/task-types";
 
 export default function NewTaskSidebar() {
   const [open, setOpen] = useState(false);
@@ -73,21 +76,25 @@ export default function NewTaskSidebar() {
 function SideBarForm() {
   const { user } = useCurrentUser();
   const {
+    title,
+    description,
     category,
     deadline,
     price,
     visibility,
-    setCategory,
-    setDeadline,
+    content,
+    setTitle,
+    setDescription,
     setPrice,
     setVisibility,
-    content,
-    setContent,
+    setDeadline,
   } = useTask();
 
   useEffect(() => {
     async function autoDraftSave() {
       await autoSaveDraftTask(
+        title,
+        description,
         content,
         user?.id!,
         category,
@@ -99,12 +106,63 @@ function SideBarForm() {
     setTimeout(() => {
       autoDraftSave();
     }, 500);
-  }, [content, user, setContent, category, price, visibility, deadline]);
-
+  }, [content, user, category, price, visibility, deadline,title,description]);
+  const form = useFormContext<TaskSchema>();
   return (
-    <div className="p-4 space-y-6 full">
+    <div className="p-4 space-y-4 full">
+      <FormField
+        control={form.control}
+        name="title"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Title</FormLabel>
+            <FormControl>
+              <TextareaAutosize
+                minRows={1}
+                maxRows={2}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                placeholder="Task Title"
+                {...field}
+                value={title}
+                onChange={(e) => {
+                  field.onChange(e.target.value);
+                  setTitle(e.target.value);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+      <FormField
+        control={form.control}
+        name="description"
+        render={({ field }) => (
+          <FormItem>
+            <FormLabel>Description</FormLabel>
+            <FormControl>
+              <TextareaAutosize
+                minRows={1}
+                maxRows={2}
+                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                placeholder="Task Description"
+                {...field}
+                value={description}
+                onChange={(e) => {
+                  setDescription(e.target.value);
+
+                  field.onChange(e.target.value);
+                }}
+              />
+            </FormControl>
+            <FormMessage />
+          </FormItem>
+        )}
+      />
+
       <FormField
         name="deadline"
+        control={form.control}
         render={({ field }) => (
           <FormItem>
             <FormLabel>Deadline</FormLabel>
@@ -132,6 +190,7 @@ function SideBarForm() {
       />
 
       <FormField
+        control={form.control}
         name="visibility"
         render={({ field }) => (
           <FormItem>
@@ -158,6 +217,7 @@ function SideBarForm() {
       />
 
       <FormField
+        control={form.control}
         name="category"
         render={({ field }) => (
           <FormItem>
@@ -171,6 +231,7 @@ function SideBarForm() {
       />
 
       <FormField
+        control={form.control}
         name="price"
         render={({ field }) => (
           <FormItem>
@@ -195,8 +256,8 @@ function SideBarForm() {
 
       <Separator />
 
-      <div className="space-y-2">
-        <div className="flex items-center gap-2">
+      <div className="space-y-1">
+        <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>

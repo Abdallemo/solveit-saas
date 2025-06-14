@@ -4,6 +4,8 @@ import { createContext, useContext, useState, ReactNode } from "react";
 type TaskContextType = {
   content: string;
   setContent: (c: string) => void;
+  setTitle: (c: string) => void;
+  setDescription: (c: string) => void;
   setDeadline: (d: string) => void;
   setVisibility: (d: "public" | "private") => void;
   setSelectedFiles: (f: File[]) => void;
@@ -12,6 +14,8 @@ type TaskContextType = {
   selectedFiles: File[];
   deadline: string;
   visibility: "public" | "private";
+  title: string;
+  description: string;
   category: string;
   price: number;
 };
@@ -20,6 +24,8 @@ const TaskContext = createContext<TaskContextType | undefined>(undefined);
 type TaskPorvideProps = {
   children: ReactNode;
   dbCategory: string;
+  dbTitle: string;
+  dbDescription: string;
   dbContent: string;
   dbDeadline: string;
   updatedAt?: Date;
@@ -33,8 +39,13 @@ export const TaskProvider = ({
   dbDeadline,
   dbVisibility,
   dbPrice,
+  dbTitle,
+  dbDescription,
+  updatedAt,
 }: TaskPorvideProps) => {
   const [content, setContent] = useState(dbContent);
+  const [title, setTitle] = useState(dbTitle);
+  const [description, setDescription] = useState(dbDescription);
   const [deadline, setDeadline] = useState(dbDeadline);
   const [visibility, setVisibility] = useState(dbVisibility);
   const [category, setCategory] = useState(dbCategory);
@@ -56,6 +67,10 @@ export const TaskProvider = ({
         setCategory,
         price,
         setPrice,
+        description,
+         setDescription,
+        title,
+        setTitle,
       }}>
       {children}
     </TaskContext.Provider>

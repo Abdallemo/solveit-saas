@@ -23,6 +23,9 @@ export default async function Page() {
     deadline = "12h",
     visibility = "public",
     price = 10,
+    title,
+    description,
+    updatedAt
   } = draft ?? {};
   return (
     <TaskProvider
@@ -30,7 +33,11 @@ export default async function Page() {
       dbCategory={category ?? ""}
       dbDeadline={deadline ?? "12h"}
       dbPrice={price ?? 10}
-      dbVisibility={visibility ?? "public"}>
+      dbVisibility={visibility ?? "public"}
+      dbDescription={description ?? ""}
+      dbTitle={title ?? ""}
+      updatedAt={updatedAt}
+      >
       <NewTaskpage />
     </TaskProvider>
   );

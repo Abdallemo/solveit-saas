@@ -21,8 +21,16 @@ import { CircleAlert, Loader } from "lucide-react";
 import useCurrentUser from "@/hooks/useCurrentUser";
 
 export default function TaskCreationPage() {
-  const { category, deadline, price, visibility, content, selectedFiles } =
-    useTask();
+  const {
+    category,
+    deadline,
+    price,
+    visibility,
+    content,
+    selectedFiles,
+    description,
+    title,
+  } = useTask();
   const [isUploading, setIsUploading] = useState(false);
   const router = useRouter();
   const doc = new DOMParser().parseFromString(content, "text/html");
@@ -51,27 +59,36 @@ export default function TaskCreationPage() {
     return JSON.stringify(uploadedFileMeta);
   }
   const isDisabled = textContent.trim().length < 5;
+
+  const defaultValues = useMemo(
+    () => ({
+      title,
+      description,
+      content,
+      deadline,
+      visibility,
+      category,
+      price,
+    }),
+    [title, description, content, deadline, visibility, category, price]
+  );
+
   const form = useForm({
     resolver: zodResolver(taskSchema),
-    defaultValues: {
-      deadline: deadline,
-      visibility: visibility,
-      category: category,
-      price: price,
-      content: content,
-    },
+    defaultValues,
   });
+
   const currentUser = useCurrentUser();
-  if (!currentUser) return;
   const { user } = currentUser;
 
   async function onSubmit(data: TaskSchema) {
     try {
-      console.log(data);
-      setIsUploading(true)
+      setIsUploading(true);
       const uploadedFiles = await uploadSelectedFiles(selectedFiles);
 
       await autoSaveDraftTask(
+        title,
+        description,
         content,
         user?.id!,
         category,
@@ -80,7 +97,7 @@ export default function TaskCreationPage() {
         deadline,
         uploadedFiles
       );
-      setIsUploading(false)
+      setIsUploading(false);
 
       const url = await createTaksPaymentCheckoutSession(price);
       router.push(url!);
@@ -94,8 +111,19 @@ export default function TaskCreationPage() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b p-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Post a Task</h1>
-          <Button type="submit" form="task-form" disabled={isDisabled || isUploading} className="hover:cursor-pointer" >
-          {isUploading ? <Loader className="animate-spin"/>:"Publish Task"}
+          <Button
+            type="submit"
+            form="task-form"
+            disabled={isDisabled || isUploading}
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+            {isUploading ? (
+              <>
+                <Loader className="animate-spin w-4 h-4" />
+                Uploading files...
+              </>
+            ) : (
+              "Publish Task"
+            )}
           </Button>
         </header>
         <FormProvider {...form}>
