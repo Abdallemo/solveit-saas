@@ -1,0 +1,246 @@
+import {
+  Home,
+  Bug,
+  Send,
+  LifeBuoy,
+  LucideBarChart3,
+  LucidePieChart,
+  LucideAlertTriangle,
+} from "lucide-react";
+import {
+  LuArrowUpRight,
+  LuBrain,
+  LuCalendar,
+  LuClipboardCheck,
+  LuClipboardList,
+  LuClipboardPlus,
+  LuDollarSign,
+  LuHistory,
+  LuLayoutDashboard,
+  LuListChecks,
+  LuMonitor,
+  LuSearch,
+  LuSettings,
+  LuShieldCheck,
+  LuStar,
+  LuUserPlus,
+  LuUsers,
+} from "react-icons/lu";
+
+export const MenuItemsAdmin = [
+  {
+    title: "Dashboard",
+    url: "/dashboard/admin",
+    icon: LuLayoutDashboard,
+  },
+  {
+    title: "User Management",
+    url: "/dashboard/admin/users",
+    icon: LuUsers,
+    child: [
+      {
+        title: "All Users",
+        url: "/dashboard/admin/users",
+        icon: LuUsers,
+      },
+      {
+        title: "Moderators",
+        url: "/dashboard/admin/users/moderators",
+        icon: LuShieldCheck,
+      },
+      {
+        title: "Pending Verifications",
+        url: "/dashboard/admin/users/pending",
+        icon: LucideAlertTriangle,
+      },
+    ],
+  },
+  {
+    title: "Task Oversight",
+    url: "/dashboard/admin/tasks",
+    icon: LuClipboardList,
+    child: [
+      {
+        title: "All Tasks",
+        url: "/dashboard/admin/tasks",
+        icon: LuClipboardList,
+      },
+      {
+        title: "Disputed Tasks",
+        url: "/dashboard/admin/tasks/disputes",
+        icon: LucideAlertTriangle,
+      },
+    ],
+  },
+  {
+    title: "AI Management",
+    url: "/dashboard/admin/ai",
+    icon: LuBrain, 
+    child: [
+      {
+        title: "AI Rules",
+        url: "/dashboard/admin/ai/rules",
+        icon: LuListChecks, 
+      },
+      {
+        title: "Moderation Logs",
+        url: "/dashboard/admin/ai/logs",
+        icon: LuHistory,
+      },
+      {
+        title: "AI Training Feedback",
+        url: "/dashboard/admin/ai/feedback",
+        icon: LuStar,
+      },
+    ],
+  },
+  {
+    title: "Payment Management",
+    url: "/dashboard/admin/payments",
+    icon: LuDollarSign,
+    child: [
+      {
+        title: "All Transactions",
+        url: "/dashboard/admin/payments",
+        icon: LuDollarSign,
+      },
+      {
+        title: "Pending/Hold",
+        url: "/dashboard/admin/payments/hold",
+        icon: LuListChecks,
+      },
+    ],
+  },
+  {
+    title: "System Reports",
+    url: "/dashboard/admin/reports",
+    icon: LucidePieChart,
+  },
+  {
+    title: "Site Settings",
+    url: "/dashboard/admin/settings",
+    icon: LuSettings,
+  },
+];
+
+export const MenuItemsPoster = [
+  {
+    title: "Dashboard",
+    url: "/dashboard/poster",
+    icon: Home,
+  },
+  {
+    title: "Tasks & Jobs",
+    url: "/dashboard/tasks",
+    icon: LuClipboardList,
+    child: [
+      {
+        title: "New Task/Job",
+        url: "/dashboard/poster/newTask",
+        icon: LuClipboardPlus,
+      },
+      {
+        title: "Your Tasks/Jobs",
+        url: "/dashboard/poster/yourTasks",
+        icon: LuListChecks,
+      },
+      {
+        title: "Task Analytics",
+        url: "/dashboard/poster/task-analytics",
+        icon: LucideBarChart3,
+      },
+    ],
+  },
+  {
+    title: "Mentorship",
+    url: "/dashboard/poster/mentors",
+    icon: LuUsers,
+    child: [
+      {
+        title: "Browse Mentors",
+        url: "/dashboard/poster/mentors",
+        icon: LuSearch,
+      },
+      {
+        title: "Bookings",
+        url: "/dashboard/poster/bookings",
+        icon: LuCalendar,
+      },
+      {
+        title: "Past Sessions",
+        url: "/dashboard/poster/history",
+        icon: LuHistory,
+      },
+      {
+        title: "Workspace",
+        url: "/dashboard/poster/workspace",
+        icon: LuMonitor,
+      },
+    ],
+  },
+];
+
+export const MenuItemsSolver = [
+  {
+    title: "Dashboard",
+    url: "/dashboard/solver",
+    icon: Home,
+  },
+  {
+    title: "Tasks & Jobs",
+    url: "/dashboard/tasks",
+    icon: Bug,
+    child: [
+      {
+        title: "Assigned Tasks",
+        url: "/dashboard/solver/assigned",
+        icon: LuClipboardCheck,
+      },
+      {
+        title: "Earnings",
+        url: "/dashboard/solver/earnings",
+        icon: LuDollarSign,
+      },
+    ],
+  },
+  {
+    title: "Mentorship",
+    url: "/dashboard/solver/workspace",
+    icon: LuUsers,
+    child: [
+      {
+        title: "Workspace",
+        url: "/dashboard/solver/workspace",
+        icon: LuMonitor,
+      },
+      {
+        title: "My Reviews",
+        url: "/dashboard/solver/reviews",
+        icon: LuStar,
+      },
+      {
+        title: "Mentor Listing",
+        url: "/dashboard/solver/listing",
+        icon: LuUserPlus,
+      },
+      {
+        title: "Upgrade to Solver++",
+        url: "/dashboard/solver/upgrade",
+        icon: LuArrowUpRight,
+      },
+    ],
+  },
+];
+
+export const navSecondary = [
+  {
+    title: "Support",
+    url: "#",
+    icon: LifeBuoy,
+  },
+  {
+    title: "Feedback",
+    url: "#",
+    icon: Send,
+  },
+];

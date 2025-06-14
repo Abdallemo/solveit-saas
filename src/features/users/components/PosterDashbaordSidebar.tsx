@@ -1,10 +1,6 @@
 "use client";
 import React, { Suspense } from "react";
-import {
-  LuClipboardList,
-  LuClipboardPlus,
-  LuListChecks,
-} from "react-icons/lu";
+import {MenuItemsAdmin,MenuItemsPoster,MenuItemsSolver,navSecondary} from '@/components/dashboard/menu-items'
 import {
   Sidebar,
   SidebarContent,
@@ -20,7 +16,7 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
-import { Home, Bug, Send, LifeBuoy } from "lucide-react";
+
 import Link from "next/link";
 import { NavUser } from "./User_nav_bar";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -28,70 +24,28 @@ import ProfileSkeleton from "@/components/profile-loading-skeleton";
 import { NavSecondary } from "./NavSecondary";
 import { usePathname } from "next/navigation";
 
-const MenuItemsPoster = [
-  {
-    title: "Home",
-    url: "/dashboard/poster",
-    icon: Home,
-  },
-  {
-    title: "Tasks & Jobs",
-    url: "/dashboard/tasks",
-    icon: LuClipboardList,
-    child: [
-      {
-        title: "New Task/Job",
-        url: "/dashboard/poster/newTask",
-        icon: LuClipboardPlus,
-      },
-      {
-        title: "Your Tasks/Jobs",
-        url: "/dashboard/poster/yourTasks",
-        icon: LuListChecks,
-      },
-    ],
-  },
-];
 
-const MenuItemsSolver = [
-  {
-    title: "Home",
-    url: "/dashboard/solver",
-    icon: Home,
-  },
-  {
-    title: "Tasks & Jobs",
-    url: "/dashboard/solver",
-    icon: Bug,
-    child: [
-      {
-        title: "Explore Issues",
-        url: "/dashboard/tasks",
-        icon: Send,
-      },
-    ],
-  },
-];
-
-const navSecondary = [
-  {
-    title: "Support",
-    url: "#",
-    icon: LifeBuoy,
-  },
-  {
-    title: "Feedback",
-    url: "#",
-    icon: Send,
-  },
-];
-
-export default function PosterDashboardSidebar() {
+export default function DashboardSidebar() {
   const { user, state } = useCurrentUser();
   const pathname = usePathname();
 
   const isActive = (url: string, exact = false) => {
+    const defaultSolverPath = "/dashboard/solver";
+    const defaultPosterPath = "/dashboard/poster";
+
     if (exact) return pathname === url;
+
+    if (
+      (user?.role === "SOLVER" &&
+        pathname === defaultSolverPath &&
+        url === defaultSolverPath) ||
+      (user?.role === "POSTER" &&
+        pathname === defaultPosterPath &&
+        url === defaultPosterPath)
+    ) {
+      return true;
+    }
+
     return pathname === url || pathname.startsWith(`${url}/`);
   };
 
@@ -113,8 +67,7 @@ export default function PosterDashboardSidebar() {
                           isActive(item.url, true)
                             ? "bg-foreground/10 text-foreground"
                             : ""
-                        }`}
-                      >
+                        }`}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -131,8 +84,7 @@ export default function PosterDashboardSidebar() {
                                   isActive(cld.url)
                                     ? "bg-foreground/10 text-foreground"
                                     : ""
-                                }`}
-                              >
+                                }`}>
                                 <cld.icon />
                                 <span>{cld.title}</span>
                               </Link>
@@ -154,8 +106,7 @@ export default function PosterDashboardSidebar() {
                           isActive(item.url, true)
                             ? "bg-foreground/10 text-foreground"
                             : ""
-                        }`}
-                      >
+                        }`}>
                         <item.icon />
                         <span>{item.title}</span>
                       </Link>
@@ -172,8 +123,7 @@ export default function PosterDashboardSidebar() {
                                   isActive(cld.url)
                                     ? "bg-foreground/10 text-foreground"
                                     : ""
-                                }`}
-                              >
+                                }`}>
                                 <cld.icon />
                                 <span>{cld.title}</span>
                               </Link>

@@ -17,23 +17,28 @@ import { Badge } from "@/components/ui/badge";
 import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
-  getAllTasksbyIdPaginated,
+  getAllTasksByRolePaginated,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
 
-export default async function BrowseTasks({ searchParams }:{searchParams:Promise<{q?: string,page?: string;}>}) {
+export default async function BrowseTasks({
+  searchParams,
+}: {
+  searchParams: Promise<{ q?: string; page?: string }>;
+}) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
-  const {q,page} = await searchParams
+  const { q, page } = await searchParams;
   const search = q ?? "";
   const pages = Number.parseInt(page ?? "1");
   const limit = 3;
   const offset = (pages - 1) * limit;
-
-  const { tasks, totalCount } = await getAllTasksbyIdPaginated(
+  console.log("user Role:", currentUser.role);
+  const { tasks, totalCount } = await getAllTasksByRolePaginated(
     currentUser.id,
+    currentUser.role,
     {
       search,
       limit,
@@ -80,7 +85,11 @@ export default async function BrowseTasks({ searchParams }:{searchParams:Promise
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-4xl font-bold text-foreground">Public Tasks</h1>
+          <h1 className="text-4xl font-bold text-foreground">
+            {currentUser.role == "POSTER"
+              ? "Public Tasks"
+              : "Available Tasks & Jobs"}
+          </h1>
           <Badge variant="outline" className="text-foreground">
             Total: {totalCount}
           </Badge>
@@ -92,7 +101,11 @@ export default async function BrowseTasks({ searchParams }:{searchParams:Promise
             className="flex items-center gap-3  justify-center">
             <Input
               name="q"
-              placeholder="Search Public tasks..."
+              placeholder={
+                currentUser.role == "POSTER"
+                  ? "Search Public tasks..."
+                  : "Search Available tasks..."
+              }
               defaultValue={search}
               className="flex-1"
             />
