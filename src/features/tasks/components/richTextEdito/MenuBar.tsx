@@ -155,7 +155,7 @@ export default function MenuBar({ editor }: menuBarProp) {
       >
         <Code className="h-4 w-4" />
       </Button>
-      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleImageUpload}>
+      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={handleImageUpload} disabled>
         <ImageIcon className="h-4 w-4" />
       </Button>
 
