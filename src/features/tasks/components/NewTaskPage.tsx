@@ -21,13 +21,15 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CircleAlert } from "lucide-react";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { generateTitleAndDescription } from "../lib/utils";
 
 export default function TaskCreationPage() {
   const { category, deadline, price, visibility, content, selectedFiles } =
     useTask();
   const router = useRouter();
-  const {isDisabled} = generateTitleAndDescription(content)
+
+  const doc = new DOMParser().parseFromString(content, "text/html");
+  const textContent = doc.body.textContent || "";
+  const isDisabled = textContent.trim().length < 5;
   const form = useForm({
     resolver: zodResolver(taskSchema),
     defaultValues: {

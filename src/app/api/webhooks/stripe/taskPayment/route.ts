@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         console.log("starting creat Task prosess")
 
         await createTaskAction(
+          userId,
           title,
           description,
           category,
@@ -77,7 +78,8 @@ export async function POST(request: NextRequest) {
           deadline,
           price,
           uploadedFiles as UploadedFileMeta[],
-          paymentId
+          paymentId,
+    
         );
 
         //cleaning 
