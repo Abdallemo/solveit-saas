@@ -19,10 +19,9 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { FormEventHandler, Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExampleCombobox } from "./CategorySelectWrapper";
-import { SelectLoadingSkeleton } from "./NewTaskForm";
 import { useTask } from "@/contexts/TaskContext";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { autoSaveDraftTask } from "../server/action";

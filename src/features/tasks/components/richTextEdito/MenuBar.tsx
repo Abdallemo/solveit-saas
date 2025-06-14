@@ -18,7 +18,6 @@ import {
 } from "lucide-react"
 import type React from "react"
 import { useRef } from "react"
-import NewTaskModel from "../NewTaskMode"
 import { useTask } from "@/contexts/TaskContext"
 
 function toggleMergedCodeBlock(editor: Editor) {
