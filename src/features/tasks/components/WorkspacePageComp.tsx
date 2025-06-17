@@ -70,6 +70,7 @@ export default function WorkspacePageComp({
   }, [form, content]);
 
   async function onSubmit(data: TaskSchema) {
+    toast.success("Solution Uploaded successfully")
     try {
       setIsUploading(true);
       setIsUploading(false);
@@ -85,24 +86,24 @@ export default function WorkspacePageComp({
         <header className="border-b p-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
           <Button
-            type="submit"
-            form="task-form"
+            // type="submit"
+            form="solution-form"
             disabled={isDisabled || isUploading}
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]" onClick={()=>toast.success("Solution Uploaded successfully")}>
             {isUploading ? (
               <>
                 <Loader className="animate-spin w-4 h-4" />
                 Uploading files...
               </>
             ) : (
-              "Publish Task"
+              "Publish Solution"
             )}
           </Button>
         </header>
         <FormProvider {...form}>
           <form
             onSubmit={form.handleSubmit(onSubmit)}
-            id="task-form"
+            id="solution-form"
             className="flex-1 flex overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="p-4 pb-2">
