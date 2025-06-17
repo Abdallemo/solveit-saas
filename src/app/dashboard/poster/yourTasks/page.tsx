@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
-  getUserTasksbyIdPaginated,
+  getPosterTasksbyIdPaginated,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
 
@@ -39,7 +39,7 @@ export default async function PosterPublishedTasks({
   const limit = 3;
   const offset = (pages - 1) * limit;
 
-  const { tasks, totalCount } = await getUserTasksbyIdPaginated(
+  const { tasks, totalCount } = await getPosterTasksbyIdPaginated(
     currentUser.id,
     {
       search,
@@ -126,7 +126,7 @@ export default async function PosterPublishedTasks({
                       </div>
                       <div className="flex items-center space-x-2 mb-2">
                         <p className="text-foreground text-sm">
-                          Posted by {currentUser.name}
+                          Posted by {task.poster.name}
                         </p>
                         <span className="text-gray-400">•</span>
                         <p className="text-gray-500 text-sm">
@@ -137,7 +137,7 @@ export default async function PosterPublishedTasks({
                     <div className="flex items-center space-x-2">
                       {getStatusBadge(task.status!)}
                       <Button variant="success" asChild>
-                        <Link href={`/dashboard/poster/yourTasks/${task.id}`}>
+                        <Link href={`/dashboard/tasks/${task.id}`}>
                           View Details
                         </Link>
                       </Button>

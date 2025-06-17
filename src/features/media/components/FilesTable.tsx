@@ -1,14 +1,21 @@
-"use client"
+"use client";
 
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Button } from "@/components/ui/button"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui/dropdown-menu";
 import {
   File,
   FileText,
@@ -21,76 +28,89 @@ import {
   Eye,
   Trash2,
   Copy,
-} from "lucide-react"
-import { formatDistanceToNow } from "date-fns"
-import { toast } from "sonner"
+} from "lucide-react";
+import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import AuthGate from "@/components/AuthGate";
+import { taskTableType } from "@/drizzle/schemas";
 
 interface FileData {
-  id: string
-  fileName: string
-  fileType: string
-  fileSize: number
-  storageLocation: string
-  filePath: string
-  uploadedAt: Date | null
+  id: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  storageLocation: string;
+  filePath: string;
+  uploadedAt: Date | null;
 }
 
 interface FilesTableProps {
-  files: FileData[]
+  files: FileData[];
+  tasks: taskTableType;
 }
 
 function getFileIcon(fileType: string) {
-  const type = fileType.toLowerCase()
+  const type = fileType.toLowerCase();
 
-  if (type.includes("image")) return <ImageIcon className="h-4 w-4 text-blue-500" />
-  if (type.includes("video")) return <FileVideo className="h-4 w-4 text-purple-500" />
-  if (type.includes("audio")) return <FileAudio className="h-4 w-4 text-green-500" />
-  if (type.includes("pdf")) return <FileText className="h-4 w-4 text-red-500" />
-  if (type.includes("zip") || type.includes("rar")) return <Archive className="h-4 w-4 text-orange-500" />
+  if (type.includes("image"))
+    return <ImageIcon className="h-4 w-4 text-blue-500" />;
+  if (type.includes("video"))
+    return <FileVideo className="h-4 w-4 text-purple-500" />;
+  if (type.includes("audio"))
+    return <FileAudio className="h-4 w-4 text-green-500" />;
+  if (type.includes("pdf"))
+    return <FileText className="h-4 w-4 text-red-500" />;
+  if (type.includes("zip") || type.includes("rar"))
+    return <Archive className="h-4 w-4 text-orange-500" />;
 
-  return <File className="h-4 w-4 text-gray-500" />
+  return <File className="h-4 w-4 text-gray-500" />;
 }
 
 function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024)
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-async function  handleFileAction(action: string, file: FileData) {
+async function handleFileAction(action: string, file: FileData) {
   switch (action) {
     case "view":
-      window.open(file.storageLocation, "_blank")
-      break
+      window.open(file.storageLocation, "_blank");
+      break;
     case "download":
-      const link = document.createElement("a")
-      link.href = file.storageLocation
-      link.download = file.fileName
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      break
+      const link = document.createElement("a");
+      link.href = file.storageLocation;
+      link.download = file.fileName;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      break;
     case "copy":
-     await navigator.clipboard.writeText(file.storageLocation)
-      toast.success("Link copied to clipboard",{duration:2000})
-      break
+      await navigator.clipboard.writeText(file.storageLocation);
+      toast.success("Link copied to clipboard", { duration: 2000 });
+      break;
     case "delete":
-      console.log("Delete file:", file.id)
-      break
+      console.log("Delete file:", file.id);
+      break;
     default:
-      break
+      break;
   }
 }
 
-export function FilesTable({ files }: FilesTableProps) {
+export function FilesTable({ files, tasks }: FilesTableProps) {
+  const currentUser = useCurrentUser();
+  if (!currentUser) return <AuthGate />;
+
   if (files.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground bg-white rounded-md border">
         <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
         <p>No files attached to this task</p>
       </div>
-    )
+    );
   }
 
   return (
@@ -118,9 +138,15 @@ export function FilesTable({ files }: FilesTableProps) {
                   {file.fileType}
                 </span>
               </TableCell>
-              <TableCell className="text-muted-foreground">{formatFileSize(file.fileSize)}</TableCell>
               <TableCell className="text-muted-foreground">
-                {file.uploadedAt ? formatDistanceToNow(new Date(file.uploadedAt), { addSuffix: true }) : "Unknown"}
+                {formatFileSize(file.fileSize)}
+              </TableCell>
+              <TableCell className="text-muted-foreground">
+                {file.uploadedAt
+                  ? formatDistanceToNow(new Date(file.uploadedAt), {
+                      addSuffix: true,
+                    })
+                  : "Unknown"}
               </TableCell>
               <TableCell>
                 <DropdownMenu>
@@ -131,23 +157,32 @@ export function FilesTable({ files }: FilesTableProps) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => handleFileAction("view", file)}>
+                    <DropdownMenuItem
+                      onClick={() => handleFileAction("view", file)}>
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFileAction("download", file)}>
+                    <DropdownMenuItem
+                      onClick={() => handleFileAction("download", file)}>
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleFileAction("copy", file)}>
+                    <DropdownMenuItem
+                      onClick={() => handleFileAction("copy", file)}>
                       <Copy className="mr-2 h-4 w-4" />
                       Copy Link
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    <DropdownMenuItem onClick={() => handleFileAction("delete", file)} className="text-red-600">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      Delete
-                    </DropdownMenuItem>
+                    {currentUser.user?.id === tasks.posterId && (
+                      <>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          onClick={() => handleFileAction("delete", file)}
+                          className="text-red-600">
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete
+                        </DropdownMenuItem>
+                      </>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
@@ -156,5 +191,5 @@ export function FilesTable({ files }: FilesTableProps) {
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

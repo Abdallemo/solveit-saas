@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { ScrollArea } from "@radix-ui/react-scroll-area";
-import { useTask } from "@/contexts/TaskContext";
 
 interface FileUploadProps {
   onFilesChange?: (files: File[]) => void;
@@ -21,7 +20,7 @@ export default function FileUploadUi({
   maxFiles = 5,
   className,
 }: FileUploadProps) {
-  const {selectedFiles  ,setSelectedFiles} = useTask()
+  const [selectedFiles  ,setSelectedFiles] = useState<File[]>([])
 
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);

@@ -18,7 +18,7 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { FormEvent, useRef } from "react";
-import { useTask } from "@/contexts/TaskContext";
+// import { useTask } from "@/contexts/TaskContext";
 import { Toggle } from "@/components/ui/toggle";
 
 function toggleMergedCodeBlock(editor: Editor) {
@@ -47,7 +47,7 @@ type menuBarProp = {
 
 export default function MenuBar({ editor }: menuBarProp) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { selectedFiles } = useTask();
+  // const { selectedFiles } = useTask();
 
   const handleImageUpload = (e: FormEvent) => {
     e.preventDefault()

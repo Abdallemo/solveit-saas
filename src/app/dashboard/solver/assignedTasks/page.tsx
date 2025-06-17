@@ -1,4 +1,10 @@
-import { Calendar, Search, User } from "lucide-react";
+import {
+  Calendar,
+  Search,
+  SquareArrowUpLeft,
+  SquareArrowUpRight,
+  User,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -17,28 +23,29 @@ import { Badge } from "@/components/ui/badge";
 import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
-  getAllTasksByRolePaginated,
+  getAssignedTasksbyIdPaginated,
+  getWorkspaceByTaskId,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
 
-export default async function BrowseTasks({
+export default async function PosterPublishedTasks({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; page?: string }>;
+  searchParams: Promise<{ q: string; page: string }>;
 }) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
+
   const { q, page } = await searchParams;
   const search = q ?? "";
   const pages = Number.parseInt(page ?? "1");
   const limit = 3;
   const offset = (pages - 1) * limit;
-  console.log("user Role:", currentUser.role);
-  const { tasks, totalCount } = await getAllTasksByRolePaginated(
+
+  const { tasks, totalCount } = await getAssignedTasksbyIdPaginated(
     currentUser.id,
-    currentUser.role,
     {
       search,
       limit,
@@ -80,15 +87,14 @@ export default async function BrowseTasks({
         return <Badge variant="secondary">Unknown</Badge>;
     }
   };
+  const workspaceExist = await getWorkspaceByTaskId(currentUser.id);
 
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-8">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">
-            {currentUser.role == "POSTER"
-              ? "Public Tasks"
-              : "Available Tasks & Jobs"}
+            Your Assigned Tasks
           </h1>
           <Badge variant="outline" className="text-foreground">
             Total: {totalCount}
@@ -101,11 +107,7 @@ export default async function BrowseTasks({
             className="flex items-center gap-3  justify-center">
             <Input
               name="q"
-              placeholder={
-                currentUser.role == "POSTER"
-                  ? "Search Public tasks..."
-                  : "Search Available tasks..."
-              }
+              placeholder="Search your assigned tasks..."
               defaultValue={search}
               className="flex-1"
             />
@@ -132,7 +134,7 @@ export default async function BrowseTasks({
                       </div>
                       <div className="flex items-center space-x-2 mb-2">
                         <p className="text-foreground text-sm">
-                          Posted by {currentUser.name}
+                          Posted by {task.poster.name}
                         </p>
                         <span className="text-gray-400">•</span>
                         <p className="text-gray-500 text-sm">
@@ -141,11 +143,17 @@ export default async function BrowseTasks({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                       <Badge><p>RM{task.price}</p></Badge>
                       {getStatusBadge(task.status!)}
-                      <Button variant="success" asChild>
+                      <Button variant="ghost" asChild>
                         <Link href={`/dashboard/tasks/${task.id}`}>
-                          View Details
+                          <SquareArrowUpRight />
+                        </Link>
+                      </Button>
+                      <Button variant="success" asChild>
+                        <Link href={`/dashboard/solver/workspace/start/${task.id}`}>
+                          {task.workspace
+                            ? "Continue Workspace"
+                            : "Begin Workspace"}
                         </Link>
                       </Button>
                     </div>
@@ -165,13 +173,6 @@ export default async function BrowseTasks({
                         <span>
                           Due: {formatDate(task.deadline.toLocaleDateString())}
                         </span>
-                      </div>
-                    )}
-
-                    {task.solverId && (
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4" />
-                        <span>Being solved</span>
                       </div>
                     )}
                   </div>

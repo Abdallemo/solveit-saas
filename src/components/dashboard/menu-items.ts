@@ -177,7 +177,7 @@ export const MenuItemsSolver = [
     child: [
       {
         title: "Assigned Tasks",
-        url: "/dashboard/solver/assigned",
+        url: "/dashboard/solver/assignedTasks",
         icon: LuClipboardCheck,
       },
       {
@@ -189,12 +189,12 @@ export const MenuItemsSolver = [
   },
   {
     title: "Mentorship",
-    url: "/dashboard/solver/workspace",
+    url: "/dashboard/solver/mentor",
     icon: LuUsers,
     child: [
       {
         title: "Workspace",
-        url: "/dashboard/solver/workspace",
+        url: "/dashboard/solver/mentor",
         icon: LuMonitor,
       },
       {
