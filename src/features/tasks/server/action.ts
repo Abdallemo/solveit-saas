@@ -8,6 +8,7 @@ import {
   TaskFileTable,
   TaskTable,
   UserRoleType,
+  WorkspaceTable,
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { UploadedFileMeta } from "@/features/media/server/action";
@@ -15,56 +16,15 @@ import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import { parseDeadline } from "@/lib/utils";
-import { and, asc, count, eq, ilike, not } from "drizzle-orm";
+import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
+export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
+export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
 
-export async function getAllTaskCatagories() {
-  const catagoryName = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true },
-  });
-  return catagoryName;
-}
-export async function getTaskCatagoryId(name: string) {
-  const catagoryId = await db.query.TaskCategoryTable.findFirst({
-    where: (table, fn) => fn.eq(table.name, name),
-    columns: { id: true },
-  });
-  return catagoryId;
-}
-
-export async function getAllCategoryMap(): Promise<Record<string, string>> {
-  const categories = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true },
-  });
-
-  return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
-}
-export async function taskPaymentInsetion(
-  status: PaymentStatusType,
-  amount: number,
-  userId: string,
-  purpose?: string,
-  stripePaymentIntentId?: string,
-  releaseDate?: Date,
-  stripeChargeId?: string
-) {
-  const payment = await db
-    .insert(PaymentTable)
-    .values({
-      amount,
-      userId,
-      purpose,
-      releaseDate,
-      status,
-      stripeChargeId,
-      stripePaymentIntentId,
-    })
-    .returning({ paymentId: PaymentTable.id });
-  return [payment][0][0].paymentId;
-}
-
+//the Magic Parts 🪄
 export async function createTaskAction(
   userId: string,
   title: string,
@@ -116,115 +76,6 @@ export async function createTaskAction(
 
   console.log("Task created successfully!");
 }
-
-export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
-export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
-
-export async function getUserTasksbyId(userId: string) {
-  const userTasks = await db.query.TaskTable.findMany({
-    where: (table, fn) => fn.eq(table.posterId, userId),
-    orderBy: [asc(TaskTable.title)],
-  });
-  return userTasks;
-}
-
-export async function getTasksbyId(id: string) {
-  const Task = await db.query.TaskTable.findFirst({
-    where: (table, fn) => fn.eq(table.id, id),
-  });
-  if (!Task || !Task.id) return;
-  return Task;
-}
-
-export async function getAllTasksbyId() {
-  const allTasksFiltred = db.query.TaskTable.findMany({
-    where: (table, fn) =>
-      fn.and(
-        fn.not(fn.eq(table.status, "IN_PROGRESS")),
-        fn.not(fn.eq(table.status, "ASSIGNED"))
-      ),
-  });
-  return allTasksFiltred;
-}
-
-export async function getUserTasksbyIdPaginated(
-  userId: string,
-  { search, limit, offset }: { search?: string; limit: number; offset: number }
-) {
-  const where = and(
-    eq(TaskTable.posterId, userId),
-    search ? ilike(TaskTable.title, `%${search}%`) : undefined
-  );
-
-  const [tasks, totalCountResult] = await Promise.all([
-    db.query.TaskTable.findMany({
-      where,
-      limit,
-      offset,
-      orderBy: (table,fn) => fn.desc(table.createdAt),
-    }),
-    db.select({ count: count() }).from(TaskTable).where(where),
-  ]);
-
-  const totalCount = totalCountResult[0]?.count ?? 0;
-
-  return { tasks, totalCount };
-}
-
-export async function getAllTasksByRolePaginated(
-  userId: string,
-  role: UserRoleType,
-  {
-    search,
-    limit,
-    offset,
-  }: {
-    search?: string;
-    limit: number;
-    offset: number;
-  }
-) {
-  let where;
-
-  if (role === "POSTER") {
-   
-    where = and(
-      not(eq(TaskTable.posterId, userId)),
-
-      not(eq(TaskTable.visibility, "private")),
-      search ? ilike(TaskTable.title, `%${search}%`) : undefined
-    );
-  } else if (role === "SOLVER") {
-    
-    where = and(
-      not(eq(TaskTable.posterId, userId)),
-      not(eq(TaskTable.status, "ASSIGNED")),
-      search ? ilike(TaskTable.title, `%${search}%`) : undefined
-    );
-  }
-
-  const [tasks, totalCountResult] = await Promise.all([
-    db.query.TaskTable.findMany({
-      where,
-      limit,
-      offset,
-      orderBy: (table) => table.createdAt,
-    }),
-    db.select({ count: count() }).from(TaskTable).where(where),
-  ]);
-
-  const totalCount = totalCountResult[0]?.count ?? 0;
-
-  return { tasks, totalCount };
-}
-
-export async function getTaskFilesById(taskId: string) {
-  const files = await db.query.TaskFileTable.findMany({
-    where: (table, fn) => fn.eq(table.taskId, taskId),
-  });
-  return files;
-}
-
 export async function createTaksPaymentCheckoutSession(price: number) {
   const referer = await getServerReturnUrl();
   try {
@@ -316,6 +167,233 @@ export async function autoSaveDraftTask(
     await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
   }
 }
+type assignTaskReturnType = {
+  error?:
+    | "no such task available"
+    | "unable to assign task"
+    | "task already assigned to solver";
+  success?: "Task successfully assigned to you!";
+};
+export async function assignTaskToSolverById(
+  taskId: string,
+  solverId: string
+): Promise<assignTaskReturnType> {
+  try {
+    const oldTask = await db.query.TaskTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, taskId),
+    });
+    if (!oldTask) return { error: "no such task available" };
+    if (oldTask.solverId) return { error: "task already assigned to solver" };
+
+    const updatedTask = await db
+      .update(TaskTable)
+      .set({
+        solverId: solverId,
+        status: "ASSIGNED",
+        updatedAt: new Date(Date.now()),
+      })
+      .where(and(eq(TaskTable.id, taskId), isNull(TaskTable.solverId)));
+    revalidatePath(`/yourTasks/${taskId}`);
+    return { success: "Task successfully assigned to you!" };
+  } catch (error) {
+    console.error(error);
+    return { error: "unable to assign task" };
+  }
+}
+export async function createWorkspace(task: TaskReturnType) {
+  const newWorkspace = await db.insert(WorkspaceTable).values({
+    solverId: task?.solverId!,
+    taskId: task?.id!,
+  }).returning()
+  return newWorkspace[0];
+}
+
+// getters 🥱
+export async function getAllTaskCatagories() {
+  const catagoryName = await db.query.TaskCategoryTable.findMany({
+    columns: { id: true, name: true },
+  });
+  return catagoryName;
+}
+export async function getTaskCatagoryId(name: string) {
+  const catagoryId = await db.query.TaskCategoryTable.findFirst({
+    where: (table, fn) => fn.eq(table.name, name),
+    columns: { id: true },
+  });
+  return catagoryId;
+}
+
+export async function getAllCategoryMap(): Promise<Record<string, string>> {
+  const categories = await db.query.TaskCategoryTable.findMany({
+    columns: { id: true, name: true },
+  });
+
+  return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
+}
+
+export async function taskPaymentInsetion(
+  status: PaymentStatusType,
+  amount: number,
+  userId: string,
+  purpose?: string,
+  stripePaymentIntentId?: string,
+  releaseDate?: Date,
+  stripeChargeId?: string
+) {
+  const payment = await db
+    .insert(PaymentTable)
+    .values({
+      amount,
+      userId,
+      purpose,
+      releaseDate,
+      status,
+      stripeChargeId,
+      stripePaymentIntentId,
+    })
+    .returning({ paymentId: PaymentTable.id });
+  return [payment][0][0].paymentId;
+}
+
+export async function getUserTasksbyId(userId: string) {
+  const userTasks = await db.query.TaskTable.findMany({
+    where: (table, fn) => fn.eq(table.posterId, userId),
+    orderBy: [asc(TaskTable.title)],
+  });
+  return userTasks;
+}
+export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
+export async function getTasksbyId(id: string) {
+  const Task = await db.query.TaskTable.findFirst({
+    where: (table, fn) => fn.eq(table.id, id),
+    with: {
+      poster: true,
+      solver: true,
+      workspace: true,
+    },
+  });
+  if (!Task || !Task.id) return;
+  return Task;
+}
+
+export async function getAllTasksbyId() {
+  const allTasksFiltred = db.query.TaskTable.findMany({
+    where: (table, fn) =>
+      fn.and(
+        fn.not(fn.eq(table.status, "IN_PROGRESS")),
+        fn.not(fn.eq(table.status, "ASSIGNED"))
+      ),
+  });
+  return allTasksFiltred;
+}
+
+export async function getPosterTasksbyIdPaginated(
+  userId: string,
+  { search, limit, offset }: { search?: string; limit: number; offset: number }
+) {
+  const where = and(
+    eq(TaskTable.posterId, userId),
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+  );
+
+  const [tasks, totalCountResult] = await Promise.all([
+    db.query.TaskTable.findMany({
+      where,
+      limit,
+      offset,
+      orderBy: (table, fn) => fn.desc(table.createdAt),
+      with: {
+        poster: true,
+      },
+    }),
+    db.select({ count: count() }).from(TaskTable).where(where),
+  ]);
+
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
+  return { tasks, totalCount };
+}
+export async function getAssignedTasksbyIdPaginated(
+  userId: string,
+  { search, limit, offset }: { search?: string; limit: number; offset: number }
+) {
+  const where = and(
+    eq(TaskTable.solverId, userId),
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+  );
+
+  const [tasks, totalCountResult] = await Promise.all([
+    db.query.TaskTable.findMany({
+      where,
+      limit,
+      offset,
+      orderBy: (table, fn) => fn.desc(table.createdAt),
+      with: {
+        workspace: true,
+        poster: true,
+        solver: true,
+      },
+    }),
+    db.select({ count: count() }).from(TaskTable).where(where),
+  ]);
+
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
+  return { tasks, totalCount };
+}
+
+export async function getAllTasksByRolePaginated(
+  userId: string,
+  role: UserRoleType,
+  {
+    search,
+    limit,
+    offset,
+  }: {
+    search?: string;
+    limit: number;
+    offset: number;
+  }
+) {
+  let where;
+
+  if (role === "POSTER") {
+    where = and(
+      not(eq(TaskTable.posterId, userId)),
+
+      not(eq(TaskTable.visibility, "private")),
+      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    );
+  } else if (role === "SOLVER") {
+    where = and(
+      not(eq(TaskTable.posterId, userId)),
+      not(eq(TaskTable.status, "ASSIGNED")),
+      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    );
+  }
+
+  const [tasks, totalCountResult] = await Promise.all([
+    db.query.TaskTable.findMany({
+      where,
+      limit,
+      offset,
+      orderBy: (table) => table.createdAt,
+    }),
+    db.select({ count: count() }).from(TaskTable).where(where),
+  ]);
+
+  const totalCount = totalCountResult[0]?.count ?? 0;
+
+  return { tasks, totalCount };
+}
+
+export async function getTaskFilesById(taskId: string) {
+  const files = await db.query.TaskFileTable.findMany({
+    where: (table, fn) => fn.eq(table.taskId, taskId),
+  });
+  return files;
+}
+
 export async function getDraftTask(userId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
@@ -324,4 +402,25 @@ export async function getDraftTask(userId: string) {
 }
 export async function deleteDraftTask(userId: string) {
   await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
+}
+export async function getWorkspaceByTaskId(taskId: string) {
+  const workspace = await db.query.WorkspaceTable.findFirst({
+    where: (table, fn) => fn.eq(table.taskId, taskId),
+    with: {
+      solver: true,
+      task: true,
+    },
+  });
+  return workspace;
+}
+export type WorkpaceSchemReturnedType = Awaited<ReturnType<typeof getWorkspaceById>>
+export async function getWorkspaceById(workspaceId: string) {
+  const workspace = await db.query.WorkspaceTable.findFirst({
+    where: (table, fn) => fn.eq(table.id, workspaceId),
+    with: {
+      solver: true,
+      task: true,
+    },
+  });
+  return workspace;
 }

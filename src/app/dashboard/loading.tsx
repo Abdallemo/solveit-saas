@@ -1,56 +1,144 @@
 import { Skeleton } from "@/components/ui/skeleton"
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarInset,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubItem,
+  SidebarProvider,
+} from "@/components/ui/sidebar"
 
 export default function DashboardSkeleton() {
   return (
-    <div className="flex h-screen w-full bg-sidebar">
-      
-      <div className="hidden w-64 flex-col border-r bg-card md:flex">
-        
-        <div className="flex h-14 items-center border-b px-4">
-          <Skeleton className="h-8 w-32" />
+    <SidebarProvider defaultOpen>
+      <AppSidebarSkeleton />
+      <SidebarInset>
+        <div className="flex h-screen items-center justify-center">
+          <Skeleton className="h-8 w-48" />
         </div>
-
-        
-        <div className="flex-1 p-4">
-          <div className="space-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="flex items-center gap-3">
-                <Skeleton className="h-4 w-4 rounded-sm" />
-                <Skeleton className="h-4 w-24" />
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      
-      <div className="flex flex-1 flex-col">
-      
-        <div className="flex h-14 items-center border-b px-4">
-          <Skeleton className="md:hidden h-8 w-8 rounded-md" />
-          <Skeleton className="ml-4 h-5 w-32" />
-          <Skeleton className="ml-auto h-8 w-8 rounded-full" />
-        </div>
-
-        <div className="p-4 md:p-6">
-         
-          <div className="grid gap-4 md:grid-cols-3">
-            {Array.from({ length: 3 }).map((_, i) => (
-              <div key={i} className="rounded-lg border bg-card p-4 shadow-sm">
-                <Skeleton className="h-4 w-16" />
-                <Skeleton className="mt-3 h-6 w-20" />
-              </div>
-            ))}
-          </div>
-
-         
-          <div className="mt-6 rounded-lg border bg-card p-4 shadow-sm">
-            <Skeleton className="h-4 w-32" />
-            <Skeleton className="mt-4 h-[200px] w-full" />
-          </div>
-        </div>
-      </div>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
 
+function AppSidebarSkeleton() {
+  return (
+    <Sidebar>
+      <SidebarHeader>
+        <div className="p-2">
+          <Skeleton className="h-6 w-16" />
+        </div>
+      </SidebarHeader>
+
+      <SidebarContent>
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {/* Dashboard - Active item */}
+              <SidebarMenuItem>
+                <SidebarMenuButton className="bg-sidebar-accent">
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-20" />
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+
+              {/* Tasks & Jobs with sub-items */}
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-24" />
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-16" />
+                    </div>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+
+              {/* Mentorship with sub-items */}
+              <SidebarMenuItem>
+                <SidebarMenuButton>
+                  <Skeleton className="h-4 w-4" />
+                  <Skeleton className="h-4 w-20" />
+                </SidebarMenuButton>
+                <SidebarMenuSub>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-20" />
+                    </div>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-24" />
+                    </div>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-28" />
+                    </div>
+                  </SidebarMenuSubItem>
+                  <SidebarMenuSubItem>
+                    <div className="flex items-center gap-2 px-2 py-1">
+                      <Skeleton className="h-3 w-3" />
+                      <Skeleton className="h-3 w-32" />
+                    </div>
+                  </SidebarMenuSubItem>
+                </SidebarMenuSub>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
+
+      <SidebarFooter>
+        <SidebarMenu>
+          {/* Support */}
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-16" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* Feedback */}
+          <SidebarMenuItem>
+            <SidebarMenuButton>
+              <Skeleton className="h-4 w-4" />
+              <Skeleton className="h-4 w-18" />
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+
+          {/* User Profile */}
+          <SidebarMenuItem>
+            <SidebarMenuButton className="h-12">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-3 w-28" />
+                <Skeleton className="h-2 w-32" />
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarFooter>
+    </Sidebar>
+  )
+}

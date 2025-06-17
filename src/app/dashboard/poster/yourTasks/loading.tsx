@@ -5,14 +5,14 @@ export default function Loading() {
   return (
     <div className="pt-10 py-10 md:p-6 w-6xl mx-auto">
       <div className="flex justify-between items-center mb-6">
-        {/* <h1 className="text-2xl font-bold">Your Tasks</h1> */}
+       
         <Skeleton className="h-5 w-16" />
         <div className="text-sm text-muted-foreground">
           <Skeleton className="h-5 w-16" />
         </div>
       </div>
 
-      {/* Search bar */}
+   
       <div className="relative mb-6">
         <Skeleton className="h-10 w-full rounded-md" />
         <div className="absolute right-3 top-2.5">
@@ -20,7 +20,7 @@ export default function Loading() {
         </div>
       </div>
 
-      {/* Task cards */}
+     
       {Array.from({ length: 3 }).map((_, index) => (
         <div key={index} className="mb-4 border rounded-lg p-4">
           <div className="flex justify-between items-start mb-2">
@@ -41,7 +41,7 @@ export default function Loading() {
         </div>
       ))}
 
-      {/* Pagination */}
+    
       <div className="flex justify-center items-center mt-8 gap-2">
         <Skeleton className="h-8 w-8 rounded-md" />
         <Skeleton className="h-8 w-8 rounded-md" />

@@ -1,6 +1,6 @@
 import { env } from "@/env/server";
 import { UploadedFileMeta } from "@/features/media/server/action";
-import { generateTitleAndDescription } from "@/features/tasks/lib/utils";
+
 import {
   createTaskAction,
   deleteDraftTask,
@@ -17,7 +17,7 @@ import {
 
 import { eq } from "drizzle-orm";
 import { UserSubscriptionTable } from "@/drizzle/schemas";
-import Stripe from "stripe";
+import type Stripe from "stripe";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -34,88 +34,14 @@ export async function POST(request: NextRequest) {
   const secret = env.STRIPE_WEBHOOK_SECRET;
   const body = await request.text();
   const event = stripe.webhooks.constructEvent(body, sig, secret);
-
   switch (event.type) {
     case "checkout.session.completed":
-      try {
-        const session = event.data.object;
-        const userId = event?.data.object?.metadata?.userId;
-        const paymentIntentId = session.payment_intent as string;
-        const paymentIntent = await stripe.paymentIntents.retrieve(
-          paymentIntentId
-        );
-        if (!userId) return;
-        console.log("user is there");
-        const amount = session.amount_total! / 100;
-        console.log("Saving into Payment table");
-
-        const paymentId = await taskPaymentInsetion(
-          "PENDING",
-          amount,
-          userId,
-          "Task Payment",
-          paymentIntentId
-        );
-
-        if (!paymentId) return;
-        console.log("retreving from draft table");
-
-        const draftTasks = await getDraftTask(userId);
-
-        if (!draftTasks) return;
-        const {
-          title,
-          description,
-          category,
-          content,
-          deadline,
-          price,
-          uploadedFiles,
-          visibility,
-        } = draftTasks;
-
-        if (
-          !category ||
-          !content ||
-          !deadline ||
-          !price ||
-          !visibility ||
-          !description
-        )
-          return;
-
-        console.log("starting creat Task prosess");
-
-        await createTaskAction(
-          userId,
-          title,
-          description,
-          category,
-          content,
-          visibility,
-          deadline,
-          price,
-          uploadedFiles as UploadedFileMeta[],
-          paymentId
-        );
-
-        //cleaning
-        await deleteDraftTask(userId);
-      } catch (error) {
-        console.error(error);
-      }
-
+      await handleTaskCreate(event)
       break;
 
     case "customer.subscription.updated":
-      console.log("customer.subscription.updated");
-      console.log(
-        "Scheduled cancellation at:",
-        new Date(event.data.object.cancel_at! * 1000)
-      );
       break;
     case "customer.subscription.created":
-      console.log("trigred customer.subscription.created");
       await handleCreate(event.data.object);
       break;
 
@@ -180,4 +106,74 @@ async function handleDelete(subscription: Stripe.Subscription) {
       userId: userId,
     }
   );
+}
+
+async function handleTaskCreate(event: Stripe.Event) {
+
+  if (event.type !== "checkout.session.completed") return;
+  try {
+    const session = event.data.object;
+    const userId = event?.data.object?.metadata?.userId;
+    const paymentIntentId = session.payment_intent as string;
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    if (!userId) return;
+    console.log("user is there");
+    const amount = session.amount_total! / 100;
+    console.log("Saving into Payment table");
+
+    const paymentId = await taskPaymentInsetion(
+      "PENDING",
+      amount,
+      userId,
+      "Task Payment",
+      paymentIntentId
+    );
+
+    if (!paymentId) return;
+    console.log("retreving from draft table");
+
+    const draftTasks = await getDraftTask(userId);
+
+    if (!draftTasks) return;
+    const {
+      title,
+      description,
+      category,
+      content,
+      deadline,
+      price,
+      uploadedFiles,
+      visibility,
+    } = draftTasks;
+
+    if (
+      !category ||
+      !content ||
+      !deadline ||
+      !price ||
+      !visibility ||
+      !description
+    )
+      return;
+
+    console.log("starting creat Task prosess");
+
+    await createTaskAction(
+      userId,
+      title,
+      description,
+      category,
+      content,
+      visibility,
+      deadline,
+      price,
+      uploadedFiles as UploadedFileMeta[],
+      paymentId
+    );
+
+    //cleaning
+    await deleteDraftTask(userId);
+  } catch (error) {
+    console.error(error);
+  }
 }

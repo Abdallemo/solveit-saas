@@ -12,7 +12,7 @@ import {
   numeric,
   json,
 } from "drizzle-orm/pg-core";
-
+import { relations } from "drizzle-orm";
 export const UserRole = pgEnum("role", [
   "ADMIN",
   "MODERATOR",
@@ -125,7 +125,7 @@ export const PaymentTable = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   amount: integer("amount").notNull(),
   status: PaymentStatus("status").default("PENDING"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
@@ -170,14 +170,16 @@ export const TaskTable = pgTable("tasks", {
   content: text("content"),
   price: integer("price"),
   posterId: uuid("poster_id")
-    .references(() => UserTable.id,{onDelete:'cascade'})
+    .references(() => UserTable.id, { onDelete: "cascade" })
     .notNull(),
   solverId: uuid("solver_id").references(() => UserTable.id),
   visibility: TaskVisibility("visibility"),
   categoryId: uuid("category_id")
-    .references(() => TaskCategoryTable.id,{onDelete:'cascade'})
+    .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
     .notNull(),
-  paymentId: uuid("payment_id").references(() => PaymentTable.id,{onDelete:'cascade'}),
+  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
@@ -187,7 +189,7 @@ export const TaskDraftTable = pgTable("task_drafts", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   title: text("title").notNull(),
   description: text("description"),
   content: text("content"),
@@ -203,7 +205,7 @@ export const TaskFileTable = pgTable("task_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id")
     .notNull()
-    .references(() => TaskTable.id,{onDelete:'cascade'}),
+    .references(() => TaskTable.id, { onDelete: "cascade" }),
   fileName: text("file_name").notNull(),
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size").notNull(),
@@ -249,10 +251,11 @@ export const WorkspaceTable = pgTable("workspaces", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id")
     .notNull()
-    .references(() => TaskTable.id,{onDelete:'cascade'}),
+    .references(() => TaskTable.id, { onDelete: "cascade" }),
   solverId: uuid("solver_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  content: text("content"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -260,10 +263,10 @@ export const WorkspaceFilesTable = pgTable("workspace_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id")
     .notNull()
-    .references(() => WorkspaceTable.id,{onDelete:'cascade'}),
+    .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
   uploadedById: uuid("uploaded_by_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   fileName: text("file_name").notNull(),
   fileType: text("file_type").notNull(),
   fileSize: integer("file_size").notNull(),
@@ -278,19 +281,28 @@ export const SolutionTable = pgTable("solutions", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id")
     .notNull()
-    .references(() => WorkspaceTable.id,{onDelete:'cascade'}),
+    .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
   content: text("content"),
   fileUrl: text("file_url"),
   isFinal: boolean("is_final").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
+export const SolutionFilesTable = pgTable("solution_files", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  solutionId: uuid("solution_id")
+    .notNull()
+    .references(() => SolutionTable.id, { onDelete: "cascade" }),
+  workspaceFileId: uuid("workspace_file_id")
+    .notNull()
+    .references(() => WorkspaceFilesTable.id, { onDelete: "cascade" }),
+});
 
 export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   title: text("title"),
   description: text("description"),
   ratePerHour: integer("rate_per_hour"),
@@ -306,7 +318,7 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
   message: text("message"),
   sentBy: uuid("sent_by")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
@@ -325,7 +337,7 @@ export const MentorSessionTable = pgTable("mentor_session", {
   id: uuid("id").primaryKey().defaultRandom(),
   bookingId: uuid("booking_id")
     .notNull()
-    .references(() => MentorshipBookingTable.id,{onDelete:'cascade'}),
+    .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -333,13 +345,15 @@ export const MentorshipBookingTable = pgTable("mentorship_bookings", {
   id: uuid("id").primaryKey().defaultRandom(),
   solverId: uuid("solver_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   posterId: uuid("student_id")
     .notNull()
-    .references(() => UserTable.id,{onDelete:'cascade'}),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   bookingTime: timestamp("booking_time", { mode: "date" }).notNull(),
   durationMinutes: integer("duration_minutes").notNull(),
-  paymentId: uuid("payment_id").references(() => PaymentTable.id,{onDelete:'cascade'}),
+  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
+    onDelete: "cascade",
+  }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 export const RulesTable = pgTable("ai_rules", {
@@ -347,3 +361,47 @@ export const RulesTable = pgTable("ai_rules", {
   ruleList: text("rule_list").array().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
+
+//* RELATINOS
+
+//* To Many Relations Here
+export const userRlations = relations(UserTable, ({ many }) => ({
+  tasksAsPoster: many(TaskTable, {
+    relationName: "poster",
+  }),
+  tasksAsSolver: many(TaskTable, {
+    relationName: "solver",
+  }),
+}));
+
+//* To Obe Relations Here
+export const taskRelations = relations(TaskTable, ({ one }) => ({
+  poster: one(UserTable, {
+    relationName: "poster",
+    fields: [TaskTable.posterId],
+    references: [UserTable.id],
+  }),
+  solver: one(UserTable, {
+    relationName: "solver",
+    fields: [TaskTable.solverId],
+    references: [UserTable.id],
+  }),
+  workspace: one(WorkspaceTable, {
+    relationName: "workspace",
+    fields: [TaskTable.id],
+    references: [WorkspaceTable.taskId],
+  }),
+}));
+
+export const workspaceRelations = relations(WorkspaceTable, ({ one }) => ({
+  task: one(TaskTable, {
+    relationName: "task",
+    fields: [WorkspaceTable.taskId],
+    references: [TaskTable.id],
+  }),
+  solver: one(UserTable, {
+    relationName: "solver",
+    fields: [WorkspaceTable.solverId],
+    references: [UserTable.id],
+  }),
+}));
