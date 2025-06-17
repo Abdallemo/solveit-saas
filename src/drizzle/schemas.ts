@@ -140,16 +140,16 @@ export const FeedbackTable = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     posterId: uuid("poster_id")
-      .references(() => UserTable.id)
+      .references(() => UserTable.id,{onDelete:'cascade'})
       .notNull(),
     solverId: uuid("solver_id")
-      .references(() => UserTable.id)
+      .references(() => UserTable.id,{onDelete:'cascade'})
       .notNull(),
     feedbackType: FeedbackType("feedback_type").notNull(),
     mentorBookingId: uuid("mentor_booking_id").references(
       () => MentorshipBookingTable.id
     ),
-    taskId: uuid("task_id").references(() => TaskTable.id),
+    taskId: uuid("task_id").references(() => TaskTable.id,{onDelete:'cascade'}),
     rating: integer("rating").default(0).notNull(),
     comment: text("comment"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
@@ -172,7 +172,7 @@ export const TaskTable = pgTable("tasks", {
   posterId: uuid("poster_id")
     .references(() => UserTable.id, { onDelete: "cascade" })
     .notNull(),
-  solverId: uuid("solver_id").references(() => UserTable.id),
+  solverId: uuid("solver_id").references(() => UserTable.id,{onDelete:'cascade'}),
   visibility: TaskVisibility("visibility"),
   categoryId: uuid("category_id")
     .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
