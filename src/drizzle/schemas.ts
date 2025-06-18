@@ -140,16 +140,18 @@ export const FeedbackTable = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     posterId: uuid("poster_id")
-      .references(() => UserTable.id,{onDelete:'cascade'})
+      .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
     solverId: uuid("solver_id")
-      .references(() => UserTable.id,{onDelete:'cascade'})
+      .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
     feedbackType: FeedbackType("feedback_type").notNull(),
     mentorBookingId: uuid("mentor_booking_id").references(
       () => MentorshipBookingTable.id
     ),
-    taskId: uuid("task_id").references(() => TaskTable.id,{onDelete:'cascade'}),
+    taskId: uuid("task_id").references(() => TaskTable.id, {
+      onDelete: "cascade",
+    }),
     rating: integer("rating").default(0).notNull(),
     comment: text("comment"),
     createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
@@ -172,7 +174,9 @@ export const TaskTable = pgTable("tasks", {
   posterId: uuid("poster_id")
     .references(() => UserTable.id, { onDelete: "cascade" })
     .notNull(),
-  solverId: uuid("solver_id").references(() => UserTable.id,{onDelete:'cascade'}),
+  solverId: uuid("solver_id").references(() => UserTable.id, {
+    onDelete: "cascade",
+  }),
   visibility: TaskVisibility("visibility"),
   categoryId: uuid("category_id")
     .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
@@ -365,12 +369,23 @@ export const RulesTable = pgTable("ai_rules", {
 //* RELATINOS
 
 //* To Many Relations Here
-export const userRlations = relations(UserTable, ({ many }) => ({
+export const userRlations = relations(UserTable, ({ many, one }) => ({
   tasksAsPoster: many(TaskTable, {
     relationName: "poster",
   }),
   tasksAsSolver: many(TaskTable, {
     relationName: "solver",
+  }),
+  account: one(AccountTable, {
+    fields: [UserTable.id],
+    references: [AccountTable.userId],
+  }),
+}));
+
+export const accountRelations = relations(AccountTable, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [AccountTable.userId],
+    references: [UserTable.id],
   }),
 }));
 
