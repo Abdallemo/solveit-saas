@@ -1,17 +1,3 @@
-Absolutely, Abdullahi! Here's a complete and clean `README.md` for your **SolveIt** system, including:
-
-1. ✅ **Project Overview**
-2. ⚙️ **Tech Stack**
-3. 🚀 **Features**
-4. 🧪 **Modules Progress**
-5. 📋 **To-Do Checklist** *(as discussed above)*
-6. 📁 **Folder Structure**
-7. 🧠 \**(PSM2)*
-8. 📜 **License**
-
----
-
-### 📄 `README.md`
 
 
 # SolveIt – SaaS-Based Student Job Board for UTHM
