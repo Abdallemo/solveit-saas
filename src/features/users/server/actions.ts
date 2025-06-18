@@ -1,6 +1,10 @@
 "use server";
 
-import { UserTable, UserSubscriptionTable, UserRoleType } from "@/drizzle/schemas";
+import {
+  UserTable,
+  UserSubscriptionTable,
+  UserRoleType,
+} from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { eq } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
@@ -22,13 +26,12 @@ export async function CreateUser(values: registerInferedTypes) {
 }
 export async function DeleteUserFromDb(id: string) {
   if (id) {
-    db.transaction(async (tx)=>{
+    db.transaction(async (tx) => {
       await tx.delete(UserTable).where(eq(UserTable.id, id));
       await tx
         .delete(UserSubscriptionTable)
         .where(eq(UserSubscriptionTable.userId, id));
-
-    })
+    });
   }
 }
 export async function getUserByEmail(email: string) {
@@ -42,18 +45,19 @@ export async function getUserByEmail(email: string) {
     return null;
   }
 }
-export type allUsersType = Awaited<ReturnType<typeof getAllUsers>>
+export type allUsersType = Awaited<ReturnType<typeof getAllUsers>>;
 
 export async function getAllUsers() {
   const allUsers = await db.query.UserTable.findMany();
   return allUsers;
-  
 }
-export async function updatUserRoleByid(userId:string,role:UserRoleType) {
-  await db.update(UserTable).set({
-    role,
-  }).where(eq(UserTable.id,userId))
-  
+export async function updatUserRoleByid(userId: string, role: UserRoleType) {
+  await db
+    .update(UserTable)
+    .set({
+      role,
+    })
+    .where(eq(UserTable.id, userId));
 }
 export async function getUserById(id: string) {
   try {
@@ -91,7 +95,10 @@ export async function UpdateUserField(parms: UpdateUserParams) {
       return;
     }
     if (parms.id) {
-      await db.update(UserTable).set(parms.data).where(eq(UserTable.id, parms.id));
+      await db
+        .update(UserTable)
+        .set(parms.data)
+        .where(eq(UserTable.id, parms.id));
       return;
     }
   } catch (error) {
@@ -136,4 +143,19 @@ export async function getServerUserSubscriptionByEmail({
 }) {}
 export async function updateUserRole(role: UserRole = "SOLVER", id: string) {
   await db.update(UserTable).set({ role: role }).where(eq(UserTable.id, id));
+}
+export async function isUserAccountOauth(userId: string): Promise<boolean> {
+  if (!userId) return false;
+
+  try {
+    const user = await db.query.UserTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, userId),
+      with: { account: true },
+    });
+
+    return !!user?.account;
+  } catch (error) {
+    console.error("Error checking if user is OAuth:", error);
+    return false;
+  }
 }

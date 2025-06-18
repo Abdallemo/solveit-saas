@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Mail, Bell, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,15 +25,37 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { DeleteUserAccount } from "@/features/auth/server/actions";
-import { toast } from "sonner"
-export default function AccountComponent() {
+import { toast } from "sonner";
+import Loading from "@/app/loading";
+import AuthGate from "@/components/AuthGate";
+export default function AccountComponent({
+  isOauthUser,
+}: {
+  isOauthUser: boolean;
+}) {
   const { user, state } = useCurrentUser();
   const [CurrentUser, setUser] = useState<AppUser | undefined>(user);
   const [emailNotification, SetEmailNotification] = useState<boolean>(false);
   const [pushNotification, setPushNotification] = useState<boolean>(false);
 
   const { setTheme, theme } = useTheme();
+  const [showAuthGate, setShowAuthGate] = useState(false);
 
+  useEffect(() => {
+    if (state === "unauthenticated") {
+      const timer = setTimeout(() => {
+        setShowAuthGate(true);
+      }, 400); 
+      return () => clearTimeout(timer);
+    }
+  }, [state]);
+
+  if (state === "loading" || (state === "unauthenticated" && !showAuthGate)) {
+    return <Loading />;
+  }
+  if (state === "unauthenticated" && showAuthGate) {
+    return <AuthGate />;
+  }
   return (
     <main
       className="min-h-screen overflow-x-hidden overflow-y-auto p-4 lg:p-8 flex justify-center items-start"
@@ -46,8 +68,16 @@ export default function AccountComponent() {
               experience."
             footer={
               <>
-                <Button variant={"secondary" } onClick={()=>toast.error('cancled')}>cancel</Button>
-                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => toast.error("cancled")}>
+                  cancel
+                </Button>
+                <Button
+                  variant={"success"}
+                  onClick={() => toast.success("saved")}>
+                  save
+                </Button>
               </>
             }
             sections={[
@@ -63,6 +93,7 @@ export default function AccountComponent() {
                       />
                       <Label htmlFor="email">Email</Label>
                       <Input
+                        disabled={isOauthUser}
                         id="email"
                         type="email"
                         defaultValue={CurrentUser?.email ?? ""}
@@ -118,8 +149,16 @@ export default function AccountComponent() {
             ]}
             footer={
               <>
-                <Button variant={"secondary"} onClick={()=>toast.error('cancled')}>cancel</Button>
-                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => toast.error("cancled")}>
+                  cancel
+                </Button>
+                <Button
+                  variant={"success"}
+                  onClick={() => toast.success("saved")}>
+                  save
+                </Button>
               </>
             }
           />
@@ -179,7 +218,7 @@ export default function AccountComponent() {
             ]}
           />
 
-          <CardWrapper
+          { !isOauthUser && <CardWrapper
             title="Security"
             sections={[
               {
@@ -187,26 +226,43 @@ export default function AccountComponent() {
                   <div className="flex flex-col gap-3">
                     <Label htmlFor="current-password">Current Password</Label>
                     <Input
+                      disabled={isOauthUser}
                       id="current-password"
                       type="password"
-                      defaultValue={"********"}
+                      autoComplete="new-password"
                     />
                     <Label htmlFor="new-password">New Password</Label>
-                    <Input id="new-password" type="password" />
+                    <Input
+                      disabled={isOauthUser}
+                      id="new-password"
+                      type="password"
+                    />
 
                     <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input id="confirm-password" type="password" />
+                    <Input
+                      disabled={isOauthUser}
+                      id="confirm-password"
+                      type="password"
+                    />
                   </div>
                 ),
               },
             ]}
             footer={
               <>
-                <Button variant={"secondary"} onClick={()=>toast.error('cancled')}>cancel</Button>
-                <Button variant={"success"} onClick={()=>toast.success('saved')}>save</Button>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => toast.error("cancled")}>
+                  cancel
+                </Button>
+                <Button
+                  variant={"success"}
+                  onClick={() => toast.success("saved")}>
+                  save
+                </Button>
               </>
             }
-          />
+          />}
           <CardWrapper
             title="Payment Methods"
             sections={[
@@ -241,13 +297,12 @@ export default function AccountComponent() {
             footerClassName="flex flex-col"
           />
 
-
           <AccountSubscption />
 
           <div className="flex justify-end gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive">Delete account</Button>
+                <Button variant="destructive" className="cursor-pointer">Delete account</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -258,10 +313,10 @@ export default function AccountComponent() {
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
                   <form action={DeleteUserAccount} className="">
                     <AlertDialogAction
-                      className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-full"
+                      className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-full"
                       type="submit">
                       Continue
                     </AlertDialogAction>
