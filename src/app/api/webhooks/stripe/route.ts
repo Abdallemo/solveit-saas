@@ -1,5 +1,5 @@
 import { env } from "@/env/server";
-import { UploadedFileMeta } from "@/features/media/server/action";
+import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 
 import {
   createTaskAction,
@@ -167,7 +167,7 @@ async function handleTaskCreate(event: Stripe.Event) {
       visibility,
       deadline,
       price,
-      uploadedFiles as UploadedFileMeta[],
+      uploadedFiles as PresignedUploadedFileMeta[],
       paymentId
     );
 

@@ -12,11 +12,12 @@ import {
   WorkspaceTable,
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
+import { deleteFileFromR2 } from "@/features/media/server/action";
 import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import { parseDeadline } from "@/lib/utils";
+import { parseDeadline, truncateText } from "@/lib/utils";
 import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -391,7 +392,7 @@ export async function getAllTasksByRolePaginated(
       where,
       limit,
       offset,
-      orderBy: (table) => table.createdAt,
+      orderBy: (table,fn) => fn.desc(table.createdAt),
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -447,7 +448,7 @@ export async function autoSaveDraftWorkspace(
   solverId: string,
   taskId: string
 ) {
-  if (!solverId || !taskId) return
+  if (!solverId || !taskId) return;
   try {
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
@@ -464,11 +465,37 @@ export async function autoSaveDraftWorkspace(
       await db.insert(WorkspaceTable).values({
         content,
         solverId,
-        taskId
+        taskId,
       });
     }
   } catch (e) {
     await db.delete(WorkspaceTable).where(eq(WorkspaceTable.taskId, taskId));
+  }
+}
+
+export async function deleteFileFromWorkspace(fileId: string) {
+  try {
+    const file = await db.query.WorkspaceFilesTable.findFirst({
+      where: eq(WorkspaceFilesTable.id, fileId),
+    });
+
+    if (!file) {
+      return { error: "File not found" };
+    }
+
+    await db
+      .delete(WorkspaceFilesTable)
+      .where(eq(WorkspaceFilesTable.id, fileId));
+
+    await deleteFileFromR2(file.filePath);
+    revalidatePath(`workspace/${file.workspaceId}`)
+    return {
+      file: file.fileName,
+      success: `${truncateText(file.fileName, 10)} Deleted Successfuly`,
+    };
+  } catch (error) {
+    console.error(error);
+    return { error: "Something went Wrong!!" };
   }
 }
 

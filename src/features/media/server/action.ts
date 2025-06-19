@@ -1,6 +1,6 @@
 "use server";
 
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { s3 } from "@/lib/cloudFlairR2";
 import { randomUUID } from "crypto";
@@ -66,4 +66,19 @@ export async function uploadSelectedFiles(
   }
 
   return uploadedFileMeta;
+}
+
+export async function deleteFileFromR2(filePath: string) {
+  const command = new DeleteObjectCommand({
+    Bucket: "solveit",
+    Key: filePath,
+  });
+
+  try {
+    await s3.send(command);
+    return { success: true };
+  } catch (err) {
+    console.error("R2 deletion failed:", err);
+    return { success: false };
+  }
 }

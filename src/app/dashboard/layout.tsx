@@ -1,7 +1,9 @@
-
 import React, { ReactNode } from "react";
 
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  getServerSession,
+  getServerUserSession,
+} from "@/features/auth/server/actions";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import {
@@ -10,6 +12,7 @@ import {
 } from "@/hooks/provider/stripe-subscription-provider";
 import DashboardSidebar from "@/features/users/components/PosterDashbaordSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { SessionProvider } from "next-auth/react";
 
 export default async function DashboardLayout({
   children,
@@ -38,22 +41,25 @@ export default async function DashboardLayout({
         : null,
     };
   }
+  const session = await getServerSession();
 
   return (
-    <StripeSubscriptionProvider value={stripeData}>
-      <SidebarProvider>
-        <div className="flex h-screen w-full">
-          <DashboardSidebar />
-          <div className="flex flex-col flex-1 overflow-auto">
-            <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
-              <div className="container flex h-14 items-center px-4 sm:px-6">
-                <SidebarTrigger className="mr-2" />
-              </div>
-            </header>
-            <main className="flex-1">{children}</main>
+    <SessionProvider session={session}>
+      <StripeSubscriptionProvider value={stripeData}>
+        <SidebarProvider>
+          <div className="flex h-screen w-full">
+            <DashboardSidebar />
+            <div className="flex flex-col flex-1 overflow-auto">
+              <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
+                <div className="container flex h-14 items-center px-4 sm:px-6">
+                  <SidebarTrigger className="mr-2" />
+                </div>
+              </header>
+              <main className="flex-1">{children}</main>
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
-    </StripeSubscriptionProvider>
+        </SidebarProvider>
+      </StripeSubscriptionProvider>
+    </SessionProvider>
   );
 }
