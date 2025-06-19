@@ -1,3 +1,4 @@
+import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { isAuthorized } from "@/features/auth/server/actions";
 import WorkspacePageComp from "@/features/tasks/components/WorkspacePageComp";
 import { getWorkspaceById } from "@/features/tasks/server/action";
@@ -11,10 +12,13 @@ export default async function Page({
   await isAuthorized("SOLVER");
   const { workspaceId } = await params;
   const currentWorkspace = await getWorkspaceById(workspaceId);
+  
 
   return (
     <>
-      <WorkspacePageComp defaultValues={currentWorkspace?.task!}/>
+      <WorkspaceProvider workspace={currentWorkspace}>
+        {<WorkspacePageComp/>}
+      </WorkspaceProvider>
     </>
   );
 }

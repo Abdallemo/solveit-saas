@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {useState } from "react";
 import { Mail, Bell, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,7 +9,6 @@ import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useTheme } from "next-themes";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { AppUser } from "../../../../../types/next-auth";
 import AccountSubscption from "../Account-subscption";
 import { CardWrapper } from "@/components/card-wrapper";
 
@@ -28,34 +27,23 @@ import { DeleteUserAccount } from "@/features/auth/server/actions";
 import { toast } from "sonner";
 import Loading from "@/app/loading";
 import AuthGate from "@/components/AuthGate";
+import { useAuthGate } from "@/hooks/useAuthGate";
 export default function AccountComponent({
   isOauthUser,
 }: {
   isOauthUser: boolean;
 }) {
-  const { user, state } = useCurrentUser();
-  const [CurrentUser, setUser] = useState<AppUser | undefined>(user);
+  const { user } = useCurrentUser();
   const [emailNotification, SetEmailNotification] = useState<boolean>(false);
   const [pushNotification, setPushNotification] = useState<boolean>(false);
 
   const { setTheme, theme } = useTheme();
-  const [showAuthGate, setShowAuthGate] = useState(false);
 
-  useEffect(() => {
-    if (state === "unauthenticated") {
-      const timer = setTimeout(() => {
-        setShowAuthGate(true);
-      }, 400); 
-      return () => clearTimeout(timer);
-    }
-  }, [state]);
+  const { isLoading, isBlocked } = useAuthGate();
 
-  if (state === "loading" || (state === "unauthenticated" && !showAuthGate)) {
-    return <Loading />;
-  }
-  if (state === "unauthenticated" && showAuthGate) {
-    return <AuthGate />;
-  }
+  if (isLoading) return <Loading />;
+  if (isBlocked) return <AuthGate />;
+
   return (
     <main
       className="min-h-screen overflow-x-hidden overflow-y-auto p-4 lg:p-8 flex justify-center items-start"
@@ -89,14 +77,14 @@ export default function AccountComponent({
                       <Label htmlFor="firstName">First name</Label>
                       <Input
                         id="firstName"
-                        defaultValue={CurrentUser?.name ?? ""}
+                        defaultValue={user?.name ?? ""}
                       />
                       <Label htmlFor="email">Email</Label>
                       <Input
                         disabled={isOauthUser}
                         id="email"
                         type="email"
-                        defaultValue={CurrentUser?.email ?? ""}
+                        defaultValue={user?.email ?? ""}
                       />
                     </div>
                   </>

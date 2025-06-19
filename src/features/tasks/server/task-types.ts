@@ -24,8 +24,9 @@ export const taskSchema = z.object({
   description: z.string().min(4, "description is too short"),
 });
 export const WorkpaceSchem = z.object({
-  content: z.string().min(4, "Content is too short"),
+  content: z.string().min(10, "Content is too short"),
 
 });
+export type WorkpaceSchemType = z.infer<typeof WorkpaceSchem>;
 
 export type TaskSchema = z.infer<typeof taskSchema>;

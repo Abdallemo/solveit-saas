@@ -8,10 +8,11 @@ import {
   TaskFileTable,
   TaskTable,
   UserRoleType,
+  WorkspaceFilesTable,
   WorkspaceTable,
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
-import { UploadedFileMeta } from "@/features/media/server/action";
+import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
@@ -23,6 +24,16 @@ import { redirect } from "next/navigation";
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
+type workspaceFileType = {
+  fileName: string;
+  uploadedById: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  storageLocation: string;
+  workspaceId: string;
+  isDraft: boolean;
+};
 
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -34,7 +45,7 @@ export async function createTaskAction(
   visibility: string,
   deadlineStr: string,
   price: number,
-  uploadedFiles: UploadedFileMeta[],
+  uploadedFiles: PresignedUploadedFileMeta[],
   paymentId: string
 ) {
   console.log("inside a createTaskAcrion Yoo");
@@ -201,10 +212,13 @@ export async function assignTaskToSolverById(
   }
 }
 export async function createWorkspace(task: TaskReturnType) {
-  const newWorkspace = await db.insert(WorkspaceTable).values({
-    solverId: task?.solverId!,
-    taskId: task?.id!,
-  }).returning()
+  const newWorkspace = await db
+    .insert(WorkspaceTable)
+    .values({
+      solverId: task?.solverId!,
+      taskId: task?.id!,
+    })
+    .returning();
   return newWorkspace[0];
 }
 
@@ -413,14 +427,73 @@ export async function getWorkspaceByTaskId(taskId: string) {
   });
   return workspace;
 }
-export type WorkpaceSchemReturnedType = Awaited<ReturnType<typeof getWorkspaceById>>
+export type WorkpaceSchemReturnedType = Awaited<
+  ReturnType<typeof getWorkspaceById>
+>;
 export async function getWorkspaceById(workspaceId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
     where: (table, fn) => fn.eq(table.id, workspaceId),
     with: {
       solver: true,
       task: true,
+      workspaceFiles: true,
     },
   });
   return workspace;
+}
+
+export async function autoSaveDraftWorkspace(
+  content: string,
+  solverId: string,
+  taskId: string
+) {
+  if (!solverId || !taskId) return
+  try {
+    const oldTask = await db.query.WorkspaceTable.findFirst({
+      where: (table, fn) => fn.eq(table.taskId, taskId),
+    });
+
+    if (oldTask) {
+      await db
+        .update(WorkspaceTable)
+        .set({
+          content,
+        })
+        .where(eq(WorkspaceTable.taskId, taskId));
+    } else {
+      await db.insert(WorkspaceTable).values({
+        content,
+        solverId,
+        taskId
+      });
+    }
+  } catch (e) {
+    await db.delete(WorkspaceTable).where(eq(WorkspaceTable.taskId, taskId));
+  }
+}
+
+export async function saveFileToWorkspaceDB({
+  fileName,
+  fileType,
+  fileSize,
+  filePath,
+  storageLocation,
+  workspaceId,
+  isDraft,
+  uploadedById,
+}: workspaceFileType) {
+  const newFile = await db
+    .insert(WorkspaceFilesTable)
+    .values({
+      fileName,
+      filePath,
+      fileSize,
+      fileType,
+      storageLocation,
+      workspaceId,
+      isDraft,
+      uploadedById,
+    })
+    .returning();
+  return newFile[0];
 }

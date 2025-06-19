@@ -1,31 +1,20 @@
 "use client";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm, FormProvider } from "react-hook-form";
-import TaskPostingEditor from "./richTextEdito/Tiptap";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TaskSchema, taskSchema } from "../server/task-types";
-import {
-  getPresignedUploadUrl,
-  UploadedFileMeta,
-} from "@/features/media/server/action";
+import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
 import { WorkpaceSchemReturnedType } from "../server/action";
 import { toast } from "sonner";
 import { CircleAlert, Loader } from "lucide-react";
 import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 
-type WorkspaceProp = Partial<
-  Pick<NonNullable<WorkpaceSchemReturnedType>, "content">
->;
-export default function WorkspacePageComp({
-  defaultValues,
-}: {
-  defaultValues: WorkspaceProp;
-}) {
-  const content = defaultValues.content!;
+export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
+  const {content} = useWorkspace()
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -36,31 +25,8 @@ export default function WorkspacePageComp({
     setIsDisabled(text.length < 5);
   }, [content]);
 
-  async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
-    const uploadedFileMeta: UploadedFileMeta[] = [];
-    for (const file of selectedFiles) {
-      const presigned = await getPresignedUploadUrl(file.name, file.type);
-      await fetch(presigned.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      });
-
-      uploadedFileMeta.push({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        filePath: presigned.filePath,
-        storageLocation: presigned.publicUrl,
-      });
-    }
-    return JSON.stringify(uploadedFileMeta);
-  }
-
-  const form = useForm<TaskSchema>({
-    resolver: zodResolver(taskSchema),
+  const form = useForm<WorkpaceSchemType>({
+    resolver: zodResolver(WorkpaceSchem),
   });
 
   useEffect(() => {
@@ -69,8 +35,8 @@ export default function WorkspacePageComp({
     });
   }, [form, content]);
 
-  async function onSubmit(data: TaskSchema) {
-    toast.success("Solution Uploaded successfully")
+  async function onSubmit(data: WorkpaceSchemType) {
+    toast.warning("Currently Solution Publishing is under Construction ")
     try {
       setIsUploading(true);
       setIsUploading(false);
@@ -86,10 +52,9 @@ export default function WorkspacePageComp({
         <header className="border-b p-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
           <Button
-            // type="submit"
             form="solution-form"
             disabled={isDisabled || isUploading}
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]" onClick={()=>toast.success("Solution Uploaded successfully")}>
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]" >
             {isUploading ? (
               <>
                 <Loader className="animate-spin w-4 h-4" />
@@ -117,7 +82,7 @@ export default function WorkspacePageComp({
                 </Suspense>
               </div>
             </div>
-            <WorkspaceSidebar />
+            <WorkspaceSidebar/>
           </form>
         </FormProvider>
       </div>
