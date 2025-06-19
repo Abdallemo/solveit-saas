@@ -1,4 +1,4 @@
-import { and, eq, isNotNull, isNull, or, sql } from "drizzle-orm";
+import { sql } from "drizzle-orm";
 import {
   timestamp,
   pgTable,
@@ -12,7 +12,10 @@ import {
   numeric,
   json,
 } from "drizzle-orm/pg-core";
-import { relations } from "drizzle-orm";
+import { relations } from "@/drizzle/relations";
+
+
+
 export const UserRole = pgEnum("role", [
   "ADMIN",
   "MODERATOR",
@@ -278,7 +281,7 @@ export const WorkspaceFilesTable = pgTable("workspace_files", {
   filePath: text("file_path").notNull(),
   isDraft: boolean("is_draft").default(true),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const SolutionTable = pgTable("solutions", {
@@ -408,7 +411,7 @@ export const taskRelations = relations(TaskTable, ({ one }) => ({
   }),
 }));
 
-export const workspaceRelations = relations(WorkspaceTable, ({ one }) => ({
+export const workspaceRelations = relations(WorkspaceTable, ({ one ,many}) => ({
   task: one(TaskTable, {
     relationName: "task",
     fields: [WorkspaceTable.taskId],
@@ -419,4 +422,17 @@ export const workspaceRelations = relations(WorkspaceTable, ({ one }) => ({
     fields: [WorkspaceTable.solverId],
     references: [UserTable.id],
   }),
+   workspaceFiles: many(WorkspaceFilesTable),
+   
 }));
+export const workspaceFilesRelation = relations(
+  WorkspaceFilesTable,
+  ({ one }) => ({
+    workspace: one(WorkspaceTable, {
+      fields: [WorkspaceFilesTable.workspaceId],
+      references: [WorkspaceTable.id],
+    }),
+  })
+);
+
+

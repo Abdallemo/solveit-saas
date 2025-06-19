@@ -1,21 +1,33 @@
-"use client"
-import type React from "react"
+"use client";
+import type React from "react";
 
-import { Label } from "@/components/ui/label"
-import { Separator } from "@/components/ui/separator"
-import { FileText, Send, MessageCircle } from "lucide-react"
-import FileUploadUi from "@/features/media/components/FileUploadUi"
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
-import { Button } from "@/components/ui/button"
-import { useEffect, useState } from "react"
-import { useIsMobile } from "@/hooks/use-mobile"
-import useCurrentUser from "@/hooks/useCurrentUser"
-import TextareaAutosize from "react-textarea-autosize"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
+import { FileText, Send, MessageCircle } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { useEffect, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import TextareaAutosize from "react-textarea-autosize";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import FileUploadSolver from "@/features/media/components/FileUploadSolver";
+import { autoSaveDraftWorkspace } from "../../server/action";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import AuthGate from "@/components/AuthGate";
+import Loading from "@/app/dashboard/solver/loading";
 
 export default function WorkspaceSidebar() {
-  const [open, setOpen] = useState(false)
-  const isMobile = useIsMobile()
+  const [open, setOpen] = useState(false);
+
+  const isMobile = useIsMobile();
 
   if (isMobile)
     return (
@@ -24,8 +36,7 @@ export default function WorkspaceSidebar() {
           <Button
             variant="outline"
             size="sm"
-            className="w-20 h-8 sticky shadow-md bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform"
-          >
+            className="w-20 h-8 sticky shadow-md bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform">
             Solution Workspace
             <span className="sr-only">Solution Workspace</span>
           </Button>
@@ -39,7 +50,7 @@ export default function WorkspaceSidebar() {
           </div>
         </SheetContent>
       </Sheet>
-    )
+    );
 
   return (
     <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col">
@@ -48,20 +59,32 @@ export default function WorkspaceSidebar() {
       </div>
       <SideBarForm />
     </div>
-  )
+  );
 }
 
 function SideBarForm() {
-  const { user } = useCurrentUser()
-  const [comment, setComment] = useState("")
-  const [comments, setComments] = useState<Array<{ id: string; text: string; timestamp: Date; author: string }>>([])
+  const { user } = useCurrentUser();
+  const [comment, setComment] = useState("");
+  const [comments, setComments] = useState<
+    Array<{ id: string; text: string; timestamp: Date; author: string }>>([]);
+  const { content, currentWorkspace } = useWorkspace();
 
   useEffect(() => {
-    async function autoDraftSave() {}
+    async function autoDraftSave() {
+      await autoSaveDraftWorkspace(
+        content,
+        currentWorkspace?.task.solverId!,
+        currentWorkspace?.taskId!
+      );
+    }
     setTimeout(() => {
-      autoDraftSave()
-    }, 500)
-  }, [])
+      autoDraftSave();
+    }, 500);
+  }, [content, currentWorkspace]);
+  const { isLoading, isBlocked } = useAuthGate();
+
+  if (isLoading) return <Loading />;
+  if (isBlocked) return <AuthGate />;
 
   const handleSendComment = () => {
     if (comment.trim()) {
@@ -70,33 +93,31 @@ function SideBarForm() {
         text: comment,
         timestamp: new Date(),
         author: user?.name || "Anonymous",
-      }
-      setComments((prev) => [...prev, newComment])
-      setComment("")
+      };
+      setComments((prev) => [...prev, newComment]);
+      setComment("");
     }
-  }
+  };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault()
-      handleSendComment()
+      e.preventDefault();
+      handleSendComment();
     }
-  }
+  };
 
   return (
-    <div className="p-4 space-y-4 flex flex-col h-full">
-      
-      <div className="space-y-1">
+    <div className="p-2 space-y-4 flex flex-col h-full">
+      <div className="space-y-1 ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi />
+        <FileUploadSolver />
       </div>
 
       <Separator />
 
-      
       <div className="space-y-2">
         <div className="flex items-center gap-1">
           <MessageCircle className="h-4 w-4 text-muted-foreground" />
@@ -112,7 +133,11 @@ function SideBarForm() {
             onChange={(e) => setComment(e.target.value)}
             onKeyPress={handleKeyPress}
           />
-          <Button size="sm" onClick={handleSendComment} disabled={!comment.trim()} className="self-end">
+          <Button
+            size="sm"
+            onClick={handleSendComment}
+            disabled={!comment.trim()}
+            className="self-end">
             <Send className="h-4 w-4" />
           </Button>
         </div>
@@ -120,7 +145,6 @@ function SideBarForm() {
 
       <Separator />
 
-     
       <div className="flex-1 min-h-0">
         <Card className="h-full">
           <CardHeader className="pb-3">
@@ -141,7 +165,9 @@ function SideBarForm() {
                 comments.map((commentItem) => (
                   <div key={commentItem.id} className="space-y-1">
                     <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">{commentItem.author}</span>
+                      <span className="text-xs font-medium text-foreground">
+                        {commentItem.author}
+                      </span>
                       <span className="text-xs text-muted-foreground">
                         {commentItem.timestamp.toLocaleTimeString([], {
                           hour: "2-digit",
@@ -150,7 +176,9 @@ function SideBarForm() {
                       </span>
                     </div>
                     <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-sm text-foreground whitespace-pre-wrap">{commentItem.text}</p>
+                      <p className="text-sm text-foreground whitespace-pre-wrap">
+                        {commentItem.text}
+                      </p>
                     </div>
                   </div>
                 ))
@@ -160,5 +188,5 @@ function SideBarForm() {
         </Card>
       </div>
     </div>
-  )
+  );
 }

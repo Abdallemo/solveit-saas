@@ -7,11 +7,13 @@ import { common, createLowlight } from "lowlight"
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
 import Highlight from "@tiptap/extension-highlight"
 import MenuBar from "../MenuBar"
-import { useTask } from "@/contexts/TaskContext"
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+
 import { useState } from "react"
 
 export default function WorkspaceEditor() {
-  const [content, setContent ] = useState("")
+    const {content,setContent} = useWorkspace()
+  
 
   const lowlight = createLowlight(common)
   const editor = useEditor({

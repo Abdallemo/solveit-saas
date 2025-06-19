@@ -9,7 +9,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { TaskSchema, taskSchema } from "../server/task-types";
 import {
   getPresignedUploadUrl,
-  UploadedFileMeta,
 } from "@/features/media/server/action";
 import {
   autoSaveDraftTask,
@@ -19,6 +18,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { CircleAlert, Loader } from "lucide-react";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 
 export default function TaskCreationPage({
   defaultValues,
@@ -49,9 +49,9 @@ export default function TaskCreationPage({
   }, [content]);
 
   async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
-    const uploadedFileMeta: UploadedFileMeta[] = [];
+    const uploadedFileMeta: PresignedUploadedFileMeta[] = [];
     for (const file of selectedFiles) {
-      const presigned = await getPresignedUploadUrl(file.name, file.type);
+      const presigned = await getPresignedUploadUrl(file.name, file.type,'task');
       await fetch(presigned.uploadUrl, {
         method: "PUT",
         headers: {
