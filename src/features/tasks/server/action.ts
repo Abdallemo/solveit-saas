@@ -379,6 +379,7 @@ export async function getAllTasksByRolePaginated(
       not(eq(TaskTable.visibility, "private")),
       search ? ilike(TaskTable.title, `%${search}%`) : undefined
     );
+    
   } else if (role === "SOLVER") {
     where = and(
       not(eq(TaskTable.posterId, userId)),
@@ -393,6 +394,7 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table,fn) => fn.desc(table.createdAt),
+      with:{poster:true,solver:true}
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
