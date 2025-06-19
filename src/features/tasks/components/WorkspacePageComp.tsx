@@ -4,18 +4,48 @@ import { Button } from "@/components/ui/button";
 import { useForm, FormProvider } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
-import { WorkpaceSchemReturnedType } from "../server/action";
 import { toast } from "sonner";
 import { CircleAlert, Loader } from "lucide-react";
 import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { Progress } from "@/components/ui/progress";
+const options = {
+  year: "numeric",
+  month: "numeric",
+  day: "numeric",
+  hour: "numeric",
+  minute: "numeric",
+  second: "numeric",
+  hour12: true,
+};
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
+  const [currentTime, setCurrentTime] = useState(new Date(Date.now()));
   const [isDisabled, setIsDisabled] = useState(true);
-  const {content} = useWorkspace()
+  const { content } = useWorkspace();
+  const formattedDateTime =
+    currentTime.toLocaleDateString("en-US", {
+      month: "numeric",
+      day: "numeric",
+      year: "numeric",
+    }) +
+    " " +
+    currentTime.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      second: "2-digit",
+      hour12: true,
+    });
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+
+    return () => clearInterval(interval); 
+  }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
 
@@ -36,7 +66,7 @@ export default function WorkspacePageComp() {
   }, [form, content]);
 
   async function onSubmit(data: WorkpaceSchemType) {
-    toast.warning("Currently Solution Publishing is under Construction ")
+    toast.warning("Currently Solution Publishing is under Construction ");
     try {
       setIsUploading(true);
       setIsUploading(false);
@@ -54,7 +84,7 @@ export default function WorkspacePageComp() {
           <Button
             form="solution-form"
             disabled={isDisabled || isUploading}
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]" >
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isUploading ? (
               <>
                 <Loader className="animate-spin w-4 h-4" />
@@ -71,10 +101,16 @@ export default function WorkspacePageComp() {
             id="solution-form"
             className="flex-1 flex overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="p-4 pb-2">
+              <div className="p-4 pb-2  flex justify-between items-center">
                 <p className="text-sm text-muted-foreground">
                   answer with in time
                 </p>
+                <div className="flex justify-between items-center gap-4">
+                  <span className="text-muted-foreground w-22 ">
+                    {formattedDateTime}
+                  </span>
+                  <Progress value={currentTime.getSeconds()} className="w-72" />
+                </div>
               </div>
               <div className="flex-1 overflow-auto p-4 pt-0">
                 <Suspense>
@@ -82,7 +118,7 @@ export default function WorkspacePageComp() {
                 </Suspense>
               </div>
             </div>
-            <WorkspaceSidebar/>
+            <WorkspaceSidebar />
           </form>
         </FormProvider>
       </div>

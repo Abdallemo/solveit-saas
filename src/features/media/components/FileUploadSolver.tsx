@@ -8,12 +8,17 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
+import {
+  deleteFileFromWorkspace,
+  saveFileToWorkspaceDB,
+} from "@/features/tasks/server/action";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { getPresignedUploadUrl } from "../server/action";
 import AuthGate from "@/components/AuthGate";
 import { useFileUploadWithProgress } from "@/hooks/useFileUploadWithProgress";
 import { Progress } from "@/components/ui/progress";
+import Loading from "@/app/loading";
+import { useAuthGate } from "@/hooks/useAuthGate";
 
 interface FileUploadProps {
   maxFiles?: number;
@@ -24,19 +29,17 @@ export default function FileUploadSolver({
   maxFiles = 5,
   className,
 }: FileUploadProps) {
+  const useCurrentSolver = useCurrentUser();
+  const { isLoading, isBlocked } = useAuthGate();
   const { uploadedFiles, setUploadedFiles, currentWorkspace } = useWorkspace();
   const { uploadFile, progress } = useFileUploadWithProgress();
-
-  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]); 
-
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  if (isLoading) return <Loading />;
+  if (isBlocked) return <AuthGate />;
 
-  const useCurrentSolver = useCurrentUser();
-  if (!useCurrentSolver.user?.id) {
-    return <AuthGate />;
-  }
-  const uploadedById = useCurrentSolver.user.id;
+  const uploadedById = useCurrentSolver.user?.id!;
   const fileLimitReached = uploadedFiles.length >= maxFiles;
 
   const handleFiles = async (newFiles: FileList | null) => {
@@ -48,7 +51,7 @@ export default function FileUploadSolver({
     );
 
     for (const file of fileArray) {
-      setUploadingFiles((prev) => [...prev, file]); 
+      setUploadingFiles((prev) => [...prev, file]);
       try {
         const presigned = await getPresignedUploadUrl(
           file.name,
@@ -71,7 +74,6 @@ export default function FileUploadSolver({
 
         setUploadedFiles((prev) => [...prev, savedFile]);
 
-
         setTimeout(() => {
           setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
         }, 100);
@@ -86,10 +88,12 @@ export default function FileUploadSolver({
     inputRef.current!.value = "";
   };
 
-  const removeFile = (filePath: string) => {
+  const removeFile = async (fileId: string, filePath: string) => {
     const updated = uploadedFiles.filter((f) => f.filePath !== filePath);
+    const { success, error, file } = await deleteFileFromWorkspace(fileId);
+    if (success) toast.success(success);
+    if (error) toast.error(error);
     setUploadedFiles(updated);
-
   };
 
   return (
@@ -124,7 +128,7 @@ export default function FileUploadSolver({
           }}
         />
 
-        <div className="flex flex-col items-center gap-2 bg-amber-500">
+        <div className="flex flex-col items-center gap-2">
           <div className="p-2 rounded-full bg-muted">
             <Upload className="h-4 w-4 text-muted-foreground" />
           </div>
@@ -136,6 +140,7 @@ export default function FileUploadSolver({
             files
           </div>
           <Button
+            type="button"
             disabled={fileLimitReached}
             variant="outline"
             size="sm"
@@ -146,11 +151,9 @@ export default function FileUploadSolver({
         </div>
       </div>
 
-      
       {(uploadingFiles.length > 0 || uploadedFiles.length > 0) && (
         <ScrollArea className="flex-1">
           <div className="mt-2 space-y-2 h-[100px] overflow-scroll p-2">
-         
             {uploadingFiles.map((file) => (
               <div
                 key={`uploading-${file.name}`}
@@ -189,7 +192,8 @@ export default function FileUploadSolver({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => removeFile(file.filePath)}
+                  type="button"
+                  onClick={() => removeFile(file.id, file.filePath)}
                   className="h-6 w-6 p-0 cursor-pointer">
                   <X className="h-3 w-3" />
                 </Button>
