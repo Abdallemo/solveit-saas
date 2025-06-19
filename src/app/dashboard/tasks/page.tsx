@@ -120,30 +120,40 @@ export default async function BrowseTasks({
           {tasks.length > 0 ? (
             tasks.map((task) => (
               <Card
-                key={task.id}
-                className="hover:shadow-md transition-shadow bg-card">
-                <CardHeader className="pb-1">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
+                className="hover:shadow-md transition-shadow bg-card w-full"
+                key={task.id}>
+                <CardHeader className="pb-2 sm:pb-1">
+                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
+                    <div className="flex flex-col min-w-0 flex-1">
                       <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="text-lg font-semibold text-foreground">
+                        <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                           {task.title}
                         </h3>
                       </div>
-                      <div className="flex items-center space-x-2 mb-2">
-                        <p className="text-foreground text-sm">
-                          Posted by {currentUser.name}
+                      <div className="flex items-center space-x-2 mb-2 text-xs sm:text-sm">
+                        <p className="text-foreground">
+                          Posted by {task.poster.name}
                         </p>
                         <span className="text-gray-400">•</span>
-                        <p className="text-gray-500 text-sm">
+                        <p className="text-gray-500">
                           {task.createdAt?.toLocaleDateString()}
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                       <Badge><p>RM{task.price}</p></Badge>
-                      {getStatusBadge(task.status!)}
-                      <Button variant="success" asChild>
+
+                    {/* Mobile: Stack vertically, Desktop: Horizontal */}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Badge className="text-xs">
+                          <p>RM{task.price}</p>
+                        </Badge>
+                        {getStatusBadge(task.status!)}
+                      </div>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="w-full sm:w-auto text-xs sm:text-sm"
+                        asChild>
                         <Link href={`/dashboard/tasks/${task.id}`}>
                           View Details
                         </Link>
@@ -153,30 +163,37 @@ export default async function BrowseTasks({
                 </CardHeader>
 
                 <CardContent className="pt-0">
-                  <div className="flex items-center space-x-6 text-sm text-foreground mb-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs sm:text-sm text-foreground mb-3">
                     <Badge
-                      className={getColorClass(categoryMap[task.categoryId])}>
+                      className={`${getColorClass(
+                        categoryMap[task.categoryId]
+                      )} text-xs`}>
                       {categoryMap[task.categoryId] || "Unknown"}
                     </Badge>
 
-                    {task.deadline && (
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4" />
-                        <span>
-                          Due: {formatDate(task.deadline.toLocaleDateString())}
-                        </span>
-                      </div>
-                    )}
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+                      {task.deadline && (
+                        <div className="flex items-center space-x-1">
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">
+                            Due:{" "}
+                            {formatDate(task.deadline.toLocaleDateString())}
+                          </span>
+                        </div>
+                      )}
 
-                    {task.solverId && (
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4" />
-                        <span>Being solved</span>
-                      </div>
-                    )}
+                      {task.solverId && (
+                        <div className="flex items-center space-x-1">
+                          <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">
+                            Being solved
+                          </span>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
-                  <p className="text-foreground text-sm leading-relaxed">
+                  <p className="text-foreground text-sm sm:text-base leading-relaxed">
                     {task.description}
                   </p>
                 </CardContent>
