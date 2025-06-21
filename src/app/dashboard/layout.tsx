@@ -4,7 +4,10 @@ import {
   getServerSession,
   getServerUserSession,
 } from "@/features/auth/server/actions";
-import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import {
+  getServerUserSubscriptionById,
+  getUserById,
+} from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import {
   StripeSubscriptionContextType,
@@ -13,13 +16,29 @@ import {
 import DashboardSidebar from "@/features/users/components/PosterDashbaordSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "next-auth/react";
+import { redirect } from "next/navigation";
 
 export default async function DashboardLayout({
   children,
 }: {
   children: ReactNode;
 }) {
-  const { id } = (await getServerUserSession())!;
+  const user = await getServerUserSession();
+  if (!user) {
+    return redirect("/api/auth/signout?callbackUrl=/login");
+  }
+  const { id, role } = user;
+
+  if (!id || !role) {
+    return redirect("/api/auth/signout?callbackUrl=/login");
+  }
+  const userInDb = await getUserById(id);
+  if (!userInDb) {
+    return redirect(
+      "/api/auth/signout?callbackUrl=/login?error=account_deleted"
+    );
+  }
+
   const subscription = await getServerUserSubscriptionById(id);
   let stripeData: StripeSubscriptionContextType = {
     cancelAt: null,
@@ -42,13 +61,19 @@ export default async function DashboardLayout({
     };
   }
   const session = await getServerSession();
+  if (!session?.user) {
+    return redirect("/api/auth/signout?callbackUrl=/login");
+  }
 
   return (
-    <SessionProvider session={session}>
+    <SessionProvider
+      basePath="/api/auth"
+      refetchInterval={30*60}
+      refetchOnWindowFocus={true}>
       <StripeSubscriptionProvider value={stripeData}>
         <SidebarProvider>
           <div className="flex h-screen w-full">
-            <DashboardSidebar />
+            <DashboardSidebar user={session?.user!} />
             <div className="flex flex-col flex-1 overflow-auto">
               <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
                 <div className="container flex h-14 items-center px-4 sm:px-6">

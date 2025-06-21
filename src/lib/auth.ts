@@ -23,6 +23,7 @@ export const {
 
   session: {
     strategy: "jwt",
+    maxAge: 12 * 60 * 60,
   },
   trustHost: true,
   ...authConfig,

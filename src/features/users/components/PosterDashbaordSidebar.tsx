@@ -19,14 +19,13 @@ import {
 
 import Link from "next/link";
 import { NavUser } from "./User_nav_bar";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
 import { NavSecondary } from "./NavSecondary";
 import { usePathname } from "next/navigation";
+import { Session } from "next-auth";
 
 
-export default function DashboardSidebar() {
-  const { user, state } = useCurrentUser();
+export default function DashboardSidebar({user}:{ user: Session["user"];}) {
   const pathname = usePathname();
 
   const isActive = (url: string, exact = false) => {
@@ -180,9 +179,6 @@ export default function DashboardSidebar() {
 
       <SidebarFooter>
         <NavSecondary items={navSecondary} />
-        {state === "loading" ? (
-          <ProfileSkeleton />
-        ) : (
           <Suspense fallback={<ProfileSkeleton />}>
             <NavUser
               email={user?.email}
@@ -191,7 +187,7 @@ export default function DashboardSidebar() {
               role={user?.role}
             />
           </Suspense>
-        )}
+        
       </SidebarFooter>
     </Sidebar>
   );

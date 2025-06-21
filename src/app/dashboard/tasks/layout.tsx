@@ -1,6 +1,5 @@
 import {
   getServerUserSession,
-  isAuthorized,
 } from "@/features/auth/server/actions";
 import { ReactNode } from "react";
 import { getUserById } from "@/features/users/server/actions";
@@ -20,7 +19,6 @@ export default async function Layout({ children }: { children: ReactNode }) {
     );
   }
 
-  await isAuthorized("POSTER");
 
   return <>{children}</>;
 }
