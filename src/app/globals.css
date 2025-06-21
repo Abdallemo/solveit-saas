@@ -149,3 +149,21 @@
   }
 
 }
+html {
+  scroll-behavior: smooth;
+}
+
+@layer utilities {
+  @keyframes scroll {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-33.333333%);
+    }
+  }
+
+  .animate-scroll {
+    animation: scroll linear infinite;
+  }
+}
