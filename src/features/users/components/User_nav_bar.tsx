@@ -103,7 +103,7 @@ export function NavUser({ image, name, email, role }: AppUser) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut()}>
+            <DropdownMenuItem onClick={() => signOut({redirectTo:'/login'})}>
               <LogOut />
               Log out
             </DropdownMenuItem>
