@@ -5,10 +5,12 @@ import Footer from "@/components/marketing/footer";
 import MouseMoveEffect from "@/components/marketing/mouse-move-effect";
 import Navbar from "@/components/marketing/navbar";
 import Pricing from "@/components/marketing/pricing";
+import DemoSection from "@/components/marketing/DemoSection";
+
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center">
+    <div className="min-h-screen w-full flex flex-col items-center scroll-smooth">
       <MouseMoveEffect />
 
       <div className="pointer-events-none fixed inset-0">
@@ -20,11 +22,13 @@ export default function Home() {
       <div className="z-10 w-full max-w-7xl px-4">
         <Navbar />
         <Hero />
+        <DemoSection/>
         <Features />
         <CTA />
         <Pricing />
         <Footer />
       </div>
+      
     </div>
   );
 }

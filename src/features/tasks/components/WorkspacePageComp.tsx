@@ -10,21 +10,15 @@ import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Progress } from "@/components/ui/progress";
-const options = {
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-  hour: "numeric",
-  minute: "numeric",
-  second: "numeric",
-  hour12: true,
-};
+
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date(Date.now()));
   const [isDisabled, setIsDisabled] = useState(true);
   const { content } = useWorkspace();
+  const [progress] = useState(65);
+
   const formattedDateTime =
     currentTime.toLocaleDateString("en-US", {
       month: "numeric",
@@ -44,7 +38,7 @@ export default function WorkspacePageComp() {
       setCurrentTime(new Date());
     }, 1000);
 
-    return () => clearInterval(interval); 
+    return () => clearInterval(interval);
   }, []);
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -102,14 +96,12 @@ export default function WorkspacePageComp() {
             className="flex-1 flex overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="p-4 pb-2  flex justify-between items-center">
-                <p className="text-sm text-muted-foreground">
-                  answer with in time
-                </p>
-                <div className="flex justify-between items-center gap-4">
-                  <span className="text-muted-foreground w-22 ">
-                    {formattedDateTime}
-                  </span>
-                  <Progress value={currentTime.getSeconds()} className="w-72" />
+                <div className="mt-4">
+                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
+                    <span>My Website's Contact Form Broke! (Coding Help)</span>
+                    <span>{progress}% Complete</span>
+                  </div>
+                  <Progress value={progress} className="h-2" />
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-4 pt-0">
