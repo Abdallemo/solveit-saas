@@ -1,5 +1,5 @@
 "use client";
-import { Suspense, useEffect, useMemo, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useForm, FormProvider } from "react-hook-form";
 import TaskPostingEditor from "./richTextEdito/Tiptap";
@@ -117,8 +117,7 @@ export default function TaskCreationPage({
         uploadedFiles
       );
       setIsUploading(false);
-
-      const url = await createTaksPaymentCheckoutSession(price);
+      const url = await createTaksPaymentCheckoutSession(price,user?.id!,deadline);
       router.push(url!);
     } catch (e) {
       console.error(e);

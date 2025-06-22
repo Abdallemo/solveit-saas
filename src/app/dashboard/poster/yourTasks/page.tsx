@@ -156,7 +156,7 @@ export default async function PosterPublishedTasks({
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
                         <span>
-                          Due: {formatDate(task.deadline.toLocaleDateString())}
+                          Due: {task.deadline}
                         </span>
                       </div>
                     )}
@@ -164,7 +164,7 @@ export default async function PosterPublishedTasks({
                     {task.solverId && (
                       <div className="flex items-center space-x-1">
                         <User className="w-4 h-4" />
-                        <span>Being solved</span>
+                        <span>Being solved by {task.solver?.name}</span>
                       </div>
                     )}
                   </div>

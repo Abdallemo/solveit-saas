@@ -177,7 +177,7 @@ export default async function BrowseTasks({
                           <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                           <span className="text-xs sm:text-sm">
                             Due:{" "}
-                            {formatDate(task.deadline.toLocaleDateString())}
+                            {task.deadline}
                           </span>
                         </div>
                       )}
@@ -186,7 +186,7 @@ export default async function BrowseTasks({
                         <div className="flex items-center space-x-1">
                           <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                           <span className="text-xs sm:text-sm">
-                            Being solved
+                            Being solved  by {task.solver?.name}
                           </span>
                         </div>
                       )}

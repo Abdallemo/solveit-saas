@@ -67,6 +67,7 @@ export default async function DashboardLayout({
 
   return (
     <SessionProvider
+    session={session}
       basePath="/api/auth"
       refetchInterval={30*60}
       refetchOnWindowFocus={true}>

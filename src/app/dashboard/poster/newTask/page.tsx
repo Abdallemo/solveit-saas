@@ -20,7 +20,7 @@ export default async function Page() {
     description = "",
     updatedAt,
   } = draft ?? {};
-  
+
   const defaultValues: TaskSchema = {
     title: title ?? "",
     description: description ?? "",
