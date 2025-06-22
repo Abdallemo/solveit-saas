@@ -17,7 +17,7 @@ import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import { parseDeadline, truncateText } from "@/lib/utils";
+import { truncateText } from "@/lib/utils";
 import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -44,18 +44,17 @@ export async function createTaskAction(
   category: string,
   content: string,
   visibility: string,
-  deadlineStr: string,
+  deadline: string,
   price: number,
   uploadedFiles: PresignedUploadedFileMeta[],
   paymentId: string
 ) {
   console.log("inside a createTaskAcrion Yoo");
 
-  const deadline = parseDeadline(deadlineStr);
   const categoryId = await getTaskCatagoryId(category);
 
   if (!categoryId || categoryId == undefined) return;
-  console.log("inserting into taks table");
+
   const [taskId] = await db
     .insert(TaskTable)
     .values({
@@ -67,7 +66,7 @@ export async function createTaskAction(
       price: price,
       status: "OPEN",
       visibility: visibility == "public" ? "public" : "private",
-      deadline: deadline,
+      deadline,
       paymentId,
     })
     .returning({ taskId: TaskTable.id });
@@ -85,10 +84,14 @@ export async function createTaskAction(
       }))
     );
   }
-
+  await deleteDraftTask(userId);
   console.log("Task created successfully!");
 }
-export async function createTaksPaymentCheckoutSession(price: number) {
+export async function createTaksPaymentCheckoutSession(
+  price: number,
+  userId: string,
+  deadlineStr: string
+) {
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
@@ -117,7 +120,8 @@ export async function createTaksPaymentCheckoutSession(price: number) {
         },
       ],
       metadata: {
-        userId: currentUser.id,
+        userId,
+        deadlineStr,
         type: "task_payment",
       },
       cancel_url: referer,
@@ -319,6 +323,7 @@ export async function getPosterTasksbyIdPaginated(
       orderBy: (table, fn) => fn.desc(table.createdAt),
       with: {
         poster: true,
+        solver:true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -379,7 +384,6 @@ export async function getAllTasksByRolePaginated(
       not(eq(TaskTable.visibility, "private")),
       search ? ilike(TaskTable.title, `%${search}%`) : undefined
     );
-    
   } else if (role === "SOLVER") {
     where = and(
       not(eq(TaskTable.posterId, userId)),
@@ -393,8 +397,8 @@ export async function getAllTasksByRolePaginated(
       where,
       limit,
       offset,
-      orderBy: (table,fn) => fn.desc(table.createdAt),
-      with:{poster:true,solver:true}
+      orderBy: (table, fn) => fn.desc(table.createdAt),
+      with: { poster: true, solver: true },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -490,7 +494,7 @@ export async function deleteFileFromWorkspace(fileId: string) {
       .where(eq(WorkspaceFilesTable.id, fileId));
 
     await deleteFileFromR2(file.filePath);
-    revalidatePath(`workspace/${file.workspaceId}`)
+    revalidatePath(`workspace/${file.workspaceId}`);
     return {
       file: file.fileName,
       success: `${truncateText(file.fileName, 10)} Deleted Successfuly`,

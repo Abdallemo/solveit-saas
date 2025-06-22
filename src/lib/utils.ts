@@ -8,22 +8,24 @@ export const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
 };
 
-export function parseDeadline(value: string): Date | null {
-  const now = new Date();
-  console.log('deadline Values: '+value)
+export function parseDeadline(value: string, baseTime: Date = new Date()): Date | null {
+  const base = baseTime.getTime();
   switch (value) {
     case "12h":
-      return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      return new Date(base + 12 * 60 * 60 * 1000);
     case "24h":
-      return new Date(now.getTime() + 48 * 60 * 60 * 1000);
-    case "48":
-      return new Date(now.getTime() + 3 * 24 * 60 * 60 * 1000);
+      return new Date(base + 24 * 60 * 60 * 1000);
+    case "48h":
+      return new Date(base + 48 * 60 * 60 * 1000);
     case "3days":
-      return new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000);
+      return new Date(base + 3 * 24 * 60 * 60 * 1000);
+    case "7days":
+      return new Date(base + 7 * 24 * 60 * 60 * 1000);
     default:
       return null;
   }
 }
+
 export function truncateText(text: string, maxLength: number): string {
   return text.length > maxLength ? text.slice(0, maxLength).trim() + "..." : text;
 }

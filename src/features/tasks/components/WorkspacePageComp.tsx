@@ -10,14 +10,14 @@ import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { Progress } from "@/components/ui/progress";
-
+import { DeadlineProgress } from "./DeadlineProgress";
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date(Date.now()));
   const [isDisabled, setIsDisabled] = useState(true);
-  const { content } = useWorkspace();
-  const [progress] = useState(65);
+  const { content, currentWorkspace } = useWorkspace();
+  const [progress, setProgress] = useState(0);
 
   const formattedDateTime =
     currentTime.toLocaleDateString("en-US", {
@@ -97,11 +97,18 @@ export default function WorkspacePageComp() {
             <div className="flex-1 flex flex-col overflow-hidden">
               <div className="p-4 pb-2  flex justify-between items-center">
                 <div className="mt-4">
-                  <div className="flex items-center justify-between text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    <span>My Website's Contact Form Broke! (Coding Help)</span>
-                    <span>{progress}% Complete</span>
+                  <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
+                    <span>{currentWorkspace?.task.title}</span>
+                    <span>{progress.toFixed()}% Complete</span>
                   </div>
-                  <Progress value={progress} className="h-2" />
+                  <div className="ml-5 flex flex-col w-7xl items-end">
+                    <DeadlineProgress
+                      progress={progress}
+                      setProgress={setProgress}
+                      createdAt={currentWorkspace?.createdAt!}
+                      deadlineValue={currentWorkspace?.task.deadline!}
+                    />
+                  </div>
                 </div>
               </div>
               <div className="flex-1 overflow-auto p-4 pt-0">

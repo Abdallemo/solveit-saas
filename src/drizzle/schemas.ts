@@ -187,11 +187,12 @@ export const TaskTable = pgTable("tasks", {
   paymentId: uuid("payment_id").references(() => PaymentTable.id, {
     onDelete: "cascade",
   }),
+  deadline: text("deadline"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
-  deadline: timestamp("deadline", { mode: "date" }),
 });
+
 export const TaskDraftTable = pgTable("task_drafts", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")

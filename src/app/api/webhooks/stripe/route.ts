@@ -155,7 +155,7 @@ async function handleTaskCreate(event: Stripe.Event) {
       !description
     )
       return;
-
+    
     console.log("starting creat Task prosess");
 
     await createTaskAction(
@@ -172,7 +172,7 @@ async function handleTaskCreate(event: Stripe.Event) {
     );
 
     //cleaning
-    await deleteDraftTask(userId);
+    
   } catch (error) {
     console.error(error);
   }

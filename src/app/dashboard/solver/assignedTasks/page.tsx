@@ -88,9 +88,9 @@ export default async function SolverAssignedTasks({
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Max-width for content, centered, with responsive padding - Matches BrowseTasks */}
+     
       <div className="max-w-6xl mx-auto px-6 py-8">
-        {/* Header section: flex-col on mobile, flex-row on small screens and up - Matches BrowseTasks */}
+       
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">
             Your Assigned Tasks
@@ -100,7 +100,7 @@ export default async function SolverAssignedTasks({
           </Badge>
         </div>
 
-        {/* Search bar section - Matches BrowseTasks layout */}
+       
         <div className="mb-8 items-center">
           <form
             method="get"
@@ -110,11 +110,11 @@ export default async function SolverAssignedTasks({
               name="q"
               placeholder="Search your assigned tasks..."
               defaultValue={search}
-              className="flex-1" // Matches BrowseTasks Input width
+              className="flex-1" 
             />
             <Button
               type="submit"
-              className="whitespace-nowrap" // Matches BrowseTasks Button width
+              className="whitespace-nowrap" 
             >
               <Search className="w-4 h-4 mr-2" />
               Search
@@ -122,26 +122,26 @@ export default async function SolverAssignedTasks({
           </form>
         </div>
 
-        {/* Task Cards Container - Matches BrowseTasks spacing and min-height */}
+        
         <div className="space-y-6 min-h-[500px]">
           {tasks.length > 0 ? (
             tasks.map((task) => (
               <Card
                 key={task.id}
-                // Card styling - Matches BrowseTasks
+              
                 className="hover:shadow-md transition-shadow bg-card w-full"
               >
-                {/* CardHeader with consistent padding - Matches BrowseTasks */}
+               
                 <CardHeader className="pb-2 sm:pb-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     <div className="flex flex-col min-w-0 flex-1">
-                      {/* Task Title with responsive font size and truncation - Matches BrowseTasks */}
+                     
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                           {task.title}
                         </h3>
                       </div>
-                      {/* Posted by and Date with responsive layout and improved text color - Matches BrowseTasks */}
+                     
                       <div className="flex items-center space-x-2 mb-2 text-xs sm:text-sm">
                         <p className="text-foreground">
                           Posted by {task.poster.name}
@@ -153,11 +153,11 @@ export default async function SolverAssignedTasks({
                       </div>
                     </div>
 
-                    {/* Action Buttons (Status, View Task, Continue Workspace) */}
-                    {/* Flex layout and gaps - Matches BrowseTasks general layout */}
+                   
+                  
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        {/* No price badge in PosterPublishedTasks, keep consistent by omitting */}
+                      
                         {getStatusBadge(task.status!)}
                       </div>
                       <Button variant="outline" asChild className="w-full sm:w-auto text-xs sm:text-sm">
@@ -165,11 +165,11 @@ export default async function SolverAssignedTasks({
                           <SquareArrowUpRight />
                         </Link>
                       </Button>
-                      {/* "Continue Workspace" Button - Specific to PosterPublishedTasks */}
+                     
                       <Button
-                        variant="success" // Specific variant
+                        variant="success" 
                         size="sm"
-                        // Sizing adjusted to match the other button in this component
+                       
                         className="w-full sm:w-auto text-xs sm:text-sm whitespace-nowrap"
                         asChild
                       >
@@ -185,13 +185,13 @@ export default async function SolverAssignedTasks({
                   </div>
                 </CardHeader>
 
-                {/* CardContent with consistent padding - Matches BrowseTasks */}
+                
                 <CardContent className="pt-0">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs sm:text-sm text-foreground mb-3">
                     <Badge
                       className={`${getColorClass(
                         categoryMap[task.categoryId]
-                      )} text-xs`} // Matches BrowseTasks badge text size
+                      )} text-xs`} 
                     >
                       {categoryMap[task.categoryId] || "Unknown"}
                     </Badge>
@@ -199,18 +199,18 @@ export default async function SolverAssignedTasks({
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                       {task.deadline && (
                         <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> {/* Icon size matches BrowseTasks */}
-                          <span className="text-xs sm:text-sm"> {/* Text size matches BrowseTasks */}
-                            Due: {formatDate(task.deadline.toLocaleDateString())}
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                          <span className="text-xs sm:text-sm"> 
+                            Due: {task.deadline}
                           </span>
                         </div>
                       )}
 
-                      {/* Re-added Being solved status with User icon for consistency */}
+                     
                       {task.solverId && (
                         <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> {/* Icon size matches BrowseTasks */}
-                          <span className="text-xs sm:text-sm"> {/* Text size matches BrowseTasks */}
+                          <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> 
+                          <span className="text-xs sm:text-sm"> 
                             Being solved
                           </span>
                         </div>
@@ -218,7 +218,7 @@ export default async function SolverAssignedTasks({
                     </div>
                   </div>
 
-                  {/* Task Description with responsive font size and line clamping for consistent height */}
+                  
                   <p className="text-foreground text-sm sm:text-base leading-relaxed line-clamp-2">
                     {task.description}
                   </p>
@@ -232,7 +232,7 @@ export default async function SolverAssignedTasks({
           )}
         </div>
 
-        {/* Pagination - Matches BrowseTasks positioning and margins */}
+       
         {(hasPrevious || hasNext) && (
           <div className="flex justify-center mt-8 mb-8">
             <Pagination>
@@ -253,8 +253,7 @@ export default async function SolverAssignedTasks({
 
                 {hasNext && (
                   <>
-                    {/* The ellipsis logic here is slightly different from the initial PosterPublishedTasks,
-                        but aligns with the more general pagination pattern. */}
+                    
                     <PaginationItem>
                       <PaginationEllipsis />
                     </PaginationItem>
