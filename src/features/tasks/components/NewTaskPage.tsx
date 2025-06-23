@@ -42,7 +42,7 @@ export default function TaskCreationPage({
   const router = useRouter()
   const [isUploading, setIsUploading] = useState(false)
   const [isDisabled, setIsDisabled] = useState(true)
-  const { isLoading, isBlocked } = useAuthGate(2000)
+  const { isLoading, isBlocked } = useAuthGate()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
 
   useAutoSave({
