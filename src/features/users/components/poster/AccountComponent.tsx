@@ -46,9 +46,9 @@ export default function AccountComponent({
 
   return (
     <main
-      className="min-h-screen overflow-x-hidden overflow-y-auto p-4 lg:p-8 flex justify-center items-start"
+      className="h-full w-full overflow-x-hidden overflow-y-auto  flex justify-center items-start"
       suppressHydrationWarning>
-      <div className="max-w-3xl w-full h-full p-4 sm:p-6 md:p-8 lg:p-10">
+      <div className="max-w-3xl w-full h-full p-4 sm:p-6 md:p-8 lg:p-10 ">
         <div className="space-y-6 md:space-y-8">
           <CardWrapper
             title="User Preferences"
@@ -290,7 +290,7 @@ export default function AccountComponent({
           <div className="flex justify-end gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="cursor-pointer">Delete account</Button>
+                <Button variant="destructive" className="cursor-pointer max-w-3xl w-full ">Delete account</Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>

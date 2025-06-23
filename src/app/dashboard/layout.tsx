@@ -13,10 +13,11 @@ import {
   StripeSubscriptionContextType,
   StripeSubscriptionProvider,
 } from "@/hooks/provider/stripe-subscription-provider";
-import DashboardSidebar from "@/features/users/components/PosterDashbaordSidebar";
+import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "next-auth/react";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 export default async function DashboardLayout({
   children,
@@ -64,15 +65,17 @@ export default async function DashboardLayout({
   if (!session?.user) {
     return redirect("/api/auth/signout?callbackUrl=/login");
   }
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
 
   return (
     <SessionProvider
-    session={session}
+      session={session}
       basePath="/api/auth"
-      refetchInterval={30*60}
+      refetchInterval={30 * 60}
       refetchOnWindowFocus={true}>
       <StripeSubscriptionProvider value={stripeData}>
-        <SidebarProvider>
+        <SidebarProvider defaultOpen={defaultOpen}>
           <div className="flex h-screen w-full">
             <DashboardSidebar user={session?.user!} />
             <div className="flex flex-col flex-1 overflow-auto">

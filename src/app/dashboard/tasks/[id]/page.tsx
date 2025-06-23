@@ -1,5 +1,4 @@
 import AuthGate from "@/components/AuthGate";
-import { Button } from "@/components/ui/button";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
@@ -26,19 +25,19 @@ export default async function Page({
 
   if (!isValidUuid(id)) {
     console.error(`Invalid ID format: ${id}. Redirecting.`);
-    redirect("/dashboard/poster/yourTasks/");
+    redirect("/dashboard/");
   }
 
   const task = await getTasksbyId(id);
-  if (!task) redirect("/dashboard/poster/yourTasks/");
+  if (!task) redirect("/dashboard/");
   
   const files = await getTaskFilesById(id);
 
-  if (!task?.content || !task.id) redirect("/dashboard/poster/yourTasks/");
+  if (!task?.content || !task.id) redirect("/dashboard/");
  
   return (
-    <main className="flex flex-col w-full h-full gap-5 items-center">
-      <div className="mt-10 flex flex-col items-end">
+    <main className="flex flex-col w-full h-full gap-5 items-center p-10">
+      <div className="w-full flex flex-col items-end ">
         {currentUser.role === "SOLVER" && task.solverId !== currentUser.id && (
           <AssignTaskButton taskId={id} userId={currentUser.id} />
         )}
@@ -46,7 +45,7 @@ export default async function Page({
           <TaskPreview content={task?.content} />
         </Suspense>
       </div>
-      <div className="max-w-5xl w-5xl ">
+      <div className="w-full flex flex-col items-center">
         <FilesTable files={files} tasks={task} />
       </div>
     </main>

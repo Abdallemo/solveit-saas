@@ -12,35 +12,32 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import TextareaAutosize from "react-textarea-autosize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
-import { autoSaveDraftWorkspace } from "../../server/action";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { useAuthGate } from "@/hooks/useAuthGate";
-import AuthGate from "@/components/AuthGate";
-import Loading from "@/app/dashboard/solver/loading";
 
-export default function WorkspaceSidebar() {
-  const [open, setOpen] = useState(false);
-
+export default function WorkspaceSidebar({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (value: boolean) => void;
+}) {
   const isMobile = useIsMobile();
 
   if (isMobile)
     return (
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild className="">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-20 h-8 sticky shadow-md bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform">
-            Solution Workspace
-            <span className="sr-only">Solution Workspace</span>
-          </Button>
-        </SheetTrigger>
+        <Button
+        type="button"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
+          <FileText className="w-5 h-5" />
+        </Button>
         <SheetContent side="right" className="w-80 sm:w-96">
           <SheetHeader>
             <SheetTitle>Solution Workspace</SheetTitle>
@@ -66,25 +63,8 @@ function SideBarForm() {
   const { user } = useCurrentUser();
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<
-    Array<{ id: string; text: string; timestamp: Date; author: string }>>([]);
-  const { content, currentWorkspace } = useWorkspace();
-
-  useEffect(() => {
-    async function autoDraftSave() {
-      await autoSaveDraftWorkspace(
-        content,
-        currentWorkspace?.task.solverId!,
-        currentWorkspace?.taskId!
-      );
-    }
-    setTimeout(() => {
-      autoDraftSave();
-    }, 500);
-  }, [content, currentWorkspace]);
-  const { isLoading, isBlocked } = useAuthGate();
-
-  if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
+    Array<{ id: string; text: string; timestamp: Date; author: string }>
+  >([]);
 
   const handleSendComment = () => {
     if (comment.trim()) {

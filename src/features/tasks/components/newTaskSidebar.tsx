@@ -9,7 +9,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Calendar, Eye, Tag, DollarSign } from "lucide-react";
+import { FileText } from "lucide-react";
 import FileUploadUi from "@/features/media/components/FileUploadUi";
 import {
   Sheet,
@@ -19,12 +19,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ExampleCombobox } from "./CategorySelectWrapper";
 import { useTask } from "@/contexts/TaskContext";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { autoSaveDraftTask } from "../server/action";
 import {
   FormControl,
   FormField,
@@ -36,22 +34,25 @@ import TextareaAutosize from "react-textarea-autosize";
 import { useFormContext } from "react-hook-form";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 
-export default function NewTaskSidebar() {
-  const [open, setOpen] = useState(false);
+export default function NewTaskSidebar({
+  open,
+  setOpen,
+}: {
+  open: boolean;
+  setOpen: (value: boolean) => void;
+}) {
   const isMobile = useIsMobile();
 
   if (isMobile)
     return (
       <Sheet open={open} onOpenChange={setOpen}>
-        <SheetTrigger asChild className="">
-          <Button
-            variant="outline"
-            size="sm"
-            className="w-20 h-8 sticky shadow-md bg-primary text-primary-foreground hover:bg-primary/90 hover:scale-105 transition-transform">
-            Task Details
-            <span className="sr-only">Task Details</span>
-          </Button>
-        </SheetTrigger>
+        <Button
+        type="button"
+          size="icon"
+          onClick={() => setOpen(true)}
+          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
+          <FileText className="w-5 h-5" />
+        </Button>
         <SheetContent side="right" className="w-80 sm:w-96">
           <SheetHeader>
             <SheetTitle>Task Details</SheetTitle>
@@ -64,7 +65,7 @@ export default function NewTaskSidebar() {
     );
 
   return (
-    <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col">
+    <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col ">
       <div className="p-4 border-b bg-background">
         <h2 className="font-medium">Task Details</h2>
       </div>
@@ -74,15 +75,9 @@ export default function NewTaskSidebar() {
 }
 
 function SideBarForm() {
-  const { user } = useCurrentUser();
   const {
     title,
     description,
-    category,
-    deadline,
-    price,
-    visibility,
-    content,
     setTitle,
     setDescription,
     setPrice,
@@ -90,26 +85,9 @@ function SideBarForm() {
     setDeadline,
   } = useTask();
 
-  useEffect(() => {
-    async function autoDraftSave() {
-      await autoSaveDraftTask(
-        title,
-        description,
-        content,
-        user?.id!,
-        category,
-        price,
-        visibility,
-        deadline
-      );
-    }
-    setTimeout(() => {
-      autoDraftSave();
-    }, 500);
-  }, [content, user, category, price, visibility, deadline,title,description]);
   const form = useFormContext<TaskSchema>();
   return (
-    <div className="p-4 space-y-4 full">
+    <div className="p-3 space-y-4 shrink-0">
       <FormField
         control={form.control}
         name="title"
@@ -261,7 +239,7 @@ function SideBarForm() {
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi />
+        <FileUploadUi  className="overflow-y-scroll"/>
       </div>
     </div>
   );
