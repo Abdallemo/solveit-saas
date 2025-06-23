@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import useCurrentUser from "./useCurrentUser";
 
-export function useAuthGate(delay = 400) {
+export function useAuthGate(delay = 10000) {
   const { state } = useCurrentUser();
   const [showAuthGate, setShowAuthGate] = useState(false);
 
