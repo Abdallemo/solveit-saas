@@ -1,5 +1,5 @@
 "use client";
-import React, { Suspense } from "react";
+import React, { Suspense, useState } from "react";
 import {MenuItemsAdmin,MenuItemsPoster,MenuItemsSolver,navSecondary} from '@/components/dashboard/menu-items'
 import {
   Sidebar,
@@ -15,6 +15,7 @@ import {
   SidebarMenuSub,
   SidebarMenuSubButton,
   SidebarMenuSubItem,
+  useSidebar,
 } from "@/components/ui/sidebar";
 
 import Link from "next/link";
@@ -27,7 +28,11 @@ import { Session } from "next-auth";
 
 export default function DashboardSidebar({user}:{ user: Session["user"];}) {
   const pathname = usePathname();
+ const {isMobile,openMobile,setOpenMobile,setOpen,open,toggleSidebar} = useSidebar()
 
+const closeMobileSidebar = () => {
+  if (isMobile && openMobile) setOpenMobile(false);
+};
   const isActive = (url: string, exact = false) => {
     const defaultSolverPath = "/dashboard/solver";
     const defaultPosterPath = "/dashboard/poster";
@@ -49,7 +54,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
   };
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
+    <Sidebar variant="sidebar" collapsible="icon" >
       <SidebarHeader />
       <SidebarContent>
         <SidebarGroup>
@@ -61,6 +66,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <Link
+                      onClick={closeMobileSidebar}
                         href={item.url}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                           isActive(item.url, true)
@@ -78,6 +84,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                           <SidebarMenuSubItem key={cld.title}>
                             <SidebarMenuSubButton asChild>
                               <Link
+                              onClick={closeMobileSidebar}
                                 href={cld.url}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                                   isActive(cld.url)
@@ -100,6 +107,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <Link
+                      onClick={closeMobileSidebar}
                         href={item.url}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                           isActive(item.url, true)
@@ -117,6 +125,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                           <SidebarMenuSubItem key={cld.title}>
                             <SidebarMenuSubButton asChild>
                               <Link
+                              onClick={closeMobileSidebar}
                                 href={cld.url}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                                   isActive(cld.url)
@@ -139,6 +148,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild>
                       <Link
+                      onClick={closeMobileSidebar}
                         href={item.url}
                         className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                           isActive(item.url, true)
@@ -156,6 +166,7 @@ export default function DashboardSidebar({user}:{ user: Session["user"];}) {
                           <SidebarMenuSubItem key={cld.title}>
                             <SidebarMenuSubButton asChild>
                               <Link
+                              onClick={closeMobileSidebar}
                                 href={cld.url}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                                   isActive(cld.url)

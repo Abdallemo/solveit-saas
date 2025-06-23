@@ -29,9 +29,15 @@ import { signOut } from "next-auth/react";
 import { AppUser } from "../../../../types/next-auth";
 import Link from "next/link";
 import { createStripeCheckoutSession } from "@/features/subscriptions/server/action";
+import { useState } from "react";
 
 export function NavUser({ image, name, email, role }: AppUser) {
-  const { isMobile } = useSidebar();
+  const { isMobile, openMobile, setOpenMobile, setOpen, open, toggleSidebar } =
+    useSidebar();
+
+  const closeMobileSidebar = () => {
+    if (isMobile && openMobile) setOpenMobile(false);
+  };
 
   return (
     <SidebarMenu>
@@ -81,9 +87,10 @@ export function NavUser({ image, name, email, role }: AppUser) {
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               {role === "POSTER" ? (
-                <DropdownMenuItem onSelect={async()=>{
-                  await createStripeCheckoutSession('PREMIUM')
-                }}>
+                <DropdownMenuItem
+                  onSelect={async () => {
+                    await createStripeCheckoutSession("PREMIUM");
+                  }}>
                   <Sparkles />
                   Upgrade to Pro
                 </DropdownMenuItem>
@@ -91,7 +98,9 @@ export function NavUser({ image, name, email, role }: AppUser) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link href={`/dashboard/${role?.toLocaleLowerCase()}/account`}>
+              <Link
+                href={`/dashboard/${role?.toLocaleLowerCase()}/account`}
+                onClick={closeMobileSidebar}>
                 <DropdownMenuItem>
                   <BadgeCheck />
                   Account
@@ -103,7 +112,7 @@ export function NavUser({ image, name, email, role }: AppUser) {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({redirectTo:'/login'})}>
+            <DropdownMenuItem onClick={() => signOut({ redirectTo: "/login" })}>
               <LogOut />
               Log out
             </DropdownMenuItem>

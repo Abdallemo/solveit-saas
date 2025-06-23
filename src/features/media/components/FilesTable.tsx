@@ -106,7 +106,7 @@ export function FilesTable({ files, tasks }: FilesTableProps) {
 
   if (files.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground bg-white rounded-md border">
+      <div className="text-center py-8 text-muted-foreground bg-sidebar rounded-md border">
         <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
         <p>No files attached to this task</p>
       </div>
@@ -114,8 +114,8 @@ export function FilesTable({ files, tasks }: FilesTableProps) {
   }
 
   return (
-    <div className="rounded-md border bg-background/10">
-      <Table>
+    <div className="rounded-md border bg-background/10 w-full">
+      <Table className="">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[20px]"></TableHead>
@@ -134,7 +134,7 @@ export function FilesTable({ files, tasks }: FilesTableProps) {
                 <div className="font-medium">{file.fileName}</div>
               </TableCell>
               <TableCell>
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sidebar-foreground text-muted">
                   {file.fileType}
                 </span>
               </TableCell>

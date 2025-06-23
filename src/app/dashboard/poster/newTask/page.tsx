@@ -1,3 +1,4 @@
+import AuthGate from "@/components/AuthGate";
 import { TaskProvider } from "@/contexts/TaskContext";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
@@ -6,7 +7,7 @@ import { TaskSchema } from "@/features/tasks/server/task-types";
 
 export default async function Page() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return;
+  if (!currentUser || !currentUser.id) return <AuthGate/>;
 
   const draft = await getDraftTask(currentUser.id);
 

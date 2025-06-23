@@ -19,7 +19,7 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 h-[500px] w-[500px] bg-purple-500/10 blur-[100px]" />
       </div>
 
-      <div className="z-10 w-full max-w-7xl px-4">
+      <div className="z-10 w-full max-w-7xl px-4 ">
         <Navbar />
         <Hero />
         <DemoSection/>

@@ -455,6 +455,7 @@ export async function autoSaveDraftWorkspace(
   taskId: string
 ) {
   if (!solverId || !taskId) return;
+  console.info('fired autosave 🪄')
   try {
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),

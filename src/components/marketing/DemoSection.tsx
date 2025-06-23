@@ -1,12 +1,14 @@
 "use client"
+import { useIsMobile } from "@/hooks/use-mobile";
 import dynamic from "next/dynamic";
 
 const SolveItDemo = dynamic(() => import("./SolveItDemo"), {
   ssr: false, 
 });
-
 export default function DemoSection() {
+  const isMobile = useIsMobile()
   return (
+    !isMobile &&
     <section id="Demo" >
       <div className=" mx-auto px-4">
         <div className="text-center mb-12">
@@ -23,5 +25,6 @@ export default function DemoSection() {
         <SolveItDemo />
       </div>
     </section>
+    
   );
 }
