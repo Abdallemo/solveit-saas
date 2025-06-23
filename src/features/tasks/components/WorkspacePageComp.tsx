@@ -21,7 +21,7 @@ export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
   const { content, currentWorkspace } = useWorkspace();
   const [progress, setProgress] = useState(0);
-  const { isLoading, isBlocked } = useAuthGate(10000);
+  const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   useAutoSave({
