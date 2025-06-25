@@ -1,5 +1,5 @@
 "use client"
-import { Suspense, useEffect, useState } from "react"
+import { Suspense, useEffect, useRef, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { useForm, FormProvider, FieldErrors } from "react-hook-form"
 import TaskPostingEditor from "./richTextEdito/Tiptap"
@@ -11,6 +11,7 @@ import { getPresignedUploadUrl } from "@/features/media/server/action"
 import {
   autoSaveDraftTask,
   createTaksPaymentCheckoutSession,
+  validateStripeSession,
 } from "../server/action"
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -21,6 +22,7 @@ import { useAutoSave } from "@/hooks/useAutoDraftSave"
 import { useAuthGate } from "@/hooks/useAuthGate"
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading"
 import AuthGate from "@/components/AuthGate"
+import { useSearchParams } from "next/navigation"
 
 export default function TaskCreationPage({
   defaultValues,
@@ -44,6 +46,24 @@ export default function TaskCreationPage({
   const [isDisabled, setIsDisabled] = useState(true)
   const { isLoading, isBlocked } = useAuthGate()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const searchParams = useSearchParams()
+  const hasShownToast = useRef(false)
+
+  useEffect(() => {
+    const sessionId = searchParams.get("session_id")
+    if (!sessionId || hasShownToast.current) return
+    (async () => {
+      const isValid = await validateStripeSession(sessionId)
+      if (isValid) {
+        toast.success("Task published successfully!")
+        hasShownToast.current = true
+
+        const url = new URL(window.location.href)
+        url.searchParams.delete("session_id")
+        window.history.replaceState({}, "", url.toString())
+      }
+    })()
+  }, [searchParams])
 
   useAutoSave({
     autoSaveFn: autoSaveDraftTask,
@@ -151,11 +171,10 @@ export default function TaskCreationPage({
       toast.error(`${(<CircleAlert />)}something Went Wrong`)
     }
   }
-  function onError(errors:FieldErrors<TaskSchema>) {
+  function onError(errors: FieldErrors<TaskSchema>) {
     console.warn("Validation errors ❌", errors)
-    setIsSheetOpen(true) 
+    setIsSheetOpen(true)
 
-    
     const firstErrorField = Object.keys(errors)[0]
     const el = document.querySelector(`[name="${firstErrorField}"]`)
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" })
@@ -182,7 +201,7 @@ export default function TaskCreationPage({
         </header>
         <FormProvider {...form}>
           <form
-            onSubmit={form.handleSubmit(onSubmit,onError)}
+            onSubmit={form.handleSubmit(onSubmit, onError)}
             id="task-form"
             className="flex-1 flex overflow-hidden">
             <div className="flex-1 flex flex-col overflow-hidden">

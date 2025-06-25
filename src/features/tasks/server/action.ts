@@ -124,8 +124,8 @@ export async function createTaksPaymentCheckoutSession(
         deadlineStr,
         type: "task_payment",
       },
-      cancel_url: referer,
-      success_url: referer,
+      cancel_url: `${referer}`,
+      success_url: `${referer}?session_id={CHECKOUT_SESSION_ID}`,
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
@@ -137,6 +137,13 @@ export async function createTaksPaymentCheckoutSession(
     throw error;
   }
 }
+
+export async function validateStripeSession(sessionId: string): Promise<boolean> {
+  const session = await stripe.checkout.sessions.retrieve(sessionId)
+  return session.payment_status === "paid"
+}
+
+
 export async function autoSaveDraftTask(
   title: string,
   description: string,
@@ -323,7 +330,7 @@ export async function getPosterTasksbyIdPaginated(
       orderBy: (table, fn) => fn.desc(table.createdAt),
       with: {
         poster: true,
-        solver:true,
+        solver: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -455,7 +462,7 @@ export async function autoSaveDraftWorkspace(
   taskId: string
 ) {
   if (!solverId || !taskId) return;
-  console.info('fired autosave 🪄')
+  console.info("fired autosave 🪄");
   try {
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
