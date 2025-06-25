@@ -122,7 +122,7 @@ async function handleTaskCreate(event: Stripe.Event) {
     console.log("Saving into Payment table");
 
     const paymentId = await taskPaymentInsetion(
-      "PENDING",
+      "HOLD",
       amount,
       userId,
       "Task Payment",

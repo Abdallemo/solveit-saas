@@ -24,7 +24,7 @@ export const UserRole = pgEnum("role", [
 ]);
 export const TierEnum = pgEnum("tier", ["BASIC", "PREMIUM"]);
 export const PaymentStatus = pgEnum("payment_status", [
-  "PENDING",
+  "HOLD",
   "SUCCEEDED",
   "FAILED",
   "CANCELED",
@@ -130,7 +130,7 @@ export const PaymentTable = pgTable("payments", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   amount: integer("amount").notNull(),
-  status: PaymentStatus("status").default("PENDING"),
+  status: PaymentStatus("status").default("HOLD"),
   stripePaymentIntentId: text("stripe_payment_intent_id"),
   stripeChargeId: text("stripe_charge_id"),
   purpose: text("purpose"),
