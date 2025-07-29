@@ -8,6 +8,7 @@ import {
   GeneratePresignedUrlInput,
   PresignedUploadedFileMeta,
   PresignedUrlResponse,
+  scope,
 } from "./media-types";
 
 export async function generatePresignedUrl({
@@ -35,14 +36,14 @@ export async function generatePresignedUrl({
 export async function getPresignedUploadUrl(
   fileName: string,
   fileType: string,
-  scope: "workspace" | "task" = "workspace"
+  scope: scope = "workspace"
 ) {
   return await generatePresignedUrl({ fileName, fileType, scope });
 }
 
 export async function uploadSelectedFiles(
   selectedFiles: File[],
-  scope: "workspace" | "task" = "workspace"
+  scope: scope = "workspace"
 ) {
   const uploadedFileMeta: PresignedUploadedFileMeta[] = [];
 

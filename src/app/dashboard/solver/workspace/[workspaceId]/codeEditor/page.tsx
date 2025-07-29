@@ -1,6 +1,6 @@
 import MonocaCodeEditor from "@/features/tasks/components/monoca/monocaCodeEditor";
 
-export default function page() {
+export default function Page() {
   return (
     <MonocaCodeEditor/>
   )
