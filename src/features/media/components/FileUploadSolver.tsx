@@ -41,7 +41,7 @@ export default function FileUploadSolver({
 
   const uploadedById = useCurrentSolver.user?.id!;
   const fileLimitReached = uploadedFiles.length >= maxFiles;
-
+//todo DRY : future make this func resuble
   const handleFiles = async (newFiles: FileList | null) => {
     if (!newFiles) return;
 
