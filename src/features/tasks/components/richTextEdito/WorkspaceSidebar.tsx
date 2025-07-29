@@ -3,7 +3,7 @@ import type React from "react";
 
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Send, MessageCircle } from "lucide-react";
+import { FileText, Send, MessageCircle, Code2 } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -18,6 +18,9 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import TextareaAutosize from "react-textarea-autosize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
+import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { useRouter ,usePathname} from "next/navigation";
 
 export default function WorkspaceSidebar({
   open,
@@ -27,7 +30,7 @@ export default function WorkspaceSidebar({
   setOpen: (value: boolean) => void;
 }) {
   const isMobile = useIsMobile();
-
+  
   if (isMobile)
     return (
       <Sheet open={open} onOpenChange={setOpen}>
@@ -52,7 +55,9 @@ export default function WorkspaceSidebar({
   return (
     <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col">
       <div className="p-4 border-b bg-background">
-        <h2 className="font-medium">Solution Workspace</h2>
+        <div className="flex justify-center gap-1">
+          <h2 className="font-medium">Solution Workspace</h2>
+        </div>
       </div>
       <SideBarForm />
     </div>
@@ -61,6 +66,8 @@ export default function WorkspaceSidebar({
 
 function SideBarForm() {
   const { user } = useCurrentUser();
+  const router = useRouter()
+  const pathName = usePathname()
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<
     Array<{ id: string; text: string; timestamp: Date; author: string }>
@@ -91,7 +98,10 @@ function SideBarForm() {
       <div className="space-y-1 ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
+          <div className="flex w-full justify-between">
           <Label>Attachments</Label>
+          <Button onClick={()=>router.push(`${pathName}/codeEditor`)} className="cursor-pointer">Open Code Editor <Code2/> </Button>
+          </div>
         </div>
         <FileUploadSolver />
       </div>
