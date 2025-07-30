@@ -56,6 +56,9 @@ export default function WorkspacePageComp() {
   if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
+
+    if (progress == 100) return;
+    //i can call a server action 
     toast.warning("Currently Solution Publishing is under Construction ");
     try {
       setIsUploading(true);
@@ -65,7 +68,7 @@ export default function WorkspacePageComp() {
       toast.error(`${(<CircleAlert />)}something Went Wrong`);
     }
   }
-  function onError(errors:FieldErrors<WorkpaceSchemType>) {
+  function onError(errors: FieldErrors<WorkpaceSchemType>) {
     console.warn("Validation errors ❌", errors);
     setIsSheetOpen(true);
 
@@ -80,13 +83,15 @@ export default function WorkspacePageComp() {
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
           <Button
             form="solution-form"
-            disabled={isDisabled || isUploading}
+            disabled={isDisabled || isUploading || progress >= 100}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            {isUploading ? (
+            {isUploading ? ( // If uploading, show loader and text
               <>
                 <Loader className="animate-spin w-4 h-4" />
                 Uploading files...
               </>
+            ) : progress >= 100 ? (
+              "Submission Closed"
             ) : (
               "Publish Solution"
             )}
