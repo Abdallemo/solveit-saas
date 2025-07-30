@@ -14,14 +14,14 @@ type WorkspaceContextType = {
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
   undefined
 );
-type TaskPorvideProps = {
+type WorkspacePorviderProps = {
   children: ReactNode;
    workspace:WorkpaceSchemReturnedType
 };
 export const WorkspaceProvider = ({
   children,
   workspace
-}: TaskPorvideProps) => {
+}: WorkspacePorviderProps) => {
   const [content, setContent] = useState(workspace?.content ?? "");
   const [uploadedFiles, setUploadedFiles] = useState<WorkspaceUploadedFileMeta[]>(workspace?.workspaceFiles ?? []);
   const [currentWorkspace] = useState(workspace);
@@ -42,6 +42,6 @@ export const WorkspaceProvider = ({
 
 export const useWorkspace = () => {
   const context = useContext(WorkspaceContext);
-  if (!context) throw new Error("useTask must be used within a TaskProvider");
+  if (!context) throw new Error("useWorkspace must be used within a WorkspacePorvider");
   return context;
 };
