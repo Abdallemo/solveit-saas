@@ -19,7 +19,7 @@ import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import { truncateText } from "@/lib/utils";
+import { calculateProgress, isError, truncateText } from "@/lib/utils";
 import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -140,11 +140,12 @@ export async function createTaksPaymentCheckoutSession(
   }
 }
 
-export async function validateStripeSession(sessionId: string): Promise<boolean> {
-  const session = await stripe.checkout.sessions.retrieve(sessionId)
-  return session.payment_status === "paid"
+export async function validateStripeSession(
+  sessionId: string
+): Promise<boolean> {
+  const session = await stripe.checkout.sessions.retrieve(sessionId);
+  return session.payment_status === "paid";
 }
-
 
 export async function autoSaveDraftTask(
   title: string,
@@ -464,10 +465,12 @@ export async function autoSaveDraftWorkspace(
   taskId: string
 ) {
   if (!solverId || !taskId) return;
+
   console.info("fired autosave 🪄");
   try {
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
+      with: { solver: true, task: true, workspaceFiles: true },
     });
 
     if (oldTask) {
@@ -525,6 +528,8 @@ export async function saveFileToWorkspaceDB({
   isDraft,
   uploadedById,
 }: workspaceFileType) {
+  if (isDraft == false) return;
+
   const newFile = await db
     .insert(WorkspaceFilesTable)
     .values({
@@ -540,30 +545,60 @@ export async function saveFileToWorkspaceDB({
     .returning();
   return newFile[0];
 }
-export async function publishSolution(workspaceId:string,content:string) {
-  //=> first get the workspace
-  const workspace = await getWorkspaceById(workspaceId)
-  //=> get all files associated with
-  db.transaction(async(dx)=>{
-  
-    const solution = await dx.insert(SolutionTable).values({
-      workspaceId,
-      content:workspace?.content,
-      isFinal:true,
-  
-  
-    }).returning()
+export async function publishSolution(workspaceId: string, content: string) {
+  try {
+    const workspace = await getWorkspaceById(workspaceId);
+    if (!workspace) {
+      throw new Error("Unable to find this Workspace.");
+    }
+    const deadlinePercentage = calculateProgress(
+      workspace.task.deadline!,
+      workspace.createdAt!
+    );
+    if (deadlinePercentage >= 100) {
+      throw new Error("The submission window has closed.");
+    }
+    db.transaction(async (dx) => {
+      const solution = await dx
+        .insert(SolutionTable)
+        .values({
+          workspaceId,
+          content: content,
+          isFinal: true,
+        })
+        .returning();
 
-    workspace?.workspaceFiles.map(async(workspaceFile)=>{
-      await db.insert(SolutionFilesTable).values({
-        solutionId:solution[0].id,
-        workspaceFileId:workspaceFile.id
+      if (!solution || solution.length === 0 || !solution[0].id) {
+        throw new Error("Failed to create solution record.");
+      }
+      await Promise.all(
+        workspace?.workspaceFiles.map(async (workspaceFile) => {
+          await db.insert(SolutionFilesTable).values({
+            solutionId: solution[0].id,
+            workspaceFileId: workspaceFile.id,
+          });
 
-      })
-      
-  })
+          await dx
+            .update(WorkspaceFilesTable)
+            .set({ isDraft: false })
+            .where(eq(WorkspaceFilesTable.id, workspaceFile.id));
+        })
+      );
 
-  })
-  //=> make them final 
-  //=> insert all to the solution table
+      await dx
+        .update(TaskTable)
+        .set({ status: "COMPLETED" })
+        .where(eq(TaskTable.id, workspace?.taskId));
+    });
+    return { success: true, message: "Successfully published solution!" };
+  } catch (error) {
+    console.error("Error publishing solution:", error);
+    if (isError(error)) {
+      throw new Error(
+        error.message ||
+          "Unable to publish solution due to an unexpected error."
+      );
+    }
+    throw new Error(`Unable to publish solution due to: ${String(error)}`);
+  }
 }
