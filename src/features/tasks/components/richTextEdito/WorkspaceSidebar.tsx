@@ -18,8 +18,6 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import TextareaAutosize from "react-textarea-autosize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
-import { Badge } from "@/components/ui/badge";
-import Link from "next/link";
 import { useRouter ,usePathname} from "next/navigation";
 
 export default function WorkspaceSidebar({
