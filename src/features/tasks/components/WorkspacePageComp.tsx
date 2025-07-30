@@ -10,11 +10,12 @@ import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { DeadlineProgress } from "./DeadlineProgress";
-import { autoSaveDraftWorkspace } from "../server/action";
+import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/dashboard/solver/loading";
+import { isError } from "lodash";
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
@@ -56,16 +57,36 @@ export default function WorkspacePageComp() {
   if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
+    if (progress == 100) {
+      toast.error("The submission has closed");
+      return;
+    }
+    if (!currentWorkspace?.id) {
+      toast.error("Not found current workspace id"); // Corrected typo
+      return;
+    }
 
-    if (progress == 100) return;
-    //i can call a server action 
-    toast.warning("Currently Solution Publishing is under Construction ");
     try {
       setIsUploading(true);
+
+      const result = await publishSolution(currentWorkspace.id, data.content);
+
+      if (result.success) {
+        toast.success(result.message);
+
+      } else {
+        toast.error(result.message || "Failed to publish solution.");
+      }
+    } catch (e: unknown) {
+      console.error("Error publishing solution from client:", e);
+
+      if (isError(e)) {
+        toast.error(e.message || "Something went wrong during publishing.");
+      } else {
+        toast.error("An unknown error occurred during publishing.");
+      }
+    } finally {
       setIsUploading(false);
-    } catch (e) {
-      console.error(e);
-      toast.error(`${(<CircleAlert />)}something Went Wrong`);
     }
   }
   function onError(errors: FieldErrors<WorkpaceSchemType>) {

@@ -8,7 +8,10 @@ export const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
 };
 
-export function parseDeadline(value: string, baseTime: Date = new Date()): Date | null {
+export function parseDeadline(
+  value: string,
+  baseTime: Date = new Date()
+): Date | null {
   const base = baseTime.getTime();
   switch (value) {
     case "12h":
@@ -25,9 +28,33 @@ export function parseDeadline(value: string, baseTime: Date = new Date()): Date 
       return null;
   }
 }
+export function calculateProgress(
+  deadlineValue: string,
+  createdAt: Date
+): number {
+  const deadline = parseDeadline(deadlineValue, new Date(createdAt));
+  if (!deadline) return -1;
 
+  const now = new Date().getTime();
+  const created = new Date(createdAt).getTime();
+  const end = deadline.getTime();
+
+  const totalDuration = end - created;
+  const elapsed = now - created;
+
+  const percentage = Math.min(
+    Math.max((elapsed / totalDuration) * 100, 0),
+    100
+  );
+  return percentage;
+}
+export function isError(err: unknown): err is Error {
+  return typeof err === 'object' && err !== null && 'message' in err;
+}
 export function truncateText(text: string, maxLength: number): string {
-  return text.length > maxLength ? text.slice(0, maxLength).trim() + "..." : text;
+  return text.length > maxLength
+    ? text.slice(0, maxLength).trim() + "..."
+    : text;
 }
 const badgeColors = [
   "bg-green-100 text-green-800",

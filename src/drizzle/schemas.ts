@@ -294,7 +294,7 @@ export const SolutionTable = pgTable("solutions", {
   fileUrl: text("file_url"),
   isFinal: boolean("is_final").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 export const SolutionFilesTable = pgTable("solution_files", {
   id: uuid("id").primaryKey().defaultRandom(),
