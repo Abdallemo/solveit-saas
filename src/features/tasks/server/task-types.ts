@@ -30,3 +30,27 @@ export const WorkpaceSchem = z.object({
 export type WorkpaceSchemType = z.infer<typeof WorkpaceSchem>;
 
 export type TaskSchema = z.infer<typeof taskSchema>;
+
+
+export type workspaceFileType = {
+  fileName: string;
+  uploadedById: string;
+  fileType: string;
+  fileSize: number;
+  filePath: string;
+  storageLocation: string;
+  workspaceId: string;
+  isDraft: boolean;
+};
+
+export type SolutionReturnErrorType =
+  | "Unable to locate the specified workspace. Please verify the ID and try again."
+  | "Submission window has closed. You can no longer publish a solution for this task."
+  | "This solution has already been marked as completed. No further submissions are allowed."
+  | "This solution has been canceled and cannot be submitted."
+  | "Failed to create a solution record. Please try again or contact support if the issue persists."
+  | "Solution published successfully!"
+  | "An error occurred while attempting to publish the solution. See console for details."
+  | "Unable to publish the solution due to an unexpected issue. Please try again later."
+  | "Publishing failed due to: [error details]. Please review and retry.";
+
