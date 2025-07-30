@@ -19,6 +19,8 @@ import TextareaAutosize from "react-textarea-autosize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
 import { useRouter ,usePathname} from "next/navigation";
+import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
+
 
 export default function WorkspaceSidebar({
   open,
@@ -70,6 +72,8 @@ function SideBarForm() {
   const [comments, setComments] = useState<
     Array<{ id: string; text: string; timestamp: Date; author: string }>
   >([]);
+    const { monacoEditor } = useFeatureFlags();
+  
 
   const handleSendComment = () => {
     if (comment.trim()) {

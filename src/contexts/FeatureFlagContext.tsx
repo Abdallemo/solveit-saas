@@ -1,27 +1,34 @@
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import { createContext, useContext } from "react";
 
-type FeatureFlags = Record<string, boolean>;
+export type FeatureFlags = {
+  monacoEditor: boolean;
+  experimental3DViewer: boolean;
+  aiSummarizer: boolean;
+  pdfPreview: boolean;
+};
 
 const FeatureFlagContext = createContext<FeatureFlags | undefined>(undefined);
 
-export const FeatureFlagProvider = <T extends FeatureFlags>({
-  children,
+export function FeatureFlagProvider({
   flags,
+  children,
 }: {
-  children: ReactNode;
-  flags: T;
-}) => {
+  flags: FeatureFlags;
+  children: React.ReactNode;
+}) {
   return (
     <FeatureFlagContext.Provider value={flags}>
       {children}
     </FeatureFlagContext.Provider>
   );
-};
+}
 
-export const useFeatureFlagContext = <T extends FeatureFlags>() => {
+export function useFeatureFlags() {
   const context = useContext(FeatureFlagContext);
-  if (!context) throw new Error("Must be used within FeatureFlagProvider");
-  return context as T;
-};
+  if (!context) {
+    throw new Error("useFeatureFlags must be used within a FeatureFlagProvider");
+  }
+  return context;
+}

@@ -18,6 +18,14 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { SessionProvider } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
+import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
+
+const dbFlags = {
+  monacoEditor: false,
+  experimental3DViewer: false,
+  aiSummarizer: false,
+  pdfPreview: false,
+} as const
 
 export default async function DashboardLayout({
   children,
@@ -67,7 +75,13 @@ export default async function DashboardLayout({
   }
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-
+  const myFlags = {
+    monacoEditor: true,
+    experimental3DViewer: false,
+    aiSummarizer: true,
+    pdfPreview: false,
+  }as const;
+  
   return (
     <SessionProvider
       session={session}
@@ -84,7 +98,9 @@ export default async function DashboardLayout({
                   <SidebarTrigger className="mr-2" />
                 </div>
               </header>
+              <FeatureFlagProvider flags={dbFlags}>
               <main className="flex-1">{children}</main>
+              </FeatureFlagProvider>
             </div>
           </div>
         </SidebarProvider>
