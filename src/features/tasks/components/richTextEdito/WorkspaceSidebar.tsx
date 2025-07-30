@@ -3,7 +3,7 @@ import type React from "react";
 
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Send, MessageCircle, Code2 } from "lucide-react";
+import { FileText, Send, MessageCircle, Code2, Lock } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -18,9 +18,13 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import TextareaAutosize from "react-textarea-autosize";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
-import { useRouter ,usePathname} from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
-
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 export default function WorkspaceSidebar({
   open,
@@ -30,12 +34,12 @@ export default function WorkspaceSidebar({
   setOpen: (value: boolean) => void;
 }) {
   const isMobile = useIsMobile();
-  
+
   if (isMobile)
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <Button
-        type="button"
+          type="button"
           size="icon"
           onClick={() => setOpen(true)}
           className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
@@ -66,14 +70,13 @@ export default function WorkspaceSidebar({
 
 function SideBarForm() {
   const { user } = useCurrentUser();
-  const router = useRouter()
-  const pathName = usePathname()
+  const router = useRouter();
+  const pathName = usePathname();
   const [comment, setComment] = useState("");
   const [comments, setComments] = useState<
     Array<{ id: string; text: string; timestamp: Date; author: string }>
   >([]);
-    const { monacoEditor } = useFeatureFlags();
-  
+  const { monacoEditor } = useFeatureFlags();
 
   const handleSendComment = () => {
     if (comment.trim()) {
@@ -101,8 +104,27 @@ function SideBarForm() {
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <div className="flex w-full justify-between">
-          <Label>Attachments</Label>
-          <Button onClick={()=>router.push(`${pathName}/codeEditor`)} className="cursor-pointer">Open Code Editor <Code2/> </Button>
+            <Label>Attachments</Label>
+            {monacoEditor ? (
+              <Button
+                onClick={() => router.push(`${pathName}/codeEditor`)}
+                className="cursor-pointer">
+                Open Code Editor <Code2 />{" "}
+              </Button>
+            ) : (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    disabled={false}
+                    className="opacity-50 cursor-not-allowed">
+                    Open Code Editor <Code2 /> <Lock />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>under construction</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
           </div>
         </div>
         <FileUploadSolver />
