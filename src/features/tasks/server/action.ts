@@ -558,7 +558,7 @@ export async function publishSolution(workspaceId: string, content: string) {
     if (deadlinePercentage >= 100) {
       throw new Error("The submission window has closed.");
     }
-    db.transaction(async (dx) => {
+    await db.transaction(async (dx) => {
       const solution = await dx
         .insert(SolutionTable)
         .values({
@@ -584,7 +584,6 @@ export async function publishSolution(workspaceId: string, content: string) {
             .where(eq(WorkspaceFilesTable.id, workspaceFile.id));
         })
       );
-
       await dx
         .update(TaskTable)
         .set({ status: "COMPLETED" })

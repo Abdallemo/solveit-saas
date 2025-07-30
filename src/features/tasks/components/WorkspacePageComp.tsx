@@ -62,7 +62,7 @@ export default function WorkspacePageComp() {
       return;
     }
     if (!currentWorkspace?.id) {
-      toast.error("Not found current workspace id"); // Corrected typo
+      toast.error("Not found current workspace id"); 
       return;
     }
 
