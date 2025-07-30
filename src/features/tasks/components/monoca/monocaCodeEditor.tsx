@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
+import { toast } from "sonner";
 
 const supportedLangExtension: Record<string, string> = {
   js: "javascript",
@@ -30,12 +31,12 @@ function extractFileExtention(
 }
 
 export default function MonocaCodeEditor() {
-  const [files, setFiles] = useState<Record<string, string>>({});
-  const [currentFile, setCurrentFile] = useState("app.js");
+  //=> {file.js:content of the file ...}
+  const [sidebarFileList, setSidebarFileList] = useState<Record<string, string>>({});
+  const [currentFile, setCurrentFile] = useState("");
   const [newFileName, setNewFileName] = useState("");
   const [showInput, setShowInput] = useState(false);
-  const [isSaving, setIsSaving] = useState(false);
-  const { uploadedFiles, setUploadedFiles } = useWorkspace();
+  const { uploadedFiles, setUploadedFiles } = useWorkspace(); //=> this might be problematic but will see
 
   const getFileIcon = (filename: string) => {
     const ext = filename.split(".").pop()?.toLowerCase() || "";
@@ -49,62 +50,80 @@ export default function MonocaCodeEditor() {
     };
     return <Code2 className={`w-4 h-4 ${colors[ext] || "text-gray-400"}`} />;
   };
-
+  //todo /=> mock one change it to real one 
   const addFile = () => {
-    if (newFileName.trim() && !files[newFileName]) {
-      setFiles((prev) => ({ ...prev, [newFileName]: "" }));
+    if (newFileName.trim() && !sidebarFileList[newFileName]) {
+      setSidebarFileList((prev) => ({ ...prev, [newFileName]: "" }));
       setCurrentFile(newFileName);
       setNewFileName("");
       setShowInput(false);
     }
   };
-
+  //todo /=> mock one Link it to s3 bucket to delete files too 
   const deleteFile = (filename: string) => {
-    if (Object.keys(files).length > 1) {
-      setFiles((prev) => {
+    if (Object.keys(sidebarFileList).length > 1) {
+      setSidebarFileList((prev) => {
         const newFiles = { ...prev };
         delete newFiles[filename];
         return newFiles;
       });
-      setCurrentFile((prev) => (prev === filename ? Object.keys(files)[0] : prev));
+      setCurrentFile((prev) =>
+        prev === filename ? Object.keys(sidebarFileList)[0] : prev
+      );
     }
   };
-
+// whenever this component mounts it retreve file meta from the workspace 
+// 
   useEffect(() => {
-    let isMounted = true;
-
+    console.log("use Effect fired here worksapce File Details:\n",uploadedFiles)
     async function loadUploadedFiles() {
-      const fetchedFiles: Record<string, string> = {};
       
+      const fetchedFiles: Record<string, string> = {};
+
       try {
+
         await Promise.all(
+
           uploadedFiles.map(async (file) => {
-            if (files[file.fileName]) return;
             
+            // if (sidebarFileList[file.fileName]) return;
+
             try {
-              const res = await fetch(file.storageLocation);
-              if (!res.ok) throw new Error("Failed to fetch " + file.fileName);
-              const content = await res.text();
-              if (isMounted) {
-                fetchedFiles[file.fileName] = content;
-              }
+              const fileResponese = await fetch(file.storageLocation);
+
+              if (!fileResponese.ok) throw new Error("Failed to fetch " + file.fileName);
+              
+              //=> 
+              const content = await fileResponese.text();
+          
+              fetchedFiles[file.fileName] = content;
+              
             } catch (error) {
+              toast.error("Error loading file:")
               console.error("Error loading file:", file.fileName, error);
             }
           })
         );
 
-        if (isMounted && Object.keys(fetchedFiles).length > 0) {
-          setFiles((prev) => ({ ...prev, ...fetchedFiles }));
-          
-          if (!files[currentFile] || !uploadedFiles.some(f => f.fileName === currentFile)) {
-            const firstValidFile = uploadedFiles.find(f => fetchedFiles[f.fileName])?.fileName;
+        if ( Object.keys(fetchedFiles).length > 0) {
+          setSidebarFileList((prev)=> ({...prev,...fetchedFiles}))
+             if (
+            !(currentFile in sidebarFileList) ||
+            !uploadedFiles.some((file)=>file.fileName=== currentFile)
+          ){
+            const firstValidFile = uploadedFiles.find((file) => fetchedFiles[file.fileName])?.fileName;
             if (firstValidFile) {
               setCurrentFile(firstValidFile);
+            }else if (Object.keys(sidebarFileList).length > 0){
+              setCurrentFile(Object.keys(sidebarFileList)[0])
+            }else{
+               setCurrentFile("");
             }
           }
+
         }
       } catch (error) {
+        toast.error("Error in file loading")
         console.error("Error in file loading:", error);
       }
     }
@@ -114,17 +133,19 @@ export default function MonocaCodeEditor() {
     }
 
     return () => {
-      isMounted = false;
+    console.log("use Effect clear func fired here current Worksapce File Details:\n",uploadedFiles)
+      
+      //=> for cleaning but guess nothing to clean 
     };
-  }, [uploadedFiles, currentFile, files]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [uploadedFiles, currentFile]);
 
-  const saveFile = async (fileName: string, content: string) => {
-    if (isSaving) return;
-    
-    const target = uploadedFiles.find((f) => f.fileName === fileName);
+  const saveFileAction = async (fileName: string, content: string) => {
+
+    const target = uploadedFiles.find((file) => file.fileName === fileName);
     if (!target) return;
 
-    setIsSaving(true);
+
     try {
       const res = await fetch("/api/media", {
         method: "PUT",
@@ -137,32 +158,31 @@ export default function MonocaCodeEditor() {
           contentType: target.fileType,
         }),
       });
-
       if (!res.ok) throw new Error("Save failed");
 
       setUploadedFiles((prev) =>
-        prev.map((f) =>
-          f.fileName === fileName
-            ? { ...f, updatedAt: new Date().toISOString() }
-            : f
+        prev.map((file) =>
+          file.fileName === fileName
+            ? { ...file, updatedAt: new Date().toISOString() }
+            : file
         )
       );
     } catch (err) {
       console.error("Save failed:", err);
-    } finally {
-      setIsSaving(false);
     }
   };
 
   useAutoSave({
-    autoSaveFn: saveFile,
-    autoSaveArgs: [currentFile, files[currentFile]],
-    delay: 1000,
+    autoSaveFn: saveFileAction,
+    autoSaveArgs: [currentFile, sidebarFileList[currentFile]],
+    delay: 800,
   });
 
   const handleEditorChange = (code: string | undefined) => {
+
     if (code === undefined) return;
-    setFiles((prev) => ({ ...prev, [currentFile]: code }));
+    setSidebarFileList((prev) => ({ ...prev, [currentFile]: code }));
+
   };
 
   return (
@@ -174,8 +194,7 @@ export default function MonocaCodeEditor() {
             variant="ghost"
             size="sm"
             className="h-6 w-6 p-0"
-            onClick={() => setShowInput(!showInput)}
-          >
+            onClick={() => setShowInput(!showInput)}>
             <Plus className="w-3 h-3" />
           </Button>
         </div>
@@ -197,19 +216,18 @@ export default function MonocaCodeEditor() {
         )}
 
         <div className="flex-1 overflow-auto">
-          {Object.keys(files).map((filename) => (
+          {Object.keys(sidebarFileList).map((filename) => (
             <div
               key={filename}
               className={`group flex items-center justify-between px-2 py-1.5 hover:bg-muted cursor-pointer text-sm ${
                 filename === currentFile ? "bg-muted" : ""
               }`}
-              onClick={() => setCurrentFile(filename)}
-            >
+              onClick={() => setCurrentFile(filename)}>
               <div className="flex items-center gap-2 min-w-0">
                 {getFileIcon(filename)}
                 <span className="truncate">{filename}</span>
               </div>
-              {Object.keys(files).length > 1 && (
+              {Object.keys(sidebarFileList).length > 1 && (
                 <Button
                   variant="ghost"
                   size="sm"
@@ -217,8 +235,7 @@ export default function MonocaCodeEditor() {
                   onClick={(e) => {
                     e.stopPropagation();
                     deleteFile(filename);
-                  }}
-                >
+                  }}>
                   <X className="w-3 h-3" />
                 </Button>
               )}
@@ -232,7 +249,7 @@ export default function MonocaCodeEditor() {
           height="100%"
           theme="vs-dark"
           language={extractFileExtention(currentFile, supportedLangExtension)}
-          value={files[currentFile]}
+          value={sidebarFileList[currentFile]}
           onChange={handleEditorChange}
           options={{
             minimap: { enabled: false },

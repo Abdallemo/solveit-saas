@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
   }
 }
 export async function PUT(req: NextRequest) {
+  console.log("hit endpoint file update..")
   const { filePath, content, contentType } = await req.json();
   console.log("File path",filePath )
   if (!filePath || typeof content !== "string") {
