@@ -10,12 +10,13 @@ import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { DeadlineProgress } from "./DeadlineProgress";
-import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
+import { autoSaveDraftWorkspace, publishSolution} from "../server/action";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/dashboard/solver/loading";
 import { isError } from "lodash";
+import { SolutionError } from "../lib/errors";
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
@@ -24,7 +25,7 @@ export default function WorkspacePageComp() {
   const [progress, setProgress] = useState(0);
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
+  const alreadySubmitedSolution = currentWorkspace?.task.status =="COMPLETED"
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
     autoSaveArgs: [
@@ -57,6 +58,7 @@ export default function WorkspacePageComp() {
   if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
+
     if (progress == 100) {
       toast.error("The submission has closed");
       return;
@@ -64,6 +66,9 @@ export default function WorkspacePageComp() {
     if (!currentWorkspace?.id) {
       toast.error("Not found current workspace id"); 
       return;
+    }
+    if (currentWorkspace.task.status === "COMPLETED"){
+      return
     }
 
     try {
@@ -73,15 +78,11 @@ export default function WorkspacePageComp() {
 
       if (result.success) {
         toast.success(result.message);
-
-      } else {
-        toast.error(result.message || "Failed to publish solution.");
-      }
+      } 
     } catch (e: unknown) {
-      console.error("Error publishing solution from client:", e);
 
-      if (isError(e)) {
-        toast.error(e.message || "Something went wrong during publishing.");
+      if (isError(e) && e instanceof SolutionError) {
+        toast.error(e.code);
       } else {
         toast.error("An unknown error occurred during publishing.");
       }
@@ -104,7 +105,7 @@ export default function WorkspacePageComp() {
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
           <Button
             form="solution-form"
-            disabled={isDisabled || isUploading || progress >= 100}
+            disabled={isDisabled || isUploading || progress >= 100 || alreadySubmitedSolution}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isUploading ? ( // If uploading, show loader and text
               <>
@@ -113,9 +114,11 @@ export default function WorkspacePageComp() {
               </>
             ) : progress >= 100 ? (
               "Submission Closed"
-            ) : (
+            ) :
+              alreadySubmitedSolution? (" Already Submited"):
+            (
               "Publish Solution"
-            )}
+            ) }
           </Button>
         </header>
         <FormProvider {...form}>

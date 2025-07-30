@@ -1,5 +1,5 @@
 "use server";
-import { TaskFormSchema } from "./task-types";
+import { SolutionReturnErrorType, TaskFormSchema, workspaceFileType } from "./task-types";
 import db from "@/drizzle/db";
 import {
   PaymentStatusType,
@@ -23,20 +23,12 @@ import { calculateProgress, isError, truncateText } from "@/lib/utils";
 import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { SolutionError } from "../lib/errors";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
-type workspaceFileType = {
-  fileName: string;
-  uploadedById: string;
-  fileType: string;
-  fileSize: number;
-  filePath: string;
-  storageLocation: string;
-  workspaceId: string;
-  isDraft: boolean;
-};
+
 
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -545,18 +537,30 @@ export async function saveFileToWorkspaceDB({
     .returning();
   return newFile[0];
 }
+//=> error type
+
+
+
+//=> im thinking to eaither ditch the throw new error and use above or use both so that client recive it (which is another me )
 export async function publishSolution(workspaceId: string, content: string) {
   try {
     const workspace = await getWorkspaceById(workspaceId);
     if (!workspace) {
-      throw new Error("Unable to find this Workspace.");
+      throw new SolutionError("Unable to locate the specified workspace. Please verify the ID and try again.");
     }
     const deadlinePercentage = calculateProgress(
       workspace.task.deadline!,
       workspace.createdAt!
     );
     if (deadlinePercentage >= 100) {
-      throw new Error("The submission window has closed.");
+      throw new SolutionError("Submission window has closed. You can no longer publish a solution for this task.");
+    }
+    const workspaceStats = workspace.task.status;
+    if (workspaceStats === "COMPLETED") {
+      throw new SolutionError("This solution has already been marked as completed. No further submissions are allowed.");
+    }
+    if (workspaceStats === "CANCELED") {
+      throw new SolutionError("This solution has been canceled and cannot be submitted.");
     }
     await db.transaction(async (dx) => {
       const solution = await dx
@@ -569,11 +573,11 @@ export async function publishSolution(workspaceId: string, content: string) {
         .returning();
 
       if (!solution || solution.length === 0 || !solution[0].id) {
-        throw new Error("Failed to create solution record.");
+        throw new SolutionError("Failed to create a solution record. Please try again or contact support if the issue persists.");
       }
       await Promise.all(
         workspace?.workspaceFiles.map(async (workspaceFile) => {
-          await db.insert(SolutionFilesTable).values({
+          await dx.insert(SolutionFilesTable).values({
             solutionId: solution[0].id,
             workspaceFileId: workspaceFile.id,
           });
@@ -589,15 +593,13 @@ export async function publishSolution(workspaceId: string, content: string) {
         .set({ status: "COMPLETED" })
         .where(eq(TaskTable.id, workspace?.taskId));
     });
-    return { success: true, message: "Successfully published solution!" };
+    return { success: true, message: "Successfully published solution!" as const };
   } catch (error) {
-    console.error("Error publishing solution:", error);
     if (isError(error)) {
-      throw new Error(
-        error.message ||
-          "Unable to publish solution due to an unexpected error."
+      throw new SolutionError(
+        "Unable to publish the solution due to an unexpected issue. Please try again later."
       );
     }
-    throw new Error(`Unable to publish solution due to: ${String(error)}`);
+    throw new SolutionError("Publishing failed due to: [error details]. Please review and retry.");
   }
 }
