@@ -4,6 +4,8 @@ import db from "@/drizzle/db";
 import {
   PaymentStatusType,
   PaymentTable,
+  SolutionFilesTable,
+  SolutionTable,
   TaskDraftTable,
   TaskFileTable,
   TaskTable,
@@ -537,4 +539,31 @@ export async function saveFileToWorkspaceDB({
     })
     .returning();
   return newFile[0];
+}
+export async function publishSolution(workspaceId:string,content:string) {
+  //=> first get the workspace
+  const workspace = await getWorkspaceById(workspaceId)
+  //=> get all files associated with
+  db.transaction(async(dx)=>{
+  
+    const solution = await dx.insert(SolutionTable).values({
+      workspaceId,
+      content:workspace?.content,
+      isFinal:true,
+  
+  
+    }).returning()
+
+    workspace?.workspaceFiles.map(async(workspaceFile)=>{
+      await db.insert(SolutionFilesTable).values({
+        solutionId:solution[0].id,
+        workspaceFileId:workspaceFile.id
+
+      })
+      
+  })
+
+  })
+  //=> make them final 
+  //=> insert all to the solution table
 }
