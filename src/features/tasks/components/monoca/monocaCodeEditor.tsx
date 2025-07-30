@@ -107,20 +107,18 @@ export default function MonocaCodeEditor() {
 
         if ( Object.keys(fetchedFiles).length > 0) {
           setSidebarFileList((prev)=> ({...prev,...fetchedFiles}))
-             if (
-            !(currentFile in sidebarFileList) ||
-            !uploadedFiles.some((file)=>file.fileName=== currentFile)
-          ){
+            
+          if (
+            !sidebarFileList[currentFile] ||
+            !uploadedFiles.some((file) => file.fileName === currentFile)
+
+          ) {
+
             const firstValidFile = uploadedFiles.find((file) => fetchedFiles[file.fileName])?.fileName;
             if (firstValidFile) {
               setCurrentFile(firstValidFile);
-            }else if (Object.keys(sidebarFileList).length > 0){
-              setCurrentFile(Object.keys(sidebarFileList)[0])
-            }else{
-               setCurrentFile("");
             }
           }
-
         }
       } catch (error) {
         toast.error("Error in file loading")
