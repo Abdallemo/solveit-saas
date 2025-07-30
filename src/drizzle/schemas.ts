@@ -437,3 +437,14 @@ export const workspaceFilesRelation = relations(
 );
 
 
+export const SolutionTableRelation = relations(SolutionTable,({many})=>({
+  solustionFiles:many(SolutionFilesTable,{
+    relationName:"solustionFiles"
+  })
+}))
+export const SolutionFilesTableRelations = relations(SolutionFilesTable,({one})=>({
+  solustion:one(SolutionTable,{
+    fields:[SolutionFilesTable.id],
+    references:[SolutionTable.id]
+  })
+}))
