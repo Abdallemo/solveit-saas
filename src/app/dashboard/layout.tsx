@@ -19,13 +19,18 @@ import { SessionProvider } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
+import { AlarmClock, Bell, Inbox, Lock } from "lucide-react";
+import { IconNotification } from "@tabler/icons-react";
+import { Button } from "@/components/ui/button";
+import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
+import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
   aiSummarizer: false,
   pdfPreview: false,
-} as const
+} as const;
 
 export default async function DashboardLayout({
   children,
@@ -80,8 +85,8 @@ export default async function DashboardLayout({
     experimental3DViewer: false,
     aiSummarizer: true,
     pdfPreview: false,
-  }as const;
-  
+  } as const;
+
   return (
     <SessionProvider
       session={session}
@@ -94,12 +99,16 @@ export default async function DashboardLayout({
             <DashboardSidebar user={session?.user!} />
             <div className="flex flex-col flex-1 overflow-auto">
               <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
-                <div className="container flex h-14 items-center px-4 sm:px-6">
+                <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                   <SidebarTrigger className="mr-2" />
+                  <div className="flex">
+                    <WalletDropdownMenu/>
+                    <NotificationDropDown/>
+                  </div>
                 </div>
               </header>
               <FeatureFlagProvider flags={dbFlags}>
-              <main className="flex-1">{children}</main>
+                <main className="flex-1">{children}</main>
               </FeatureFlagProvider>
             </div>
           </div>
