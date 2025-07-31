@@ -43,6 +43,7 @@ type assignTaskReturnType = {
     | "unable to assign task"
     | "task already assigned to solver";
   success?: "Task successfully assigned to you!";
+  newTask: TaskReturnType;
 };
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -208,22 +209,46 @@ export async function assignTaskToSolverById(
     const oldTask = await db.query.TaskTable.findFirst({
       where: (table, fn) => fn.eq(table.id, taskId),
     });
-    if (!oldTask) return { error: "no such task available" };
-    if (oldTask.solverId) return { error: "task already assigned to solver" };
+    if (!oldTask)
+      return { error: "no such task available", newTask: undefined };
+    if (oldTask.solverId)
+      return { error: "task already assigned to solver", newTask: undefined };
 
-    const updatedTask = await db
-      .update(TaskTable)
-      .set({
-        solverId: solverId,
-        status: "ASSIGNED",
-        updatedAt: new Date(Date.now()),
-      })
-      .where(and(eq(TaskTable.id, taskId), isNull(TaskTable.solverId)));
+    const result = await db.transaction(async (tx) => {
+      const updated = await tx
+        .update(TaskTable)
+        .set({
+          solverId: solverId,
+          status: "ASSIGNED",
+          updatedAt: new Date(),
+        })
+        .where(and(eq(TaskTable.id, taskId), isNull(TaskTable.solverId)))
+        .returning();
+
+      if (!updated.length) return null;
+
+      return await tx.query.TaskTable.findFirst({
+        where: (table, fn) => fn.eq(table.id, taskId),
+        with: {
+          poster: true,
+          solver: true,
+          workspace: true,
+        },
+      });
+    });
+
+    if (!result) {
+      return { error: "unable to assign task", newTask: undefined };
+    }
+
     revalidatePath(`/yourTasks/${taskId}`);
-    return { success: "Task successfully assigned to you!" };
+    return {
+      success: "Task successfully assigned to you!",
+      newTask: result,
+    };
   } catch (error) {
     console.error(error);
-    return { error: "unable to assign task" };
+    return { error: "unable to assign task", newTask: undefined };
   }
 }
 export async function createWorkspace(task: TaskReturnType) {
@@ -432,6 +457,7 @@ export async function getAssignedTasksbyIdPaginated(
         workspace: true,
         poster: true,
         solver: true,
+        blockedSolvers: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
