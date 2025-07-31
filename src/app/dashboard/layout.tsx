@@ -24,6 +24,7 @@ import { IconNotification } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
 import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
+import { getWalletInfo } from "@/features/tasks/server/action";
 
 const dbFlags = {
   monacoEditor: false,
@@ -75,7 +76,7 @@ export default async function DashboardLayout({
     };
   }
   const session = await getServerSession();
-  if (!session?.user) {
+  if (!session?.user || !session.user.id) {
     return redirect("/api/auth/signout?callbackUrl=/login");
   }
   const cookieStore = await cookies();
@@ -86,7 +87,7 @@ export default async function DashboardLayout({
     aiSummarizer: true,
     pdfPreview: false,
   } as const;
-
+  const {pending,availabel} = await getWalletInfo(session.user.id)
   return (
     <SessionProvider
       session={session}
@@ -101,8 +102,8 @@ export default async function DashboardLayout({
               <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
                 <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                   <SidebarTrigger className="mr-2" />
-                  <div className="flex">
-                    <WalletDropdownMenu/>
+                  <div className="flex gap-2">
+                    <WalletDropdownMenu availabel={availabel} pending={pending}/>
                     <NotificationDropDown/>
                   </div>
                 </div>
