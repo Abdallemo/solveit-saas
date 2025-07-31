@@ -11,6 +11,7 @@ import {
   check,
   numeric,
   json,
+  jsonb,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 
@@ -380,6 +381,18 @@ export const RulesTable = pgTable("ai_rules", {
   ruleList: text("rule_list").array().default([]),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
+export const notifications = pgTable("notifications", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  senderId: text("sender_id", ).notNull(),
+  receiverId: text("receiver_id", ).notNull(),
+  subject: text("subject", ),
+  content: text("content").notNull(),
+  method: jsonb("method").notNull(),
+  read: boolean("read").notNull().default(false),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
+
 
 //* RELATINOS
 
