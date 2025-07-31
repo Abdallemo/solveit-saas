@@ -1,4 +1,5 @@
 import {
+  AlertTriangle,
   Calendar,
   Search,
   SquareArrowUpRight,
@@ -50,7 +51,6 @@ export default async function SolverAssignedTasks({
       offset,
     }
   );
-
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
@@ -88,9 +88,7 @@ export default async function SolverAssignedTasks({
 
   return (
     <div className="min-h-screen bg-background">
-     
       <div className="max-w-6xl mx-auto px-6 py-8">
-       
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">
             Your Assigned Tasks
@@ -100,48 +98,36 @@ export default async function SolverAssignedTasks({
           </Badge>
         </div>
 
-       
         <div className="mb-8 items-center">
-          <form
-            method="get"
-            className="flex items-center gap-3 justify-center"
-          >
+          <form method="get" className="flex items-center gap-3 justify-center">
             <Input
               name="q"
               placeholder="Search your assigned tasks..."
               defaultValue={search}
-              className="flex-1" 
+              className="flex-1"
             />
-            <Button
-              type="submit"
-              className="whitespace-nowrap" 
-            >
+            <Button type="submit" className="whitespace-nowrap">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
           </form>
         </div>
 
-        
         <div className="space-y-6 min-h-[500px]">
           {tasks.length > 0 ? (
             tasks.map((task) => (
               <Card
                 key={task.id}
-              
-                className="hover:shadow-md transition-shadow bg-card w-full"
-              >
-               
+                className="hover:shadow-md transition-shadow bg-card w-full">
                 <CardHeader className="pb-2 sm:pb-1">
                   <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
                     <div className="flex flex-col min-w-0 flex-1">
-                     
                       <div className="flex items-center space-x-2 mb-2">
                         <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                           {task.title}
                         </h3>
                       </div>
-                     
+
                       <div className="flex items-center space-x-2 mb-2 text-xs sm:text-sm">
                         <p className="text-foreground">
                           Posted by {task.poster.name}
@@ -153,30 +139,37 @@ export default async function SolverAssignedTasks({
                       </div>
                     </div>
 
-                   
-                  
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-2 sm:flex-shrink-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                      
-                        {getStatusBadge(task.status!)}
+                        {task.blockedSolvers.some(
+                          (blocked) => blocked.userId === currentUser.id
+                        ) ? (
+                          <Badge
+                            variant={"secondary"}
+                            className="bg-yellow-100 text-yellow-800">
+                            canceled
+                          </Badge>
+                        ) : (
+                          getStatusBadge(task.status!)
+                        )}
                       </div>
-                      <Button variant="outline" asChild className="w-full sm:w-auto text-xs sm:text-sm">
+                      <Button
+                        variant="outline"
+                        asChild
+                        className="w-full sm:w-auto text-xs sm:text-sm">
                         <Link href={`/dashboard/tasks/${task.id}`}>
                           <SquareArrowUpRight />
                         </Link>
                       </Button>
-                     
+
                       <Button
-                        variant="success" 
+                        variant="success"
                         size="sm"
-                       
                         className="w-full sm:w-auto text-xs sm:text-sm whitespace-nowrap"
-                        asChild
-                      >
+                        asChild>
                         <Link
-                          href={`/dashboard/solver/workspace/start/${task.id}`}
-                        >
-                          {task.workspace
+                          href={`/dashboard/solver/workspace/start/${task.id}`}>
+                          {task.status === "IN_PROGRESS"
                             ? "Continue Workspace"
                             : "Begin Workspace"}
                         </Link>
@@ -185,43 +178,54 @@ export default async function SolverAssignedTasks({
                   </div>
                 </CardHeader>
 
-                
-                <CardContent className="pt-0">
+                <CardContent className="pt-0 flex flex-col">
                   <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-6 text-xs sm:text-sm text-foreground mb-3">
                     <Badge
                       className={`${getColorClass(
                         categoryMap[task.categoryId]
-                      )} text-xs`} 
-                    >
+                      )} text-xs`}>
                       {categoryMap[task.categoryId] || "Unknown"}
                     </Badge>
-
                     <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                       {task.deadline && (
                         <div className="flex items-center space-x-1">
-                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> 
-                          <span className="text-xs sm:text-sm"> 
+                          <Calendar className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">
                             Due: {task.deadline}
                           </span>
                         </div>
                       )}
 
-                     
-                      {task.solverId && (
+                      {task.status == "ASSIGNED" && (
                         <div className="flex items-center space-x-1">
-                          <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" /> 
-                          <span className="text-xs sm:text-sm"> 
+                          <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+                          <span className="text-xs sm:text-sm">
                             Being solved
                           </span>
                         </div>
                       )}
                     </div>
                   </div>
-
-                  
-                  <p className="text-foreground text-sm sm:text-base leading-relaxed line-clamp-2">
-                    {task.description}
-                  </p>
+                  <div className="w-full flex justify-between">
+                    <p className="text-foreground text-sm sm:text-base leading-relaxed line-clamp-2">
+                      {task.description}
+                    </p>
+                    {task.blockedSolvers.some(
+                      (blocked) => blocked.userId === currentUser.id
+                    ) && (
+                      <div className="flex items-center gap-1 mt-1 ">
+                        <AlertTriangle size={14} />
+                        <span className="text-yellow-600 text-xs">
+                          Publishing is disabled for this task.
+                        </span>
+                        <Link
+                          href={"#"}
+                          className="text-xs font-semibold text-primary/50 underline">
+                          read more
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             ))
@@ -232,7 +236,6 @@ export default async function SolverAssignedTasks({
           )}
         </div>
 
-       
         {(hasPrevious || hasNext) && (
           <div className="flex justify-center mt-8 mb-8">
             <Pagination>
@@ -253,7 +256,6 @@ export default async function SolverAssignedTasks({
 
                 {hasNext && (
                   <>
-                    
                     <PaginationItem>
                       <PaginationEllipsis />
                     </PaginationItem>

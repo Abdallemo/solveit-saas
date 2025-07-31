@@ -1,7 +1,7 @@
 "use client";
 
 import { startTransition, useTransition } from "react";
-import { assignTaskToSolverById } from "@/features/tasks/server/action";
+import { assignTaskToSolverById, createWorkspace } from "@/features/tasks/server/action";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -18,9 +18,11 @@ export function AssignTaskButton({
   const handleClick = () => {
     startTransition(async () => {
       try {
-        const { error, success } = await assignTaskToSolverById(taskId, userId);
+        const { error, success ,newTask} = await assignTaskToSolverById(taskId, userId);
+
         if (success) {
           toast.success(success);
+          await createWorkspace(newTask);
         }
         if (error) {
           toast.error(error);

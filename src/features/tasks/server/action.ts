@@ -502,9 +502,11 @@ export async function getAllTasksByRolePaginated(
         : undefined,
       not(eq(TaskTable.posterId, userId)),
       and(
-        not(eq(TaskTable.status, "ASSIGNED")),
-        not(eq(TaskTable.status, "COMPLETED")),
-        not(eq(TaskTable.status, "CANCELED"))
+        // not(eq(TaskTable.status, "ASSIGNED")),
+        // not(eq(TaskTable.status, "COMPLETED")),
+        // not(eq(TaskTable.status, "CANCELED")),
+        //reversed lol
+        eq(TaskTable.status, "OPEN")
       ),
       search ? ilike(TaskTable.title, `%${search}%`) : undefined
     );
