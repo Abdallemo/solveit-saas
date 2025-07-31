@@ -40,7 +40,6 @@ const loadingSteps = [
 ];
 
 export default function WorkspaceOnboarding({
-  taskId,
   workspaceId,
 }: {
   taskId: string;

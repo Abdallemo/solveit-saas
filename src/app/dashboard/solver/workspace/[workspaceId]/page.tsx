@@ -4,9 +4,7 @@ import {  getWorkspaceById, handleTaskDeadline} from "@/features/tasks/server/ac
 
 export default async function Page({params}:{params: Promise<{ workspaceId: string }>;}) {
   await isAuthorized("SOLVER");
-  const { workspaceId } = await params;
-  const currentWorkspace = await getWorkspaceById(workspaceId);
-  await handleTaskDeadline(currentWorkspace)
+
   return <WorkspacePageComp />;
 }
 

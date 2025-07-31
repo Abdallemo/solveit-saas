@@ -1,11 +1,12 @@
+import db from "@/drizzle/db";
+import { TaskTable } from "@/drizzle/schemas";
 import { isAuthorized } from "@/features/auth/server/actions";
 import WorkspaceOnboarding from "@/features/tasks/components/WorkspaceOnboardLoading";
 import {
-  createWorkspace,
-  getTasksbyId,
+
   getWorkspaceByTaskId,
 } from "@/features/tasks/server/action";
-import { Loader2 } from "lucide-react";
+import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -18,14 +19,16 @@ export default async function page({
 
   const { taskId } = await params;
   const workspace = await getWorkspaceByTaskId(taskId);
-  const Tasks = await getTasksbyId(taskId);
-
-  console.log(Tasks?.solverId);
-  if (!workspace) {
-    const newWorkspace = await createWorkspace(Tasks);
+  if (!workspace){
+    throw new Error("unable to find this worksapce")
+  }
+  if (workspace?.task.status === "ASSIGNED") {
+    await db.update(TaskTable)
+            .set({ status: "IN_PROGRESS" })
+            .where(eq(TaskTable.id, workspace?.taskId));
     return (
       <>
-        <WorkspaceOnboarding taskId={taskId} workspaceId={newWorkspace.id} />
+        <WorkspaceOnboarding taskId={taskId} workspaceId={workspace.id} />
       </>
     );
   }
