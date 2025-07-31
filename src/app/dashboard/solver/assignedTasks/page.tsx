@@ -24,8 +24,10 @@ import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
   getAssignedTasksbyIdPaginated,
+   getWorkspaceById, handleTaskDeadline
 } from "@/features/tasks/server/action";
 import Link from "next/link";
+
 
 export default async function SolverAssignedTasks({
   searchParams,
@@ -42,7 +44,7 @@ export default async function SolverAssignedTasks({
   const pages = Number.parseInt(page ?? "1");
   const limit = 3;
   const offset = (pages - 1) * limit;
-
+  
   const { tasks, totalCount } = await getAssignedTasksbyIdPaginated(
     currentUser.id,
     {
@@ -51,6 +53,7 @@ export default async function SolverAssignedTasks({
       offset,
     }
   );
+  
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
