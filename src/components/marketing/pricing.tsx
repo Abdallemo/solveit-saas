@@ -23,9 +23,6 @@ export default async function Pricing() {
     ? await getServerUserSubscriptionById(currentUser.id)
     : null;
 
-  console.log("bug: CurrentUser " + currentUser?.id);
-  console.log("bug: userSubscription " + userSubscription);
-
   return (
     <section id="pricing" className="py-20">
       <div className="mx-auto max-w-7xl px-4">

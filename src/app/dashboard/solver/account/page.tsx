@@ -9,7 +9,6 @@ export default async function SolverAccountPage() {
   if (!currentUser || !currentUser.id) return <AuthGate />;
 
   const isOauthUser = await isUserAccountOauth(currentUser.id);
-  console.log('is this user oAuth Users ',isOauthUser)
   
   return <AccountComponent isOauthUser={isOauthUser} />;
 }
