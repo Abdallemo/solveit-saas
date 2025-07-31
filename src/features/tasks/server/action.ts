@@ -1,5 +1,9 @@
 "use server";
-import { SolutionReturnErrorType, TaskFormSchema, workspaceFileType } from "./task-types";
+import {
+  SolutionReturnErrorType,
+  TaskFormSchema,
+  workspaceFileType,
+} from "./task-types";
 import db from "@/drizzle/db";
 import {
   PaymentStatusType,
@@ -28,7 +32,6 @@ import { SolutionError } from "../lib/errors";
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
-
 
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -252,6 +255,29 @@ export async function getAllCategoryMap(): Promise<Record<string, string>> {
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
 
+export async function getWalletInfo(solverId: string) {
+  let pending = 0;
+  let availabel = 0;
+  if (!solverId) {
+    throw new Error("error! user id is empty");
+  }
+  const solverInfo = await db.query.WorkspaceTable.findMany({
+    with: { solver: true, task: true },
+    where: (table, fn) => fn.eq(table.solverId, solverId),
+  });
+  for (const record of solverInfo) {
+    switch (record.task.status) {
+      case "ASSIGNED":
+      case "IN_PROGRESS":
+        pending += record.task.price!;
+        break;
+      case "COMPLETED":
+        availabel += record.task.price!;
+        break;
+    }
+  }
+  return { pending, availabel };
+}
 export async function taskPaymentInsetion(
   status: PaymentStatusType,
   amount: number,
@@ -539,28 +565,34 @@ export async function saveFileToWorkspaceDB({
 }
 //=> error type
 
-
-
 //=> im thinking to eaither ditch the throw new error and use above or use both so that client recive it (which is another me )
 export async function publishSolution(workspaceId: string, content: string) {
   try {
     const workspace = await getWorkspaceById(workspaceId);
     if (!workspace) {
-      throw new SolutionError("Unable to locate the specified workspace. Please verify the ID and try again.");
+      throw new SolutionError(
+        "Unable to locate the specified workspace. Please verify the ID and try again."
+      );
     }
     const deadlinePercentage = calculateProgress(
       workspace.task.deadline!,
       workspace.createdAt!
     );
     if (deadlinePercentage >= 100) {
-      throw new SolutionError("Submission window has closed. You can no longer publish a solution for this task.");
+      throw new SolutionError(
+        "Submission window has closed. You can no longer publish a solution for this task."
+      );
     }
     const workspaceStats = workspace.task.status;
     if (workspaceStats === "COMPLETED") {
-      throw new SolutionError("This solution has already been marked as completed. No further submissions are allowed.");
+      throw new SolutionError(
+        "This solution has already been marked as completed. No further submissions are allowed."
+      );
     }
     if (workspaceStats === "CANCELED") {
-      throw new SolutionError("This solution has been canceled and cannot be submitted.");
+      throw new SolutionError(
+        "This solution has been canceled and cannot be submitted."
+      );
     }
     await db.transaction(async (dx) => {
       const solution = await dx
@@ -573,7 +605,9 @@ export async function publishSolution(workspaceId: string, content: string) {
         .returning();
 
       if (!solution || solution.length === 0 || !solution[0].id) {
-        throw new SolutionError("Failed to create a solution record. Please try again or contact support if the issue persists.");
+        throw new SolutionError(
+          "Failed to create a solution record. Please try again or contact support if the issue persists."
+        );
       }
       await Promise.all(
         workspace?.workspaceFiles.map(async (workspaceFile) => {
@@ -593,13 +627,18 @@ export async function publishSolution(workspaceId: string, content: string) {
         .set({ status: "COMPLETED" })
         .where(eq(TaskTable.id, workspace?.taskId));
     });
-    return { success: true, message: "Successfully published solution!" as const };
+    return {
+      success: true,
+      message: "Successfully published solution!" as const,
+    };
   } catch (error) {
     if (isError(error)) {
       throw new SolutionError(
         "Unable to publish the solution due to an unexpected issue. Please try again later."
       );
     }
-    throw new SolutionError("Publishing failed due to: [error details]. Please review and retry.");
+    throw new SolutionError(
+      "Publishing failed due to: [error details]. Please review and retry."
+    );
   }
 }

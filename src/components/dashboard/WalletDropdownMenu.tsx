@@ -9,7 +9,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export default function WalletDropdownMenu() {
+export default function WalletDropdownMenu({pending,availabel}:{pending:number,availabel:number}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -30,7 +30,7 @@ export default function WalletDropdownMenu() {
                 <span className="text-xs text-muted-foreground">Pending</span>
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               </div>
-              <div className="text-lg font-semibold">$1,247.50</div>
+              <div className="text-lg font-semibold">RM{pending}</div>
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span>Held until reviews done</span>
@@ -45,7 +45,7 @@ export default function WalletDropdownMenu() {
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
               </div>
               <div className="text-lg font-semibold text-green-600">
-                $892.30
+                RM{availabel}
               </div>
               <Button size="sm" className="w-full h-7 text-xs">
                 <ArrowUpRight className="h-3 w-3 mr-1" />
