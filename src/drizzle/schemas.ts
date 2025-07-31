@@ -23,6 +23,10 @@ export const UserRole = pgEnum("role", [
   "POSTER",
   "SOLVER",
 ]);
+export const NotificationMethodsEnum = pgEnum("role", [
+  "SYSTEM",
+  "EMAIL",
+]);
 export const TierEnum = pgEnum("tier", ["BASIC", "PREMIUM"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
@@ -387,7 +391,7 @@ export const notifications = pgTable("notifications", {
   receiverId: text("receiver_id", ).notNull(),
   subject: text("subject", ),
   content: text("content").notNull(),
-  method: jsonb("method").notNull(),
+  method: NotificationMethodsEnum("method").notNull(),
   read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
