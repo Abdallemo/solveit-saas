@@ -6,6 +6,7 @@ import {
 } from "./task-types";
 import db from "@/drizzle/db";
 import {
+  BlockedTasksTable,
   PaymentStatusType,
   PaymentTable,
   SolutionFilesTable,
@@ -24,7 +25,7 @@ import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import { calculateProgress, isError, truncateText } from "@/lib/utils";
-import { and, asc, count, eq, ilike, isNull, not } from "drizzle-orm";
+import { and, asc, count, eq, ilike, inArray, isNull, not } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SolutionError } from "../lib/errors";
@@ -32,6 +33,8 @@ import { SolutionError } from "../lib/errors";
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
+export type WorkpaceSchemReturnedType = Awaited<ReturnType<typeof getWorkspaceById>>;
+export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
 
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -231,8 +234,51 @@ export async function createWorkspace(task: TaskReturnType) {
     .returning();
   return newWorkspace[0];
 }
+export async function addSolverToTaskBlockList(userId:string,taskId:string,reason:string) {
+  await db.insert(BlockedTasksTable).values({
+  userId,
+  taskId,
+  reason,
+});
+}
+export async function handleTaskDeadline(currentWorkspace: WorkpaceSchemReturnedType) {
+  if (!currentWorkspace) {
+    throw new Error("Workspace not found");
+  }
+  const { task, taskId, solverId, createdAt } = currentWorkspace;
+  const deadlinePercentage = calculateProgress(
+    task.deadline!,
+    createdAt!
+  );
+  if (deadlinePercentage < 100) {
+    return { skipped: true };
+  }
+
+  if (task.status === "OPEN") {
+    return { skipped: true, reason: "Task already OPEN" };
+  }
+
+  const alreadyBlocked = await getBlockedSolver(solverId, taskId);
+  if (alreadyBlocked) {
+    return { skipped: true, reason: "Solver already blocked" };
+  }
+
+  await db.update(TaskTable)
+    .set({ status: "OPEN" })
+    .where(eq(TaskTable.id, taskId));
+
+  await addSolverToTaskBlockList(solverId, taskId, "Missed deadline");
+
+  return { status: "reopened", blocked: true };
+}
 
 // getters 🥱
+export async function getBlockedSolver(solverId:string, taskId:string) {
+  const result = db.query.BlockedTasksTable.findFirst({
+    where : (table,fn)=> fn.and(fn.eq(table.userId,solverId),fn.eq(table.taskId,taskId))
+  })
+  return [result][0]
+}
 export async function getAllTaskCatagories() {
   const catagoryName = await db.query.TaskCategoryTable.findMany({
     columns: { id: true, name: true },
@@ -309,7 +355,6 @@ export async function getUserTasksbyId(userId: string) {
   });
   return userTasks;
 }
-export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
 export async function getTasksbyId(id: string) {
   const Task = await db.query.TaskTable.findFirst({
     where: (table, fn) => fn.eq(table.id, id),
@@ -404,6 +449,12 @@ export async function getAllTasksByRolePaginated(
   }
 ) {
   let where;
+  const blockedTasks = await db.query.BlockedTasksTable.findMany({
+
+    with:{task:true},
+    where : (table,fn)=> fn.eq(table.userId,userId)
+  })
+  const blockedTaskIds = blockedTasks.map(t => t.taskId);
 
   if (role === "POSTER") {
     where = and(
@@ -414,6 +465,9 @@ export async function getAllTasksByRolePaginated(
     );
   } else if (role === "SOLVER") {
     where = and(
+      blockedTaskIds.length > 0 
+      ?not(inArray(TaskTable.id,blockedTaskIds))
+      :undefined,
       not(eq(TaskTable.posterId, userId)),
       not(eq(TaskTable.status, "ASSIGNED")),
       search ? ilike(TaskTable.title, `%${search}%`) : undefined
@@ -462,9 +516,6 @@ export async function getWorkspaceByTaskId(taskId: string) {
   });
   return workspace;
 }
-export type WorkpaceSchemReturnedType = Awaited<
-  ReturnType<typeof getWorkspaceById>
->;
 export async function getWorkspaceById(workspaceId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
     where: (table, fn) => fn.eq(table.id, workspaceId),
@@ -563,9 +614,7 @@ export async function saveFileToWorkspaceDB({
     .returning();
   return newFile[0];
 }
-//=> error type
 
-//=> im thinking to eaither ditch the throw new error and use above or use both so that client recive it (which is another me )
 export async function publishSolution(workspaceId: string, content: string) {
   try {
     const workspace = await getWorkspaceById(workspaceId);
@@ -574,11 +623,8 @@ export async function publishSolution(workspaceId: string, content: string) {
         "Unable to locate the specified workspace. Please verify the ID and try again."
       );
     }
-    const deadlinePercentage = calculateProgress(
-      workspace.task.deadline!,
-      workspace.createdAt!
-    );
-    if (deadlinePercentage >= 100) {
+    const {blocked}= await handleTaskDeadline(workspace)
+    if (blocked){
       throw new SolutionError(
         "Submission window has closed. You can no longer publish a solution for this task."
       );
@@ -642,3 +688,4 @@ export async function publishSolution(workspaceId: string, content: string) {
     );
   }
 }
+

@@ -1,22 +1,25 @@
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { isAuthorized } from "@/features/auth/server/actions";
-import { getWorkspaceById } from "@/features/tasks/server/action";
-import { ReactNode } from 'react'
+import {  getWorkspaceById } from "@/features/tasks/server/action";
+
+import { ReactNode } from "react";
 
 export default async function WorkspaceLayout({
   children,
-   params,
+  params,
 }: {
-  children: ReactNode,
+  children: ReactNode;
   params: Promise<{ workspaceId: string }>;
 }) {
-   await isAuthorized("SOLVER");
-    const { workspaceId } = await params;
-    const currentWorkspace = await getWorkspaceById(workspaceId);
+  await isAuthorized("SOLVER");
+  const { workspaceId } = await params;
+  const currentWorkspace = await getWorkspaceById(workspaceId);
+    if (!currentWorkspace) {
+    throw new Error("Workspace not found");
+  }
   return (
-    
-     <WorkspaceProvider workspace={currentWorkspace}>
-    {children}
+    <WorkspaceProvider workspace={currentWorkspace}>
+      {children}
     </WorkspaceProvider>
-  )
+  );
 }
