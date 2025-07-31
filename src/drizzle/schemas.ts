@@ -192,7 +192,18 @@ export const TaskTable = pgTable("tasks", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
 });
+export const BlockedTasksTable = pgTable("blocked_tasks",{
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => TaskTable.id, { onDelete: "cascade" }),
+  reason:text("reason"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 
+})
 export const TaskDraftTable = pgTable("task_drafts", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -394,7 +405,7 @@ export const accountRelations = relations(AccountTable, ({ one }) => ({
 }));
 
 //* To Obe Relations Here
-export const taskRelations = relations(TaskTable, ({ one }) => ({
+export const taskRelations = relations(TaskTable, ({ one ,many}) => ({
   poster: one(UserTable, {
     relationName: "poster",
     fields: [TaskTable.posterId],
@@ -410,8 +421,16 @@ export const taskRelations = relations(TaskTable, ({ one }) => ({
     fields: [TaskTable.id],
     references: [WorkspaceTable.taskId],
   }),
+  blockedSolvers:many(BlockedTasksTable,{
+    relationName:"blockedSolvers"
+  })
 }));
-
+export const BlockedTasksTableRelation = relations(BlockedTasksTable,({one})=>({
+  task:one(TaskTable,{
+    fields:[BlockedTasksTable.taskId],
+    references:[TaskTable.id]
+  })
+}))
 export const workspaceRelations = relations(WorkspaceTable, ({ one ,many}) => ({
   task: one(TaskTable, {
     relationName: "task",
