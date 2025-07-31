@@ -15,18 +15,13 @@ import {
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 
-
-
 export const UserRole = pgEnum("role", [
   "ADMIN",
   "MODERATOR",
   "POSTER",
   "SOLVER",
 ]);
-export const NotificationMethodsEnum = pgEnum("role", [
-  "SYSTEM",
-  "EMAIL",
-]);
+export const NotificationMethodsEnum = pgEnum("role", ["SYSTEM", "EMAIL"]);
 export const TierEnum = pgEnum("tier", ["BASIC", "PREMIUM"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
@@ -197,7 +192,7 @@ export const TaskTable = pgTable("tasks", {
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
 });
-export const BlockedTasksTable = pgTable("blocked_tasks",{
+export const BlockedTasksTable = pgTable("blocked_tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
@@ -205,10 +200,9 @@ export const BlockedTasksTable = pgTable("blocked_tasks",{
   taskId: uuid("task_id")
     .notNull()
     .references(() => TaskTable.id, { onDelete: "cascade" }),
-  reason:text("reason"),
+  reason: text("reason"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-
-})
+});
 export const TaskDraftTable = pgTable("task_drafts", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -387,16 +381,14 @@ export const RulesTable = pgTable("ai_rules", {
 });
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
-  senderId: text("sender_id", ).notNull(),
-  receiverId: text("receiver_id", ).notNull(),
-  subject: text("subject", ),
+  senderId: text("sender_id").notNull(),
+  receiverId: text("receiver_id").notNull(),
+  subject: text("subject"),
   content: text("content").notNull(),
   method: NotificationMethodsEnum("method").notNull(),
   read: boolean("read").notNull().default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
-
-
 
 //* RELATINOS
 
@@ -406,6 +398,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
     relationName: "poster",
   }),
   tasksAsSolver: many(TaskTable, {
+    relationName: "solver",
+  }),
+  blockedSolverFromTask: many(BlockedTasksTable, {
     relationName: "solver",
   }),
   account: one(AccountTable, {
@@ -422,7 +417,7 @@ export const accountRelations = relations(AccountTable, ({ one }) => ({
 }));
 
 //* To Obe Relations Here
-export const taskRelations = relations(TaskTable, ({ one ,many}) => ({
+export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   poster: one(UserTable, {
     relationName: "poster",
     fields: [TaskTable.posterId],
@@ -438,30 +433,42 @@ export const taskRelations = relations(TaskTable, ({ one ,many}) => ({
     fields: [TaskTable.id],
     references: [WorkspaceTable.taskId],
   }),
-  blockedSolvers:many(BlockedTasksTable,{
-    relationName:"blockedSolvers"
-  })
-}));
-export const BlockedTasksTableRelation = relations(BlockedTasksTable,({one})=>({
-  task:one(TaskTable,{
-    fields:[BlockedTasksTable.taskId],
-    references:[TaskTable.id]
-  })
-}))
-export const workspaceRelations = relations(WorkspaceTable, ({ one ,many}) => ({
-  task: one(TaskTable, {
-    relationName: "task",
-    fields: [WorkspaceTable.taskId],
-    references: [TaskTable.id],
+  blockedSolvers: many(BlockedTasksTable, {
+    relationName: "blockedSolvers",
   }),
-  solver: one(UserTable, {
-    relationName: "solver",
-    fields: [WorkspaceTable.solverId],
-    references: [UserTable.id],
-  }),
-   workspaceFiles: many(WorkspaceFilesTable),
-   
 }));
+export const BlockedTasksTableRelation = relations(
+  BlockedTasksTable,
+  ({ one }) => ({
+    task: one(TaskTable, {
+      relationName: "blockedSolvers",
+      fields: [BlockedTasksTable.taskId],
+      references: [TaskTable.id],
+    }),
+    solver: one(UserTable, {
+      relationName: "user",
+
+      fields: [BlockedTasksTable.userId],
+      references: [UserTable.id],
+    }),
+  })
+);
+export const workspaceRelations = relations(
+  WorkspaceTable,
+  ({ one, many }) => ({
+    task: one(TaskTable, {
+      relationName: "task",
+      fields: [WorkspaceTable.taskId],
+      references: [TaskTable.id],
+    }),
+    solver: one(UserTable, {
+      relationName: "solver",
+      fields: [WorkspaceTable.solverId],
+      references: [UserTable.id],
+    }),
+    workspaceFiles: many(WorkspaceFilesTable),
+  })
+);
 export const workspaceFilesRelation = relations(
   WorkspaceFilesTable,
   ({ one }) => ({
@@ -472,15 +479,17 @@ export const workspaceFilesRelation = relations(
   })
 );
 
-
-export const SolutionTableRelation = relations(SolutionTable,({many})=>({
-  solustionFiles:many(SolutionFilesTable,{
-    relationName:"solustionFiles"
+export const SolutionTableRelation = relations(SolutionTable, ({ many }) => ({
+  solustionFiles: many(SolutionFilesTable, {
+    relationName: "solustionFiles",
+  }),
+}));
+export const SolutionFilesTableRelations = relations(
+  SolutionFilesTable,
+  ({ one }) => ({
+    solustion: one(SolutionTable, {
+      fields: [SolutionFilesTable.id],
+      references: [SolutionTable.id],
+    }),
   })
-}))
-export const SolutionFilesTableRelations = relations(SolutionFilesTable,({one})=>({
-  solustion:one(SolutionTable,{
-    fields:[SolutionFilesTable.id],
-    references:[SolutionTable.id]
-  })
-}))
+);
