@@ -29,6 +29,7 @@ import {
   handleTaskDeadline,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
+import { Toggle } from "@/components/ui/toggle";
 
 export default async function SolverAssignedTasks({
   searchParams,
@@ -118,6 +119,7 @@ export default async function SolverAssignedTasks({
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
+            <Toggle />
           </form>
         </div>
 
