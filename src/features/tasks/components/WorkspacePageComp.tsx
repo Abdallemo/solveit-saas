@@ -17,6 +17,7 @@ import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/dashboard/solver/loading";
 import { isError } from "lodash";
 import { SolutionError } from "../lib/errors";
+import { sendNotification } from "@/features/notifications/server/action";
 
 export default function WorkspacePageComp() {
   const [isUploading, setIsUploading] = useState(false);
@@ -75,7 +76,15 @@ export default function WorkspacePageComp() {
       setIsUploading(true);
 
       const result = await publishSolution(currentWorkspace.id, data.content);
-
+        await sendNotification({
+                  sender: "solveit@org.com",
+                  receiver: currentWorkspace.task.poster.email!,
+                  method: ["email"],
+                  body: {
+                    subject: "Task Completed",
+                    content: `you Task titiled ${currentWorkspace.task.title} has bean complited please review it with in 7days `,
+                  },
+                });
       if (result.success) {
         toast.success(result.message);
       } 
