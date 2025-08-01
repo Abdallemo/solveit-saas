@@ -81,12 +81,6 @@ export default async function DashboardLayout({
   }
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const myFlags = {
-    monacoEditor: true,
-    experimental3DViewer: false,
-    aiSummarizer: true,
-    pdfPreview: false,
-  } as const;
   const {pending,availabel} = await getWalletInfo(session.user.id)
   return (
     <SessionProvider
