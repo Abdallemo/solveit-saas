@@ -52,7 +52,8 @@ export default async function SolverAssignedTasks({
       search,
       limit,
       offset,
-    }
+    },
+    true
   );
   for (const task of tasks) {
     const eachWorksapce = await getWorkspaceById(task.workspace.id);
