@@ -36,7 +36,7 @@ export function AssignTaskButton({
             method: ["email"],
             body: {
               subject: "task Picked",
-              content: `you Task is picked by ${
+              content: `you Task titiled ${newTask?.title} is picked by ${
                 newTask?.solver?.name
               }\n you will reciev your solution on ${parseDeadline(
                 newTask?.deadline!

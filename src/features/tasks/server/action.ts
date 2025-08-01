@@ -578,8 +578,9 @@ export async function getWorkspaceById(workspaceId: string) {
     where: (table, fn) => fn.eq(table.id, workspaceId),
     with: {
       solver: true,
-      task: true,
+      task: {with:{solver:true,poster:true}},
       workspaceFiles: true,
+
     },
   });
   return workspace;
