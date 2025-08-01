@@ -10,12 +10,12 @@ export default async function WorkspaceLayout({
   params,
 }: {
   children: ReactNode;
-  params: { workspaceId: string };
+  params: Promise<{ workspaceId: string }>;
 }) {
   
   await isAuthorized("SOLVER");
   const currentUser = await getServerUserSession()
-  const { workspaceId } = params;
+  const { workspaceId } = await params;
   const currentWorkspace = await getWorkspaceById(workspaceId);
   if (!currentWorkspace) {
     throw new Error("Workspace not found");
