@@ -25,7 +25,17 @@ import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import { calculateProgress, isError, truncateText } from "@/lib/utils";
-import { and, asc, count, eq, ilike, inArray, isNull, not } from "drizzle-orm";
+import {
+  and,
+  asc,
+  count,
+  eq,
+  ilike,
+  inArray,
+  isNull,
+  not,
+  or,
+} from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SolutionError } from "../lib/errors";
@@ -295,7 +305,7 @@ export async function handleTaskDeadline(
 
   await db
     .update(TaskTable)
-    .set({ status: "OPEN" })
+    .set({ status: "OPEN", solverId: null })
     .where(eq(TaskTable.id, taskId));
 
   await addSolverToTaskBlockList(solverId, taskId, "Missed deadline");
@@ -445,10 +455,20 @@ export async function getPosterTasksbyIdPaginated(
 }
 export async function getAssignedTasksbyIdPaginated(
   userId: string,
-  { search, limit, offset }: { search?: string; limit: number; offset: number }
+  { search, limit, offset }: { search?: string; limit: number; offset: number },
+  showBlocked: boolean
 ) {
+  const blockedTasks = await db.query.BlockedTasksTable.findMany({
+    with: { task: true },
+    where: (table, fn) => fn.eq(table.userId, userId),
+  });
+  const blockedTaskIds = blockedTasks.map((t) => t.taskId);
+
   const where = and(
-    eq(TaskTable.solverId, userId),
+    or(
+      eq(TaskTable.solverId, userId),
+      showBlocked ? inArray(TaskTable.id, blockedTaskIds) : undefined
+    ),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined
   );
 
@@ -506,13 +526,7 @@ export async function getAllTasksByRolePaginated(
         ? not(inArray(TaskTable.id, blockedTaskIds))
         : undefined,
       not(eq(TaskTable.posterId, userId)),
-      and(
-        // not(eq(TaskTable.status, "ASSIGNED")),
-        // not(eq(TaskTable.status, "COMPLETED")),
-        // not(eq(TaskTable.status, "CANCELED")),
-        //reversed lol
-        eq(TaskTable.status, "OPEN")
-      ),
+      and(eq(TaskTable.status, "OPEN")),
       search ? ilike(TaskTable.title, `%${search}%`) : undefined
     );
   }
