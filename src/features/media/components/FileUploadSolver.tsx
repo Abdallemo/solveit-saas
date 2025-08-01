@@ -72,7 +72,7 @@ export default function FileUploadSolver({
           uploadedById,
         });
 
-        setUploadedFiles((prev) => [...prev, savedFile]);
+        setUploadedFiles((prev) => [...prev, savedFile!]);
 
         setTimeout(() => {
           setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
