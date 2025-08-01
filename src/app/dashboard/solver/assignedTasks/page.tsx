@@ -24,10 +24,11 @@ import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
   getAssignedTasksbyIdPaginated,
-   getWorkspaceById, handleTaskDeadline
+  getWorkspaceById,
+  getWorkspaceByTaskId,
+  handleTaskDeadline,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
-
 
 export default async function SolverAssignedTasks({
   searchParams,
@@ -44,7 +45,7 @@ export default async function SolverAssignedTasks({
   const pages = Number.parseInt(page ?? "1");
   const limit = 3;
   const offset = (pages - 1) * limit;
-  
+
   const { tasks, totalCount } = await getAssignedTasksbyIdPaginated(
     currentUser.id,
     {
@@ -53,7 +54,10 @@ export default async function SolverAssignedTasks({
       offset,
     }
   );
-  
+  for (const task of tasks) {
+    const eachWorksapce = await getWorkspaceById(task.workspace.id);
+    await handleTaskDeadline(eachWorksapce);
+  }
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
@@ -174,6 +178,10 @@ export default async function SolverAssignedTasks({
                           href={`/dashboard/solver/workspace/start/${task.id}`}>
                           {task.status === "IN_PROGRESS"
                             ? "Continue Workspace"
+                            : task.blockedSolvers.some(
+                                (blocked) => blocked.userId === currentUser.id
+                              )
+                            ? "View Workspace"
                             : "Begin Workspace"}
                         </Link>
                       </Button>
@@ -199,7 +207,7 @@ export default async function SolverAssignedTasks({
                         </div>
                       )}
 
-                      {task.status == "ASSIGNED" && (
+                      {task.status == "IN_PROGRESS" && (
                         <div className="flex items-center space-x-1">
                           <User className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
                           <span className="text-xs sm:text-sm">
