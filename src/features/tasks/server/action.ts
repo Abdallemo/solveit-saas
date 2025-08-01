@@ -32,7 +32,7 @@ import { SolutionError } from "../lib/errors";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
-export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasksbyId>>;
+export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasks>>;
 export type WorkpaceSchemReturnedType = Awaited<
   ReturnType<typeof getWorkspaceById>
 >;
@@ -400,13 +400,18 @@ export async function getTasksbyId(id: string) {
   return Task;
 }
 
-export async function getAllTasksbyId() {
+export async function getAllTasks() {
   const allTasksFiltred = db.query.TaskTable.findMany({
     where: (table, fn) =>
       fn.and(
         fn.not(fn.eq(table.status, "IN_PROGRESS")),
         fn.not(fn.eq(table.status, "ASSIGNED"))
       ),
+    with: {
+      poster: true,
+      solver: true,
+      workspace: true,
+    },
   });
   return allTasksFiltred;
 }
@@ -724,5 +729,47 @@ export async function publishSolution(workspaceId: string, content: string) {
     throw new SolutionError(
       "Publishing failed due to: [error details]. Please review and retry."
     );
+  }
+}
+
+export async function handleTaskDeadlineEnhacned(task: TaskReturnType) {
+  //if this task status is assigned or on progress check these
+  if (
+    !task ||
+    !task.solverId ||
+    !task.id ||
+    !task.workspace?.createdAt ||
+    !task.deadline
+  )
+    return;
+  //i asume my system will asign users to assign or in progress when they task task or start working with
+  if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
+    const deadlinePercentage = calculateProgress(
+      task.deadline,
+      task.workspace.createdAt!
+    );
+    if (deadlinePercentage < 100) return;
+
+    try {
+      const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
+      if (alreadyBlocked) return;
+
+      await db
+        .update(TaskTable)
+        .set({ status: "OPEN" })
+        .where(
+          and(
+            eq(TaskTable.id, task.id),
+            inArray(TaskTable.status, ["ASSIGNED", "IN_PROGRESS"])
+          )
+        );
+
+      await addSolverToTaskBlockList(task.solverId, task.id, "Missed deadline");
+      console.log(
+        `[Deadline] Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`
+      );
+    } catch (error) {
+      console.error(error);
+    }
   }
 }
