@@ -1,10 +1,15 @@
 "use client";
 
 import { startTransition, useTransition } from "react";
-import { assignTaskToSolverById, createWorkspace } from "@/features/tasks/server/action";
+import {
+  assignTaskToSolverById,
+  createWorkspace,
+} from "@/features/tasks/server/action";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { sendNotification } from "@/features/notifications/server/action";
+import { parseDeadline } from "@/lib/utils";
 
 export function AssignTaskButton({
   taskId,
@@ -18,11 +23,28 @@ export function AssignTaskButton({
   const handleClick = () => {
     startTransition(async () => {
       try {
-        const { error, success ,newTask} = await assignTaskToSolverById(taskId, userId);
+        const { error, success, newTask } = await assignTaskToSolverById(
+          taskId,
+          userId
+        );
 
         if (success) {
-          toast.success(success);
           await createWorkspace(newTask);
+          await sendNotification({
+            sender: "solveit@org.com",
+            receiver: newTask?.poster.email!,
+            method: ["email"],
+            body: {
+              subject: "task Picked",
+              content: `you Task is picked by ${
+                newTask?.solver?.name
+              }\n you will reciev your solution on ${parseDeadline(
+                newTask?.deadline!
+              )}`,
+            },
+          });
+          toast.success(success);
+
         }
         if (error) {
           toast.error(error);
