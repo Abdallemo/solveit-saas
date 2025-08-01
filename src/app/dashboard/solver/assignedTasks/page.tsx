@@ -183,7 +183,7 @@ export default async function SolverAssignedTasks({
                             ? "Continue Workspace"
                             : task.blockedSolvers.some(
                                 (blocked) => blocked.userId === currentUser.id
-                              )
+                              ) || task.status === "COMPLETED"
                             ? "View Workspace"
                             : "Begin Workspace"}
                         </Link>

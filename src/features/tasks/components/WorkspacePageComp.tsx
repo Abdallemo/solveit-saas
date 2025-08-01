@@ -10,7 +10,7 @@ import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { DeadlineProgress } from "./DeadlineProgress";
-import { autoSaveDraftWorkspace, publishSolution} from "../server/action";
+import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import AuthGate from "@/components/AuthGate";
@@ -26,7 +26,7 @@ export default function WorkspacePageComp() {
   const [progress, setProgress] = useState(0);
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const alreadySubmitedSolution = currentWorkspace?.task.status =="COMPLETED"
+  const alreadySubmitedSolution = currentWorkspace?.task.status == "COMPLETED";
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
     autoSaveArgs: [
@@ -59,37 +59,36 @@ export default function WorkspacePageComp() {
   if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
-
     if (progress == 100) {
       toast.error("The submission has closed");
       return;
     }
     if (!currentWorkspace?.id) {
-      toast.error("Not found current workspace id"); 
+      toast.error("Not found current workspace id");
       return;
     }
-    if (currentWorkspace.task.status === "COMPLETED"){
-      return
+    if (currentWorkspace.task.status === "COMPLETED") {
+      return;
     }
 
     try {
       setIsUploading(true);
 
       const result = await publishSolution(currentWorkspace.id, data.content);
-        await sendNotification({
-                  sender: "solveit@org.com",
-                  receiver: currentWorkspace.task.poster.email!,
-                  method: ["email"],
-                  body: {
-                    subject: "Task Completed",
-                    content: `you Task titiled ${currentWorkspace.task.title} has bean complited please review it with in 7days `,
-                  },
-                });
+      await sendNotification({
+        sender: "solveit@org.com",
+        receiver: currentWorkspace.task.poster.email!,
+        method: ["email"],
+        body: {
+          subject: "Task Completed",
+          content: `you Task titiled <h4>${currentWorkspace.task.title}</h4> 
+          has bean complited please review it with in 7days `,
+        },
+      });
       if (result.success) {
         toast.success(result.message);
-      } 
+      }
     } catch (e: unknown) {
-
       if (isError(e) && e instanceof SolutionError) {
         toast.error(e.code);
       } else {
@@ -114,7 +113,12 @@ export default function WorkspacePageComp() {
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
           <Button
             form="solution-form"
-            disabled={isDisabled || isUploading || progress >= 100 || alreadySubmitedSolution}
+            disabled={
+              isDisabled ||
+              isUploading ||
+              progress >= 100 ||
+              alreadySubmitedSolution
+            }
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isUploading ? ( // If uploading, show loader and text
               <>
@@ -123,11 +127,11 @@ export default function WorkspacePageComp() {
               </>
             ) : progress >= 100 ? (
               "Submission Closed"
-            ) :
-              alreadySubmitedSolution? (" Already Submited"):
-            (
+            ) : alreadySubmitedSolution ? (
+              " Already Submited"
+            ) : (
               "Publish Solution"
-            ) }
+            )}
           </Button>
         </header>
         <FormProvider {...form}>
