@@ -415,6 +415,7 @@ export async function getPosterTasksbyIdPaginated(
       with: {
         poster: true,
         solver: true,
+        taskSolution:true
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -684,6 +685,7 @@ export async function publishSolution(
         .insert(SolutionTable)
         .values({
           workspaceId,
+          taskId:workspace.taskId,
           content: content,
           isFinal: true,
         })
