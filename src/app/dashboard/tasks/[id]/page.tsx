@@ -46,7 +46,7 @@ export default async function Page({
         </Suspense>
       </div>
       <div className="w-full flex flex-col items-center">
-        <FilesTable files={files} tasks={task} />
+        <FilesTable files={files} scope={task} scopeType="task"/>
       </div>
     </main>
   );
