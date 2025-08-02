@@ -1,6 +1,6 @@
 "use client";
 import React, { Suspense, useState } from "react";
-import {MenuItemsAdmin,MenuItemsPoster,MenuItemsSolver,navSecondary} from '@/components/dashboard/menu-items'
+import {MenuItemsAdmin,MenuItemsModerator,MenuItemsPoster,MenuItemsSolver,navSecondary} from '@/components/dashboard/menu-items'
 import {
   Sidebar,
   SidebarContent,
@@ -101,7 +101,46 @@ const closeMobileSidebar = () => {
                     )}
                   </SidebarMenuItem>
                 ))}
+              {user?.role === "MODERATOR" &&
+                MenuItemsModerator.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton asChild>
+                      <Link
+                      onClick={closeMobileSidebar}
+                        href={item.url}
+                        className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                          isActive(item.url, true)
+                            ? "bg-foreground/10 text-foreground"
+                            : ""
+                        }`}>
+                        <item.icon />
+                        <span>{item.title}</span>
+                      </Link>
+                    </SidebarMenuButton>
 
+                    {item.child && (
+                      <SidebarMenuSub>
+                        {item.child.map((cld) => (
+                          <SidebarMenuSubItem key={cld.title}>
+                            <SidebarMenuSubButton asChild>
+                              <Link
+                              onClick={closeMobileSidebar}
+                                href={cld.url}
+                                className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
+                                  isActive(cld.url)
+                                    ? "bg-foreground/10 text-foreground"
+                                    : ""
+                                }`}>
+                                <cld.icon />
+                                <span>{cld.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    )}
+                  </SidebarMenuItem>
+                ))}
               {user?.role === "SOLVER" &&
                 MenuItemsSolver.map((item) => (
                   <SidebarMenuItem key={item.title}>
