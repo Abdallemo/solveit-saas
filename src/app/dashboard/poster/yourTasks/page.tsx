@@ -103,7 +103,7 @@ export default async function PosterPublishedTasks({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {task.status === "COMPLETED" || task.status === "SUBMITTED" && (
+                      {(task.status ==="SUBMITTED" ||task.status === "COMPLETED") && (
                         <Button
                           variant="outline"
                           asChild
