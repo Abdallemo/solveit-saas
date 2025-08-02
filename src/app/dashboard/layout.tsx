@@ -19,9 +19,6 @@ import { SessionProvider } from "next-auth/react";
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
-import { AlarmClock, Bell, Inbox, Lock } from "lucide-react";
-import { IconNotification } from "@tabler/icons-react";
-import { Button } from "@/components/ui/button";
 import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { getWalletInfo } from "@/features/tasks/server/action";
@@ -97,7 +94,9 @@ export default async function DashboardLayout({
                 <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                   <SidebarTrigger className="mr-2" />
                   <div className="flex gap-2">
-                    <WalletDropdownMenu availabel={availabel} pending={pending}/>
+                    {user.role === "SOLVER" && (
+                      <WalletDropdownMenu availabel={availabel} pending={pending}/>
+                    )}
                     <NotificationDropDown/>
                   </div>
                 </div>
