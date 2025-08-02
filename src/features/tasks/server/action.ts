@@ -658,7 +658,7 @@ export async function publishSolution(
         "Unable to locate the specified workspace. Please verify the ID and try again."
       );
     }
-    await handleTaskDeadlineEnhacned(workspace.task);
+    await handleTaskDeadline(workspace.task);
     const alreadyBlocked = await getBlockedSolver(
       workspace.task.solverId!,
       workspace.task.id
@@ -728,7 +728,7 @@ export async function publishSolution(
   }
 }
 
-export async function handleTaskDeadlineEnhacned(task: TaskReturnType) {
+export async function handleTaskDeadline(task: TaskReturnType) {
   //if this task status is assigned or on progress check these
   if (
     !task ||
