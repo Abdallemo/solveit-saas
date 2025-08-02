@@ -33,7 +33,8 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import AuthGate from "@/components/AuthGate";
-import { taskTableType } from "@/drizzle/schemas";
+import { TaskTable, taskTableType } from "@/drizzle/schemas";
+import { SolutionById } from "@/features/tasks/server/action";
 
 interface FileData {
   id: string;
@@ -45,10 +46,6 @@ interface FileData {
   uploadedAt: Date | null;
 }
 
-interface FilesTableProps {
-  files: FileData[];
-  tasks: taskTableType;
-}
 
 function getFileIcon(fileType: string) {
   const type = fileType.toLowerCase();
@@ -100,14 +97,18 @@ async function handleFileAction(action: string, file: FileData) {
   }
 }
 
-export function FilesTable({ files, tasks }: FilesTableProps) {
+type FilesTablePropss =
+  | { files: FileData[]; scopeType: "task"; scope: taskTableType }
+  | { files: FileData[]; scopeType: "solution"; scope: SolutionById };
+
+export function FilesTable({ files, scope,scopeType }: FilesTablePropss) {
   const currentUser = useCurrentUser();
   if (!currentUser) return <AuthGate />;
 
   
   if (files.length === 0) {
     return (
-      <div className="text-center py-8 text-muted-foreground bg-sidebar rounded-md border">
+      <div className="text-center py-8 text-muted-foreground bg-sidebar rounded-md border w-full">
         <File className="h-12 w-12 mx-auto mb-4 opacity-50" />
         <p>No files attached to this task</p>
       </div>
@@ -116,7 +117,7 @@ export function FilesTable({ files, tasks }: FilesTableProps) {
 
   return (
     <div className="rounded-md border bg-background/10 w-full">
-      <Table className="">
+      <Table className="bg-card">
         <TableHeader>
           <TableRow>
             <TableHead className="w-[20px]"></TableHead>
@@ -173,7 +174,7 @@ export function FilesTable({ files, tasks }: FilesTableProps) {
                       <Copy className="mr-2 h-4 w-4" />
                       Copy Link
                     </DropdownMenuItem>
-                    {currentUser.user?.id === tasks.posterId && (
+                    {scopeType === "task" && currentUser.user?.id === scope.posterId && (
                       <>
                         <DropdownMenuSeparator />
                         <DropdownMenuItem

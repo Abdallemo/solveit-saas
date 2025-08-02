@@ -26,7 +26,7 @@ export default function WorkspacePageComp() {
   const [progress, setProgress] = useState(0);
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const alreadySubmitedSolution = currentWorkspace?.task.status == "COMPLETED";
+  const alreadySubmitedSolution = currentWorkspace?.task.status == "SUBMITTED" || currentWorkspace?.task.status == "COMPLETED";
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
     autoSaveArgs: [
@@ -67,7 +67,7 @@ export default function WorkspacePageComp() {
       toast.error("Not found current workspace id");
       return;
     }
-    if (currentWorkspace.task.status === "COMPLETED") {
+    if (currentWorkspace.task.status === "COMPLETED",currentWorkspace.task.status === "SUBMITTED") {
       return;
     }
 
@@ -80,9 +80,9 @@ export default function WorkspacePageComp() {
         receiver: currentWorkspace.task.poster.email!,
         method: ["email"],
         body: {
-          subject: "Task Completed",
+          subject: "Task Submited",
           content: `you Task titiled <h4>${currentWorkspace.task.title}</h4> 
-          has bean complited please review it with in 7days `,
+          has bean submited please review it with in 7days `,
         },
       });
       if (result.success) {
