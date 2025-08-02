@@ -20,6 +20,7 @@ import {
   getPosterTasksbyIdPaginated,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
+import GetStatusBadge from "@/features/tasks/components/taskStatusBadge";
 
 export default async function PosterPublishedTasks({
   searchParams,
@@ -49,37 +50,6 @@ export default async function PosterPublishedTasks({
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
-
-  const getStatusBadge = (status: TaskStatusType) => {
-    switch (status) {
-      case "OPEN":
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            Open
-          </Badge>
-        );
-      case "IN_PROGRESS":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            In Progress
-          </Badge>
-        );
-      case "ASSIGNED":
-        return (
-          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-            Assigned
-          </Badge>
-        );
-      case "COMPLETED":
-        return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-            Completed
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +103,7 @@ export default async function PosterPublishedTasks({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      {task.status === "COMPLETED" && (
+                      {task.status === "COMPLETED" || task.status === "SUBMITTED" && (
                         <Button
                           variant="outline"
                           asChild
@@ -143,7 +113,7 @@ export default async function PosterPublishedTasks({
                           </Link>
                         </Button>
                       )}
-                      {getStatusBadge(task.status!)}
+                      {GetStatusBadge(task.status!)}
                       <Button variant="success" asChild>
                         <Link href={`/dashboard/tasks/${task.id}`}>
                           View Details
