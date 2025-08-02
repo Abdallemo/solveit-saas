@@ -231,6 +231,7 @@ export async function assignTaskToSolverById(
           solverId: solverId,
           status: "ASSIGNED",
           updatedAt: new Date(),
+          assignedAt: new Date(),
         })
         .where(and(eq(TaskTable.id, taskId), isNull(TaskTable.solverId)))
         .returning();
@@ -281,36 +282,6 @@ export async function addSolverToTaskBlockList(
     taskId,
     reason,
   });
-}
-export async function handleTaskDeadline(
-  currentWorkspace: WorkpaceSchemReturnedType
-) {
-  if (!currentWorkspace) {
-    throw new Error("Workspace not found");
-  }
-  const { task, taskId, solverId, createdAt } = currentWorkspace;
-  const deadlinePercentage = calculateProgress(task.deadline!, createdAt!);
-  if (deadlinePercentage < 100) {
-    return { skipped: true };
-  }
-
-  if (task.status === "OPEN") {
-    return { skipped: true, reason: "Task already OPEN" };
-  }
-
-  const alreadyBlocked = await getBlockedSolver(solverId, taskId);
-  if (alreadyBlocked) {
-    return { skipped: true, reason: "Solver already blocked" };
-  }
-
-  await db
-    .update(TaskTable)
-    .set({ status: "OPEN", solverId: null })
-    .where(eq(TaskTable.id, taskId));
-
-  await addSolverToTaskBlockList(solverId, taskId, "Missed deadline");
-
-  return { status: "reopened", blocked: true };
 }
 
 // getters 🥱
@@ -574,12 +545,13 @@ export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   });
   return workspace;
 }
-export async function getWorkspaceById(workspaceId: string) {
+export async function getWorkspaceById(workspaceId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
-    where: (table, fn) => fn.eq(table.id, workspaceId),
+    where: (table, fn) =>
+      fn.and(fn.eq(table.id, workspaceId), fn.eq(table.solverId, solverId)),
     with: {
       solver: true,
-      task: { with: { solver: true, poster: true } },
+      task: { with: { solver: true, poster: true, workspace: true } },
       workspaceFiles: true,
     },
   });
@@ -673,16 +645,25 @@ export async function saveFileToWorkspaceDB({
   return newFile[0];
 }
 
-export async function publishSolution(workspaceId: string, content: string) {
+export async function publishSolution(
+  workspaceId: string,
+  content: string,
+  solverId: string
+) {
   try {
-    const workspace = await getWorkspaceById(workspaceId);
+    const workspace = await getWorkspaceById(workspaceId, solverId);
+    workspace?.task;
     if (!workspace) {
       throw new SolutionError(
         "Unable to locate the specified workspace. Please verify the ID and try again."
       );
     }
-    const { blocked } = await handleTaskDeadline(workspace);
-    if (blocked) {
+    await handleTaskDeadlineEnhacned(workspace.task);
+    const alreadyBlocked = await getBlockedSolver(
+      workspace.task.solverId!,
+      workspace.task.id
+    );
+    if (alreadyBlocked) {
       throw new SolutionError(
         "Submission window has closed. You can no longer publish a solution for this task."
       );
@@ -754,14 +735,15 @@ export async function handleTaskDeadlineEnhacned(task: TaskReturnType) {
     !task.solverId ||
     !task.id ||
     !task.workspace?.createdAt ||
-    !task.deadline
+    !task.deadline ||
+    !task.updatedAt ||
+    !task.assignedAt
   )
     return;
-  //i asume my system will asign users to assign or in progress when they task task or start working with
   if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
     const deadlinePercentage = calculateProgress(
       task.deadline,
-      task.workspace.createdAt!
+      task.assignedAt
     );
     if (deadlinePercentage < 100) return;
 
@@ -771,7 +753,7 @@ export async function handleTaskDeadlineEnhacned(task: TaskReturnType) {
 
       await db
         .update(TaskTable)
-        .set({ status: "OPEN" })
+        .set({ status: "OPEN" ,assignedAt:null})
         .where(
           and(
             eq(TaskTable.id, task.id),
