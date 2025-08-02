@@ -35,7 +35,7 @@ export const TaskStatusEnum = pgEnum("task_status", [
   "ASSIGNED",
   "IN_PROGRESS",
   "COMPLETED",
-  "CANCELED",
+  "SUBMITTED"
 ]);
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
@@ -486,14 +486,18 @@ export const workspaceFilesRelation = relations(
       fields: [WorkspaceFilesTable.workspaceId],
       references: [WorkspaceTable.id],
     }),
+    solutionFile:one(SolutionFilesTable,{
+      fields:[WorkspaceFilesTable.id],
+      references:[SolutionFilesTable.workspaceFileId],
+      relationName:"solutionFile"
+    })
   })
 );
 
 export const SolutionTableRelation = relations(SolutionTable, ({ many,one }) => ({
-  solustionFiles: many(SolutionFilesTable, {
-    relationName: "solustionFiles",
+  solutionFiles: many(SolutionFilesTable, {
+    relationName: "solutionFiles",
   }),
-  //todo add relation
   taskSolution:one(TaskTable,{
     fields:[SolutionTable.taskId],
     references:[TaskTable.id],
@@ -503,9 +507,16 @@ export const SolutionTableRelation = relations(SolutionTable, ({ many,one }) => 
 export const SolutionFilesTableRelations = relations(
   SolutionFilesTable,
   ({ one }) => ({
-    solustion: one(SolutionTable, {
-      fields: [SolutionFilesTable.id],
+    solution: one(SolutionTable, {
+      fields: [SolutionFilesTable.solutionId],
       references: [SolutionTable.id],
+      relationName: "solutionFiles",
+
     }),
+    solutionFile:one(WorkspaceFilesTable,{
+      fields:[SolutionFilesTable.workspaceFileId],
+      references:[WorkspaceFilesTable.id],
+      relationName:"solutionFile"
+    })
   })
 );
