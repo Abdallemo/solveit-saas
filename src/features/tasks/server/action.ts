@@ -39,10 +39,12 @@ import {
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SolutionError } from "../lib/errors";
+import { table } from "console";
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasks>>;
+export type SolutionById = Awaited<ReturnType<typeof getSolutionById>>;
 export type WorkpaceSchemReturnedType = Awaited<
   ReturnType<typeof getWorkspaceById>
 >;
@@ -328,6 +330,7 @@ export async function getWalletInfo(solverId: string) {
     switch (record.task.status) {
       case "ASSIGNED":
       case "IN_PROGRESS":
+      case "SUBMITTED":
         pending += record.task.price!;
         break;
       case "COMPLETED":
@@ -670,14 +673,9 @@ export async function publishSolution(
       );
     }
     const workspaceStats = workspace.task.status;
-    if (workspaceStats === "COMPLETED") {
+    if (workspaceStats === "COMPLETED" || workspaceStats === "SUBMITTED" ) {
       throw new SolutionError(
         "This solution has already been marked as completed. No further submissions are allowed."
-      );
-    }
-    if (workspaceStats === "CANCELED") {
-      throw new SolutionError(
-        "This solution has been canceled and cannot be submitted."
       );
     }
     await db.transaction(async (dx) => {
@@ -688,6 +686,7 @@ export async function publishSolution(
           taskId:workspace.taskId,
           content: content,
           isFinal: true,
+          updatedAt:new Date()
         })
         .returning();
 
@@ -711,7 +710,7 @@ export async function publishSolution(
       );
       await dx
         .update(TaskTable)
-        .set({ status: "COMPLETED" })
+        .set({ status: "SUBMITTED" ,updatedAt:new Date()})
         .where(eq(TaskTable.id, workspace?.taskId));
     });
     return {
@@ -771,4 +770,32 @@ export async function handleTaskDeadline(task: TaskReturnType) {
       console.error(error);
     }
   }
+}
+export async function getSolutionById(solutionId:string){
+
+  if (!solutionId) {
+    throw new Error("Solution Id is undefined")
+  }
+
+  const solution = await db.query.SolutionTable.findFirst({
+    where: (table,fn)=> fn.eq(table.id,solutionId),
+    with:{
+      taskSolution:{
+        with:{
+          solver:true,
+          taskSolution:true
+        }
+      },
+      solutionFiles:{with:{
+        solutionFile:true
+      }}
+    }
+  })
+  if (!solution){
+    throw new Error("Sorry No such Solution for this Task!")
+  
+  }
+  //todo ill think of other latter
+  return solution
+  
 }

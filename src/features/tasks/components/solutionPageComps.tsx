@@ -7,9 +7,6 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
-interface SolutionPageProps {
-  solution?: Solution
-}
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -17,134 +14,193 @@ import { Textarea } from "@/components/ui/textarea"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
-import { FileText, Download, Send, ThumbsUp, ThumbsDown } from "lucide-react"
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Send, ThumbsUp, ThumbsDown, CheckCircle, XCircle } from "lucide-react"
 import { SolutionPreview } from "./richTextEdito/TaskPreview"
+import type { SolutionById } from "../server/action"
+import type { TaskStatusType } from "@/drizzle/schemas"
+import { FilesTable } from "@/features/media/components/FilesTable"
 
-
-export default function SolutionPageComps({ solution = mockSolution }: SolutionPageProps) {
-  const [comment, setComment] = useState("")
-
-  const getStatusBadge = (status: string) => {
-    const variants = {
-      accepted: "bg-green-100 text-green-800",
-      pending: "bg-yellow-100 text-yellow-800",
-      rejected: "bg-red-100 text-red-800",
-    }
-    return variants[status as keyof typeof variants] || variants.pending
+function AcceptSolutionDialog() {
+  const handleAccept = () => {
+    console.log("Solution accepted")
   }
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
-      <div className="flex-1 p-8">
-        <BreadcrumbSolution/>
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button className="flex items-center space-x-2" variant={'success'}>
+          <CheckCircle className="h-4 w-4" />
+          <span>Accept Solution</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Accept This Solution?</AlertDialogTitle>
+          <AlertDialogDescription className="text-foreground">
+            By accepting this solution, you confirm that it meets your requirements and resolves your task. This action
+            will mark the task as completed and release payment to the solver.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleAccept} className="bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 cursor-pointer" >
+            Yes, Accept Solution
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
 
-        <Card className="mb-6">
+function RequestRefundDialog() {
+  const handleRefund = () => {
+    console.log("Refund requested")
+  }
+
+  return (
+    <AlertDialog>
+      <AlertDialogTrigger asChild>
+        <Button
+          variant="destructive"
+          className="flex items-center space-x-2"
+        >
+          <XCircle className="h-4 w-4" />
+          <span>Request Refund</span>
+        </Button>
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Request a Refund?</AlertDialogTitle>
+          <AlertDialogDescription className="text-foreground">
+            Are you sure you want to request a refund for this task? This indicates that the solution does not meet your
+            requirements. Please note that refund requests will be reviewed by our team.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction onClick={handleRefund} className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
+            Yes, Request Refund
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+export default function SolutionPageComps({ solution }: { solution: SolutionById }) {
+  const [comment, setComment] = useState("")
+  const files = solution.solutionFiles.map((f) => {
+    const { id, fileName, filePath, fileSize, fileType, storageLocation, uploadedAt } = f.solutionFile
+    return { id, fileName, fileType, fileSize, storageLocation, filePath, uploadedAt }
+  })
+
+  const getStatusBadge = (status: TaskStatusType) => {
+    const variants = {
+      ASSIGNED: "bg-green-100 text-green-600",
+      COMPLETED: "bg-green-100 text-green-800",
+      // pending: "bg-yellow-100 text-yellow-800",
+
+      CANCELED: "bg-red-100 text-red-800",
+
+    }
+    return variants[status as keyof typeof variants] || variants.ASSIGNED
+  }
+
+  const comments = [
+    {
+      id: "comment_001",
+      author: "task_user",
+      content: "This worked perfectly! Thank you so much for the detailed explanation.",
+      createdAt: "1 hour ago",
+      avatar: "TU",
+    },
+  ]
+
+  return (
+    <div className="flex min-h-screen bg-background/10">
+      <div className="flex-1 p-8 gap-3 flex flex-col">
+        <BreadcrumbSolution />
+        <Card className="mb-6 mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl font-medium text-gray-900">Solution</h2>
+              <h2 className="text-xl text-foreground font-bold">Solution</h2>
               <div className="flex items-center space-x-2">
-                <Badge className={getStatusBadge(solution.status)}>
-                  {solution.status.charAt(0).toUpperCase() + solution.status.slice(1)}
-                </Badge>
-                <span className="text-sm text-gray-500">by {solution.author}</span>
+                <Badge className={getStatusBadge(solution.taskSolution.status!)}>{solution.taskSolution.status}</Badge>
+                <span className="text-sm text-foreground/60">by {solution.taskSolution.solver?.name}</span>
               </div>
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span>Submitted {solution.submittedAt}</span>
+              <span>Submitted {solution.createdAt?.toLocaleString()}</span>
               <span>•</span>
-              <span>Updated {solution.updatedAt}</span>
+              <span>Updated {solution.updatedAt?.toLocaleDateString()}</span>
             </div>
           </CardHeader>
-
           <CardContent>
-            <SolutionPreview content={solution.content} />
+            <SolutionPreview content={solution.content!} />
+
+          
+            <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
+              <AcceptSolutionDialog />
+              <RequestRefundDialog />
+            </div>
 
             <Separator className="my-6" />
 
-        
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
                 <Button variant="outline" size="sm" className="flex items-center space-x-2 bg-transparent">
                   <ThumbsUp className="h-4 w-4" />
-                  <span>Helpful ({solution.helpfulVotes})</span>
+                  <span>Helpful ({"12"})</span>
                 </Button>
                 <Button variant="outline" size="sm" className="flex items-center space-x-2 bg-transparent">
                   <ThumbsDown className="h-4 w-4" />
-                  <span>Not helpful ({solution.notHelpfulVotes})</span>
+                  <span>Not helpful ({"1"})</span>
                 </Button>
               </div>
-              {!solution.isBestSolution && (
-                <Button variant="outline" size="sm">
-                  Mark as Best Solution
-                </Button>
-              )}
-              {solution.isBestSolution && <Badge className="bg-yellow-100 text-yellow-800">⭐ Best Solution</Badge>}
+              {/* TODO */}
+              {false && <Badge className="bg-yellow-100 text-yellow-800">⭐ Best Solution</Badge>}
             </div>
           </CardContent>
         </Card>
-
-        {solution.files.length > 0 && (
-          <Card className="mb-6">
-            <CardHeader>
-              <h3 className="text-lg font-medium text-gray-900">shared files</h3>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {solution.files.map((file) => (
-                  <div
-                    key={file.id}
-                    className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <FileText className="h-5 w-5 text-gray-400" />
-                      <div>
-                        <div className="font-medium text-gray-900">{file.name}</div>
-                        <div className="text-sm text-gray-500">{file.size}</div>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-4">
-                      <span className="text-sm text-gray-500">{file.uploadedAt}</span>
-                      <Button variant="ghost" size="sm">
-                        <Download className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-
+        {solution.solutionFiles.length > 0 && <FilesTable files={files} scope={solution} scopeType="solution" />}
         <Card>
           <CardHeader>
-            <h3 className="text-lg font-medium text-gray-900">comments</h3>
+            <h3 className="text-lg font-medium text-foreground">comments</h3>
           </CardHeader>
           <CardContent>
-            {solution.comments.length > 0 && (
+            {comments.length > 0 && (
               <div className="space-y-4 mb-6">
-                {solution.comments.map((comment) => (
+                {comments.map((comment) => (
                   <div key={comment.id} className="flex space-x-3">
                     <Avatar className="h-8 w-8">
                       <AvatarFallback>{comment.avatar}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-gray-900">{comment.author}</span>
-                        <span className="text-sm text-gray-500">{comment.createdAt}</span>
+                        <span className="font-medium text-foreground">{comment.author}</span>
+                        <span className="text-sm text-foreground/60">{comment.createdAt}</span>
                       </div>
-                      <p className="text-gray-700">{comment.content}</p>
+                      <p className="text-foreground/80">{comment.content}</p>
                     </div>
                   </div>
                 ))}
               </div>
             )}
-
             <Separator className="mb-4" />
-
             <div>
               <div className="mb-2">
-                <span className="text-sm font-medium text-gray-700">leave a comment</span>
+                <span className="text-sm font-medium text-foreground/70">leave a comment</span>
               </div>
               <div className="flex space-x-3">
                 <Textarea
@@ -165,112 +221,22 @@ export default function SolutionPageComps({ solution = mockSolution }: SolutionP
   )
 }
 
-
-
-export const mockSolution: Solution = {
-  id: "sol_001",
-  title: "SolidWorks Extrusion Fix",
-  content: `
-    <h3>Solution for SolidWorks Extrusion Issue</h3>
-    <p>Hey! I see the issue with your SolidWorks extrusion. The problem is likely with your sketch constraints and the direction of extrusion. Here's how to fix it:</p>
-    
-    <h4>Step-by-step solution:</h4>
-    <ol>
-      <li>First, check your sketch is fully constrained (no blue lines)</li>
-      <li>Go to <strong>Features → Extruded Boss/Base</strong></li>
-      <li>Set the direction to "Blind" and specify exact depth</li>
-      <li>Make sure "Merge result" is checked if you want to combine with existing geometry</li>
-      <li>Preview before accepting to ensure correct direction</li>
-    </ol>
-    
-    <blockquote>
-      <p><strong>Pro tip:</strong> The key is making sure your sketch plane is properly oriented and your constraints are complete.</p>
-    </blockquote>
-    
-    <p>Let me know if you need clarification on any of these steps!</p>
-  `,
-  author: "mentor_john",
-  authorAvatar: "MJ",
-  status: "accepted",
-  submittedAt: "2 hours ago",
-  updatedAt: "1 hour ago",
-  helpfulVotes: 12,
-  notHelpfulVotes: 1,
-  isBestSolution: true,
-  files: [
-    {
-      id: "file_001",
-      name: "SolidWorks_Fix_Tutorial.pdf",
-      size: "1.2MB",
-      uploadedAt: "9:02, Jun 23, 2023",
-      downloadUrl: "#",
-    },
-    {
-      id: "file_002",
-      name: "corrected_sketch.sldprt",
-      size: "856KB",
-      uploadedAt: "10:15, Jun 23, 2023",
-      downloadUrl: "#",
-    },
-  ],
-  comments: [
-    {
-      id: "comment_001",
-      author: "task_user",
-      content: "This worked perfectly! Thank you so much for the detailed explanation.",
-      createdAt: "1 hour ago",
-      avatar: "TU",
-    },
-  ],
-}
-
-export interface SolutionFile {
-  id: string
-  name: string
-  size: string
-  uploadedAt: string
-  downloadUrl: string
-}
-
-export interface SolutionComment {
-  id: string
-  author: string
-  content: string
-  createdAt: string
-  avatar?: string
-}
-
-export interface Solution {
-  id: string
-  title: string
-  content: string // HTML content
-  author: string
-  authorAvatar?: string
-  status: "pending" | "accepted" | "rejected"
-  submittedAt: string
-  updatedAt: string
-  helpfulVotes: number
-  notHelpfulVotes: number
-  files: SolutionFile[]
-  comments: SolutionComment[]
-  isBestSolution: boolean
-}
 export function BreadcrumbSolution() {
   return (
-   <Breadcrumb>
-  <BreadcrumbList>
-    <BreadcrumbItem>
-      <BreadcrumbLink href="/">explore tasks</BreadcrumbLink>
-    </BreadcrumbItem>
-    <BreadcrumbSeparator />
-    <BreadcrumbItem>
-      <BreadcrumbLink href="/components">task_0001</BreadcrumbLink>
-    </BreadcrumbItem>
-    <BreadcrumbSeparator />
-    <BreadcrumbItem>
-      <BreadcrumbPage>solution</BreadcrumbPage>
-    </BreadcrumbItem>
-  </BreadcrumbList>
-</Breadcrumb>
+    <Breadcrumb>
+      <BreadcrumbList>
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/">explore tasks</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbLink href="/components">task_0001</BreadcrumbLink>
+        </BreadcrumbItem>
+        <BreadcrumbSeparator />
+        <BreadcrumbItem>
+          <BreadcrumbPage>solution</BreadcrumbPage>
+        </BreadcrumbItem>
+      </BreadcrumbList>
+    </Breadcrumb>
   )
 }
