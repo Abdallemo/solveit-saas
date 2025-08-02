@@ -6,7 +6,6 @@ export default async function SolutionPage({params}:{params:Promise<{solutionId:
   const {solutionId} = await params
   console.log("solution id :",solutionId)
   const solution = await getSolutionById(solutionId)
-
   return (
     <SolutionPageComps solution={solution}/>
   )
