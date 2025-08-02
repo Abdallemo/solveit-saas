@@ -103,7 +103,7 @@ async function handleFileAction(action: string, file: FileData) {
 export function FilesTable({ files, tasks }: FilesTableProps) {
   const currentUser = useCurrentUser();
   if (!currentUser) return <AuthGate />;
-
+  console.log(files[0].fileType)
   if (files.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground bg-sidebar rounded-md border">
