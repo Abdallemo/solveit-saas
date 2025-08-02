@@ -27,6 +27,67 @@ import {
   LuUserPlus,
   LuUsers,
 } from "react-icons/lu";
+export const MenuItemsModerator = [
+  {
+    title: "Dashboard",
+    url: "/dashboard/moderator",
+    icon: LuLayoutDashboard,
+  },
+  {
+    title: "Disputes",
+    url: "/dashboard/moderator/disputes",
+    icon: LuClipboardList,
+    child: [
+      {
+        title: "All Disputes",
+        url: "/dashboard/moderator/disputes/all",
+        icon: LuClipboardCheck,
+      },
+      {
+        title: "Pending Review",
+        url: "/dashboard/moderator/disputes/pending",
+        icon: LucideAlertTriangle,
+      },
+      {
+        title: "Resolved Cases",
+        url: "/dashboard/moderator/disputes/resolved",
+        icon: LuHistory,
+      },
+    ],
+  },
+  {
+    title: "Content Review",
+    url: "/dashboard/moderator/content",
+    icon: LuMonitor,
+    child: [
+      {
+        title: "Task Comments",
+        url: "/dashboard/moderator/content/comments",
+        icon: LuClipboardList,
+      },
+      {
+        title: "Mentor Messages",
+        url: "/dashboard/moderator/content/mentor-messages",
+        icon: LuUsers,
+      },
+    ],
+  },
+  {
+    title: "Moderation Logs",
+    url: "/dashboard/moderator/logs",
+    icon: LuHistory,
+  },
+  {
+    title: "Flagged Tasks",
+    url: "/dashboard/moderator/flags",
+    icon: LucideAlertTriangle,
+  },
+  {
+    title: "User Reports",
+    url: "/dashboard/moderator/reports",
+    icon: LuSearch,
+  },
+];
 
 export const MenuItemsAdmin = [
   {
