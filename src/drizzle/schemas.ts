@@ -301,6 +301,9 @@ export const SolutionTable = pgTable("solutions", {
   workspaceId: uuid("workspace_id")
     .notNull()
     .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
+  taskId: uuid("task_id")
+    .notNull()
+    .references(() => TaskTable.id, { onDelete: "cascade" }),
   content: text("content"),
   fileUrl: text("file_url"),
   isFinal: boolean("is_final").default(false),
@@ -429,6 +432,11 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
     fields: [TaskTable.solverId],
     references: [UserTable.id],
   }),
+  taskSolution: one(SolutionTable, {
+    relationName: "taskSolution",
+    fields: [TaskTable.id],
+    references: [SolutionTable.taskId],
+  }),
   workspace: one(WorkspaceTable, {
     relationName: "workspace",
     fields: [TaskTable.id],
@@ -437,6 +445,7 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   blockedSolvers: many(BlockedTasksTable, {
     relationName: "blockedSolvers",
   }),
+  
 }));
 export const BlockedTasksTableRelation = relations(
   BlockedTasksTable,
@@ -480,9 +489,15 @@ export const workspaceFilesRelation = relations(
   })
 );
 
-export const SolutionTableRelation = relations(SolutionTable, ({ many }) => ({
+export const SolutionTableRelation = relations(SolutionTable, ({ many,one }) => ({
   solustionFiles: many(SolutionFilesTable, {
     relationName: "solustionFiles",
+  }),
+  //todo add relation
+  taskSolution:one(TaskTable,{
+    fields:[SolutionTable.taskId],
+    references:[TaskTable.id],
+    relationName:"taskSolution"
   }),
 }));
 export const SolutionFilesTableRelations = relations(
