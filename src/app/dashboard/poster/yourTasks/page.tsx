@@ -1,4 +1,4 @@
-import { Calendar, Search, User } from "lucide-react";
+import { Calendar, Search, SquareArrowUpRight, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -21,19 +21,17 @@ import {
 } from "@/features/tasks/server/action";
 import Link from "next/link";
 
-
-
-
 export default async function PosterPublishedTasks({
   searchParams,
-}: {searchParams:Promise<{q:string,page:string}>}) {
-
+}: {
+  searchParams: Promise<{ q: string; page: string }>;
+}) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
 
-  const {q,page} = await searchParams
+  const { q, page } = await searchParams;
   const search = q ?? "";
   const pages = Number.parseInt(page ?? "1");
   const limit = 3;
@@ -135,6 +133,16 @@ export default async function PosterPublishedTasks({
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
+                      {task.status === "COMPLETED" && (
+                        <Button
+                          variant="outline"
+                          asChild
+                          className="w-full sm:w-auto text-xs sm:text-sm">
+                          <Link href={`/dashboard/tasks/${task.id}/solutions/${task.taskSolution.id}`}>
+                            <span className="text-green-600 text-xs font-semibold">View Solution</span><SquareArrowUpRight />
+                          </Link>
+                        </Button>
+                      )}
                       {getStatusBadge(task.status!)}
                       <Button variant="success" asChild>
                         <Link href={`/dashboard/tasks/${task.id}`}>
@@ -155,9 +163,7 @@ export default async function PosterPublishedTasks({
                     {task.deadline && (
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4" />
-                        <span>
-                          Due: {task.deadline}
-                        </span>
+                        <span>Due: {task.deadline}</span>
                       </div>
                     )}
 
