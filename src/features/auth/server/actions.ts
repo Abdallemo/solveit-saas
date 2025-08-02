@@ -203,8 +203,8 @@ export async function verifyVerificationToken(
 
 export async function isAuthorized(whichRole: UserRole | undefined) {
   const user = await getServerUserSession() 
-  if (!whichRole) return {authorized: false,user:null};
-  if (!user ||!user?.role ) return {authorized: true,user:null};
+  if (!whichRole) return {authorized: false,};
+  if (!user ||!user?.role ) return {authorized: true,};
 
   if (whichRole == user.role) {
     return { authorized: true, user:user};
