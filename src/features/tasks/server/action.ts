@@ -9,6 +9,7 @@ import {
   BlockedTasksTable,
   PaymentStatusType,
   PaymentTable,
+  RefundTable,
   SolutionFilesTable,
   SolutionTable,
   TaskDraftTable,
@@ -418,7 +419,7 @@ export async function getPosterTasksbyIdPaginated(
       with: {
         poster: true,
         solver: true,
-        taskSolution:true
+        taskSolution: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -673,7 +674,7 @@ export async function publishSolution(
       );
     }
     const workspaceStats = workspace.task.status;
-    if (workspaceStats === "COMPLETED" || workspaceStats === "SUBMITTED" ) {
+    if (workspaceStats === "COMPLETED" || workspaceStats === "SUBMITTED") {
       throw new SolutionError(
         "This solution has already been marked as completed. No further submissions are allowed."
       );
@@ -683,10 +684,10 @@ export async function publishSolution(
         .insert(SolutionTable)
         .values({
           workspaceId,
-          taskId:workspace.taskId,
+          taskId: workspace.taskId,
           content: content,
           isFinal: true,
-          updatedAt:new Date()
+          updatedAt: new Date(),
         })
         .returning();
 
@@ -710,7 +711,7 @@ export async function publishSolution(
       );
       await dx
         .update(TaskTable)
-        .set({ status: "SUBMITTED" ,updatedAt:new Date()})
+        .set({ status: "SUBMITTED", updatedAt: new Date() })
         .where(eq(TaskTable.id, workspace?.taskId));
     });
     return {
@@ -754,7 +755,7 @@ export async function handleTaskDeadline(task: TaskReturnType) {
 
       await db
         .update(TaskTable)
-        .set({ status: "OPEN" ,assignedAt:null})
+        .set({ status: "OPEN", assignedAt: null })
         .where(
           and(
             eq(TaskTable.id, task.id),
@@ -771,31 +772,50 @@ export async function handleTaskDeadline(task: TaskReturnType) {
     }
   }
 }
-export async function getSolutionById(solutionId:string){
-
+export async function getSolutionById(solutionId: string) {
   if (!solutionId) {
-    throw new Error("Solution Id is undefined")
+    throw new Error("Solution Id is undefined");
   }
 
   const solution = await db.query.SolutionTable.findFirst({
-    where: (table,fn)=> fn.eq(table.id,solutionId),
-    with:{
-      taskSolution:{
-        with:{
-          solver:true,
-          taskSolution:true
-        }
+    where: (table, fn) => fn.eq(table.id, solutionId),
+    with: {
+      taskSolution: {
+        with: {
+          solver: true,
+          taskSolution: true,
+        },
       },
-      solutionFiles:{with:{
-        solutionFile:true
-      }}
-    }
-  })
-  if (!solution){
-    throw new Error("Sorry No such Solution for this Task!")
-  
+      solutionFiles: {
+        with: {
+          solutionFile: true,
+        },
+      },
+    },
+  });
+  if (!solution) {
+    throw new Error("Sorry No such Solution for this Task!");
   }
   //todo ill think of other latter
-  return solution
-  
+  return solution;
 }
+export async function acceptSolution(taskId: string, posterId: string) {
+  const updatedTask = await db
+    .update(TaskTable)
+    .set({ status: "COMPLETED", updatedAt: new Date() })
+    .where(and(eq(TaskTable.id, taskId), eq(TaskTable.posterId, posterId)))
+    .returning();
+  if (!updatedTask || !updatedTask[0].paymentId) {
+    //todo more secure
+    return{error:true,success:false}
+  }
+  const releaseDate = new Date(Date.now()+7*24*60*60*1000)
+  if (updatedTask.length > 0) {
+    await db
+      .update(PaymentTable)
+      .set({ status: "SUCCEEDED",releaseDate:releaseDate })
+      .where(eq(PaymentTable.id, updatedTask[0].paymentId));
+  }
+  return{success:true,error:false}
+}
+export async function requestRefund() {}
