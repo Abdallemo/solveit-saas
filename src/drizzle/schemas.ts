@@ -191,6 +191,7 @@ export const TaskTable = pgTable("tasks", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("status").default("OPEN"),
+  assignedAt: timestamp("assigned_at", { mode: "date" }),
 });
 export const BlockedTasksTable = pgTable("blocked_tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
