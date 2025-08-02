@@ -563,9 +563,10 @@ export async function getDraftTask(userId: string) {
 export async function deleteDraftTask(userId: string) {
   await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
 }
-export async function getWorkspaceByTaskId(taskId: string) {
+export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
-    where: (table, fn) => fn.eq(table.taskId, taskId),
+    where: (table, fn) =>
+      fn.and(fn.eq(table.taskId, taskId), fn.eq(table.solverId, solverId)),
     with: {
       solver: true,
       task: true,
@@ -578,9 +579,8 @@ export async function getWorkspaceById(workspaceId: string) {
     where: (table, fn) => fn.eq(table.id, workspaceId),
     with: {
       solver: true,
-      task: {with:{solver:true,poster:true}},
+      task: { with: { solver: true, poster: true } },
       workspaceFiles: true,
-
     },
   });
   return workspace;
