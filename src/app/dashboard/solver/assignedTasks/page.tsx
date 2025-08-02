@@ -3,7 +3,7 @@ import {
   Calendar,
   Search,
   SquareArrowUpRight,
-  User, // Re-added User icon for consistency with BrowseTasks
+  User,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,14 +18,12 @@ import {
 } from "@/components/ui/pagination";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { formatDate, getColorClass } from "@/lib/utils";
+import { getColorClass } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import type { TaskStatusType } from "@/drizzle/schemas";
 import {
   getAllCategoryMap,
   getAssignedTasksbyIdPaginated,
-  getWorkspaceById,
-  getWorkspaceByTaskId,
   handleTaskDeadline,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
@@ -57,8 +55,7 @@ export default async function SolverAssignedTasks({
     true
   );
   for (const task of tasks) {
-    const eachWorksapce = await getWorkspaceById(task.workspace.id);
-    await handleTaskDeadline(eachWorksapce);
+    await handleTaskDeadline(task)
   }
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;

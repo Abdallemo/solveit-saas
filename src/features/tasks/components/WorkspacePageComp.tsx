@@ -74,8 +74,8 @@ export default function WorkspacePageComp() {
     try {
       setIsUploading(true);
 
-      const result = await publishSolution(currentWorkspace.id, data.content);
-      await sendNotification({
+      const result = await publishSolution(currentWorkspace.id, data.content,currentWorkspace.solverId);
+      sendNotification({
         sender: "solveit@org.com",
         receiver: currentWorkspace.task.poster.email!,
         method: ["email"],

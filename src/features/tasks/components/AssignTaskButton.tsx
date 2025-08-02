@@ -29,8 +29,10 @@ export function AssignTaskButton({
         );
 
         if (success) {
-          await createWorkspace(newTask);
-          await sendNotification({
+          const newWorkspace = await createWorkspace(newTask);
+          console.log(`assigned task: ${newTask?.id} & created worksapce ${newWorkspace.id}`)
+          
+          sendNotification({
             sender: "solveit@org.com",
             receiver: newTask?.poster.email!,
             method: ["email"],

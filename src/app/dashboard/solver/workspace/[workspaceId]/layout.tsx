@@ -13,14 +13,13 @@ export default async function WorkspaceLayout({
   params: Promise<{ workspaceId: string }>;
 }) {
   
-  await isAuthorized("SOLVER");
-  const currentUser = await getServerUserSession()
+  const {user} = await isAuthorized("SOLVER");
   const { workspaceId } = await params;
-  const currentWorkspace = await getWorkspaceById(workspaceId);
+  const currentWorkspace = await getWorkspaceById(workspaceId,user?.id!);
   if (!currentWorkspace) {
     throw new Error("Workspace not found");
   }
-  if ( currentWorkspace.solverId !== currentUser?.id){
+  if ( currentWorkspace.solverId !== user?.id){
     redirect("/dashboard/"); 
     
   }

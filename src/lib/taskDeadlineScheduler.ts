@@ -1,5 +1,5 @@
 
-import { handleTaskDeadlineEnhacned ,getAllTasks} from "@/features/tasks/server/action";
+import { handleTaskDeadline ,getAllTasks} from "@/features/tasks/server/action";
 
 const INTERVAL = 10 * 60 * 1000; 
 
@@ -9,7 +9,7 @@ export function startDeadlineScheduler() {
       const tasks = await getAllTasks(); 
 
       for (const task of tasks) {
-       await handleTaskDeadlineEnhacned(task)
+       await handleTaskDeadline(task)
       }
 
       console.log("[DeadlineScheduler] Checked all tasks.");

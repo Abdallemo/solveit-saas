@@ -1,6 +1,6 @@
 import db from "@/drizzle/db";
 import { TaskTable } from "@/drizzle/schemas";
-import { isAuthorized } from "@/features/auth/server/actions";
+import {  isAuthorized } from "@/features/auth/server/actions";
 import WorkspaceOnboarding from "@/features/tasks/components/WorkspaceOnboardLoading";
 import {
 
@@ -15,10 +15,10 @@ export default async function page({
 }: {
   params: Promise<{ taskId: string }>;
 }) {
-  await isAuthorized("SOLVER");
+  const {user} = await isAuthorized("SOLVER");
 
   const { taskId } = await params;
-  const workspace = await getWorkspaceByTaskId(taskId);
+  const workspace = await getWorkspaceByTaskId(taskId,user?.id!);
   if (!workspace){
     throw new Error("unable to find this worksapce")
   }
@@ -32,5 +32,6 @@ export default async function page({
       </>
     );
   }
+  console.log(`before redirecting current worksapce ${workspace.id}`)
   return redirect(`/dashboard/solver/workspace/${workspace.id}`);
 }
