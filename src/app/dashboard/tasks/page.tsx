@@ -20,6 +20,7 @@ import {
   getAllTasksByRolePaginated,
 } from "@/features/tasks/server/action";
 import Link from "next/link";
+import GetStatusBadge from "@/features/tasks/components/taskStatusBadge";
 
 export default async function BrowseTasks({
   searchParams,
@@ -50,36 +51,6 @@ export default async function BrowseTasks({
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
 
-  const getStatusBadge = (status: TaskStatusType) => {
-    switch (status) {
-      case "OPEN":
-        return (
-          <Badge variant="secondary" className="bg-green-100 text-green-800">
-            Open
-          </Badge>
-        );
-      case "IN_PROGRESS":
-        return (
-          <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
-            In Progress
-          </Badge>
-        );
-      case "ASSIGNED":
-        return (
-          <Badge variant="secondary" className="bg-purple-100 text-purple-800">
-            Assigned
-          </Badge>
-        );
-      case "COMPLETED":
-        return (
-          <Badge variant="secondary" className="bg-gray-100 text-gray-800">
-            Completed
-          </Badge>
-        );
-      default:
-        return <Badge variant="secondary">Unknown</Badge>;
-    }
-  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -147,7 +118,7 @@ export default async function BrowseTasks({
                         <Badge className="text-xs">
                           <p>RM{task.price}</p>
                         </Badge>
-                        {getStatusBadge(task.status!)}
+                        {GetStatusBadge(task.status!)}
                       </div>
                       <Button
                         variant="default"
