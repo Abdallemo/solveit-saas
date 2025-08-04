@@ -807,15 +807,39 @@ export async function acceptSolution(taskId: string, posterId: string) {
     .returning();
   if (!updatedTask || !updatedTask[0].paymentId) {
     //todo more secure
-    return{error:true,success:false}
+    return { error: true, success: false };
   }
-  const releaseDate = new Date(Date.now()+7*24*60*60*1000)
+  const releaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
   if (updatedTask.length > 0) {
     await db
       .update(PaymentTable)
-      .set({ status: "SUCCEEDED",releaseDate:releaseDate })
+      .set({ status: "SUCCEEDED", releaseDate: releaseDate })
       .where(eq(PaymentTable.id, updatedTask[0].paymentId));
   }
-  return{success:true,error:false}
+  return { success: true, error: false };
 }
-export async function requestRefund() {}
+export async function requestRefund(
+  taskId: string,
+  posterId: string,
+  reason: string
+) {
+  const task = await getTasksbyId(taskId);
+  if (!task) {
+    throw new Error("No such task found");
+  }
+  if (task.posterId !== posterId) {
+    throw new Error("Anauthorized Request! You are not the Owner of This Task");
+  }
+  try {
+    const refund = await db.insert(RefundTable).values({
+      paymentId: task.paymentId!,
+      taskId: task.id,
+      refundedAt: new Date(),
+      refundReason: reason,
+    });
+    
+  } catch (err) {
+    console.log(err)
+    throw new Error("unable to create a refund request Please try again")
+  }
+}
