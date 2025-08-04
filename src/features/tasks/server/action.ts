@@ -1,9 +1,5 @@
 "use server";
-import {
-  SolutionReturnErrorType,
-  TaskFormSchema,
-  workspaceFileType,
-} from "./task-types";
+import { workspaceFileType } from "./task-types";
 import db from "@/drizzle/db";
 import {
   BlockedTasksTable,
@@ -26,6 +22,7 @@ import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import { calculateProgress, isError, truncateText } from "@/lib/utils";
+import { SolutionError } from "@/features/tasks/lib/errors";
 import {
   and,
   asc,
@@ -39,24 +36,27 @@ import {
 } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { SolutionError } from "../lib/errors";
-import { table } from "console";
-
-export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
-export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
-export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasks>>;
-export type SolutionById = Awaited<ReturnType<typeof getSolutionById>>;
-export type WorkpaceSchemReturnedType = Awaited<
-  ReturnType<typeof getWorkspaceById>
->;
-export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
-type assignTaskReturnType = {
-  error?:
-    | "no such task available"
-    | "unable to assign task"
-    | "task already assigned to solver";
-  success?: "Task successfully assigned to you!";
-  newTask: TaskReturnType;
+import type {
+  catagoryType,
+  userTasksType,
+  allTasksFiltredType,
+  SolutionById,
+  WorkpaceSchemReturnedType,
+  TaskReturnType,
+  assignTaskReturnType,
+  taskRefundSchemaType,
+  FlatDispute,
+} from "@/features/tasks/server/task-types";
+import { taskRefundSchema } from "@/features/tasks/server/task-types";
+export type {
+  catagoryType,
+  userTasksType,
+  allTasksFiltredType,
+  SolutionById,
+  WorkpaceSchemReturnedType,
+  TaskReturnType,
+  assignTaskReturnType,
+  taskRefundSchemaType,
 };
 //the Magic Parts 🪄
 export async function createTaskAction(
@@ -784,6 +784,7 @@ export async function getSolutionById(solutionId: string) {
         with: {
           solver: true,
           taskSolution: true,
+          taskRefund:true
         },
       },
       solutionFiles: {
@@ -823,23 +824,77 @@ export async function requestRefund(
   posterId: string,
   reason: string
 ) {
-  const task = await getTasksbyId(taskId);
-  if (!task) {
-    throw new Error("No such task found");
-  }
-  if (task.posterId !== posterId) {
-    throw new Error("Anauthorized Request! You are not the Owner of This Task");
+  const result = taskRefundSchema.safeParse({ reason: reason });
+  if (result.error) {
+    throw new Error(result.error.message);
   }
   try {
+    const task = await db.query.TaskTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, taskId),
+      with: {
+        poster: true,
+        solver: true,
+        workspace: true,
+        taskRefund:true
+      },
+    });
+    if (!task) {
+      throw new Error("No such task found");
+    }
+    if (task.posterId !== posterId) {
+      throw new Error(
+        "Anauthorized Request! You are not the Owner of This Task"
+      );
+    }
+    if (task.taskRefund){
+      throw new Error(
+        "There is already a Refund Request for this Task"
+      );
+    }
     const refund = await db.insert(RefundTable).values({
       paymentId: task.paymentId!,
       taskId: task.id,
       refundedAt: new Date(),
       refundReason: reason,
     });
-    
+    return refund;
   } catch (err) {
-    console.log(err)
-    throw new Error("unable to create a refund request Please try again")
+    console.log(err);
+    throw new Error("unable to create a refund request Please try again");
   }
+}
+
+export async function getAllDisputes(): Promise<FlatDispute[]> {
+  const allDisputes = await db.query.RefundTable.findMany({
+    with: {
+      taskRefund: {
+        with: {
+          taskRefund: true,
+          taskSolution: true,
+          poster: true,
+          solver: true,
+        },
+      },
+    },
+  });
+  return allDisputes.map((dispute) => ({
+    id: dispute.id ?? null,
+    refundReason: dispute.refundReason ?? null,
+    refundedAt: dispute.refundedAt ?? null,
+    paymentId: dispute.paymentId ?? null,
+    taskId: dispute.taskId ?? null,
+    refundStatus: dispute.refundStatus,
+    assignedAt: dispute.taskRefund.assignedAt ?? null,
+    taskPaymentId: dispute.taskRefund.paymentId ?? null,
+    taskTitle: dispute.taskRefund.title ?? null,
+    taskPrice: dispute.taskRefund.price ?? null,
+
+    posterName: dispute.taskRefund.poster.name ?? null,
+    posterEmail: dispute.taskRefund.poster.email ?? null,
+
+    solverName: dispute.taskRefund.solver?.name ?? null,
+    solverEmail: dispute.taskRefund.solver?.email ?? null,
+
+    solutionContent: dispute.taskRefund.taskSolution.content,
+  }));
 }

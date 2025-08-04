@@ -25,9 +25,20 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Send, ThumbsUp, ThumbsDown, CheckCircle, XCircle } from "lucide-react";
+import {
+  Send,
+  ThumbsUp,
+  ThumbsDown,
+  CheckCircle,
+  XCircle,
+  Loader2,
+} from "lucide-react";
 import { SolutionPreview } from "./richTextEdito/TaskPreview";
-import { acceptSolution, type SolutionById } from "../server/action";
+import {
+  acceptSolution,
+  requestRefund,
+  type SolutionById,
+} from "../server/action";
 import type { TaskStatusType } from "@/drizzle/schemas";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -35,11 +46,11 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { FormField } from "@/components/ui/form";
 import { FormProvider, useForm } from "react-hook-form";
-import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Input } from "@/components/ui/input";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@radix-ui/react-tooltip";
+import { taskRefundSchemaType } from "@/features/tasks/server/action";
+import { taskRefundSchema } from "@/features/tasks/server/task-types";
 
 function AcceptSolutionDialog({
   taskId,
@@ -105,34 +116,57 @@ function AcceptSolutionDialog({
   );
 }
 
-function RequestRefundDialog() {
-  const [reason, setReason] = useState("");
-  const isValid = reason.length > 10;
-  const refundSchema = z.object({
-    reason: z.string().min(10, "please enter a valid reason!"),
+function RequestRefundDialog({
+  taskId,
+  posterId,
+}: {
+  taskId: string;
+  posterId: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
+  const form = useForm<taskRefundSchemaType>({
+    resolver: zodResolver(taskRefundSchema),
+    mode: "onChange",
+    defaultValues: { reason: "" },
   });
-  type refundSchemaType = z.infer<typeof refundSchema>;
+  const {
+    formState: { isValid },
+    watch,
+    control,
+  } = form;
+  const reason = watch("reason");
+  const [isPending, startTransition] = useTransition();
 
-  const form = useForm<refundSchemaType>({
-    resolver: zodResolver(refundSchema),
-  });
-  const handleRefund = () => {
-    console.log("Refund requested");
-  };
+  async function handleRefund(formData: taskRefundSchemaType) {
+    startTransition(async () => {
+      try {
+        await requestRefund(taskId, posterId, formData.reason);
+        form.reset();
+        setOpen(false);
+        toast.success("Your refund Request Has bean submited");
+        router.refresh();
+      } catch (error) {
+        toast.error("Something Went Wrong please Try again!");
+        console.error(error);
+      }
+    });
+  }
 
   return (
     <FormProvider {...form}>
-      <form onSubmit={form.handleSubmit(handleRefund)}>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button
-              variant="destructive"
-              className="flex items-center space-x-2">
-              <XCircle className="h-4 w-4" />
-              <span>Request Refund</span>
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogTrigger asChild>
+          <Button
+            onClick={() => setOpen(true)}
+            variant="destructive"
+            className="flex items-center space-x-2">
+            <XCircle className="h-4 w-4" />
+            <span>Request Refund</span>
+          </Button>
+        </AlertDialogTrigger>
+        <AlertDialogContent>
+          <form onSubmit={form.handleSubmit(handleRefund)}>
             <AlertDialogHeader>
               <AlertDialogTitle>Request a Refund?</AlertDialogTitle>
               <AlertDialogDescription className="text-foreground">
@@ -142,7 +176,7 @@ function RequestRefundDialog() {
               </AlertDialogDescription>
               <AlertDialogHeader>
                 <FormField
-                  control={form.control}
+                  control={control}
                   name="reason"
                   render={({ field }) => (
                     <Textarea
@@ -151,7 +185,6 @@ function RequestRefundDialog() {
                       placeholder="Reason of refund"
                       onChange={(e) => {
                         field.onChange(e.target.value);
-                        setReason((prev) => (prev = e.target.value));
                       }}
                     />
                   )}
@@ -161,22 +194,41 @@ function RequestRefundDialog() {
 
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction asChild>
+
+              {isValid ? (
+                <Button
+                  type="submit"
+                  className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
+                  {isPending ? (
+                    <>
+                      <Loader2 className="animate-spin" />
+                      sending Your Request Refund
+                    </>
+                  ) : (
+                    "Yes, Request Refund"
+                  )}
+                </Button>
+              ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button type="submit" variant={"destructive"}  disabled={!isValid}>
+                    <Button
+                      variant={"destructive"}
+                      disabled={false}
+                      className="opacity-45 cursor-not-allowed">
                       Yes, Request Refund
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>
-                    {!isValid && <p className="text-xs ">At least 10 charecters is Required</p>}
+                    <p className="text-xs ">
+                      At least 10 charecters is Required
+                    </p>
                   </TooltipContent>
                 </Tooltip>
-              </AlertDialogAction>
+              )}
             </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </form>
+          </form>
+        </AlertDialogContent>
+      </AlertDialog>
     </FormProvider>
   );
 }
@@ -263,13 +315,17 @@ export default function SolutionPageComps({
             <SolutionPreview content={solution.content!} />
 
             {solution.taskSolution.posterId === user?.id &&
-              solution.taskSolution.status !== "COMPLETED" && (
+              solution.taskSolution.status !== "COMPLETED" &&
+              !solution.taskSolution.taskRefund && (
                 <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
                   <AcceptSolutionDialog
                     taskId={solution.taskId}
                     posterId={user?.id!}
                   />
-                  <RequestRefundDialog />
+                  <RequestRefundDialog
+                    taskId={solution.taskId}
+                    posterId={user?.id!}
+                  />
                 </div>
               )}
 

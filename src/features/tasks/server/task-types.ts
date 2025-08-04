@@ -1,36 +1,57 @@
 // app/features/tasks/task-form-schema.ts
-import { z } from 'zod'
-
-export const TaskFormSchema = z.object({
-  title: z.string().min(1, 'Please enter price'),
-  description: z.string().min(1, 'Please enter price'),
-  category: z.string().min(1, 'Please select category'),
-  content: z.string().min(1, 'Please enter price'),
-  visibility: z.string().min(1, 'Please select visibility'),
-  price: z.string().min(1, 'Please enter price'),
-  deadline: z.string().min(1, 'Please select a deadline'),
-
-})
-
-export type TaskFormValues = z.infer<typeof TaskFormSchema>
-
-export const taskSchema = z.object({
-  deadline: z.string().nonempty("Deadline is required"),
-  visibility: z.enum(["public", "private"]),
-  category: z.string().nonempty("Category is required"),
-  price: z.coerce.number().min(10, "Minimum price is 10"),
-  content: z.string().min(4, "Content is too short"),
-  title: z.string().min(4, "title is too short"),
-  description: z.string().min(4, "description is too short"),
-});
-export const WorkpaceSchem = z.object({
-  content: z.string().min(10, "Content is too short"),
-
-});
+import { z } from "zod";
+import {
+  getAllDisputes,
+  getAllTaskCatagories,
+  getAllTasks,
+  getSolutionById,
+  getTasksbyId,
+  getUserTasksbyId,
+  getWorkspaceById,
+} from "./action";
+import { RefundStatusEnumType } from "@/drizzle/schemas";
+export type taskRefundSchemaType = z.infer<typeof taskRefundSchema>;
+export type TaskFormValues = z.infer<typeof TaskFormSchema>;
 export type WorkpaceSchemType = z.infer<typeof WorkpaceSchem>;
-
 export type TaskSchema = z.infer<typeof taskSchema>;
 
+export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
+export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
+export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasks>>;
+export type allDisputesType = Awaited<ReturnType<typeof getAllDisputes>>[number];
+export type SolutionById = Awaited<ReturnType<typeof getSolutionById>>;
+export type WorkpaceSchemReturnedType = Awaited<
+  ReturnType<typeof getWorkspaceById>
+>;
+export type FlatDispute = {
+  id: string;
+  refundReason: string | null;
+  refundedAt: Date | null;
+  paymentId: string;
+  taskId: string;
+  refundStatus: RefundStatusEnumType | null;
+  assignedAt: Date | null;
+  taskPaymentId: string | null;
+  taskTitle: string;
+  taskPrice: number | null;
+
+  posterName: string | null;
+  posterEmail: string | null;
+
+  solverName: string | null;
+  solverEmail: string | null;
+
+  solutionContent: string | null;
+};
+export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
+export type assignTaskReturnType = {
+  error?:
+    | "no such task available"
+    | "unable to assign task"
+    | "task already assigned to solver";
+  success?: "Task successfully assigned to you!";
+  newTask: TaskReturnType;
+};
 
 export type workspaceFileType = {
   fileName: string;
@@ -42,7 +63,6 @@ export type workspaceFileType = {
   workspaceId: string;
   isDraft: boolean;
 };
-
 export type SolutionReturnErrorType =
   | "Unable to locate the specified workspace. Please verify the ID and try again."
   | "Submission window has closed. You can no longer publish a solution for this task."
@@ -54,3 +74,27 @@ export type SolutionReturnErrorType =
   | "Unable to publish the solution due to an unexpected issue. Please try again later."
   | "Publishing failed due to: [error details]. Please review and retry.";
 
+export const TaskFormSchema = z.object({
+  title: z.string().min(1, "Please enter price"),
+  description: z.string().min(1, "Please enter price"),
+  category: z.string().min(1, "Please select category"),
+  content: z.string().min(1, "Please enter price"),
+  visibility: z.string().min(1, "Please select visibility"),
+  price: z.string().min(1, "Please enter price"),
+  deadline: z.string().min(1, "Please select a deadline"),
+});
+export const taskRefundSchema = z.object({
+  reason: z.string().min(10, "please enter a valid reason!"),
+});
+export const taskSchema = z.object({
+  deadline: z.string().nonempty("Deadline is required"),
+  visibility: z.enum(["public", "private"]),
+  category: z.string().nonempty("Category is required"),
+  price: z.coerce.number().min(10, "Minimum price is 10"),
+  content: z.string().min(4, "Content is too short"),
+  title: z.string().min(4, "title is too short"),
+  description: z.string().min(4, "description is too short"),
+});
+export const WorkpaceSchem = z.object({
+  content: z.string().min(10, "Content is too short"),
+});
