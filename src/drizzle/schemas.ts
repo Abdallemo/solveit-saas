@@ -35,8 +35,16 @@ export const TaskStatusEnum = pgEnum("task_status", [
   "ASSIGNED",
   "IN_PROGRESS",
   "COMPLETED",
-  "SUBMITTED"
+  "SUBMITTED",
 ]);
+export const RefundStatusEnum = pgEnum("refund_status", [
+  "PENDING",
+  "PROCESSING",
+  "REFUNDED",
+  "REJECTED",
+  "FAILED",
+]);
+
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
 export type taskTableType = typeof TaskTable.$inferInsert;
@@ -45,6 +53,7 @@ export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
 export type PaymentStatusType = (typeof PaymentStatus.enumValues)[number];
+export type RefundStatusEnumType = (typeof RefundStatusEnum.enumValues)[number];
 
 export const UserTable = pgTable("user", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -250,6 +259,8 @@ export const RefundTable = pgTable("refunds", {
     .notNull()
     .references(() => TaskTable.id),
   refundReason: text("refund_reason"),
+  refundStatus: RefundStatusEnum().default("PENDING"),
+  moderatorId: uuid("moderatorId").references(() => UserTable.id),
   refundedAt: timestamp("refunded_at", { mode: "date" }).defaultNow(),
   stripeRefundId: text("stripe_refund_id"),
 });
@@ -404,6 +415,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   tasksAsSolver: many(TaskTable, {
     relationName: "solver",
   }),
+  refundModerator: many(RefundTable, {
+    relationName: "refundModerator",
+  }),
   blockedSolverFromTask: many(BlockedTasksTable, {
     relationName: "solver",
   }),
@@ -442,10 +456,15 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
     fields: [TaskTable.id],
     references: [WorkspaceTable.taskId],
   }),
+  taskRefund: one(RefundTable, {
+    fields: [TaskTable.id],
+    references: [RefundTable.taskId],
+    relationName: "taskRefund",
+  }),
+
   blockedSolvers: many(BlockedTasksTable, {
     relationName: "blockedSolvers",
   }),
-  
 }));
 export const BlockedTasksTableRelation = relations(
   BlockedTasksTable,
@@ -486,24 +505,27 @@ export const workspaceFilesRelation = relations(
       fields: [WorkspaceFilesTable.workspaceId],
       references: [WorkspaceTable.id],
     }),
-    solutionFile:one(SolutionFilesTable,{
-      fields:[WorkspaceFilesTable.id],
-      references:[SolutionFilesTable.workspaceFileId],
-      relationName:"solutionFile"
-    })
+    solutionFile: one(SolutionFilesTable, {
+      fields: [WorkspaceFilesTable.id],
+      references: [SolutionFilesTable.workspaceFileId],
+      relationName: "solutionFile",
+    }),
   })
 );
 
-export const SolutionTableRelation = relations(SolutionTable, ({ many,one }) => ({
-  solutionFiles: many(SolutionFilesTable, {
-    relationName: "solutionFiles",
-  }),
-  taskSolution:one(TaskTable,{
-    fields:[SolutionTable.taskId],
-    references:[TaskTable.id],
-    relationName:"taskSolution"
-  }),
-}));
+export const SolutionTableRelation = relations(
+  SolutionTable,
+  ({ many, one }) => ({
+    solutionFiles: many(SolutionFilesTable, {
+      relationName: "solutionFiles",
+    }),
+    taskSolution: one(TaskTable, {
+      fields: [SolutionTable.taskId],
+      references: [TaskTable.id],
+      relationName: "taskSolution",
+    }),
+  })
+);
 export const SolutionFilesTableRelations = relations(
   SolutionFilesTable,
   ({ one }) => ({
@@ -511,12 +533,24 @@ export const SolutionFilesTableRelations = relations(
       fields: [SolutionFilesTable.solutionId],
       references: [SolutionTable.id],
       relationName: "solutionFiles",
-
     }),
-    solutionFile:one(WorkspaceFilesTable,{
-      fields:[SolutionFilesTable.workspaceFileId],
-      references:[WorkspaceFilesTable.id],
-      relationName:"solutionFile"
-    })
+    solutionFile: one(WorkspaceFilesTable, {
+      fields: [SolutionFilesTable.workspaceFileId],
+      references: [WorkspaceFilesTable.id],
+      relationName: "solutionFile",
+    }),
   })
 );
+export const RefundTableRelation = relations(RefundTable, ({ one, many }) => ({
+  taskRefund: one(TaskTable, {
+    fields: [RefundTable.taskId],
+    references: [TaskTable.id],
+    relationName: "taskRefund",
+  }),
+  refundModerator: one(UserTable, {
+    fields: [RefundTable.moderatorId],
+    references: [UserTable.id],
+    relationName: "refundModerator",
+  }),
+
+}));
