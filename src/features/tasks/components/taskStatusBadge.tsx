@@ -1,5 +1,5 @@
 import { Badge } from "@/components/ui/badge";
-import { TaskStatusType } from "@/drizzle/schemas";
+import { RefundStatusEnumType, TaskStatusType } from "@/drizzle/schemas";
 
 export default function GetStatusBadge(status: TaskStatusType) {
   switch (status) {
@@ -35,5 +35,36 @@ export default function GetStatusBadge(status: TaskStatusType) {
       );
     default:
       return <Badge variant="secondary">Unknown</Badge>;
+  }
+}
+export function GetRefundStatusBadge(status: RefundStatusEnumType) {
+  switch (status) {
+    case "REFUNDED":
+      return (
+        <Badge variant="secondary" className="bg-green-100 text-green-800">
+          Refunded
+        </Badge>
+      );
+    case "PROCESSING":
+      return (
+        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+          Processing
+        </Badge>
+      );
+    case "PENDING":
+      return (
+        <Badge variant="secondary" className="bg-purple-100 text-purple-800">
+          Pending
+        </Badge>
+      );
+    case "REJECTED":
+      return (
+        <Badge variant="secondary" className="bg-red-100 text-red-700">
+          Rejected
+        </Badge>
+      );
+    
+    default:
+      return <Badge variant="secondary">Pending</Badge>;
   }
 }
