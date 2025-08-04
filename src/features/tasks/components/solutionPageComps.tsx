@@ -38,6 +38,8 @@ import { FormProvider, useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "@/components/ui/input";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import { TooltipContent } from "@radix-ui/react-tooltip";
 
 function AcceptSolutionDialog({
   taskId,
@@ -47,18 +49,20 @@ function AcceptSolutionDialog({
   posterId: string;
 }) {
   const [isPending, startTransition] = useTransition();
-  const router = useRouter()
+  const router = useRouter();
 
   const handleAccept = () => {
     startTransition(async () => {
       try {
-        const {success} = await acceptSolution(taskId, posterId);
-        if (success){
-          router.refresh()
-          toast.success("You have successfully accepted this task to be Complete")
+        const { success } = await acceptSolution(taskId, posterId);
+        if (success) {
+          router.refresh();
+          toast.success(
+            "You have successfully accepted this task to be Complete"
+          );
         }
       } catch (error) {
-        console.error(error)
+        console.error(error);
       }
     });
     console.log("Solution accepted");
@@ -102,14 +106,16 @@ function AcceptSolutionDialog({
 }
 
 function RequestRefundDialog() {
+  const [reason, setReason] = useState("");
+  const isValid = reason.length > 10;
   const refundSchema = z.object({
-    reason:z.string().min(10,"please enter a valid reason!")
-  })
-  type refundSchemaType = z.infer<typeof refundSchema>
+    reason: z.string().min(10, "please enter a valid reason!"),
+  });
+  type refundSchemaType = z.infer<typeof refundSchema>;
 
   const form = useForm<refundSchemaType>({
-    resolver:zodResolver(refundSchema)
-  })
+    resolver: zodResolver(refundSchema),
+  });
   const handleRefund = () => {
     console.log("Refund requested");
   };
@@ -117,42 +123,60 @@ function RequestRefundDialog() {
   return (
     <FormProvider {...form}>
       <form onSubmit={form.handleSubmit(handleRefund)}>
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button variant="destructive" className="flex items-center space-x-2">
-          <XCircle className="h-4 w-4" />
-          <span>Request Refund</span>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Request a Refund?</AlertDialogTitle>
-          <AlertDialogDescription className="text-foreground">
-            Are you sure you want to request a refund for this task? This
-            indicates that the solution does not meet your requirements. Please
-            note that refund requests will be reviewed by our team.
-          </AlertDialogDescription>
-          <AlertDialogHeader>
-            <FormField control={form.control} name="reason" render={({field})=>(
-              <Textarea rows={2} placeholder="Reason of refund" onChange={(e)=>{
-                field.onChange(e.target.value)
-              }}/>
-            )}/>
-          </AlertDialogHeader>
-        </AlertDialogHeader>
-        
-        <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
-          <AlertDialogAction
-          
-           type="submit"
-            className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
-            Yes, Request Refund
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
-    </form>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="destructive"
+              className="flex items-center space-x-2">
+              <XCircle className="h-4 w-4" />
+              <span>Request Refund</span>
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Request a Refund?</AlertDialogTitle>
+              <AlertDialogDescription className="text-foreground">
+                Are you sure you want to request a refund for this task? This
+                indicates that the solution does not meet your requirements.
+                Please note that refund requests will be reviewed by our team.
+              </AlertDialogDescription>
+              <AlertDialogHeader>
+                <FormField
+                  control={form.control}
+                  name="reason"
+                  render={({ field }) => (
+                    <Textarea
+                      value={reason}
+                      rows={2}
+                      placeholder="Reason of refund"
+                      onChange={(e) => {
+                        field.onChange(e.target.value);
+                        setReason((prev) => (prev = e.target.value));
+                      }}
+                    />
+                  )}
+                />
+              </AlertDialogHeader>
+            </AlertDialogHeader>
+
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction asChild>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button type="submit" variant={"destructive"}  disabled={!isValid}>
+                      Yes, Request Refund
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    {!isValid && <p className="text-xs ">At least 10 charecters is Required</p>}
+                  </TooltipContent>
+                </Tooltip>
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </form>
     </FormProvider>
   );
 }
