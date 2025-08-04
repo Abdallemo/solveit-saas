@@ -33,6 +33,11 @@ import { FilesTable } from "@/features/media/components/FilesTable";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
+import { FormField } from "@/components/ui/form";
+import { FormProvider, useForm } from "react-hook-form";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Input } from "@/components/ui/input";
 
 function AcceptSolutionDialog({
   taskId,
@@ -97,11 +102,21 @@ function AcceptSolutionDialog({
 }
 
 function RequestRefundDialog() {
+  const refundSchema = z.object({
+    reason:z.string().min(10,"please enter a valid reason!")
+  })
+  type refundSchemaType = z.infer<typeof refundSchema>
+
+  const form = useForm<refundSchemaType>({
+    resolver:zodResolver(refundSchema)
+  })
   const handleRefund = () => {
     console.log("Refund requested");
   };
 
   return (
+    <FormProvider {...form}>
+      <form onSubmit={form.handleSubmit(handleRefund)}>
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button variant="destructive" className="flex items-center space-x-2">
@@ -117,17 +132,28 @@ function RequestRefundDialog() {
             indicates that the solution does not meet your requirements. Please
             note that refund requests will be reviewed by our team.
           </AlertDialogDescription>
+          <AlertDialogHeader>
+            <FormField control={form.control} name="reason" render={({field})=>(
+              <Textarea rows={2} placeholder="Reason of refund" onChange={(e)=>{
+                field.onChange(e.target.value)
+              }}/>
+            )}/>
+          </AlertDialogHeader>
         </AlertDialogHeader>
+        
         <AlertDialogFooter>
           <AlertDialogCancel>Cancel</AlertDialogCancel>
           <AlertDialogAction
-            onClick={handleRefund}
+          
+           type="submit"
             className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
             Yes, Request Refund
           </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+    </form>
+    </FormProvider>
   );
 }
 
