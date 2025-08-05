@@ -49,7 +49,7 @@ export function calculateProgress(
   return percentage;
 }
 export function isError(err: unknown): err is Error {
-  return typeof err === 'object' && err !== null && 'message' in err;
+  return typeof err === "object" && err !== null && "message" in err;
 }
 export function truncateText(text: string, maxLength: number): string {
   return text.length > maxLength
@@ -63,12 +63,31 @@ const badgeColors = [
   "bg-pink-100 text-pink-800",
   "bg-purple-100 text-purple-800",
 ];
+const objColors = [
+  "text-neutral-900 font-semibold",
+  // "text-blue-800",
+  // "text-yellow-800", 
+  // "text-pink-800",
+  // "text-purple-800",
+  // "text-purple-800",
+  // "text-cyan-800",
+  // "text-amber-800",
+  // "text-indigo-800",
+  // "text-teal-700",
+  // "text-violet-700",
+];
 
-export function getColorClass(name: string) {
+export function getColorClass(name: string, bg = true, txt?: boolean) {
   let hash = 0;
   for (let i = 0; i < name.length; i++) {
     hash = name.charCodeAt(i) + ((hash << 5) - hash);
   }
-  const index = Math.abs(hash) % badgeColors.length;
-  return badgeColors[index];
+  if (bg) {
+    const index = Math.abs(hash) % badgeColors.length;
+    return badgeColors[index];
+  }
+  if (txt) {
+    const index = Math.abs(hash) % objColors.length;
+    return objColors[index];
+  }
 }
