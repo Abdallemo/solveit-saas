@@ -8,7 +8,7 @@ export default function GetStatusBadge(status: TaskStatusType) {
       return (
         <Badge variant="secondary" className="bg-green-100 text-green-800">
           <Eye className="w-4 h-4"/>
-          
+          Open
         </Badge>
       );
     case "IN_PROGRESS":

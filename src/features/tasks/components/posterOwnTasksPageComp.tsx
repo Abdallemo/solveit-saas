@@ -1,7 +1,14 @@
 "use client";
+import { PopoverContent } from "@/components/ui/popover";
+import {
+  Command,
+  CommandInput,
+  CommandList,
+  CommandEmpty,
+  CommandGroup,
+  CommandItem,
+} from "@/components/ui/command";
 
-import type React from "react";
-import { getColorClass } from "@/lib/utils";
 import {
   Calendar,
   Search,
@@ -14,6 +21,8 @@ import {
   AlertCircle,
   Clock,
   Eye,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -43,6 +52,7 @@ import GetStatusBadge from "./taskStatusBadge";
 import { PosterTasksFiltred } from "../server/task-types";
 import { TaskStatusType } from "@/drizzle/schemas";
 
+import { useSearchParams, useRouter } from "next/navigation";
 type Props = {
   tasks: PosterTasksFiltred[];
   totalCount: number;
@@ -58,6 +68,8 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverTrigger } from "@/components/ui/popover";
+import { cn, getColorClass } from "@/lib/utils";
 
 export default function PosterPublishedTasks({
   tasks,
@@ -68,10 +80,15 @@ export default function PosterPublishedTasks({
   hasPrevious,
   hasNext,
 }: Props) {
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [viewMode, setViewMode] = useState<"cards" | "list" | "table">("cards");
-  const [selectedStatuses, setSelectedStatuses] = useState<Set<TaskStatusType>>(
-    new Set()
-  );
+  const [search, setSearch] = useState("");
+  const [open, setOpen] = useState(false);
+  const selectedStatus = useMemo(() => {
+    return (searchParams.get("status") as TaskStatusType) ?? "";
+  }, [searchParams]);
+
   const STATUS_OPTIONS: TaskStatusType[] = [
     "OPEN",
     "ASSIGNED",
@@ -80,7 +97,17 @@ export default function PosterPublishedTasks({
     "SUBMITTED",
   ];
 
-  const [search, setSearch] = useState("");
+  const handleSelect = (status: TaskStatusType) => {
+    const params = new URLSearchParams(searchParams.toString());
+    if (status === selectedStatus) {
+      params.delete("status");
+    } else {
+      params.set("status", status);
+    }
+    router.replace(`?${params.toString()}`);
+    setOpen(false);
+  };
+
   const filteredTasks = useMemo(() => {
     const lowerSearch = search.toLowerCase();
 
@@ -89,12 +116,11 @@ export default function PosterPublishedTasks({
         task.title.toLowerCase().includes(lowerSearch) ||
         task.description?.toLowerCase().includes(lowerSearch);
 
-      const matchStatus =
-        selectedStatuses.size === 0 || selectedStatuses.has(task.status!);
+      const matchStatus = !selectedStatus || task.status === selectedStatus;
 
       return matchSearch && matchStatus;
     });
-  }, [search, selectedStatuses, tasks]);
+  }, [search, selectedStatus, tasks]);
 
   const ViewToggle = () => (
     <div className="flex items-center gap-1 bg-muted p-1 rounded-lg">
@@ -156,6 +182,9 @@ export default function PosterPublishedTasks({
                   Due: {task.deadline}
                 </div>
               )}
+              <p className={getColorClass(String(task.price), false, true)}>
+                RM{task.price?.toFixed(2)}
+              </p>
             </div>
             <div className="text-xs text-gray-400 mb-2">
               Posted: {task.createdAt?.toLocaleDateString()}
@@ -227,6 +256,9 @@ export default function PosterPublishedTasks({
                       Solved by {task.solver.name}
                     </span>
                   )}
+                  <p className={getColorClass(String(task.price), false, true)}>
+                    RM{task.price?.toFixed(2)}
+                  </p>
                 </div>
               </div>
               <div className="flex gap-2 ml-4">
@@ -246,7 +278,7 @@ export default function PosterPublishedTasks({
               </div>
             </div>
           </div>
-          {index < tasks.length - 1 && <Separator />}
+          {index < filteredTasks.length - 1 && <Separator />}
         </div>
       ))}
     </div>
@@ -269,6 +301,7 @@ export default function PosterPublishedTasks({
                 Status
               </th>
               <th className="text-left p-4 font-medium text-gray-900">Due</th>
+              <th className="text-left p-4 font-medium text-gray-900">Price</th>
               <th className="text-left p-4 font-medium text-gray-900">
                 Actions
               </th>
@@ -306,6 +339,9 @@ export default function PosterPublishedTasks({
                 <td className="p-4">{GetStatusBadge(task.status!)}</td>
                 <td className="p-4 text-sm text-gray-600">
                   {task.deadline || "No deadline"}
+                </td>
+                <td className={getColorClass(String(task.price), false, true)}>
+                  RM{task.price?.toFixed(2)}
                 </td>
                 <td className="p-4">
                   <div className="flex gap-1">
@@ -366,29 +402,42 @@ export default function PosterPublishedTasks({
                 <Search className="w-4 h-4 mr-2" />
                 Search
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline">Filter Status</Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-48">
-                  {STATUS_OPTIONS.map((status) => (
-                    <DropdownMenuCheckboxItem
-                      key={status}
-                      checked={selectedStatuses.has(status)}
-                      onCheckedChange={(checked) => {
-                        setSelectedStatuses((prev) => {
-                          const updated = new Set(prev);
-                          checked
-                            ? updated.add(status)
-                            : updated.delete(status);
-                          return updated;
-                        });
-                      }}>
-                      {status.replace("_", " ")}
-                    </DropdownMenuCheckboxItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Popover open={open} onOpenChange={setOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className="w-[200px] justify-between">
+                    {selectedStatus || "Filter by status"}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="p-0 w-[200px]">
+                  <Command>
+                    <CommandInput placeholder="Search status..." />
+                    <CommandEmpty>No status found.</CommandEmpty>
+                    <CommandList>
+                      <CommandGroup>
+                        {STATUS_OPTIONS.map((status) => (
+                          <CommandItem
+                            key={status}
+                            onSelect={() => handleSelect(status)}
+                            className="cursor-pointer">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedStatus === status
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {GetStatusBadge(status)}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
@@ -396,7 +445,7 @@ export default function PosterPublishedTasks({
         </div>
 
         <div className="space-y-6 min-h-[500px]">
-          {tasks.length > 0 ? (
+          {filteredTasks.length > 0 ? (
             renderView()
           ) : (
             <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-card/50">
