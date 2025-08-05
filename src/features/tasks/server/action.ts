@@ -513,7 +513,7 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
-      with: { poster: true, solver: true },
+      with: { poster: true, solver: true ,taskSolution:true},
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
