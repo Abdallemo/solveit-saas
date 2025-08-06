@@ -24,8 +24,10 @@ export type WorkspaceUploadedFileMeta = {
   uploadedById: string;
   isDraft: boolean | null;
 };
-/** **PresignedUploadedFileMeta:** Data sent to finalize a presigned upload */
-export type PresignedUploadedFileMeta = {
+
+/** **UploadedFileMeta:** Data sent to finalize a file upload */
+
+export type UploadedFileMeta = {
   fileName: string;
   fileType: string;
   fileSize: number;
