@@ -7,6 +7,7 @@ import {
   DEFAULT_LOGIN_REDIRECT,
   apiStripePrefix,
   apiStripePrefixPayment,
+  apiMediaPrefix,
 } from "@/routes";
 
 const { auth } = NextAuth(authConfig);
@@ -17,12 +18,14 @@ export default auth((req) => {
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isApiStripePrefix = nextUrl.pathname.startsWith(apiStripePrefix);
   const isApiStripePrefixPayment = nextUrl.pathname.startsWith(apiStripePrefixPayment);
+  const isApiMediaPrefix = nextUrl.pathname.startsWith(apiMediaPrefix);
   const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
 
   if (isApiAuthRoute) return;
   if (isApiStripePrefix) return;
   if (isApiStripePrefixPayment) return;
+  if (isApiMediaPrefix) return;
 
   if (isAuthRoutes) {
     if (isLoggedIn)
