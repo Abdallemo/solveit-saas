@@ -17,7 +17,7 @@ import {
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
-import { PresignedUploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
@@ -68,7 +68,7 @@ export async function createTaskAction(
   visibility: string,
   deadline: string,
   price: number,
-  uploadedFiles: PresignedUploadedFileMeta[],
+  uploadedFiles: UploadedFileMeta[],
   paymentId: string
 ) {
   console.log("inside a createTaskAcrion Yoo");
@@ -110,10 +110,11 @@ export async function createTaskAction(
   console.log("Task created successfully!");
 }
 export async function createTaksPaymentCheckoutSession(
-  price: number,
+ values:{ price: number,
   userId: string,
-  deadlineStr: string
+  deadlineStr: string}
 ) {
+  const  {price,userId,deadlineStr} = values
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
@@ -153,7 +154,7 @@ export async function createTaksPaymentCheckoutSession(
     if (!session.url) throw new Error("Failed to create checkout session");
 
     console.log("session url" + session.url);
-    return session.url;
+     redirect(session.url);//todo breaking change
   } catch (error) {
     console.error(error);
     throw error;
