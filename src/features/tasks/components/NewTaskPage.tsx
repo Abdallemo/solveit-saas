@@ -7,22 +7,22 @@ import NewTaskSidebar from "./newTaskSidebar"
 import { useTask } from "@/contexts/TaskContext"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { TaskSchema, taskSchema } from "../server/task-types"
-import { getPresignedUploadUrl } from "@/features/media/server/action"
 import {
   autoSaveDraftTask,
   createTaksPaymentCheckoutSession,
   validateStripeSession,
 } from "../server/action"
-import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 import { CircleAlert, Loader } from "lucide-react"
 import useCurrentUser from "@/hooks/useCurrentUser"
-import { PresignedUploadedFileMeta } from "@/features/media/server/media-types"
+import { UploadedFileMeta } from "@/features/media/server/media-types"
 import { useAutoSave } from "@/hooks/useAutoDraftSave"
 import { useAuthGate } from "@/hooks/useAuthGate"
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading"
 import AuthGate from "@/components/AuthGate"
 import { useSearchParams } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
+import { useFileUpload } from "@/hooks/useFileUpload"
 
 export default function TaskCreationPage({
   defaultValues,
@@ -41,29 +41,24 @@ export default function TaskCreationPage({
   } = useTask()
   const currentUser = useCurrentUser()
   const { user } = currentUser
-  const router = useRouter()
-  const [isUploading, setIsUploading] = useState(false)
   const [isDisabled, setIsDisabled] = useState(true)
-  const { isLoading, isBlocked } = useAuthGate()
+  const { isLoading:authLoading, isBlocked } = useAuthGate()
   const [isSheetOpen, setIsSheetOpen] = useState(false)
   const searchParams = useSearchParams()
   const hasShownToast = useRef(false)
+  const sessionId = searchParams.get("session_id")
 
-  useEffect(() => {
-    const sessionId = searchParams.get("session_id")
-    if (!sessionId || hasShownToast.current) return
-    (async () => {
-      const isValid = await validateStripeSession(sessionId)
-      if (isValid) {
-        toast.success("Task published successfully!")
-        hasShownToast.current = true
-
-        const url = new URL(window.location.href)
-        url.searchParams.delete("session_id")
-        window.history.replaceState({}, "", url.toString())
-      }
-    })()
-  }, [searchParams])
+  const { data: isValidSession, isLoading} = useQuery({
+    queryKey:['stripe-session', sessionId],
+    enabled:!!sessionId,
+    queryFn:() => validateStripeSession(sessionId!)
+  })
+  const { uploadMutate, isUploading } = useFileUpload();
+ useEffect(()=>{
+    if (isValidSession && !hasShownToast.current) {
+    toast.success("Task published successfully!")
+    hasShownToast.current = true}
+ },[isValidSession])
 
   useAutoSave({
     autoSaveFn: autoSaveDraftTask,
@@ -79,41 +74,15 @@ export default function TaskCreationPage({
     ],
     delay: 700,
   })
+
   useEffect(() => {
     if (typeof window === "undefined") return
-
     const doc = new DOMParser().parseFromString(content, "text/html")
     const text = doc.body.textContent?.trim() || ""
 
     setIsDisabled(text.length < 5)
   }, [content])
 
-  async function uploadSelectedFiles(selectedFiles: File[], state?: boolean) {
-    const uploadedFileMeta: PresignedUploadedFileMeta[] = []
-    for (const file of selectedFiles) {
-      const presigned = await getPresignedUploadUrl(
-        file.name,
-        file.type,
-        "task"
-      )
-      await fetch(presigned.uploadUrl, {
-        method: "PUT",
-        headers: {
-          "Content-Type": file.type,
-        },
-        body: file,
-      })
-
-      uploadedFileMeta.push({
-        fileName: file.name,
-        fileType: file.type,
-        fileSize: file.size,
-        filePath: presigned.filePath,
-        storageLocation: presigned.publicUrl,
-      })
-    }
-    return JSON.stringify(uploadedFileMeta)
-  }
 
   const form = useForm<TaskSchema>({
     resolver: zodResolver(taskSchema),
@@ -141,13 +110,21 @@ export default function TaskCreationPage({
     price,
   ])
 
-  if (isLoading) return <Loading />
+  if (authLoading) return <Loading />
   if (isBlocked) return <AuthGate />
   async function onSubmit(data: TaskSchema) {
     try {
-      setIsUploading(true)
-      const uploadedFiles = await uploadSelectedFiles(selectedFiles)
-
+      toast.loading("uploading files",{id:"file-upload"})
+      let uploadedFileMetadata: UploadedFileMeta[] | undefined;
+      let uploadedFilesString :string | undefined
+      if (selectedFiles && selectedFiles.length > 0) {
+        uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task"});
+        console.log(uploadedFileMetadata)
+        uploadedFilesString = JSON.stringify(uploadedFileMetadata);
+      } else {
+        
+        toast.dismiss("file-upload");
+      }
       await autoSaveDraftTask(
         title,
         description,
@@ -157,15 +134,16 @@ export default function TaskCreationPage({
         price,
         visibility,
         deadline,
-        uploadedFiles
+        uploadedFilesString
+        
       )
-      setIsUploading(false)
-      const url = await createTaksPaymentCheckoutSession(
-        price,
-        user?.id!,
-        deadline
+       toast.dismiss("file-upload");
+      await createTaksPaymentCheckoutSession(
+        {price,
+        userId:user?.id!,
+        deadlineStr:deadline}
       )
-      router.push(url!)
+     
     } catch (e) {
       console.error(e)
       toast.error(`${(<CircleAlert />)}something Went Wrong`)
