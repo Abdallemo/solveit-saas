@@ -22,7 +22,7 @@ import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { getWalletInfo } from "@/features/tasks/server/action";
-import { QueryClient,QueryClientProvider } from "@tanstack/react-query";
+import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -36,7 +36,6 @@ export default async function DashboardLayout({
   children: ReactNode;
 }) {
   const user = await getServerUserSession();
-  const queryClient = new QueryClient()
   if (!user) {
     return redirect("/api/auth/signout?callbackUrl=/login");
   }
@@ -103,9 +102,9 @@ export default async function DashboardLayout({
                 </div>
               </header>
               <FeatureFlagProvider flags={dbFlags}>
-                <QueryClientProvider client={queryClient}>
+                <ReactQueryProvider>
                 <main className="flex-1">{children}</main>
-                </QueryClientProvider>
+                </ReactQueryProvider>
               </FeatureFlagProvider>
             </div>
           </div>
