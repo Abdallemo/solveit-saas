@@ -1,13 +1,8 @@
 "use server";
 
-import { DeleteObjectCommand, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@/lib/cloudFlairR2";
-import { randomUUID } from "crypto";
 import {
-  GeneratePresignedUrlInput,
-  PresignedUploadedFileMeta,
-  PresignedUrlResponse,
   scope,
 } from "./media-types";
 import { env } from "@/env/server";
