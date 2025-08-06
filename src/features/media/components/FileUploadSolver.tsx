@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Upload, X, File } from "lucide-react";
+import { Upload, X, File, Loader2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -9,16 +9,14 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import {
-  deleteFileFromWorkspace,
   saveFileToWorkspaceDB,
 } from "@/features/tasks/server/action";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { getPresignedUploadUrl } from "../server/action";
 import AuthGate from "@/components/AuthGate";
-import { useFileUploadWithProgress } from "@/hooks/useFileUploadWithProgress";
-import { Progress } from "@/components/ui/progress";
 import Loading from "@/app/loading";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { useDeleteFile, useFileUpload } from "@/hooks/useFileUpload";
+import { UploadedFileMeta } from "../server/media-types";
 
 interface FileUploadProps {
   maxFiles?: number;
@@ -32,16 +30,17 @@ export default function FileUploadSolver({
   const useCurrentSolver = useCurrentUser();
   const { isLoading, isBlocked } = useAuthGate();
   const { uploadedFiles, setUploadedFiles, currentWorkspace } = useWorkspace();
-  const { uploadFile, progress } = useFileUploadWithProgress();
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const { uploadMutate, isUploading } = useFileUpload();
+  const { mutate: deleteFile, isPending: isDeleting } = useDeleteFile();
   if (isLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
 
   const uploadedById = useCurrentSolver.user?.id!;
   const fileLimitReached = uploadedFiles.length >= maxFiles;
-//todo DRY : future make this func resuble
+
   const handleFiles = async (newFiles: FileList | null) => {
     if (!newFiles) return;
 
@@ -53,20 +52,20 @@ export default function FileUploadSolver({
     for (const file of fileArray) {
       setUploadingFiles((prev) => [...prev, file]);
       try {
-        const presigned = await getPresignedUploadUrl(
-          file.name,
-          file.type,
-          "workspace"
-        );
+        toast.loading("uploading..", { id: "file-upload" });
+        const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
+          files: [file],
+          scope: "workspace",
+        });
 
-        await uploadFile(file, presigned.uploadUrl);
+        toast.dismiss("file-upload");
 
         const savedFile = await saveFileToWorkspaceDB({
           fileName: file.name,
           fileType: file.type,
           fileSize: file.size,
-          filePath: presigned.filePath,
-          storageLocation: presigned.publicUrl,
+          filePath: uploadedMeta.filePath,
+          storageLocation: uploadedMeta.storageLocation,
           workspaceId: currentWorkspace?.id!,
           isDraft: true,
           uploadedById,
@@ -86,14 +85,6 @@ export default function FileUploadSolver({
     }
 
     inputRef.current!.value = "";
-  };
-
-  const removeFile = async (fileId: string, filePath: string) => {
-    const updated = uploadedFiles.filter((f) => f.filePath !== filePath);
-    const { success, error, file } = await deleteFileFromWorkspace(fileId);
-    if (success) toast.success(success);
-    if (error) toast.error(error);
-    setUploadedFiles(updated);
   };
 
   return (
@@ -160,14 +151,17 @@ export default function FileUploadSolver({
                 className="flex items-center gap-3 p-2 bg-muted rounded-md">
                 <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
                 <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate">
+                  <div className="text-sm font-medium truncate flex ">
                     {file.name}
                   </div>
-                  <Progress value={progress[file.name] ?? 0} />
+
                   <p className="text-xs text-muted-foreground">
                     {(file.size / 1024).toFixed(1)} KB
                   </p>
                 </div>
+                {isUploading && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
+                )}
               </div>
             ))}
 
@@ -184,7 +178,9 @@ export default function FileUploadSolver({
                     className="text-sm font-medium truncate underline text-primary">
                     {file.fileName}
                   </a>
-                  <Progress value={progress[file.fileName] ?? 100} />
+                  {isUploading && (
+                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
+                  )}
                   <p className="text-xs text-muted-foreground">
                     {(file.fileSize / 1024).toFixed(1)} KB
                   </p>
@@ -193,7 +189,18 @@ export default function FileUploadSolver({
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => removeFile(file.id, file.filePath)}
+                  onClick={() => {
+                    const updated = uploadedFiles.filter(
+                      (f) => f.filePath !== file.filePath
+                    );
+                    toast.loading("deleting", { id: "file-delete" });
+                    deleteFile({
+                      fileId: file.id,
+                      filePath: file.storageLocation,
+                    });
+                    toast.dismiss("file-delete");
+                    setUploadedFiles(updated);
+                  }}
                   className="h-6 w-6 p-0 cursor-pointer">
                   <X className="h-3 w-3" />
                 </Button>
