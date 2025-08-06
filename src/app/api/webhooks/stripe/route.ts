@@ -171,7 +171,6 @@ async function handleTaskCreate(event: Stripe.Event) {
       paymentId
     );
 
-    //cleaning
     
   } catch (error) {
     console.error(error);
