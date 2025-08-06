@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { SessionProvider } from "next-auth/react";
+import { SessionProvider, useSession } from "next-auth/react";
 import "./globals.css";
-import { getServerSession } from "@/features/auth/server/actions";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -21,15 +19,15 @@ export const metadata: Metadata = {
   description: "A SaaS based Student Job Board",
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const session = await getServerSession();
+  
 
   return (
-    <SessionProvider session={session}>
+    <SessionProvider >
       <html lang="en" suppressHydrationWarning >
         <body
           className={`${geistSans.variable} ${geistMono.variable}  antialiased  `}>
