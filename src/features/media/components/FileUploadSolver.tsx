@@ -15,7 +15,7 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/loading";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { useDeleteFile, useFileUpload } from "@/hooks/useFileUpload";
+import { useDeleteFile, useFileUpload } from "@/hooks/useFile";
 import { UploadedFileMeta } from "../server/media-types";
 
 interface FileUploadProps {

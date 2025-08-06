@@ -22,7 +22,7 @@ import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading"
 import AuthGate from "@/components/AuthGate"
 import { useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
-import { useFileUpload } from "@/hooks/useFileUpload"
+import { useFileUpload } from "@/hooks/useFile"
 
 export default function TaskCreationPage({
   defaultValues,
