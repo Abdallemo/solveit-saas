@@ -5,7 +5,7 @@ import { useForm, FormProvider, FieldErrors } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
 import { toast } from "sonner";
-import { CircleAlert, Loader } from "lucide-react";
+import { Loader } from "lucide-react";
 import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
@@ -15,18 +15,19 @@ import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/dashboard/solver/loading";
-import { isError } from "lodash";
-import { SolutionError } from "../lib/errors";
-import { sendNotification } from "@/features/notifications/server/action";
+import { useMutation } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
 export default function WorkspacePageComp() {
-  const [isUploading, setIsUploading] = useState(false);
   const [isDisabled, setIsDisabled] = useState(true);
   const { content, currentWorkspace } = useWorkspace();
   const [progress, setProgress] = useState(0);
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const alreadySubmitedSolution = currentWorkspace?.task.status == "SUBMITTED" || currentWorkspace?.task.status == "COMPLETED";
+  const router = useRouter();
+  const alreadySubmitedSolution =
+    currentWorkspace?.task.status == "SUBMITTED" ||
+    currentWorkspace?.task.status == "COMPLETED";
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
     autoSaveArgs: [
@@ -35,6 +36,15 @@ export default function WorkspacePageComp() {
       currentWorkspace?.taskId!,
     ],
     delay: 700,
+  });
+  const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
+    mutationFn: publishSolution,
+    onSuccess: (data) => {
+      toast.success(data.message, { id: "publish-solution" });
+    },
+    onError: (err) => {
+      toast.error(err.message, { id: "publish-solution" });
+    },
   });
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -67,35 +77,23 @@ export default function WorkspacePageComp() {
       toast.error("Not found current workspace id");
       return;
     }
-    if (currentWorkspace.task.status === "COMPLETED",currentWorkspace.task.status === "SUBMITTED") {
+    if (
+      currentWorkspace.task.status === "COMPLETED" ||
+      currentWorkspace.task.status === "SUBMITTED"
+    ) {
       return;
     }
 
     try {
-      setIsUploading(true);
-
-      const result = await publishSolution(currentWorkspace.id, data.content,currentWorkspace.solverId);
-      sendNotification({
-        sender: "solveit@org.com",
-        receiver: currentWorkspace.task.poster.email!,
-        method: ["email"],
-        body: {
-          subject: "Task Submited",
-          content: `you Task titiled <h4>${currentWorkspace.task.title}</h4> 
-          has bean submited please review it with in 7days `,
-        },
+      await publishSolutionMutation({
+        workspaceId: currentWorkspace.id,
+        content: data.content,
+        solverId: currentWorkspace.solverId,
       });
-      if (result.success) {
-        toast.success(result.message);
-      }
-    } catch (e: unknown) {
-      if (isError(e) && e instanceof SolutionError) {
-        toast.error(e.code);
-      } else {
-        toast.error("An unknown error occurred during publishing.");
-      }
-    } finally {
-      setIsUploading(false);
+
+      toast.success("Published successfully", { id: "publish-solution" });
+    } catch (err) {
+      toast.error("Failed to publish", { id: "publish-solution" });
     }
   }
   function onError(errors: FieldErrors<WorkpaceSchemType>) {
@@ -115,12 +113,12 @@ export default function WorkspacePageComp() {
             form="solution-form"
             disabled={
               isDisabled ||
-              isUploading ||
+              isPending ||
               progress >= 100 ||
               alreadySubmitedSolution
             }
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            {isUploading ? ( // If uploading, show loader and text
+            {isPending ? ( // If uploading, show loader and text
               <>
                 <Loader className="animate-spin w-4 h-4" />
                 Uploading files...
