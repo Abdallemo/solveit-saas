@@ -5,6 +5,7 @@ import {
   getAllTaskCatagories,
   getAllTasks,
   getAllTasksByRolePaginated,
+  getAssignedTasksbyIdPaginated,
   getPosterTasksbyIdPaginated,
   getSolutionById,
   getTasksbyId,
@@ -19,6 +20,7 @@ export type TaskSchema = z.infer<typeof taskSchema>;
 
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
+export type SolverAssignedTaskType = Awaited<ReturnType<typeof getAssignedTasksbyIdPaginated>>["tasks"][number];
 export type PosterTasksFiltred = Awaited<ReturnType<typeof getPosterTasksbyIdPaginated>>["tasks"][number];
 export type AllTasksFiltred = Awaited<ReturnType<typeof getAllTasksByRolePaginated>>["tasks"][number];
 export type allTasksFiltredType = Awaited<ReturnType<typeof getAllTasks>>;
