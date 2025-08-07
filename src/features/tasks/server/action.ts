@@ -21,7 +21,12 @@ import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import { calculateProgress, isError, truncateText } from "@/lib/utils";
+import {
+  calculateProgress,
+  isError,
+  parseDeadline,
+  truncateText,
+} from "@/lib/utils";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
   and,
@@ -48,6 +53,7 @@ import type {
   FlatDispute,
 } from "@/features/tasks/server/task-types";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
+import { sendNotification } from "@/features/notifications/server/action";
 export type {
   catagoryType,
   userTasksType,
@@ -109,12 +115,12 @@ export async function createTaskAction(
   await deleteDraftTask(userId);
   console.log("Task created successfully!");
 }
-export async function createTaksPaymentCheckoutSession(
- values:{ price: number,
-  userId: string,
-  deadlineStr: string}
-) {
-  const  {price,userId,deadlineStr} = values
+export async function createTaksPaymentCheckoutSession(values: {
+  price: number;
+  userId: string;
+  deadlineStr: string;
+}) {
+  const { price, userId, deadlineStr } = values;
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
@@ -154,7 +160,7 @@ export async function createTaksPaymentCheckoutSession(
     if (!session.url) throw new Error("Failed to create checkout session");
 
     console.log("session url" + session.url);
-     redirect(session.url);//todo breaking change
+    redirect(session.url); //todo breaking change
   } catch (error) {
     console.error(error);
     throw error;
@@ -215,18 +221,17 @@ export async function autoSaveDraftTask(
   }
 }
 
-export async function assignTaskToSolverById(
-  taskId: string,
-  solverId: string
-): Promise<assignTaskReturnType> {
+export async function assignTaskToSolverById(values: {
+  taskId: string;
+  solverId: string;
+}): Promise<assignTaskReturnType> {
+  const { solverId, taskId } = values;
   try {
     const oldTask = await db.query.TaskTable.findFirst({
       where: (table, fn) => fn.eq(table.id, taskId),
     });
-    if (!oldTask)
-      return { error: "no such task available", newTask: undefined };
-    if (oldTask.solverId)
-      return { error: "task already assigned to solver", newTask: undefined };
+    if (!oldTask) throw new Error("no such task available");
+    if (oldTask.solverId) throw new Error("task already assigned to solver");
 
     const result = await db.transaction(async (tx) => {
       const updated = await tx
@@ -253,9 +258,22 @@ export async function assignTaskToSolverById(
     });
 
     if (!result) {
-      return { error: "unable to assign task", newTask: undefined };
+      throw new Error("unable to assign task");
     }
-
+    const newWorkspace = await createWorkspace(result);
+    sendNotification({
+      sender: "solveit@org.com",
+      receiver: result?.poster.email!,
+      method: ["email"],
+      body: {
+        subject: "task Picked",
+        content: `you Task titiled ${result?.title} is picked by ${
+          result?.solver?.name
+        }\n you will reciev your solution on ${parseDeadline(
+          result?.deadline!
+        )}`,
+      },
+    });
     revalidatePath(`/yourTasks/${taskId}`);
     return {
       success: "Task successfully assigned to you!",
@@ -263,7 +281,7 @@ export async function assignTaskToSolverById(
     };
   } catch (error) {
     console.error(error);
-    return { error: "unable to assign task", newTask: undefined };
+    throw new Error("unable to assign task");
   }
 }
 export async function createWorkspace(task: TaskReturnType) {
@@ -514,7 +532,7 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
-      with: { poster: true, solver: true ,taskSolution:true},
+      with: { poster: true, solver: true, taskSolution: true },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -651,11 +669,12 @@ export async function saveFileToWorkspaceDB({
   return newFile[0];
 }
 
-export async function publishSolution(
-  workspaceId: string,
-  content: string,
-  solverId: string
-) {
+export async function publishSolution(values: {
+  workspaceId: string;
+  content: string;
+  solverId: string;
+}) {
+  const { content, solverId, workspaceId } = values;
   try {
     const workspace = await getWorkspaceById(workspaceId, solverId);
     workspace?.task;
@@ -714,6 +733,16 @@ export async function publishSolution(
         .update(TaskTable)
         .set({ status: "SUBMITTED", updatedAt: new Date() })
         .where(eq(TaskTable.id, workspace?.taskId));
+    });
+    sendNotification({
+      sender: "solveit@org.com",
+      receiver: workspace.task.poster.email!,
+      method: ["email"],
+      body: {
+        subject: "Task Submited",
+        content: `you Task titiled <h4>${workspace.task.title}</h4> 
+          has bean submited please review it with in 7days `,
+      },
     });
     return {
       success: true,
@@ -785,7 +814,7 @@ export async function getSolutionById(solutionId: string) {
         with: {
           solver: true,
           taskSolution: true,
-          taskRefund:true
+          taskRefund: true,
         },
       },
       solutionFiles: {
@@ -836,7 +865,7 @@ export async function requestRefund(
         poster: true,
         solver: true,
         workspace: true,
-        taskRefund:true
+        taskRefund: true,
       },
     });
     if (!task) {
@@ -847,10 +876,8 @@ export async function requestRefund(
         "Anauthorized Request! You are not the Owner of This Task"
       );
     }
-    if (task.taskRefund){
-      throw new Error(
-        "There is already a Refund Request for this Task"
-      );
+    if (task.taskRefund) {
+      throw new Error("There is already a Refund Request for this Task");
     }
     const refund = await db.insert(RefundTable).values({
       paymentId: task.paymentId!,
