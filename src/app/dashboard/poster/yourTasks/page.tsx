@@ -1,6 +1,6 @@
 import { getServerUserSession } from "@/features/auth/server/actions"
 import { getAllCategoryMap, getPosterTasksbyIdPaginated } from "@/features/tasks/server/action"
-import PosterPublishedTasks from "@/features/tasks/components/posterOwnTasksPageComp"
+import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 
 
 export default async function ServerWrapper({
@@ -28,14 +28,16 @@ export default async function ServerWrapper({
   const hasPrevious = pages > 1
   const hasNext = pages < totalPages
   return (
-    <PosterPublishedTasks
-      tasks={tasks}
+    <DisplayListComponent
+      title="Your Tasks"
+      itretable={tasks}
       totalCount={totalCount}
       categoryMap={categoryMap}
       pages={pages}
       totalPages={totalPages}
       hasPrevious={hasPrevious}
       hasNext={hasNext}
+      filterType="status"
     />
   )
 }
