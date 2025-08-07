@@ -1,15 +1,13 @@
 "use client";
 
-import { startTransition, useTransition } from "react";
 import {
   assignTaskToSolverById,
-  createWorkspace,
+
 } from "@/features/tasks/server/action";
 import { Button } from "@/components/ui/button";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { sendNotification } from "@/features/notifications/server/action";
-import { parseDeadline } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 
 export function AssignTaskButton({
   taskId,
@@ -18,43 +16,15 @@ export function AssignTaskButton({
   taskId: string;
   userId: string;
 }) {
-  const [isPending, startTransition] = useTransition();
 
-  const handleClick = () => {
-    startTransition(async () => {
-      try {
-        const { error, success, newTask } = await assignTaskToSolverById(
-          taskId,
-          userId
-        );
-
-        if (success) {
-          const newWorkspace = await createWorkspace(newTask);
-          console.log(`assigned task: ${newTask?.id} & created worksapce ${newWorkspace.id}`)
-          
-          sendNotification({
-            sender: "solveit@org.com",
-            receiver: newTask?.poster.email!,
-            method: ["email"],
-            body: {
-              subject: "task Picked",
-              content: `you Task titiled ${newTask?.title} is picked by ${
-                newTask?.solver?.name
-              }\n you will reciev your solution on ${parseDeadline(
-                newTask?.deadline!
-              )}`,
-            },
-          });
-          toast.success(success);
-
-        }
-        if (error) {
-          toast.error(error);
-        }
-      } catch (error: any) {
-        toast.error(error?.message || "Something went wrong.");
-      }
-    });
+  const {mutateAsync:AssignTaskMutation,isPending} = useMutation({
+    mutationFn:assignTaskToSolverById,
+    onSuccess:(data)=>{toast.success(data.success,{id:"assign-task"})},
+    onError:(err)=>{toast.error(err.message,{id:"assign-task"})}
+  })
+  async function handleClick()  {
+    toast.loading("Assigning..",{id:"assign-task"})
+   await AssignTaskMutation({solverId:userId,taskId})
   };
 
   return (
