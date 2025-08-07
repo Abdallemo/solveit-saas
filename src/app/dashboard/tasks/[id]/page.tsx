@@ -38,7 +38,7 @@ export default async function Page({
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end ">
-        {currentUser.role === "SOLVER" && task.solverId !== currentUser.id && (
+        {currentUser.role === "SOLVER" && task.solverId !== currentUser.id && !task.solver && (
           <AssignTaskButton taskId={id} userId={currentUser.id} />
         )}
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
