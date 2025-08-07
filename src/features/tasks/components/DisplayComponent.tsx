@@ -411,7 +411,7 @@ export default function DisplayListComponent({
       </div>
     );
   }
-  function renderView()  {
+  function renderView() {
     switch (viewMode) {
       case "list":
         return <ListView />;
@@ -420,7 +420,7 @@ export default function DisplayListComponent({
       default:
         return <CardsView />;
     }
-  };
+  }
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-6xl mx-auto px-6 py-8 ">
@@ -462,22 +462,41 @@ export default function DisplayListComponent({
                   <CommandEmpty>No status found.</CommandEmpty>
                   <CommandList>
                     <CommandGroup>
-                      {STATUS_OPTIONS.map((status) => (
-                        <CommandItem
-                          key={status}
-                          onSelect={() => handleSelect(status)}
-                          className="cursor-pointer">
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedValue === status
-                                ? "opacity-100"
-                                : "opacity-0"
-                            )}
-                          />
-                          {GetStatusBadge(status)}
-                        </CommandItem>
-                      ))}
+                      {filterType === "category"
+                        ? Object.values(categoryMap).map((category) => (
+                            <CommandItem
+                              key={category}
+                              onSelect={() => handleSelect(category)}
+                              className="cursor-pointer">
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedValue === category
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              <Badge className={getColorClass(category)}>
+                                {category}
+                              </Badge>
+                            </CommandItem>
+                          ))
+                        : STATUS_OPTIONS.map((status) => (
+                            <CommandItem
+                              key={status}
+                              onSelect={() => handleSelect(status)}
+                              className="cursor-pointer">
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedValue === status
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {GetStatusBadge(status)}
+                            </CommandItem>
+                          ))}
                     </CommandGroup>
                   </CommandList>
                 </Command>
