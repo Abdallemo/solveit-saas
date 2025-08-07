@@ -1,7 +1,7 @@
 import { getServerUserSession } from "@/features/auth/server/actions"
-import { getAllCategoryMap, getAllTasksByRolePaginated, getPosterTasksbyIdPaginated } from "@/features/tasks/server/action"
-import PosterPublishedTasks from "@/features/tasks/components/posterOwnTasksPageComp"
-import AllTasksPageComps from "@/features/tasks/components/AllTasksPageComps";
+import { getAllCategoryMap, getAllTasksByRolePaginated,  } from "@/features/tasks/server/action"
+
+import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 
 
 export default async function ServerWrapper({
@@ -29,14 +29,16 @@ export default async function ServerWrapper({
   const hasPrevious = pages > 1
   const hasNext = pages < totalPages
   return (
-    <AllTasksPageComps
-      tasks={tasks}
+    <DisplayListComponent
+      title={currentUser.role === "POSTER" ? "Public Tasks": "Available Tasks"}
+      itretable={tasks}
       totalCount={totalCount}
       categoryMap={categoryMap}
       pages={pages}
       totalPages={totalPages}
       hasPrevious={hasPrevious}
       hasNext={hasNext}
+      filterType="category"
     />
   )
 }
