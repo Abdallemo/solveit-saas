@@ -118,7 +118,7 @@ export default function TaskCreationPage({
       let uploadedFileMetadata: UploadedFileMeta[] | undefined;
       let uploadedFilesString :string | undefined
       if (selectedFiles && selectedFiles.length > 0) {
-        uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task"});
+        uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task",});/*url:"http://localhost:8080/api/v1/media"*/
         console.log(uploadedFileMetadata)
         uploadedFilesString = JSON.stringify(uploadedFileMetadata);
       } else {
