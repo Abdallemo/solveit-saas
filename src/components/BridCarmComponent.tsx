@@ -1,31 +1,43 @@
 "use client";
+
 import React, { Fragment } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
-  BreadcrumbSeparator,
 } from "./ui/breadcrumb";
 import { usePathname } from "next/navigation";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import Link from "next/link";
+import { ChevronRight } from "lucide-react";
+
+function formatBreadcrumbText(text: string) {
+
+  if (/^[0-9a-fA-F-]{10,}$/.test(text)) {
+    return `${text.slice(0, 6)}…${text.slice(-4)}`;
+  }
+  return text
+    .replace(/[-_]/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase());
+}
 
 export default function BridCarmComponent() {
   const pathName = usePathname();
   const { user } = useCurrentUser();
   const role = user?.role?.toLowerCase();
 
-  // Split the path into segments and filter out empty strings
   const paths = pathName.split("/").filter(Boolean);
 
-  // If the path is just `dashboard`, show "Dashboard"
   if (paths.length === 1 && paths[0] === "dashboard") {
     return (
       <Breadcrumb>
         <BreadcrumbList>
           <BreadcrumbItem>
-            <BreadcrumbLink asChild>
+            <BreadcrumbLink
+              className="text-gray-700 hover:text-gray-900 font-medium"
+              asChild
+            >
               <Link href={`/dashboard/${role}`}>Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -34,48 +46,54 @@ export default function BridCarmComponent() {
     );
   }
 
-  // Construct the breadcrumbs
   let currentPath = "";
 
   return (
     <Breadcrumb>
-      <BreadcrumbList>
+      <BreadcrumbList className="flex items-center gap-2 text-sm">
         {paths.map((pathSegment, index) => {
-          // If the segment is the user's role, skip it in the breadcrumb
-          if (pathSegment === role) {
-            return null;
-          }
+          if (pathSegment === role) return null;
 
           currentPath += `/${pathSegment}`;
           const isLast = index === paths.length - 1;
+          const isDisabled = pathSegment === "solutions";
 
           return (
             <Fragment key={pathSegment}>
               <BreadcrumbItem>
                 <BreadcrumbLink asChild>
-                  {isLast ? (
-                    <span>{pathSegment}</span>
+                  {isLast || isDisabled ? (
+                    <span
+                      className={`${
+                        isLast
+                          ? "font-semibold text-gray-900"
+                          : "text-gray-400 cursor-default"
+                      }`}
+                    >
+                      {pathSegment === "dashboard"
+                        ? "Dashboard"
+                        : formatBreadcrumbText(pathSegment)}
+                    </span>
                   ) : (
                     <Link
-                      className="capitalize"
+                      className="capitalize text-gray-500 hover:text-gray-700 transition-colors"
                       href={
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
-                          : pathSegment === "solutions"
-                          ? "#"
                           : currentPath
                       }
-                      onClick={(e) => {
-                        if (pathSegment === "solutions") {
-                          e.preventDefault();
-                        }
-                      }}>
-                      {pathSegment === "dashboard" ? "Dashboard" : pathSegment}
+                    >
+                      {pathSegment === "dashboard"
+                        ? "Dashboard"
+                        : formatBreadcrumbText(pathSegment)}
                     </Link>
                   )}
                 </BreadcrumbLink>
               </BreadcrumbItem>
-              {!isLast && <BreadcrumbSeparator />}
+
+              {!isLast && (
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+              )}
             </Fragment>
           );
         })}
