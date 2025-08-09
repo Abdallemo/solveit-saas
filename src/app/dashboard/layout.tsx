@@ -23,6 +23,8 @@ import NotificationDropDown from "@/features/notifications/components/notificati
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { getWalletInfo } from "@/features/tasks/server/action";
 import ReactQueryProvider from "@/contexts/ReactQueryProvider";
+import { IceCreamBowlIcon } from "lucide-react";
+import BridCarmComponent from "@/components/BridCarmComponent";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -92,7 +94,11 @@ export default async function DashboardLayout({
             <div className="flex flex-col flex-1 overflow-auto">
               <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
                 <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
-                  <SidebarTrigger className="mr-2" />
+                  <div className="flex items-center">
+                    <SidebarTrigger className="mr-2" />
+                    <BridCarmComponent/>
+                  </div>
+                  
                   <div className="flex gap-2">
                     {user.role === "SOLVER" && (
                       <WalletDropdownMenu availabel={availabel} pending={pending}/>
