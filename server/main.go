@@ -1,8 +1,10 @@
 package main
 
-import "log"
+import (
+	"log"
+)
 
 func main() {
-	server := NewAPIServer(":8080", nil)
-	log.Fatal(server.Run())
+	server := NewWsNotification()
+	log.Fatal(server.run())
 }
