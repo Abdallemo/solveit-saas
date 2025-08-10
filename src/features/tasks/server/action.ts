@@ -8,6 +8,7 @@ import {
   RefundTable,
   SolutionFilesTable,
   SolutionTable,
+  TaskCategoryTable,
   TaskDraftTable,
   TaskFileTable,
   TaskTable,
@@ -264,7 +265,7 @@ export async function assignTaskToSolverById(values: {
     sendNotification({
       sender: "solveit@org.com",
       receiver: result?.poster.email!,
-      method: ["email"],
+      method: ["email","system"],
       body: {
         subject: "task Picked",
         content: `you Task titiled ${result?.title} is picked by ${
@@ -305,6 +306,13 @@ export async function addSolverToTaskBlockList(
     reason,
   });
 }
+export async function createCatagory(name:string) {
+  await db.insert(TaskCategoryTable).values({
+    name
+  })
+  revalidatePath("dashboard/moderator/categories")
+  
+}
 
 // getters 🥱
 export async function getBlockedSolver(solverId: string, taskId: string) {
@@ -316,7 +324,7 @@ export async function getBlockedSolver(solverId: string, taskId: string) {
 }
 export async function getAllTaskCatagories() {
   const catagoryName = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true },
+    columns: { id: true, name: true,createdAt:true },
   });
   return catagoryName;
 }
@@ -737,7 +745,7 @@ export async function publishSolution(values: {
     sendNotification({
       sender: "solveit@org.com",
       receiver: workspace.task.poster.email!,
-      method: ["email"],
+      method: ["email","system"],
       body: {
         subject: "Task Submited",
         content: `you Task titiled <h4>${workspace.task.title}</h4> 
