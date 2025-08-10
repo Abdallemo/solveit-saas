@@ -25,6 +25,7 @@ import { getWalletInfo } from "@/features/tasks/server/action";
 import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import { IceCreamBowlIcon } from "lucide-react";
 import BridCarmComponent from "@/components/BridCarmComponent";
+import { getAllNotification } from "@/features/notifications/server/action";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -81,6 +82,7 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   const {pending,availabel} = await getWalletInfo(session.user.id)
+  const allNotifications = await getAllNotification(userInDb.id)
   return (
     <SessionProvider
       session={session}
@@ -103,7 +105,7 @@ export default async function DashboardLayout({
                     {user.role === "SOLVER" && (
                       <WalletDropdownMenu availabel={availabel} pending={pending}/>
                     )}
-                    <NotificationDropDown/>
+                    <NotificationDropDown initailAllNotifications={allNotifications}/>
                   </div>
                 </div>
               </header>
