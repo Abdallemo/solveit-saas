@@ -199,7 +199,7 @@ export const TaskTable = pgTable("tasks", {
   deadline: text("deadline"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
-  status: TaskStatusEnum("status").default("OPEN"),
+  status: TaskStatusEnum("task_status").default("OPEN"),
   assignedAt: timestamp("assigned_at", { mode: "date" }),
 });
 export const BlockedTasksTable = pgTable("blocked_tasks", {
