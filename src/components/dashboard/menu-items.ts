@@ -34,6 +34,11 @@ export const MenuItemsModerator = [
     icon: LuLayoutDashboard,
   },
   {
+    title: "Category Management",
+    url: "/dashboard/moderator/categories",
+    icon: LuClipboardList,
+  },
+  {
     title: "Disputes",
     url: "/dashboard/moderator/disputes",
     icon: LuClipboardList,
