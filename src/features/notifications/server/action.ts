@@ -1,4 +1,6 @@
 "use server";
+import db from "@/drizzle/db";
+import { notifications } from "@/drizzle/schemas";
 import { createTransporter } from "@/lib/email/createTransporter";
 type ContentType = string | { content: string; subject: string };
 const DEFAULT_SUBJECT = "SolveIt Notification";
@@ -7,7 +9,36 @@ type NotificationProp = {
   receiver: string;
   body: ContentType;
 };
+export async function getAllNotification(receiverId: string) {
+  return await db.query.notifications.findMany({
+    where: (table, fn) => fn.eq(table.receiverId, receiverId),
+  });
+}
+async function saveSystemNotification({
+  body,
+  receiver,
+  sender,
+}: NotificationProp) {
+  const content = typeof body === "string" ? body : body.content;
+  const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
+  const result = await db
+    .insert(notifications)
+    .values({
+      method: "SYSTEM",
+      content,
+      subject,
+      receiverId: receiver,
+      senderId: sender,
+      read: false,
+    })
+    .returning();
 
+  await fetch("http://localhost:3030/api/v1/send-notification", {
+    method: "POST",
+    body: JSON.stringify(result[0]),
+  });
+  return;
+}
 export async function sendNotificationByEmail({
   body,
   receiver,
@@ -103,12 +134,12 @@ export async function sendNotification({
     await sendNotificationByEmail({ sender, receiver, body });
   }
   if (method.includes("system")) {
-    //todo will add in system websocket db notifcation
+   
     console.log(
       `[SYSTEM NOTIFICATION] To: ${receiver} | Subject: ${
         typeof body === "string" ? "System Notification" : body.subject
       }`
     );
-    // await saveSystemNotification({ sender, receiver, body })
+    await saveSystemNotification({ sender, receiver, body });
   }
 }
