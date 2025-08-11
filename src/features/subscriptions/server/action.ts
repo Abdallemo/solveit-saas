@@ -11,6 +11,7 @@ import { env } from "@/env/server";
 import { headers } from "next/headers";
 import * as db from "@/features/subscriptions/server/db";
 import Stripe from "stripe";
+import { logger } from "@/lib/logging/winston";
 export const {
   CancelUserSubscription,
   CreateUserSubsciption,
@@ -57,10 +58,9 @@ export async function createStripeCheckoutSession(tier: TierType) {
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
-
-    console.log("session url" + session.url);
     redirect(session.url);
   } catch (error) {
+    logger.error("Stripe Checkout Session Failed",{error:error})
     console.error(error);
     throw error;
   }
@@ -73,7 +73,7 @@ export async function createCancelSession() {
   if (!user) redirect("/login");
 
   const { id } = user;
-  console.log("before user id");
+  logger.info("creating cancel Session for User: "+user.id,{user:user});
   const subscription = await getServerUserSubscriptionById(id);
 
   if (!subscription?.stripeCustomerId || !subscription.stripeSubscriptionId)
