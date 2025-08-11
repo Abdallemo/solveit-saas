@@ -95,7 +95,7 @@ async function handleDelete(subscription: Stripe.Subscription) {
   const customer = subscription.customer;
   const customerId = typeof customer === "string" ? customer : customer.id;
   const userId = subscription.metadata.userId;
-  console.log("Handling subscription deletion for user:", userId);
+  logger.info("Handling subscription deletion for user:"+userId );
 
   await CancelUserSubscription(
     eq(UserSubscriptionTable.stripeCustomerId, customerId),
