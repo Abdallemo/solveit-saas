@@ -25,5 +25,6 @@ export const apiAuthPrefix = '/api/auth'
 export const apiStripePrefix = '/api/webhooks/stripe'
 export const apiStripePrefixPayment = '/api/webhooks/stripe/taskPayment'
 export const apiMediaPrefix = '/api/media'
+export const apiLogsPrefix = '/api/logs'
 
 export const DEFAULT_LOGIN_REDIRECT = '/dashboard'
