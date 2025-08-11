@@ -27,6 +27,7 @@ export default function Register() {
         if (error) setError(error);
         if (success) setSuccess(success);
       } catch (error) {
+        clientLogger("error","unable to register",{error:error})
         console.log(error);
       }
     });
