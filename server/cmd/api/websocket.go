@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"sync"
-	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -80,18 +79,7 @@ func (s *wsNotification) handleNotification(w http.ResponseWriter, r *http.Reque
 	s.mu.Lock()
 	s.conns[userID] = append(s.conns[userID], conn)
 	s.mu.Unlock()
-	go func() {
-		ticker := time.NewTicker(30 * time.Second)
-		defer ticker.Stop()
-		for {
-			<-ticker.C
-			conn.SetWriteDeadline(time.Now().Add(10 * time.Second))
-			if err := conn.WriteMessage(websocket.PingMessage, nil); err != nil {
-				log.Println("ping error:", err)
-				return
-			}
-		}
-	}()
+
 	go s.cleanUp(conn, userID)
 	fmt.Println("new Connection from client:", conn.RemoteAddr())
 	for usrid := range s.conns {
