@@ -5,6 +5,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -14,6 +15,8 @@ import (
 )
 
 func main() {
+	log.Println("Go version:", runtime.Version())
+
 	if err := godotenv.Load(filepath.Join("..", ".env")); err != nil {
 		log.Println("No .env file found, falling back to system env")
 	}

@@ -27,7 +27,7 @@ func (s *Server) routes() *http.ServeMux {
 	mux := http.NewServeMux()
 
 	// WebSocket endpoints
-	mux.HandleFunc("/ws/notification", s.ws.handleNotification)
+	mux.HandleFunc("GET /api/v1/notification", s.ws.handleNotification)
 	mux.HandleFunc("POST /api/v1/send-notification", s.ws.handleSendNotification)
 
 	// Media upload endpoint

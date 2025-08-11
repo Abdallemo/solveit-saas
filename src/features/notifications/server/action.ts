@@ -1,6 +1,7 @@
 "use server";
 import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
+import { env } from "@/env/server";
 import { createTransporter } from "@/lib/email/createTransporter";
 import { logger } from "@/lib/logging/winston";
 import { and, eq } from "drizzle-orm";
@@ -40,7 +41,7 @@ async function saveSystemNotification({
     })
     .returning();
   logger.info("found results", result);
-  await fetch("http://localhost:3030/api/v1/send-notification", {
+  await fetch(`${env.GO_API_URL}/send-notification`, {
     method: "POST",
     body: JSON.stringify(result[0]),
   });
