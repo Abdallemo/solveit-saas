@@ -92,7 +92,6 @@ export default function NotificationDropDown({
     ws.onopen = () => {
       setConnectionState("connected");
 
-      // logger.info("WebSocket connected")
       console.log("WebSocket connected");
     };
 
