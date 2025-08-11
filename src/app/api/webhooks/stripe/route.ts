@@ -18,6 +18,7 @@ import {
 import { eq } from "drizzle-orm";
 import { UserSubscriptionTable } from "@/drizzle/schemas";
 import type Stripe from "stripe";
+import { logger } from "@/lib/logging/winston";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -29,7 +30,7 @@ export const config = {
 };
 
 export async function POST(request: NextRequest) {
-  console.log("yo");
+  logger.info("Stripe Webhook Success Hit")
   const sig = request.headers.get("stripe-signature") as string;
   const secret = env.STRIPE_WEBHOOK_SECRET;
   const body = await request.text();
@@ -50,7 +51,7 @@ export async function POST(request: NextRequest) {
       break;
 
     default:
-      console.log(`Unhandled event type ${event.type}`);
+      logger.debug(`Unhandled event type ${event.type}`);
       break;
   }
   return new Response(null, { status: 200 });
@@ -65,13 +66,13 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
 
     const userId = sub.metadata.userId;
     if (!userId) {
-      console.error("No userId in subscription metadata");
+      logger.error("No userId in subscription metadata");
       return;
     }
     const customer = sub.customer;
     const customerId = typeof customer === "string" ? customer : customer.id;
 
-    console.log("Inserting subscription for user:", userId);
+    logger.info("Inserting subscription for user:", {userId:userId});
 
     await updateUserSubscription(
       {
@@ -85,7 +86,7 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
       userId
     );
   } catch (err) {
-    console.error("Failed to handle subscription creation:", err);
+    logger.error("Failed to handle subscription creation:", {error:err});
     throw err;
   }
 }
@@ -116,11 +117,9 @@ async function handleTaskCreate(event: Stripe.Event) {
     const userId = event?.data.object?.metadata?.userId;
     const paymentIntentId = session.payment_intent as string;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    logger.info("found userId:"+userId)
     if (!userId) return;
-    console.log("user is there");
     const amount = session.amount_total! / 100;
-    console.log("Saving into Payment table");
-
     const paymentId = await taskPaymentInsetion(
       "HOLD",
       amount,
@@ -128,13 +127,11 @@ async function handleTaskCreate(event: Stripe.Event) {
       "Task Payment",
       paymentIntentId
     );
-
     if (!paymentId) return;
-    console.log("retreving from draft table");
 
     const draftTasks = await getDraftTask(userId);
-
     if (!draftTasks) return;
+
     const {
       title,
       description,
@@ -155,9 +152,7 @@ async function handleTaskCreate(event: Stripe.Event) {
       !description
     )
       return;
-    
-    console.log("starting creat Task prosess");
-
+  
     await createTaskAction(
       userId,
       title,
@@ -173,6 +168,6 @@ async function handleTaskCreate(event: Stripe.Event) {
 
     
   } catch (error) {
-    console.error(error);
+    logger.error("Failed To handle Task Creatio",{error:error,stripeEventId:event.id})
   }
 }
