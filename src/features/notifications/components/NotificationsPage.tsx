@@ -72,7 +72,7 @@ export default function NotificationsPage({
   const { ReadMuta } = useNotificationRead();
   const { markAllAsReadMuta } = useNotificationMarkAllAsRead();
   const { user } = useCurrentUser();
-  const router = useRouter()
+  const router = useRouter();
   const filteredAndSortedNotifications = useMemo(() => {
     const filtered = notifications.filter((notification) => {
       const matchesSearch =
@@ -136,7 +136,6 @@ export default function NotificationsPage({
   };
 
   const handleMarkAsRead = (ids: string[]) => {
-    console.log("Mark as read:", ids);
     ids.forEach(async (id) => {
       await ReadMuta({ id, receiverId: user?.id!, read: true });
     });
@@ -144,11 +143,10 @@ export default function NotificationsPage({
       prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
     );
     setSelectedIds(new Set());
-    router.refresh()
+    router.refresh();
   };
 
   const handleMarkAsUnread = (ids: string[]) => {
-    console.log("Mark as unread:", ids);
     ids.forEach(async (id) => {
       await ReadMuta({ id, receiverId: user?.id!, read: false });
     });
@@ -156,20 +154,16 @@ export default function NotificationsPage({
       prev.map((n) => (ids.includes(n.id) ? { ...n, read: false } : n))
     );
     setSelectedIds(new Set());
-    router.refresh()
-
+    router.refresh();
   };
 
   const handleDelete = (ids: string[]) => {
-    console.log("Delete:", ids);
-
     setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
     ids.forEach(async (id) => {
       await deleteNotificationMuta({ id, receiverId: user?.id! });
     });
     setSelectedIds(new Set());
-    router.refresh()
-
+    router.refresh();
   };
 
   const handleMarkAllAsRead = () => {
@@ -179,7 +173,6 @@ export default function NotificationsPage({
 
   return (
     <div className="min-h-full bg-background">
-     
       <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
@@ -257,7 +250,6 @@ export default function NotificationsPage({
           </div>
         </div>
 
-     
         {selectedCount > 0 && (
           <Card className="p-4 mb-6 bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
