@@ -51,6 +51,7 @@ export async function uploadFiles({
       const errorData = await response
         .json()
         .catch(() => ({ message: "Unknown error" }));
+        logger.error("error uploading file"+errorData)
       throw new Error(
         errorData.message || `HTTP error! status: ${response.status}`
       );
@@ -58,7 +59,7 @@ export async function uploadFiles({
     const data = await response.json();
     return data;
   } catch (error) {
-    console.error("Error in uploadFiles:", error);
+    logger.error("Error in uploadFiles:", {error:error});
     throw error;
   }
 }
