@@ -134,11 +134,8 @@ export default function CreateCategoryDialog({
 }
 export function CategoryCard({ category }: { category: any }) {
   const handleDelete = async () => {
-    // This is where you'll add your delete mutation
     console.log("Delete category:", category.id)
 
-    // Example of what you might do:
-    // await deleteCategoryMutation.mutateAsync(category.id);
   }
 
   return (
