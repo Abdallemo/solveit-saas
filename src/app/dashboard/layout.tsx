@@ -82,8 +82,8 @@ export default async function DashboardLayout({
   }
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const {pending,availabel} = await getWalletInfo(session.user.id)
-  const allNotifications = await getAllNotification(userInDb.id!)
+  const { pending, availabel } = await getWalletInfo(session.user.id);
+  const allNotifications = await getAllNotification(userInDb.id!);
   // logger.info("intial notificaion about to pass",allNotifications)
   return (
     <SessionProvider
@@ -93,31 +93,36 @@ export default async function DashboardLayout({
       refetchOnWindowFocus={true}>
       <StripeSubscriptionProvider value={stripeData}>
         <SidebarProvider defaultOpen={defaultOpen}>
-          <div className="flex h-screen w-full">
-            <DashboardSidebar user={session?.user!} />
-            <div className="flex flex-col flex-1 overflow-auto">
-              <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
-                <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
-                  <div className="flex items-center">
-                    <SidebarTrigger className="mr-2" />
-                    <BridCarmComponent/>
+          <ReactQueryProvider>
+            <div className="flex h-screen w-full">
+              <DashboardSidebar user={session?.user!} />
+              <div className="flex flex-col flex-1 overflow-auto">
+                <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
+                  <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
+                    <div className="flex items-center">
+                      <SidebarTrigger className="mr-2" />
+                      <BridCarmComponent />
+                    </div>
+
+                    <div className="flex gap-2">
+                      {user.role === "SOLVER" && (
+                        <WalletDropdownMenu
+                          availabel={availabel}
+                          pending={pending}
+                        />
+                      )}
+                      <NotificationDropDown
+                        initailAllNotifications={allNotifications}
+                      />
+                    </div>
                   </div>
-                  
-                  <div className="flex gap-2">
-                    {user.role === "SOLVER" && (
-                      <WalletDropdownMenu availabel={availabel} pending={pending}/>
-                    )}
-                    <NotificationDropDown initailAllNotifications={allNotifications}/>
-                  </div>
-                </div>
-              </header>
-              <FeatureFlagProvider flags={dbFlags}>
-                <ReactQueryProvider>
-                <main className="flex-1">{children}</main>
-                </ReactQueryProvider>
-              </FeatureFlagProvider>
+                </header>
+                <FeatureFlagProvider flags={dbFlags}>
+                  <main className="flex-1">{children}</main>
+                </FeatureFlagProvider>
+              </div>
             </div>
-          </div>
+          </ReactQueryProvider>
         </SidebarProvider>
       </StripeSubscriptionProvider>
     </SessionProvider>
