@@ -20,9 +20,10 @@ import { useAutoSave } from "@/hooks/useAutoDraftSave"
 import { useAuthGate } from "@/hooks/useAuthGate"
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading"
 import AuthGate from "@/components/AuthGate"
-import { useSearchParams } from "next/navigation"
+import { useRouter, useSearchParams } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
 import { useFileUpload } from "@/hooks/useFile"
+import { env } from "@/env/client"
 
 export default function TaskCreationPage({
   defaultValues,
@@ -47,6 +48,7 @@ export default function TaskCreationPage({
   const searchParams = useSearchParams()
   const hasShownToast = useRef(false)
   const sessionId = searchParams.get("session_id")
+  const router = useRouter()
 
   const { data: isValidSession, isLoading} = useQuery({
     queryKey:['stripe-session', sessionId],
@@ -57,8 +59,9 @@ export default function TaskCreationPage({
  useEffect(()=>{
     if (isValidSession && !hasShownToast.current) {
     toast.success("Task published successfully!")
+    router.replace(window.location.pathname)
     hasShownToast.current = true}
- },[isValidSession])
+ },[isValidSession,router])
 
   useAutoSave({
     autoSaveFn: autoSaveDraftTask,
@@ -118,11 +121,11 @@ export default function TaskCreationPage({
       let uploadedFileMetadata: UploadedFileMeta[] | undefined;
       let uploadedFilesString :string | undefined
       if (selectedFiles && selectedFiles.length > 0) {
-        uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task",});/*url:"http://localhost:8080/api/v1/media"*/
+        uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task",url:`${env.NEXT_PUBLIC_GO_API_URL}/media`});//golang api
         console.log(uploadedFileMetadata)
         uploadedFilesString = JSON.stringify(uploadedFileMetadata);
       } else {
-        
+      
         toast.dismiss("file-upload");
       }
       await autoSaveDraftTask(
