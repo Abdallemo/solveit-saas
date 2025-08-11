@@ -12,6 +12,7 @@ import {
   numeric,
   json,
   jsonb,
+  varchar,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 
@@ -405,6 +406,13 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
+export const logTable = pgTable("logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  timestamp: timestamp("timestamp").notNull(),
+  level: varchar("level", { length: 10 }).notNull(),
+  message: text("message").notNull(),
+  error: text("error").default(""),
+});
 //* RELATINOS
 
 //* To Many Relations Here
