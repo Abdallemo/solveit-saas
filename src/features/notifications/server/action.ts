@@ -2,11 +2,13 @@
 import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
 import { createTransporter } from "@/lib/email/createTransporter";
+import { logger } from "@/lib/logging/winston";
 type ContentType = string | { content: string; subject: string };
 const DEFAULT_SUBJECT = "SolveIt Notification";
 type NotificationProp = {
   sender: string;
-  receiver: string;
+  receiverId?: string;
+  receiverEmail?: string;
   body: ContentType;
 };
 export async function getAllNotification(receiverId: string) {
@@ -16,9 +18,10 @@ export async function getAllNotification(receiverId: string) {
 }
 async function saveSystemNotification({
   body,
-  receiver,
+  receiverId,
   sender,
 }: NotificationProp) {
+  logger.info("in App notification")
   const content = typeof body === "string" ? body : body.content;
   const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
   const result = await db
@@ -27,12 +30,13 @@ async function saveSystemNotification({
       method: "SYSTEM",
       content,
       subject,
-      receiverId: receiver,
+      receiverId: receiverId!,
       senderId: sender,
       read: false,
+
     })
     .returning();
-
+  logger.info("found results",result)
   await fetch("http://localhost:3030/api/v1/send-notification", {
     method: "POST",
     body: JSON.stringify(result[0]),
@@ -41,7 +45,7 @@ async function saveSystemNotification({
 }
 export async function sendNotificationByEmail({
   body,
-  receiver,
+  receiverEmail,
   sender,
 }: NotificationProp) {
   const transporter = await createTransporter();
@@ -51,7 +55,7 @@ export async function sendNotificationByEmail({
 
   const mailOptions = {
     from: `SolveIt Team 👨‍💻 <solveit@org.com>`,
-    to: receiver,
+    to: receiverEmail,
     subject,
     html: `
               <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
@@ -126,20 +130,21 @@ export async function sendNotificationByEmail({
 
 export async function sendNotification({
   sender,
-  receiver,
+  receiverId,
+  receiverEmail,
   body,
   method = ["email", "system"],
 }: NotificationProp & { method?: ("email" | "system")[] }) {
-  if (method.includes("email")) {
-    await sendNotificationByEmail({ sender, receiver, body });
-  }
   if (method.includes("system")) {
    
-    console.log(
-      `[SYSTEM NOTIFICATION] To: ${receiver} | Subject: ${
+    logger.info(
+      `[SYSTEM NOTIFICATION] To: ${receiverId} | Subject: ${
         typeof body === "string" ? "System Notification" : body.subject
       }`
     );
-    await saveSystemNotification({ sender, receiver, body });
+    await saveSystemNotification({ sender, receiverId, body });
+  }
+  if (method.includes("email")) {
+    await sendNotificationByEmail({ sender, receiverEmail, body });
   }
 }
