@@ -122,7 +122,6 @@ export default function TaskCreationPage({
       let uploadedFilesString :string | undefined
       if (selectedFiles && selectedFiles.length > 0) {
         uploadedFileMetadata = await uploadMutate({files:selectedFiles,scope:"task",url:`${env.NEXT_PUBLIC_GO_API_URL}/media`});//golang api
-        console.log(uploadedFileMetadata)
         uploadedFilesString = JSON.stringify(uploadedFileMetadata);
       } else {
       
