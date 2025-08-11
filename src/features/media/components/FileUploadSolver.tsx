@@ -8,9 +8,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import {
-  saveFileToWorkspaceDB,
-} from "@/features/tasks/server/action";
+import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/loading";
@@ -36,7 +34,11 @@ export default function FileUploadSolver({
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { uploadMutate, isUploading } = useFileUpload();
-  const { mutate: deleteFile, isPending: isDeleting } = useDeleteFile();
+  const {
+    mutateAsync: deleteFile,
+    isPending: isDeleting,
+    isError,
+  } = useDeleteFile();
   if (isLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
 
@@ -52,15 +54,15 @@ export default function FileUploadSolver({
     );
 
     for (const file of fileArray) {
-      setUploadingFiles((prev) => [...prev, file]);
       try {
         toast.loading("uploading..", { id: "file-upload" });
         const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
           files: [file],
           scope: "workspace",
-          url:`${env.NEXT_PUBLIC_GO_API_URL}/media`
+          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
         });
 
+        setUploadingFiles((prev) => [...prev, file]);
         toast.dismiss("file-upload");
 
         const savedFile = await saveFileToWorkspaceDB({
@@ -179,7 +181,7 @@ export default function FileUploadSolver({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium truncate underline text-primary">
-                    {truncate(file.fileName,{length:30})}
+                    {truncate(file.fileName, { length: 30 })}
                   </a>
                   {isUploading && (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
@@ -192,17 +194,17 @@ export default function FileUploadSolver({
                   variant="ghost"
                   size="sm"
                   type="button"
-                  onClick={() => {
-                    const updated = uploadedFiles.filter(
-                      (f) => f.filePath !== file.filePath
-                    );
-                    toast.loading("deleting", { id: "file-delete" });
-                    deleteFile({
-                      fileId: file.id,
-                      filePath: file.storageLocation,
-                    });
-                    toast.dismiss("file-delete");
-                    setUploadedFiles(updated);
+                  onClick={async () => {
+                    try {
+                      toast.loading("deleting", { id: "file-delete" });
+                      await deleteFile({
+                        fileId: file.id,
+                        filePath: file.storageLocation,
+                      });
+                      setUploadedFiles((prev) =>
+                        prev.filter((f) => f.filePath !== file.filePath)
+                      );
+                    } catch (error) {}
                   }}
                   className="h-6 w-6 p-0 cursor-pointer">
                   <X className="h-3 w-3" />
