@@ -6,8 +6,8 @@ const parsedUrl = url.parse(env.NEXTAUTH_URL || "http://localhost");
 
 
 const host = parsedUrl.hostname || "localhost";
-let port = parsedUrl.port ? Number(parsedUrl.port) : (parsedUrl.protocol === "https:" ? 443 : 80);
-if (Number.isNaN(port)) port = 80;
+let port = parsedUrl.port ? Number(parsedUrl.port) : (parsedUrl.protocol === "https:" ? 8080 : 3000);
+if (Number.isNaN(port)) port = 3000;
 
 const consoleFormat = winston.format.printf(({ level, message, timestamp }) => {
   const levelColor = {
