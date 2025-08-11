@@ -21,7 +21,7 @@ export const UserRole = pgEnum("role", [
   "POSTER",
   "SOLVER",
 ]);
-export const NotificationMethodsEnum = pgEnum("role", ["SYSTEM", "EMAIL"]);
+export const NotificationMethodsEnum = pgEnum("method", ["SYSTEM", "EMAIL"]);
 export const TierEnum = pgEnum("tier", ["BASIC", "PREMIUM"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
