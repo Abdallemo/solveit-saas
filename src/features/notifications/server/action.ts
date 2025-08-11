@@ -123,10 +123,10 @@ export async function sendNotificationByEmail({
 
   try {
     const result = await transporter.sendMail(mailOptions);
-    console.log("Email sent:", result.messageId);
+    logger.info("Email sent to: "+receiverEmail, result.messageId);
     return result;
   } catch (error) {
-    console.error("Failed to send email:", error);
+    logger.error("Failed to send notification email. to:"+receiverEmail, {error:error});
     throw new Error("Failed to send notification email.");
   }
 }
