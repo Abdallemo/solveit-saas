@@ -13,6 +13,8 @@ import { Dot, DotIcon, Inbox } from "lucide-react";
 import Link from "next/link";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useEffect, useState } from "react";
+import { logger } from "@/lib/logging/winston";
+import { env } from "@/env/client";
 type Message = {
   id: string;
   createdAt: Date | null;
@@ -29,15 +31,16 @@ export default function NotificationDropDown({
 }: {
   initailAllNotifications: Message[];
 }) {
+  console.log("intial notificaion:", initailAllNotifications);
   const { user } = useCurrentUser();
   const [Messages, setMessages] = useState<Message[]>(
-    initailAllNotifications || []
+    initailAllNotifications ?? []
   );
   const [isConnected, setIsConnected] = useState<boolean>(false);
   const userId = user?.id;
   useEffect(() => {
     const ws = new WebSocket(
-      `ws://localhost:3030/api/v1/notification?user_id=${userId}`
+      `${env.NEXT_PUBLIC_GO_API_WS_URL}/notification?user_id=${userId}`
     );
 
     ws.onopen = () => {
@@ -46,18 +49,21 @@ export default function NotificationDropDown({
 
     ws.onmessage = (event) => {
       const msg: Message = JSON.parse(event.data);
-      setMessages((prev) => [msg, ...prev]);
+      setMessages((prev) => {
+        if (prev.some((m) => m.id === msg.id)) {
+          return prev;
+        }
+        return [msg, ...prev];
+      });
       console.log("Notification for me:", msg);
     };
 
     ws.onerror = (error) => {
       setIsConnected(false);
-
-      console.error("WS error:", error);
     };
-    return ()=>{
-      
-    }
+    return () => {
+      ws.close();
+    };
   }, [userId]);
 
   return (
@@ -98,9 +104,6 @@ export default function NotificationDropDown({
             <DropdownMenuItem key={notification.id} asChild className="p-0">
               <Link href="#" className="block p-3 hover:bg-accent">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none">
-                    {notification.id}
-                  </p>
                   <p className="text-xs text-muted-foreground line-clamp-2">
                     {notification.subject}
                   </p>
