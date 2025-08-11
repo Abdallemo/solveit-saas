@@ -15,6 +15,7 @@ import {
   Info,
 } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
+import { LogsTyep } from "@/lib/logging/action"
 
 
 const summaryStats = [
@@ -45,36 +46,6 @@ const summaryStats = [
     subtext: "Target: $150,000 • 85% achieved",
     icon: DollarSign,
     trend: "+15.7%",
-  },
-]
-
-const serverLogs = [
-  {
-    id: 1,
-    timestamp: "2024-01-15 14:32:18",
-    level: "info",
-    message: "User authentication successful for user_id: 12847",
-  },
-  {
-    id: 2,
-    timestamp: "2024-01-15 14:31:45",
-    level: "warn",
-    message: "High memory usage detected on server node-03 (87%)",
-  },
-  {
-    id: 3,
-    timestamp: "2024-01-15 14:30:22",
-    level: "error",
-    message: "Database connection timeout in payment processing module",
-  },
-  { id: 4, timestamp: "2024-01-15 14:29:15", level: "info", message: "Scheduled backup completed successfully" },
-  { id: 5, timestamp: "2024-01-15 14:28:33", level: "warn", message: "Rate limit exceeded for IP: 192.168.1.100" },
-  { id: 6, timestamp: "2024-01-15 14:27:41", level: "info", message: "New task created: task_id: 45231" },
-  {
-    id: 7,
-    timestamp: "2024-01-15 14:26:58",
-    level: "error",
-    message: "Failed to send notification email to user_id: 8234",
   },
 ]
 
@@ -126,7 +97,7 @@ function getLogIcon(level: string) {
   }
 }
 
-export default function AdminDashboardComponent() {
+export default function AdminDashboardComponent({serverLogs}:{serverLogs:LogsTyep}) {
   return (
     <div className="min-h-screen bg-background md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
@@ -185,7 +156,7 @@ export default function AdminDashboardComponent() {
                       <span className="text-xs font-medium uppercase">{log.level}</span>
                     </Badge>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-muted-foreground">{log.timestamp}</p>
+                      <p className="text-sm text-muted-foreground">{log.timestamp.toLocaleDateString()}</p>
                       <p className="text-sm mt-1 break-words">{log.message}</p>
                     </div>
                   </div>
