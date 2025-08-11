@@ -19,7 +19,7 @@ var upgrader = websocket.Upgrader{
 }
 
 type Message struct {
-	ID         int    `json:"id"`
+	ID         string `json:"id"`
 	Content    string `json:"content"`
 	ReceiverId string `json:"receiverId"`
 	SenderId   string `json:"senderId"`
@@ -32,6 +32,30 @@ type wsNotification struct {
 	conns    map[string][]*websocket.Conn
 	messages []Message
 	mu       sync.RWMutex
+}
+
+func (s *wsNotification) cleanUp(conn *websocket.Conn, userID string) {
+
+	defer conn.Close()
+	for {
+		_, _, err := conn.ReadMessage()
+		if err != nil {
+			fmt.Println("connection closed or error:", err)
+
+			s.mu.Lock()
+			conns := s.conns[userID]
+			activeConns := conns[:0]
+			for _, c := range conns {
+				if c != conn {
+					activeConns = append(activeConns, c)
+				}
+			}
+			s.conns[userID] = activeConns
+			s.mu.Unlock()
+			break
+		}
+	}
+
 }
 
 func NewWsNotification() *wsNotification {
@@ -56,6 +80,7 @@ func (s *wsNotification) handleNotification(w http.ResponseWriter, r *http.Reque
 	s.conns[userID] = append(s.conns[userID], conn)
 	s.mu.Unlock()
 
+	go s.cleanUp(conn, userID)
 	fmt.Println("new Connection from client:", conn.RemoteAddr())
 	for usrid := range s.conns {
 		fmt.Println("current Active Users", usrid)
@@ -63,21 +88,6 @@ func (s *wsNotification) handleNotification(w http.ResponseWriter, r *http.Reque
 
 }
 
-func (s *wsNotification) sendToUser(userID string, msg Message) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	conns := s.conns[userID]
-	activeConns := conns[:0]
-	for _, conn := range conns {
-		if err := conn.WriteJSON(msg); err != nil {
-			log.Println("Write error:", err)
-			conn.Close()
-			continue
-		}
-		activeConns = append(activeConns, conn)
-	}
-	s.conns[userID] = activeConns
-}
 func (s *wsNotification) handleSendNotification(w http.ResponseWriter, r *http.Request) {
 	msg := Message{}
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
@@ -99,10 +109,17 @@ func (s *wsNotification) handleSendNotification(w http.ResponseWriter, r *http.R
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Notification sent"))
 }
-
-func (s *wsNotification) run() error {
-	Mux := http.NewServeMux()
-	Mux.HandleFunc("/api/v1/notification", s.handleNotification)
-	Mux.HandleFunc("POST /api/v1/send-notification", s.handleSendNotification)
-	return http.ListenAndServe(":3030", Mux)
+func (s *wsNotification) sendToUser(userID string, msg Message) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	conns := s.conns[userID]
+	activeConns := conns[:0]
+	for _, conn := range conns {
+		if err := conn.WriteJSON(msg); err != nil {
+			log.Println("Write error:", err)
+			continue
+		}
+		activeConns = append(activeConns, conn)
+	}
+	s.conns[userID] = activeConns
 }
