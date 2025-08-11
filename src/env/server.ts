@@ -23,6 +23,7 @@ export const env = createEnv({
         S3_SECRTE_ACCESS_KEY_ID:z.string(),
         S3_ACCESS_KEY_ID:z.string(),
         S3_ENDPOINT:z.string(),
+        GO_API_URL:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
