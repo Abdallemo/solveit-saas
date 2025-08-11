@@ -24,8 +24,6 @@ export default async function page() {
   }
   await isAuthorized("POSTER");
   const userRole = await getServerUserSubscriptionById(currentUser?.id);
-  userRole;
-  console.log(userRole);
   const cache = Math.random() * 1000;
   return (
     <main className="flex flex-col w-full h-screen justify-center items-center">
