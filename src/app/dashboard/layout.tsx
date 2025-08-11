@@ -26,6 +26,7 @@ import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import { IceCreamBowlIcon } from "lucide-react";
 import BridCarmComponent from "@/components/BridCarmComponent";
 import { getAllNotification } from "@/features/notifications/server/action";
+import { logger } from "@/lib/logging/winston";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -82,7 +83,8 @@ export default async function DashboardLayout({
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
   const {pending,availabel} = await getWalletInfo(session.user.id)
-  const allNotifications = await getAllNotification(userInDb.id)
+  const allNotifications = await getAllNotification(userInDb.id!)
+  // logger.info("intial notificaion about to pass",allNotifications)
   return (
     <SessionProvider
       session={session}
