@@ -55,6 +55,7 @@ import type {
 } from "@/features/tasks/server/task-types";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { sendNotification } from "@/features/notifications/server/action";
+import { logger } from "@/lib/logging/winston";
 export type {
   catagoryType,
   userTasksType,
@@ -78,43 +79,57 @@ export async function createTaskAction(
   uploadedFiles: UploadedFileMeta[],
   paymentId: string
 ) {
-  console.log("inside a createTaskAcrion Yoo");
-
+  logger.info("starting creat Task prosess");
   const categoryId = await getTaskCatagoryId(category);
 
   if (!categoryId || categoryId == undefined) return;
+  try {
+    await db.transaction(async (dx) => {
+      const [taskId] = await dx
+        .insert(TaskTable)
+        .values({
+          categoryId: categoryId.id,
+          posterId: userId,
+          title: title,
+          content: content,
+          description: description,
+          price: price,
+          status: "OPEN",
+          visibility: visibility == "public" ? "public" : "private",
+          deadline,
+          paymentId,
+        })
+        .returning({ taskId: TaskTable.id });
 
-  const [taskId] = await db
-    .insert(TaskTable)
-    .values({
-      categoryId: categoryId.id,
-      posterId: userId,
-      title: title,
-      content: content,
-      description: description,
-      price: price,
-      status: "OPEN",
-      visibility: visibility == "public" ? "public" : "private",
-      deadline,
-      paymentId,
-    })
-    .returning({ taskId: TaskTable.id });
-
-  if (uploadedFiles.length > 0) {
-    console.log("inserting into Task files Table");
-    await db.insert(TaskFileTable).values(
-      uploadedFiles.map((file) => ({
-        taskId: taskId.taskId,
-        fileName: file.fileName,
-        fileType: file.fileType,
-        fileSize: file.fileSize,
-        filePath: file.filePath,
-        storageLocation: file.storageLocation,
-      }))
-    );
+      if (uploadedFiles.length > 0) {
+        logger.info("inserting into Task files Table", { taskId: taskId });
+        await dx.insert(TaskFileTable).values(
+          uploadedFiles.map((file) => ({
+            taskId: taskId.taskId,
+            fileName: file.fileName,
+            fileType: file.fileType,
+            fileSize: file.fileSize,
+            filePath: file.filePath,
+            storageLocation: file.storageLocation,
+          }))
+        );
+      }
+      await dx
+        .delete(TaskDraftTable)
+        .where(eq(TaskDraftTable.userId, userId))
+        .returning();
+    });
+    logger.info("Task created successfully!");
+  } catch (error) {
+    if (error instanceof Error) {
+      logger.error("Failed to Create Task", { error: error });
+      throw new Error("Failed to Create Task , error:+" + error.message, {
+        cause: error,
+      });
+    }
+    logger.error("Failed to Create Task", { error: error });
+    throw new Error("Failed to Create Task , internal error ");
   }
-  await deleteDraftTask(userId);
-  console.log("Task created successfully!");
 }
 export async function createTaksPaymentCheckoutSession(values: {
   price: number;
@@ -187,6 +202,17 @@ export async function autoSaveDraftTask(
   uploadedFiles?: string
 ) {
   try {
+    let parsedFiles: UploadedFileMeta[] = [];
+    if (uploadedFiles) {
+      try {
+        const temp = JSON.parse(uploadedFiles);
+        if (Array.isArray(temp)) {
+          parsedFiles = temp as UploadedFileMeta[];
+        }
+      } catch {
+        parsedFiles = [];
+      }
+    }
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
     });
@@ -202,7 +228,7 @@ export async function autoSaveDraftTask(
           price,
           visibility,
           deadline,
-          uploadedFiles,
+          uploadedFiles: parsedFiles,
         })
         .where(eq(TaskDraftTable.userId, userId));
     } else {
@@ -215,6 +241,7 @@ export async function autoSaveDraftTask(
         price,
         visibility,
         deadline,
+        uploadedFiles: parsedFiles,
       });
     }
   } catch (e) {
@@ -264,8 +291,9 @@ export async function assignTaskToSolverById(values: {
     const newWorkspace = await createWorkspace(result);
     sendNotification({
       sender: "solveit@org.com",
-      receiver: result?.poster.email!,
-      method: ["email","system"],
+      receiverId: result?.poster.id!,
+      receiverEmail: result?.poster.email!,
+      method: ["system", "email"],
       body: {
         subject: "task Picked",
         content: `you Task titiled ${result?.title} is picked by ${
@@ -306,12 +334,11 @@ export async function addSolverToTaskBlockList(
     reason,
   });
 }
-export async function createCatagory(name:string) {
+export async function createCatagory(name: string) {
   await db.insert(TaskCategoryTable).values({
-    name
-  })
-  revalidatePath("dashboard/moderator/categories")
-  
+    name,
+  });
+  revalidatePath("dashboard/moderator/categories");
 }
 
 // getters 🥱
@@ -324,7 +351,7 @@ export async function getBlockedSolver(solverId: string, taskId: string) {
 }
 export async function getAllTaskCatagories() {
   const catagoryName = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true,createdAt:true },
+    columns: { id: true, name: true, createdAt: true },
   });
   return catagoryName;
 }
@@ -377,6 +404,7 @@ export async function taskPaymentInsetion(
   releaseDate?: Date,
   stripeChargeId?: string
 ) {
+  logger.info("Saving into Payment table");
   const payment = await db
     .insert(PaymentTable)
     .values({
@@ -558,13 +586,27 @@ export async function getTaskFilesById(taskId: string) {
 }
 
 export async function getDraftTask(userId: string) {
+  logger.info("retreving from draft table", { userId: userId });
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
   });
-  return oldTask;
+  if (!oldTask) {
+    logger.warn("unabel to find oldTask", { userId: userId });
+    return null;
+  }
+  return {
+    ...oldTask,
+    uploadedFiles: Array.isArray(oldTask.uploadedFiles)
+      ? oldTask.uploadedFiles
+      : [],
+  };
 }
 export async function deleteDraftTask(userId: string) {
-  await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
+  const res = await db
+    .delete(TaskDraftTable)
+    .where(eq(TaskDraftTable.userId, userId))
+    .returning();
+  console.log(`Draft delete for ${userId}:`, res);
 }
 export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
@@ -632,12 +674,10 @@ export async function deleteFileFromWorkspace(fileId: string) {
     if (!file) {
       return { error: "File not found" };
     }
-
+    await deleteFileFromR2(file.filePath);
     await db
       .delete(WorkspaceFilesTable)
       .where(eq(WorkspaceFilesTable.id, fileId));
-
-    await deleteFileFromR2(file.filePath);
     revalidatePath(`workspace/${file.workspaceId}`);
     return {
       file: file.fileName,
@@ -744,8 +784,9 @@ export async function publishSolution(values: {
     });
     sendNotification({
       sender: "solveit@org.com",
-      receiver: workspace.task.poster.email!,
-      method: ["email","system"],
+      receiverId: workspace.task.poster.id!,
+      receiverEmail: workspace.task.poster.email!,
+      method: ["email", "system"],
       body: {
         subject: "Task Submited",
         content: `you Task titiled <h4>${workspace.task.title}</h4> 
