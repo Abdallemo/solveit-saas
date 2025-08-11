@@ -102,7 +102,6 @@ export async function UpdateUserField(parms: UpdateUserParams) {
       return;
     }
   } catch (error) {
-    console.log(error);
   }
 }
 
