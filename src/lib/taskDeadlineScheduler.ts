@@ -1,5 +1,6 @@
 
 import { handleTaskDeadline ,getAllTasks} from "@/features/tasks/server/action";
+import { logger } from "./logging/winston";
 
 const INTERVAL = 10 * 60 * 1000; 
 
@@ -12,9 +13,9 @@ export function startDeadlineScheduler() {
        await handleTaskDeadline(task)
       }
 
-      console.log("[DeadlineScheduler] Checked all tasks.");
+      logger.info("[DeadlineScheduler] Checked all tasks.");
     } catch (error) {
-      console.error("DeadlineScheduler error:", error);
+      logger.error("DeadlineScheduler error:", {error:error});
     }
   }, INTERVAL);
 }
