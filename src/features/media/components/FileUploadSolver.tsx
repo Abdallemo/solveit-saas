@@ -17,6 +17,8 @@ import Loading from "@/app/loading";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useDeleteFile, useFileUpload } from "@/hooks/useFile";
 import { UploadedFileMeta } from "../server/media-types";
+import { env } from "@/env/client";
+import { truncate } from "lodash";
 
 interface FileUploadProps {
   maxFiles?: number;
@@ -56,6 +58,7 @@ export default function FileUploadSolver({
         const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
           files: [file],
           scope: "workspace",
+          url:`${env.NEXT_PUBLIC_GO_API_URL}/media`
         });
 
         toast.dismiss("file-upload");
@@ -176,7 +179,7 @@ export default function FileUploadSolver({
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-sm font-medium truncate underline text-primary">
-                    {file.fileName}
+                    {truncate(file.fileName,{length:30})}
                   </a>
                   {isUploading && (
                     <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
