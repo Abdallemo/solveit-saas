@@ -3,6 +3,8 @@ import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
 import { createTransporter } from "@/lib/email/createTransporter";
 import { logger } from "@/lib/logging/winston";
+import { and, eq } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 type ContentType = string | { content: string; subject: string };
 const DEFAULT_SUBJECT = "SolveIt Notification";
 type NotificationProp = {
@@ -11,9 +13,11 @@ type NotificationProp = {
   receiverEmail?: string;
   body: ContentType;
 };
-export async function getAllNotification(receiverId: string) {
+export async function getAllNotification(receiverId: string,limit=3) {
   return await db.query.notifications.findMany({
     where: (table, fn) => fn.eq(table.receiverId, receiverId),
+    limit:limit,
+    orderBy:(n,{desc})=>[desc(n.createdAt)]
   });
 }
 async function saveSystemNotification({
@@ -21,7 +25,7 @@ async function saveSystemNotification({
   receiverId,
   sender,
 }: NotificationProp) {
-  logger.info("in App notification")
+  logger.info("in App notification");
   const content = typeof body === "string" ? body : body.content;
   const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
   const result = await db
@@ -33,10 +37,9 @@ async function saveSystemNotification({
       receiverId: receiverId!,
       senderId: sender,
       read: false,
-
     })
     .returning();
-  logger.info("found results",result)
+  logger.info("found results", result);
   await fetch("http://localhost:3030/api/v1/send-notification", {
     method: "POST",
     body: JSON.stringify(result[0]),
@@ -136,7 +139,6 @@ export async function sendNotification({
   method = ["email", "system"],
 }: NotificationProp & { method?: ("email" | "system")[] }) {
   if (method.includes("system")) {
-   
     logger.info(
       `[SYSTEM NOTIFICATION] To: ${receiverId} | Subject: ${
         typeof body === "string" ? "System Notification" : body.subject
@@ -147,4 +149,54 @@ export async function sendNotification({
   if (method.includes("email")) {
     await sendNotificationByEmail({ sender, receiverEmail, body });
   }
+}
+
+export async function deleteNotification({
+  id,
+  receiverId,
+}: {
+  id: string;
+  receiverId: string;
+}) {
+  try {
+    await db
+      .delete(notifications)
+      .where(
+        and(eq(notifications.id, id), eq(notifications.receiverId, receiverId))
+      );
+    revalidatePath("/dashboard");
+  } catch (error) {
+    logger.error("failed to delete notification", { id: id });
+    throw new Error("failed to delete notification");
+  }
+}
+export async function notificationReadUpdate({
+  id,
+  receiverId,
+  read
+}: {
+  id: string;
+  receiverId: string;
+  read:boolean
+}) {
+  try {
+    await db
+      .update(notifications)
+      .set({ read: read })
+      .where(
+        and(eq(notifications.id, id), eq(notifications.receiverId, receiverId))
+      );
+    revalidatePath("/dashboard");
+    return read
+  } catch (error) {
+    logger.error("failed to mark as read ", { id: id });
+    throw new Error("failed to mark as read ");
+  }
+}
+export async function markAllAsRead({ receiverId }: { receiverId: string }) {
+  await db
+    .update(notifications)
+    .set({ read: true })
+    .where(eq(notifications.receiverId, receiverId));
+  revalidatePath("/dashboard");
 }
