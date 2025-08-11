@@ -76,7 +76,7 @@ function AcceptSolutionDialog({
         console.error(error);
       }
     });
-    console.log("Solution accepted");
+    clientLogger("info","soluton Accepted ",{taskId:taskId})
   };
 
   return (
