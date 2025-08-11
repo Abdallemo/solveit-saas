@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import FormError from "@/features/auth/register/components/loginFormError";
 import FormSuccess from "@/features/auth/register/components/loginFormSuccess";
+import { logger } from "@/lib/logging/winston";
 
 export default async function VerifyEmailPage({
   searchParams,
@@ -19,10 +20,8 @@ export default async function VerifyEmailPage({
 }) {
   const token = (await searchParams).token;
 
-  console.log("searchParms " + token);
-
   const result = await verifyVerificationToken(token);
-  console.log({ result: result });
+  logger.info({ result: result });
   return (
     <main className="w-full h-screen flex flex-col place-items-center justify-center text-foreground">
       <Card className="w-[25rem] shadow-md flex flex-col text-center'">
