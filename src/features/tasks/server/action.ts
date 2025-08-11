@@ -606,7 +606,7 @@ export async function deleteDraftTask(userId: string) {
     .delete(TaskDraftTable)
     .where(eq(TaskDraftTable.userId, userId))
     .returning();
-  console.log(`Draft delete for ${userId}:`, res);
+  logger.info("deleted task draft from user: "+userId,{result:res})
 }
 export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
@@ -685,7 +685,7 @@ export async function deleteFileFromWorkspace(fileId: string) {
     };
   } catch (error) {
     console.error(error);
-    return { error: "Something went Wrong!!" };
+    throw new Error("Something went Wrong",{cause:error})
   }
 }
 
@@ -843,10 +843,9 @@ export async function handleTaskDeadline(task: TaskReturnType) {
         );
 
       await addSolverToTaskBlockList(task.solverId, task.id, "Missed deadline");
-      console.log(
-        `[Deadline] Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`
-      );
+      logger.warn(`Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`)
     } catch (error) {
+      logger.error("unable to find blocked user",{task:task})
       console.error(error);
     }
   }
@@ -936,7 +935,6 @@ export async function requestRefund(
     });
     return refund;
   } catch (err) {
-    console.log(err);
     throw new Error("unable to create a refund request Please try again");
   }
 }
