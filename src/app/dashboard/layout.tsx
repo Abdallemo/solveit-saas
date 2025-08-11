@@ -26,7 +26,6 @@ import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import { IceCreamBowlIcon } from "lucide-react";
 import BridCarmComponent from "@/components/BridCarmComponent";
 import { getAllNotification } from "@/features/notifications/server/action";
-import { logger } from "@/lib/logging/winston";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
