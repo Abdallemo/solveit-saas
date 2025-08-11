@@ -4,19 +4,21 @@ import { DeleteObjectCommand } from "@aws-sdk/client-s3";
 import { s3 } from "@/lib/cloudFlairR2";
 import { scope } from "./media-types";
 import { env } from "@/env/server";
+import { logger } from "@/lib/logging/winston";
+
 
 export async function deleteFileFromR2(filePath: string) {
-  const command = new DeleteObjectCommand({
-    Bucket: "solveit",
-    Key: filePath,
-  });
-
   try {
-    await s3.send(command);
-    return { success: true };
-  } catch (err) {
-    console.error("R2 deletion failed:", err);
-    return { success: false };
+    const res =await fetch(`${env.GO_API_URL}/media`,{
+      method:"DELETE",
+      body:JSON.stringify({key:filePath})
+    })
+    if (!res.ok){
+      throw new Error("Failed to delete"+res.statusText)
+    }
+  } catch (error) {
+    logger.error("error deleting",error)
+      throw new Error("Failed to delete")
   }
 }
 
@@ -26,13 +28,13 @@ export async function deleteFileFromR2(filePath: string) {
 type UploadOptions = {
   files: File[];
   scope: string;
-  url?: string;
+  url: string;
 };
 
 export async function uploadFiles({
   files,
   scope,
-  url = `${process.env.NEXTAUTH_URL}/api/media`,
+  url ,
 }: UploadOptions) {
   const formData = new FormData();
   files.forEach((file) => {
@@ -53,8 +55,8 @@ export async function uploadFiles({
         errorData.message || `HTTP error! status: ${response.status}`
       );
     }
-
-    return response.json();
+    const data = await response.json();
+    return data;
   } catch (error) {
     console.error("Error in uploadFiles:", error);
     throw error;
