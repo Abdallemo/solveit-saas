@@ -1,10 +1,10 @@
-// app/api/upload/route.ts
+// app/api/media/route.ts
+
 import { NextRequest, NextResponse } from "next/server";
 import { s3 } from "@/lib/cloudFlairR2";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomUUID } from "crypto";
 import { scope, UploadedFileMeta } from "@/features/media/server/media-types";
-
 export const config = {
   api: {
     bodyParser: false,
