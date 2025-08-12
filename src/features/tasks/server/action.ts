@@ -606,7 +606,7 @@ export async function deleteDraftTask(userId: string) {
     .delete(TaskDraftTable)
     .where(eq(TaskDraftTable.userId, userId))
     .returning();
-  logger.info("deleted task draft from user: "+userId,{result:res})
+  logger.info("deleted task draft from user: " + userId, { result: res });
 }
 export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
@@ -685,7 +685,7 @@ export async function deleteFileFromWorkspace(fileId: string) {
     };
   } catch (error) {
     console.error(error);
-    throw new Error("Something went Wrong",{cause:error})
+    throw new Error("Something went Wrong", { cause: error });
   }
 }
 
@@ -843,9 +843,11 @@ export async function handleTaskDeadline(task: TaskReturnType) {
         );
 
       await addSolverToTaskBlockList(task.solverId, task.id, "Missed deadline");
-      logger.warn(`Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`)
+      logger.warn(
+        `Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`
+      );
     } catch (error) {
-      logger.error("unable to find blocked user",{task:task})
+      logger.error("unable to find blocked user", { task: task });
       console.error(error);
     }
   }
@@ -878,30 +880,63 @@ export async function getSolutionById(solutionId: string) {
   //todo ill think of other latter
   return solution;
 }
-export async function acceptSolution(taskId: string, posterId: string) {
-  const updatedTask = await db
-    .update(TaskTable)
-    .set({ status: "COMPLETED", updatedAt: new Date() })
-    .where(and(eq(TaskTable.id, taskId), eq(TaskTable.posterId, posterId)))
-    .returning();
-  if (!updatedTask || !updatedTask[0].paymentId) {
-    //todo more secure
-    return { error: true, success: false };
+export async function acceptSolution(solution: SolutionById) {
+  const {
+    taskId,
+    taskSolution: { posterId, solverId, title, paymentId },
+  } = solution;
+  try {
+    if (!posterId || !taskId) {
+      throw new Error("all field are required ");
+    }
+    if (!paymentId) {
+      throw new Error("No payment Record for this Task");
+    }
+
+    const updatedTask = await db
+      .update(TaskTable)
+      .set({ status: "COMPLETED", updatedAt: new Date() })
+      .where(and(eq(TaskTable.id, taskId), eq(TaskTable.posterId, posterId)))
+      .returning();
+
+    if (!updatedTask || updatedTask.length === 0) {
+      throw new Error("No such task found");
+    }
+
+    const releaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
+    if (updatedTask.length > 0) {
+      await db
+        .update(PaymentTable)
+        .set({ status: "SUCCEEDED", releaseDate: releaseDate })
+        .where(eq(PaymentTable.id, paymentId));
+    }
+
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system", "email"],
+      body: `Your Solution for Task "${title}" has been Accepted`,
+      receiverId: solverId!,
+    });
+    logger.info(`solution :${solution.id} Accepted`)
+  } catch (error) {
+    logger.error(`unable to Accept solution ${solution.id}`, {
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+    });
+    throw new Error("Internal Error", { cause: error });
   }
-  const releaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-  if (updatedTask.length > 0) {
-    await db
-      .update(PaymentTable)
-      .set({ status: "SUCCEEDED", releaseDate: releaseDate })
-      .where(eq(PaymentTable.id, updatedTask[0].paymentId));
-  }
-  return { success: true, error: false };
 }
-export async function requestRefund(
-  taskId: string,
-  posterId: string,
-  reason: string
-) {
+export async function requestRefund(values: {
+  solution: SolutionById;
+  reason: string;
+}) {
+  const {
+    solution: {
+      taskId,
+      taskSolution: { posterId, solverId, title },
+    },
+    reason,
+  } = values;
   const result = taskRefundSchema.safeParse({ reason: reason });
   if (result.error) {
     throw new Error(result.error.message);
@@ -933,7 +968,16 @@ export async function requestRefund(
       refundedAt: new Date(),
       refundReason: reason,
     });
-    return refund;
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: {
+        subject: `Your solution for the task "${title}" has been rejected by the poster.`,
+        content:
+          "The refund request is currently under moderator review. you currently are in block list for this task. Please check the comments for more details.",
+      },
+      receiverId: solverId!,
+    });
   } catch (err) {
     throw new Error("unable to create a refund request Please try again");
   }
