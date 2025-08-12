@@ -51,33 +51,31 @@ import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { TooltipContent } from "@radix-ui/react-tooltip";
 import { taskRefundSchemaType } from "@/features/tasks/server/action";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
+import { useMutation } from "@tanstack/react-query";
 
 function AcceptSolutionDialog({
-  taskId,
-  posterId,
+  solution,
 }: {
-  taskId: string;
-  posterId: string;
-}) {
-  const [isPending, startTransition] = useTransition();
-  const router = useRouter();
 
-  const handleAccept = () => {
-    startTransition(async () => {
-      try {
-        const { success } = await acceptSolution(taskId, posterId);
-        if (success) {
-          router.refresh();
-          toast.success(
-            "You have successfully accepted this task to be Complete"
-          );
-        }
-      } catch (error) {
-        console.error(error);
-      }
-    });
-    clientLogger("info","soluton Accepted ",{taskId:taskId})
-  };
+  solution: SolutionById;
+}) {
+  const router = useRouter();
+  const { mutateAsync: acceptSolutionMuta, isPending } = useMutation({
+    mutationFn: acceptSolution,
+    onSuccess: () => {
+      toast.success("You have successfully accepted this task to be Complete", {
+        id: "accept-task",
+      });
+    },
+    onError: () => {
+      toast.error("something went wrong", { id: "accept-task" });
+    },
+  });
+  async function handleAccept() {
+    toast.loading("accepting..", { id: "accept-task" });
+    await acceptSolutionMuta(solution);
+    router.refresh();
+  }
 
   return (
     <AlertDialog>
@@ -117,11 +115,10 @@ function AcceptSolutionDialog({
 }
 
 function RequestRefundDialog({
-  taskId,
-  posterId,
+
+  solution,
 }: {
-  taskId: string;
-  posterId: string;
+  solution: SolutionById;
 }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
@@ -136,21 +133,24 @@ function RequestRefundDialog({
     control,
   } = form;
   const reason = watch("reason");
-  const [isPending, startTransition] = useTransition();
 
+  const { mutateAsync: requestRefundMutate, isPending } = useMutation({
+    mutationFn: requestRefund,
+    onSuccess: () => {
+      toast.success("Your refund Request Has bean submited", {
+        id: "refund-request",
+      });
+    },
+    onError: () => {
+      toast.error("Something Went Wrong please Try again!", {
+        id: "refund-request",
+      });
+    },
+  });
   async function handleRefund(formData: taskRefundSchemaType) {
-    startTransition(async () => {
-      try {
-        await requestRefund(taskId, posterId, formData.reason);
-        form.reset();
-        setOpen(false);
-        toast.success("Your refund Request Has bean submited");
-        router.refresh();
-      } catch (error) {
-        toast.error("Something Went Wrong please Try again!");
-        console.error(error);
-      }
-    });
+    toast.loading("Requesting..", { id: "refund-request" });
+    await requestRefundMutate({reason:formData.reason,solution});
+    router.refresh();
   }
 
   return (
@@ -319,12 +319,11 @@ export default function SolutionPageComps({
               !solution.taskSolution.taskRefund && (
                 <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
                   <AcceptSolutionDialog
-                    taskId={solution.taskId}
-                    posterId={user?.id!}
+                    solution={solution}
                   />
                   <RequestRefundDialog
-                    taskId={solution.taskId}
-                    posterId={user?.id!}
+
+                    solution={solution}
                   />
                 </div>
               )}
