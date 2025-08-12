@@ -18,6 +18,23 @@ export const {
   updateUserSubscription,
 } = db;
 
+
+export type Subscription ={
+  id: string
+  customerId: string
+  customerName: string
+  customerEmail: string
+  planName: string
+  status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
+  amount: number
+  currency: string
+  interval: "month" | "year"
+  currentPeriodStart: string
+  currentPeriodEnd: string
+  cancelAtPeriodEnd: boolean
+  trialEnd?: string
+}
+
 export async function getServerReturnUrl() {
   const headersList = await headers();
   const referer =
@@ -121,4 +138,44 @@ export async function CreateUserSessionPortal() {
     return_url: referer,
   });
   return portalSession.url;
+}
+
+export async function getAllSubscriptions(): Promise<Subscription[]> {
+  const subscriptions = await stripe.subscriptions.list({
+    limit: 100,
+    expand: ["data.customer", "data.items.data.price"], // stop at price
+  });
+
+  const results: Subscription[] = [];
+
+  for (const sub of subscriptions.data) {
+    const customer = sub.customer as Stripe.Customer;
+    const item = sub.items.data[0];
+    const price = item.price;
+
+    // Fetch product separately
+    const product = await stripe.products.retrieve(
+      typeof price.product === "string" ? price.product : price.product.id
+    );
+
+    results.push({
+      id: sub.id,
+      customerId: customer.id,
+      customerName: customer.name || "",
+      customerEmail: customer.email || "",
+      planName: product.name || "",
+      status: sub.status as Subscription["status"],
+      amount: price.unit_amount ? price.unit_amount / 100 : 0,
+      currency: price.currency.toUpperCase(),
+      interval: price.recurring?.interval as "month" | "year",
+      currentPeriodStart: new Date(sub.current_period_start * 1000).toISOString(),
+      currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+      cancelAtPeriodEnd: sub.cancel_at_period_end,
+      trialEnd: sub.trial_end
+        ? new Date(sub.trial_end * 1000).toISOString()
+        : undefined,
+    });
+  }
+
+  return results;
 }
