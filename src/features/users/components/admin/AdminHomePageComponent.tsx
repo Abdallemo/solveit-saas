@@ -16,6 +16,7 @@ import {
 } from "lucide-react"
 import { BarChart, Bar, XAxis, YAxis, PieChart, Pie, Cell, ResponsiveContainer } from "recharts"
 import { LogsTyep } from "@/lib/logging/action"
+import { StastType } from "@/app/dashboard/admin/page"
 
 
 const summaryStats = [
@@ -97,7 +98,7 @@ function getLogIcon(level: string) {
   }
 }
 
-export default function AdminDashboardComponent({serverLogs}:{serverLogs:LogsTyep}) {
+export default function AdminDashboardComponent({serverLogs,stats}:{serverLogs:LogsTyep,stats:StastType}) {
   return (
     <div className="min-h-screen bg-background md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
