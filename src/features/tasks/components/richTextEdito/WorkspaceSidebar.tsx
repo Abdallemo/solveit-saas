@@ -3,7 +3,14 @@ import type React from "react";
 
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Send, MessageCircle, Code2, Lock } from "lucide-react";
+import {
+  FileText,
+  Send,
+  MessageCircle,
+  Code2,
+  Lock,
+  RotateCcw,
+} from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -25,6 +32,11 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useMutation } from "@tanstack/react-query";
+import { createTaskComment } from "../../server/action";
+import { toast } from "sonner";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 export default function WorkspaceSidebar({
   open,
@@ -67,27 +79,41 @@ export default function WorkspaceSidebar({
     </div>
   );
 }
-
 function SideBarForm() {
   const { user } = useCurrentUser();
   const router = useRouter();
   const pathName = usePathname();
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState<
-    Array<{ id: string; text: string; timestamp: Date; author: string }>
-  >([]);
+  const { currentWorkspace } = useWorkspace();
   const { monacoEditor } = useFeatureFlags();
-
+  const [comments] = useState(
+    [...(currentWorkspace?.task.taskComments ?? [])].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateB - dateA; 
+    })
+  );
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const {} = useMutation({
+    mutationFn: createTaskComment,
+    onSuccess: () => {},
+  });
   const handleSendComment = () => {
     if (comment.trim()) {
       const newComment = {
         id: Date.now().toString(),
-        text: comment,
-        timestamp: new Date(),
-        author: user?.name || "Anonymous",
+        content: comment,
+        createdAt: new Date(),
+        userId: user?.id!,
+        taskId: currentWorkspace?.taskId!,
       };
-      setComments((prev) => [...prev, newComment]);
+      createTaskComment({
+        comment,
+        taskId: currentWorkspace?.taskId!,
+        userId: user?.id!,
+      });
       setComment("");
+      router.refresh();
     }
   };
 
@@ -165,6 +191,14 @@ function SideBarForm() {
             <CardTitle className="text-sm font-medium flex items-center gap-2">
               <MessageCircle className="h-4 w-4" />
               Comments ({comments.length})
+              <Button
+                onClick={() => {
+                  setIsRefreshing(true);
+                  router.refresh();
+                  setTimeout(() => setIsRefreshing(false), 500);
+                }}>
+                <RotateCcw className={isRefreshing ? "animate-spin" : ""} />
+              </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-0">
@@ -176,26 +210,28 @@ function SideBarForm() {
                   <p className="text-xs">Start the conversation above</p>
                 </div>
               ) : (
-                comments.map((commentItem) => (
-                  <div key={commentItem.id} className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs font-medium text-foreground">
-                        {commentItem.author}
-                      </span>
-                      <span className="text-xs text-muted-foreground">
-                        {commentItem.timestamp.toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </span>
+                <ScrollArea className="h-60">
+                  {comments.map((commentItem) => (
+                    <div key={commentItem.id} className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-medium text-foreground">
+                          {commentItem.owner.name}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          {commentItem.createdAt!.toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                      </div>
+                      <div className="bg-muted/50 rounded-lg p-3">
+                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                          {commentItem.content}
+                        </p>
+                      </div>
                     </div>
-                    <div className="bg-muted/50 rounded-lg p-3">
-                      <p className="text-sm text-foreground whitespace-pre-wrap">
-                        {commentItem.text}
-                      </p>
-                    </div>
-                  </div>
-                ))
+                  ))}
+                </ScrollArea>
               )}
             </div>
           </CardContent>
