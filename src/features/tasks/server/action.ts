@@ -626,13 +626,19 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
       fn.and(fn.eq(table.id, workspaceId), fn.eq(table.solverId, solverId)),
     with: {
       solver: true,
-      task: { with: { solver: true, poster: true, workspace: true,taskComments:{
-        with:{
-          owner:true
-        }
-      } } },
+      task: {
+        with: {
+          solver: true,
+          poster: true,
+          workspace: true,
+          taskComments: {
+            with: {
+              owner: true,
+            },
+          },
+        },
+      },
       workspaceFiles: true,
-
     },
   });
   return workspace;
@@ -871,6 +877,11 @@ export async function getSolutionById(solutionId: string) {
           solver: true,
           taskSolution: true,
           taskRefund: true,
+          taskComments: {
+            with: {
+              owner: true,
+            },
+          },
         },
       },
       solutionFiles: {
@@ -1022,26 +1033,6 @@ export async function getAllDisputes(): Promise<FlatDispute[]> {
 
     solutionContent: dispute.taskRefund.taskSolution.content,
   }));
-}
-export async function getAllTaskComment(taskId: string) {
-  try {
-    if (!taskId) {
-      throw new Error("all field are required ");
-    }
-    const result = await db.query.TaskCommentTable.findMany({
-      where: (tb, fn) => fn.eq(tb.taskId, taskId),
-      with: {
-        owner: true,
-        taskComments: true,
-      },
-    });
-    return result;
-  } catch (error) {
-    logger.error("failed to retrieve Task comments", {
-      message: (error as Error)?.message,
-      stack: (error as Error)?.stack,
-    });
-  }
 }
 export async function createTaskComment(values: {
   taskId: string;
