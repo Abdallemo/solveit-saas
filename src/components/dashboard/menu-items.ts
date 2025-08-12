@@ -39,15 +39,10 @@ export const MenuItemsModerator = [
     icon: LuClipboardList,
   },
   {
-    title: "Disputes",
+    title: "Dispute Management",
     url: "/dashboard/moderator/disputes",
     icon: LuClipboardList,
     child: [
-      {
-        title: "All Disputes",
-        url: "/dashboard/moderator/disputes/all",
-        icon: LuClipboardCheck,
-      },
       {
         title: "Pending Review",
         url: "/dashboard/moderator/disputes/pending",
