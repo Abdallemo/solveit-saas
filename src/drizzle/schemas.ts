@@ -265,7 +265,6 @@ export const RefundTable = pgTable("refunds", {
   refundedAt: timestamp("refunded_at", { mode: "date" }),
   stripeRefundId: text("stripe_refund_id"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-
 });
 
 export const TaskCommentTable = pgTable("task_comments", {
@@ -435,6 +434,10 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
     fields: [UserTable.id],
     references: [AccountTable.userId],
   }),
+    owner: many(TaskCommentTable, {
+    relationName: "owner",
+  }),
+
 }));
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({
@@ -475,7 +478,25 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   blockedSolvers: many(BlockedTasksTable, {
     relationName: "blockedSolvers",
   }),
+    taskComments: many(TaskCommentTable, {
+    relationName: "taskComments",
+  }),
 }));
+export const TaskCommentTableRelations = relations(
+  TaskCommentTable,
+  ({ one, }) => ({
+    owner: one(UserTable, {
+      fields: [TaskCommentTable.userId],
+      references: [UserTable.id],
+      relationName:"owner"
+    }),
+    taskComments: one(TaskTable, {
+      fields: [TaskCommentTable.taskId],
+      references: [TaskTable.id],
+      relationName: "taskComments",
+    }),
+  })
+);
 export const BlockedTasksTableRelation = relations(
   BlockedTasksTable,
   ({ one }) => ({
@@ -562,5 +583,4 @@ export const RefundTableRelation = relations(RefundTable, ({ one, many }) => ({
     references: [UserTable.id],
     relationName: "refundModerator",
   }),
-
 }));
