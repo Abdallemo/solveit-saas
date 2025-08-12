@@ -19,37 +19,6 @@ import { LogsTyep } from "@/lib/logging/action"
 import { StastType } from "@/app/dashboard/admin/page"
 
 
-const summaryStats = [
-  {
-    title: "Total Users",
-    value: "12,847",
-    subtext: "Posters: 8,234 • Solvers: 3,891 • Moderators: 722",
-    icon: Users,
-    trend: "+12.5%",
-  },
-  {
-    title: "Total Tasks",
-    value: "45,231",
-    subtext: "Active: 1,234 • Completed: 43,997",
-    icon: CheckSquare,
-    trend: "+8.2%",
-  },
-  {
-    title: "Total Disputes",
-    value: "892",
-    subtext: "Pending: 23 • Resolved: 869",
-    icon: AlertTriangle,
-    trend: "-3.1%",
-  },
-  {
-    title: "Monthly Revenue",
-    value: "$127,450",
-    subtext: "Target: $150,000 • 85% achieved",
-    icon: DollarSign,
-    trend: "+15.7%",
-  },
-]
-
 const aiModerationData = [
   { name: "Mon", flagged: 45 },
   { name: "Tue", flagged: 52 },
@@ -97,8 +66,37 @@ function getLogIcon(level: string) {
       return <Info className="h-4 w-4" />
   }
 }
-
 export default function AdminDashboardComponent({serverLogs,stats}:{serverLogs:LogsTyep,stats:StastType}) {
+  const summaryStats = [
+  {
+    title: "Total Users",
+    value: stats.users.total,
+    subtext: `Posters: ${stats.users.posters} • Solvers: ${stats.users.solvers} • Moderators: ${stats.users.moderators}`,
+    icon: Users,
+    trend: `${stats.users.trend}%`,
+  },
+  {
+    title: "Total Tasks",
+    value: `${stats.tasks.total}`,
+    subtext: `Active: ${stats.tasks.active} • Completed: ${stats.tasks.completed}`,
+    icon: CheckSquare,
+    trend: `${stats.tasks.trend}%`,
+  },
+  {
+    title: "Total Disputes",
+    value: `${stats.disputes.total}`,
+    subtext: `Pending: ${stats.disputes.pending} • Resolved: ${stats.disputes.pending}`,
+    icon: AlertTriangle,
+    trend: `${stats.disputes.trend}%`,
+  },
+  {
+    title: "Monthly Revenue",
+    value: `RM${stats.revenue.total}`,
+    subtext: `Target: RM${stats.revenue.monthly} `,
+    icon: DollarSign,
+    trend: `${stats.revenue.trend}%`,
+  },
+]
   return (
     <div className="min-h-screen bg-background md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
