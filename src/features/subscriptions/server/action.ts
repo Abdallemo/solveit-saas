@@ -12,6 +12,7 @@ import { headers } from "next/headers";
 import * as db from "@/features/subscriptions/server/db";
 import Stripe from "stripe";
 import { logger } from "@/lib/logging/winston";
+import { cache } from "react";
 export const {
   CancelUserSubscription,
   CreateUserSubsciption,
@@ -139,43 +140,44 @@ export async function CreateUserSessionPortal() {
   });
   return portalSession.url;
 }
-
+export const getAllSubscriptionsCached = cache(async () => {
+  return await getAllSubscriptions();
+});
 export async function getAllSubscriptions(): Promise<Subscription[]> {
   const subscriptions = await stripe.subscriptions.list({
-    limit: 100,
-    expand: ["data.customer", "data.items.data.price"], // stop at price
+    limit: 10,
+    expand: ["data.customer", "data.items.data.price"], 
   });
 
-  const results: Subscription[] = [];
+  const results = await Promise.all(
+    subscriptions.data.map(async (sub) => {
+      const customer = sub.customer as Stripe.Customer;
+      const item = sub.items.data[0];
+      const price = item.price;
 
-  for (const sub of subscriptions.data) {
-    const customer = sub.customer as Stripe.Customer;
-    const item = sub.items.data[0];
-    const price = item.price;
+      const product = await stripe.products.retrieve(
+        typeof price.product === "string" ? price.product : price.product.id
+      );
 
-    // Fetch product separately
-    const product = await stripe.products.retrieve(
-      typeof price.product === "string" ? price.product : price.product.id
-    );
-
-    results.push({
-      id: sub.id,
-      customerId: customer.id,
-      customerName: customer.name || "",
-      customerEmail: customer.email || "",
-      planName: product.name || "",
-      status: sub.status as Subscription["status"],
-      amount: price.unit_amount ? price.unit_amount / 100 : 0,
-      currency: price.currency.toUpperCase(),
-      interval: price.recurring?.interval as "month" | "year",
-      currentPeriodStart: new Date(sub.current_period_start * 1000).toISOString(),
-      currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-      cancelAtPeriodEnd: sub.cancel_at_period_end,
-      trialEnd: sub.trial_end
-        ? new Date(sub.trial_end * 1000).toISOString()
-        : undefined,
-    });
-  }
+      return {
+        id: sub.id,
+        customerId: customer.id,
+        customerName: customer.name || "",
+        customerEmail: customer.email || "",
+        planName: product.name || "",
+        status: sub.status as Subscription["status"],
+        amount: price.unit_amount ? price.unit_amount / 100 : 0,
+        currency: price.currency.toUpperCase(),
+        interval: price.recurring?.interval as "month" | "year",
+        currentPeriodStart: new Date(sub.current_period_start * 1000).toISOString(),
+        currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
+        cancelAtPeriodEnd: sub.cancel_at_period_end,
+        trialEnd: sub.trial_end
+          ? new Date(sub.trial_end * 1000).toISOString()
+          : undefined,
+      };
+    })
+  );
 
   return results;
 }

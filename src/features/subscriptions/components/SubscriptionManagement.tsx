@@ -31,6 +31,7 @@ import {
 import { MoreHorizontal, ArrowUpDown, ChevronDown, Download } from "lucide-react"
 import { toast } from "sonner"
 import { Subscription } from "../server/action"
+import { useQuery } from "@tanstack/react-query"
 
 
 const formatAmount = (amount: number, currency: string) => {
@@ -370,76 +371,14 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
   )
 }
 
-// Mock data - replace with actual Stripe API calls
-const Mocksubscription: Subscription[] = [
-  {
-    id: "sub_1234567890",
-    customerId: "cus_1234567890",
-    customerName: "John Doe",
-    customerEmail: "john@example.com",
-    planName: "Pro Plan",
-    status: "active",
-    amount: 2999,
-    currency: "usd",
-    interval: "month",
-    currentPeriodStart: "2024-01-01",
-    currentPeriodEnd: "2024-02-01",
-    cancelAtPeriodEnd: false,
-  },
-  {
-    id: "sub_0987654321",
-    customerId: "cus_0987654321",
-    customerName: "Jane Smith",
-    customerEmail: "jane@example.com",
-    planName: "Enterprise Plan",
-    status: "trialing",
-    amount: 9999,
-    currency: "usd",
-    interval: "year",
-    currentPeriodStart: "2024-01-15",
-    currentPeriodEnd: "2025-01-15",
-    cancelAtPeriodEnd: false,
-    trialEnd: "2024-02-15",
-  },
-  {
-    id: "sub_1122334455",
-    customerId: "cus_1122334455",
-    customerName: "Bob Johnson",
-    customerEmail: "bob@example.com",
-    planName: "Basic Plan",
-    status: "past_due",
-    amount: 999,
-    currency: "usd",
-    interval: "month",
-    currentPeriodStart: "2024-01-10",
-    currentPeriodEnd: "2024-02-10",
-    cancelAtPeriodEnd: false,
-  },
-  {
-    id: "sub_5566778899",
-    customerId: "cus_5566778899",
-    customerName: "Alice Brown",
-    customerEmail: "alice@example.com",
-    planName: "Pro Plan",
-    status: "canceled",
-    amount: 2999,
-    currency: "usd",
-    interval: "month",
-    currentPeriodStart: "2024-01-05",
-    currentPeriodEnd: "2024-02-05",
-    cancelAtPeriodEnd: true,
-  },
-]
-
-export function SubscriptionManagement({subscription}:{subscription?:Subscription[]}) {
-  const [subscriptions] = useState<Subscription[]>(subscription??[])
+export function SubscriptionManagement({subscription}:{subscription:Subscription[]}) {
 
   return (
     <div className="container mx-auto py-6 px-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Subscription Management</h1>
-          <p className="text-muted-foreground">Manage and monitor all customer subscriptions</p>
+          <p className="text-muted-foreground">Manage and monitor all customer subscription</p>
         </div>
         <Button variant="outline" className="gap-2 bg-transparent">
           <Download className="h-4 w-4" />
@@ -450,10 +389,10 @@ export function SubscriptionManagement({subscription}:{subscription?:Subscriptio
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Subscriptions</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Subscription</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{subscriptions.length}</div>
+            <div className="text-2xl font-bold">{subscription.length}</div>
           </CardContent>
         </Card>
         <Card>
@@ -462,7 +401,7 @@ export function SubscriptionManagement({subscription}:{subscription?:Subscriptio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-green-600">
-              {subscriptions.filter((s) => s.status === "active" && !s.cancelAtPeriodEnd).length}
+              {subscription.filter((s) => s.status === "active" && !s.cancelAtPeriodEnd).length}
             </div>
           </CardContent>
         </Card>
@@ -472,7 +411,7 @@ export function SubscriptionManagement({subscription}:{subscription?:Subscriptio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-600">
-              {subscriptions.filter((s) => s.status === "trialing").length}
+              {subscription.filter((s) => s.status === "trialing").length}
             </div>
           </CardContent>
         </Card>
@@ -482,7 +421,7 @@ export function SubscriptionManagement({subscription}:{subscription?:Subscriptio
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-red-600">
-              {subscriptions.filter((s) => s.status === "past_due").length}
+              {subscription.filter((s) => s.status === "past_due").length}
             </div>
           </CardContent>
         </Card>
@@ -490,11 +429,11 @@ export function SubscriptionManagement({subscription}:{subscription?:Subscriptio
 
       <Card>
         <CardHeader>
-          <CardTitle>Subscriptions</CardTitle>
-          <CardDescription>A list of all customer subscriptions and their current status</CardDescription>
+          <CardTitle>Subscription</CardTitle>
+          <CardDescription>A list of all customer subscription and their current status</CardDescription>
         </CardHeader>
         <CardContent>
-          <SubscriptionTable columns={subscriptionColumns} data={subscriptions} />
+          <SubscriptionTable columns={subscriptionColumns} data={subscription} />
         </CardContent>
       </Card>
     </div>
