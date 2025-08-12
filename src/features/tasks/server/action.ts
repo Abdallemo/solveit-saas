@@ -9,6 +9,7 @@ import {
   SolutionFilesTable,
   SolutionTable,
   TaskCategoryTable,
+  TaskCommentTable,
   TaskDraftTable,
   TaskFileTable,
   TaskTable,
@@ -625,8 +626,13 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
       fn.and(fn.eq(table.id, workspaceId), fn.eq(table.solverId, solverId)),
     with: {
       solver: true,
-      task: { with: { solver: true, poster: true, workspace: true } },
+      task: { with: { solver: true, poster: true, workspace: true,taskComments:{
+        with:{
+          owner:true
+        }
+      } } },
       workspaceFiles: true,
+
     },
   });
   return workspace;
@@ -917,7 +923,7 @@ export async function acceptSolution(solution: SolutionById) {
       body: `Your Solution for Task "${title}" has been Accepted`,
       receiverId: solverId!,
     });
-    logger.info(`solution :${solution.id} Accepted`)
+    logger.info(`solution :${solution.id} Accepted`);
   } catch (error) {
     logger.error(`unable to Accept solution ${solution.id}`, {
       message: (error as Error)?.message,
@@ -1016,4 +1022,46 @@ export async function getAllDisputes(): Promise<FlatDispute[]> {
 
     solutionContent: dispute.taskRefund.taskSolution.content,
   }));
+}
+export async function getAllTaskComment(taskId: string) {
+  try {
+    if (!taskId) {
+      throw new Error("all field are required ");
+    }
+    const result = await db.query.TaskCommentTable.findMany({
+      where: (tb, fn) => fn.eq(tb.taskId, taskId),
+      with: {
+        owner: true,
+        taskComments: true,
+      },
+    });
+    return result;
+  } catch (error) {
+    logger.error("failed to retrieve Task comments", {
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+    });
+  }
+}
+export async function createTaskComment(values: {
+  taskId: string;
+  userId: string;
+  comment: string;
+}) {
+  try {
+    const { comment, taskId, userId } = values;
+    if (!taskId || !userId || !comment) {
+      throw new Error("all field are required ");
+    }
+    await db.insert(TaskCommentTable).values({
+      content: comment,
+      taskId,
+      userId,
+    });
+  } catch (error) {
+    logger.error("unable to create comment", {
+      message: (error as Error)?.message,
+      stack: (error as Error)?.stack,
+    });
+  }
 }
