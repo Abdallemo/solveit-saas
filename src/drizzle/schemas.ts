@@ -262,8 +262,10 @@ export const RefundTable = pgTable("refunds", {
   refundReason: text("refund_reason"),
   refundStatus: RefundStatusEnum().default("PENDING"),
   moderatorId: uuid("moderatorId").references(() => UserTable.id),
-  refundedAt: timestamp("refunded_at", { mode: "date" }).defaultNow(),
+  refundedAt: timestamp("refunded_at", { mode: "date" }),
   stripeRefundId: text("stripe_refund_id"),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+
 });
 
 export const TaskCommentTable = pgTable("task_comments", {
