@@ -11,7 +11,7 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -36,6 +36,7 @@ import {
 import { SolutionPreview } from "./richTextEdito/TaskPreview";
 import {
   acceptSolution,
+  createTaskComment,
   requestRefund,
   type SolutionById,
 } from "../server/action";
@@ -52,13 +53,10 @@ import { TooltipContent } from "@radix-ui/react-tooltip";
 import { taskRefundSchemaType } from "@/features/tasks/server/action";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { useMutation } from "@tanstack/react-query";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { CommentCard } from "./richTextEdito/WorkspaceSidebar";
 
-function AcceptSolutionDialog({
-  solution,
-}: {
-
-  solution: SolutionById;
-}) {
+function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
   const { mutateAsync: acceptSolutionMuta, isPending } = useMutation({
     mutationFn: acceptSolution,
@@ -114,12 +112,7 @@ function AcceptSolutionDialog({
   );
 }
 
-function RequestRefundDialog({
-
-  solution,
-}: {
-  solution: SolutionById;
-}) {
+function RequestRefundDialog({ solution }: { solution: SolutionById }) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
   const form = useForm<taskRefundSchemaType>({
@@ -149,7 +142,7 @@ function RequestRefundDialog({
   });
   async function handleRefund(formData: taskRefundSchemaType) {
     toast.loading("Requesting..", { id: "refund-request" });
-    await requestRefundMutate({reason:formData.reason,solution});
+    await requestRefundMutate({ reason: formData.reason, solution });
     router.refresh();
   }
 
@@ -241,6 +234,13 @@ export default function SolutionPageComps({
   const { user } = useCurrentUser();
   const router = useRouter();
   const [comment, setComment] = useState("");
+  const [comments] = useState(
+    [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    })
+  );
   if (!user || !user.id) {
     router.back();
   }
@@ -275,17 +275,21 @@ export default function SolutionPageComps({
     };
     return variants[status as keyof typeof variants] || variants.ASSIGNED;
   };
-
-  const comments = [
-    {
-      id: "comment_001",
-      author: "task_user",
-      content:
-        "This worked perfectly! Thank you so much for the detailed explanation.",
-      createdAt: "1 hour ago",
-      avatar: "TU",
-    },
-  ];
+  const {mutateAsync:createTaskCommentMuta,isPending} = useMutation({
+    mutationFn: createTaskComment,
+    onSuccess: () => {},
+  });
+  async function handleSendComment  () {
+    if (comment.trim()) {
+      await createTaskCommentMuta({
+        comment,
+        taskId: solution?.taskId,
+        userId: user?.id!,
+      });
+      setComment("");
+      router.refresh();
+    }
+  };
 
   return (
     <div className="flex min-h-screen bg-background/10">
@@ -318,13 +322,8 @@ export default function SolutionPageComps({
               solution.taskSolution.status !== "COMPLETED" &&
               !solution.taskSolution.taskRefund && (
                 <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
-                  <AcceptSolutionDialog
-                    solution={solution}
-                  />
-                  <RequestRefundDialog
-
-                    solution={solution}
-                  />
+                  <AcceptSolutionDialog solution={solution} />
+                  <RequestRefundDialog solution={solution} />
                 </div>
               )}
 
@@ -365,26 +364,15 @@ export default function SolutionPageComps({
           </CardHeader>
           <CardContent>
             {comments.length > 0 && (
+              <ScrollArea className="h-60 p-4">
+
               <div className="space-y-4 mb-6">
                 {comments.map((comment) => (
-                  <div key={comment.id} className="flex space-x-3">
-                    <Avatar className="h-8 w-8">
-                      <AvatarFallback>{comment.avatar}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-1">
-                        <span className="font-medium text-foreground">
-                          {comment.author}
-                        </span>
-                        <span className="text-sm text-foreground/60">
-                          {comment.createdAt}
-                        </span>
-                      </div>
-                      <p className="text-foreground/80">{comment.content}</p>
-                    </div>
-                  </div>
+                  <CommentCard key={comment.id} comment={comment} currentUserId={user?.id!} />
                 ))}
               </div>
+              </ScrollArea>
+
             )}
             <Separator className="mb-4" />
             <div>
@@ -400,7 +388,7 @@ export default function SolutionPageComps({
                   onChange={(e) => setComment(e.target.value)}
                   className="flex-1 min-h-[80px] resize-none"
                 />
-                <Button className="self-end">
+                <Button className="self-end" onClick={handleSendComment} disabled={!comment.trim()||isPending}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
