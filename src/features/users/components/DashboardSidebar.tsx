@@ -235,6 +235,7 @@ const closeMobileSidebar = () => {
               name={user?.name}
               image={user?.image}
               role={user?.role}
+              id={user.id}
             />
           </Suspense>
         
