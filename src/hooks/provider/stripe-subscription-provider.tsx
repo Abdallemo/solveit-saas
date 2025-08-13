@@ -1,6 +1,7 @@
 // hooks/provider/stripe-subscription-provider.tsx
 "use client";
 
+import { TierType } from "@/drizzle/schemas";
 import { createContext, useContext, ReactNode } from "react";
 
 export type StripeSubscriptionContextType = {
@@ -8,6 +9,7 @@ export type StripeSubscriptionContextType = {
   isCancelScheduled: boolean;
   status: string;
   nextBilling:Date | null
+  subTier:TierType
 };
 
 const StripeSubscriptionContext = createContext<StripeSubscriptionContextType | null>(null);
