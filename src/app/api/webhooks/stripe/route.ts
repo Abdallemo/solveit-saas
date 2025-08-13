@@ -41,6 +41,7 @@ export async function POST(request: NextRequest) {
       break;
 
     case "customer.subscription.updated":
+      await handleUpdate(event.data.object);
       break;
     case "customer.subscription.created":
       await handleCreate(event.data.object);
@@ -76,7 +77,7 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
 
     await updateUserSubscription(
       {
-        tier: "PREMIUM",
+        tier: "SOLVER",
         userId: userId,
         stripeCustomerId: customerId,
         stripeSubscriptionId: sub.id,
@@ -90,7 +91,9 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
     throw err;
   }
 }
-
+async function handleUpdate(subscription:  Stripe.Subscription) {
+  
+}
 async function handleDelete(subscription: Stripe.Subscription) {
   const customer = subscription.customer;
   const customerId = typeof customer === "string" ? customer : customer.id;
@@ -103,7 +106,7 @@ async function handleDelete(subscription: Stripe.Subscription) {
       stripeCustomerId: null,
       stripeSubscriptionId: null,
       stripeSubscriptionItemId: null,
-      tier: "BASIC",
+      tier: "POSTER",
       userId: userId,
     }
   );
