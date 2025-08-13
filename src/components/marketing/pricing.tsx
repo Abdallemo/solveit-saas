@@ -58,9 +58,9 @@ export default async function Pricing() {
                   className="w-full"
                   action={async () => {
                     "use server";
-                    plan.teir == "BASIC"
+                    plan.teir == "POSTER"
                       ? await createCancelSession()
-                      : await createStripeCheckoutSession("PREMIUM");
+                      : await createStripeCheckoutSession("SOLVER");
                   }}>
                   <SubscribeButton
                     tier={plan.teir}
