@@ -26,7 +26,7 @@ export function SubscribeButton({
       variant={
         currentTier === tier
           ? "default"
-          : tier === "PREMIUM"
+          : tier === "SOLVER"
           ? "default"
           : "outline"
       }>
@@ -37,7 +37,7 @@ export function SubscribeButton({
         </>
       ) : currentTier === tier ? (
         "Current Plan"
-      ) : tier === "PREMIUM" ? (
+      ) : tier === "SOLVER" ? (
         "Get Started"
       ) : (
         "Get Started"
