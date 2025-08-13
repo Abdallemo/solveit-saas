@@ -1,21 +1,17 @@
 APP_NAME := main.exe
 BIN_DIR := bin
-SRC_DIR := ./cmd/api
+SRC_DIR := ./cmd
 
 .PHONY: all build run watch clean test fmt install-tools
 
 all: build
 
-# Build binary into bin/
 build:
-	mkdir -p $(BIN_DIR)
 	go build -o $(BIN_DIR)/$(APP_NAME) $(SRC_DIR)
 
-# Run directly from bin/ (after building)
 run: build
 	./$(BIN_DIR)/$(APP_NAME)
 
-# Live reload with Air
 watch:
 	air -c air.toml
 
