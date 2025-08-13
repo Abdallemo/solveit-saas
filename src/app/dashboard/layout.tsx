@@ -60,6 +60,7 @@ export default async function DashboardLayout({
     isCancelScheduled: false,
     status: "inactive",
     nextBilling: null,
+    subTier:subscription?.tier!
   };
 
   if (subscription?.stripeSubscriptionId) {
@@ -73,6 +74,7 @@ export default async function DashboardLayout({
       nextBilling: sub.current_period_end
         ? new Date(sub.current_period_end * 1000)
         : null,
+      subTier:subscription.tier
     };
   }
   const session = await getServerSession();
