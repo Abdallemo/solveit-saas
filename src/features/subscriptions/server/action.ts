@@ -19,22 +19,21 @@ export const {
   updateUserSubscription,
 } = db;
 
-
-export type Subscription ={
-  id: string
-  customerId: string
-  customerName: string
-  customerEmail: string
-  planName: string
-  status: "active" | "canceled" | "past_due" | "trialing" | "incomplete"
-  amount: number
-  currency: string
-  interval: "month" | "year"
-  currentPeriodStart: string
-  currentPeriodEnd: string
-  cancelAtPeriodEnd: boolean
-  trialEnd?: string
-}
+export type Subscription = {
+  id: string;
+  customerId: string;
+  customerName: string;
+  customerEmail: string;
+  planName: string;
+  status: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
+  amount: number;
+  currency: string;
+  interval: "month" | "year";
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  cancelAtPeriodEnd: boolean;
+  trialEnd?: string;
+};
 
 export async function getServerReturnUrl() {
   const headersList = await headers();
@@ -56,7 +55,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     if (!selectedPlan) throw new Error("Plan not found");
 
     if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier == "PREMIUM") return; //chnaged here to test
+    if (userSubscription?.tier == "SOLVER") return; //chnaged here to test
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
       customer_email: currentUser!.email,
@@ -78,10 +77,33 @@ export async function createStripeCheckoutSession(tier: TierType) {
     if (!session.url) throw new Error("Failed to create checkout session");
     redirect(session.url);
   } catch (error) {
-    logger.error("Stripe Checkout Session Failed",{error:error})
+    logger.error("Stripe Checkout Session Failed", { error: error });
     console.error(error);
     throw error;
   }
+}
+
+export async function upgradeSolverToPlus(userId: string) {
+  const return_url = await getServerReturnUrl();
+  console.log("passed userid :", userId);
+  const subscription = await getServerUserSubscriptionById(userId);
+  if (
+    !subscription?.stripeSubscriptionId ||
+    !subscription?.stripeSubscriptionItemId
+  ) {
+    throw new Error("User does not have an active subscription");
+  }
+
+  const solverPlusPriceId = env.STRIPE_SOLVER_PLUS_PRICE_ID;
+  console.log("found solver+ pirce id :", solverPlusPriceId);
+  console.log(JSON.stringify(subscription));
+  const session = await stripe.billingPortal.sessions.create({
+    customer: subscription.stripeCustomerId!,
+    return_url,
+  });
+  redirect(session.url);
+
+  // await updateUserSubscriptionTier(userId, "SOLVER++");
 }
 
 export async function createCancelSession() {
@@ -91,7 +113,7 @@ export async function createCancelSession() {
   if (!user) redirect("/login");
 
   const { id } = user;
-  logger.info("creating cancel Session for User: "+user.id,{user:user});
+  logger.info("creating cancel Session for User: " + user.id, { user: user });
   const subscription = await getServerUserSubscriptionById(id);
 
   if (!subscription?.stripeCustomerId || !subscription.stripeSubscriptionId)
@@ -146,7 +168,7 @@ export const getAllSubscriptionsCached = cache(async () => {
 export async function getAllSubscriptions(): Promise<Subscription[]> {
   const subscriptions = await stripe.subscriptions.list({
     limit: 10,
-    expand: ["data.customer", "data.items.data.price"], 
+    expand: ["data.customer", "data.items.data.price"],
   });
 
   const results = await Promise.all(
@@ -169,7 +191,9 @@ export async function getAllSubscriptions(): Promise<Subscription[]> {
         amount: price.unit_amount ? price.unit_amount / 100 : 0,
         currency: price.currency.toUpperCase(),
         interval: price.recurring?.interval as "month" | "year",
-        currentPeriodStart: new Date(sub.current_period_start * 1000).toISOString(),
+        currentPeriodStart: new Date(
+          sub.current_period_start * 1000
+        ).toISOString(),
         currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
         cancelAtPeriodEnd: sub.cancel_at_period_end,
         trialEnd: sub.trial_end
