@@ -254,25 +254,16 @@ export const MenuItemsSolver = [
     icon: LuUsers,
     child: [
       {
-        title: "Workspace",
-        url: "/dashboard/solver/mentor",
-        icon: LuMonitor,
+        title: "Mentor Listing",
+        url: "/dashboard/solver/listing",
+        icon: LuUserPlus,
       },
       {
         title: "My Reviews",
         url: "/dashboard/solver/reviews",
         icon: LuStar,
       },
-      {
-        title: "Mentor Listing",
-        url: "/dashboard/solver/listing",
-        icon: LuUserPlus,
-      },
-      {
-        title: "Upgrade to Solver++",
-        url: "/dashboard/solver/upgrade",
-        icon: LuArrowUpRight,
-      },
+      
     ],
   },
 ];
