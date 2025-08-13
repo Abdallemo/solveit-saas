@@ -23,13 +23,13 @@ export type Plan = {
         "View solver profiles & reviews",
         "Real-time notification system",
       ],
-      teir:'BASIC'
+      teir:'POSTER'
     },
     {
       name: "Solver",
       price: "RM15",
       priceInCents: 1500, 
-      stripePriceId: env.STRIPE_PREMIUM_PRODUCT_ID,
+      stripePriceId: env.STRIPE_SOLVER_PRODUCT_ID,
       features: [
         "Access to all posted tasks",
         "Earn money by completing tasks",
@@ -38,7 +38,7 @@ export type Plan = {
         "Task filtering and smart recommendations",
         "Priority support & verification badge",
       ],
-      teir:'PREMIUM'
+      teir:'SOLVER'
     },
 
   ];
