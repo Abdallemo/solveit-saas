@@ -147,7 +147,7 @@ export async function createTaksPaymentCheckoutSession(values: {
     );
 
     if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier == "PREMIUM") return;
+    if (userSubscription?.tier == "SOLVER") return;
 
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
