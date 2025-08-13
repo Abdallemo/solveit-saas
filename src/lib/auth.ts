@@ -32,7 +32,7 @@ export const {
       UpdateUserField({ id: user.id!, data: { emailVerified: new Date() } });
     },
     async createUser({ user }) {
-      await CreateUserSubsciption({ tier: "BASIC", userId: user.id! });
+      await CreateUserSubsciption({ tier: "POSTER", userId: user.id! });
     },
   },
   pages: {
