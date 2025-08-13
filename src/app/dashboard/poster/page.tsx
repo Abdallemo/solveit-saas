@@ -30,7 +30,6 @@ export default async function page() {
       <p>Dashbard</p>
       <p>test cache :{cache}</p>
 
-      {!userRole && <Pricing />}
     </main>
   );
 }
