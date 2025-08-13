@@ -111,7 +111,7 @@ export async function EmailRegisterAction(
       password: hashedPassword,
       name,
     });
-    await CreateUserSubsciption({ tier: "BASIC", userId: userId });
+    await CreateUserSubsciption({ tier: "POSTER", userId: userId });
 
     const verificationToken = await generateVerificationToken(email);
 
