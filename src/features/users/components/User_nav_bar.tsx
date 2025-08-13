@@ -28,13 +28,14 @@ import {
 import { signOut } from "next-auth/react";
 import { AppUser } from "../../../../types/next-auth";
 import Link from "next/link";
-import { createStripeCheckoutSession } from "@/features/subscriptions/server/action";
-import { useState } from "react";
+import { createStripeCheckoutSession, upgradeSolverToPlus } from "@/features/subscriptions/server/action";
+import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
+import useCurrentUser from "@/hooks/useCurrentUser";
 
-export function NavUser({ image, name, email, role }: AppUser) {
+export function NavUser({ image, name, email, role,id }: AppUser) {
+  const { subTier } = useStripeSubscription();
   const { isMobile, openMobile, setOpenMobile, setOpen, open, toggleSidebar } =
     useSidebar();
-
   const closeMobileSidebar = () => {
     if (isMobile && openMobile) setOpenMobile(false);
   };
@@ -86,15 +87,24 @@ export function NavUser({ image, name, email, role }: AppUser) {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              {role === "POSTER" ? (
+              {role === "POSTER" && (
                 <DropdownMenuItem
                   onSelect={async () => {
-                    await createStripeCheckoutSession("PREMIUM");
+                    await createStripeCheckoutSession("SOLVER");
                   }}>
                   <Sparkles />
-                  Upgrade to Pro
+                  Upgrade to Solver
                 </DropdownMenuItem>
-              ) : null}
+              )}
+              {role === "SOLVER" && subTier === "SOLVER" && (
+                <DropdownMenuItem
+                  onSelect={async () => {
+                    await upgradeSolverToPlus(id!);
+                  }}>
+                  <Sparkles />
+                  Upgrade to Solver++
+                </DropdownMenuItem>
+              )}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
