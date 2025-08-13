@@ -23,7 +23,7 @@ export const UserRole = pgEnum("role", [
   "SOLVER",
 ]);
 export const NotificationMethodsEnum = pgEnum("method", ["SYSTEM", "EMAIL"]);
-export const TierEnum = pgEnum("tier", ["BASIC", "PREMIUM"]);
+export const TierEnum = pgEnum("tier", ["POSTER", "SOLVER","SOLVER++"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
   "SUCCEEDED",
@@ -258,7 +258,7 @@ export const RefundTable = pgTable("refunds", {
     .references(() => PaymentTable.id),
   taskId: uuid("task_id")
     .notNull()
-    .references(() => TaskTable.id),
+    .references(() => TaskTable.id,{ onDelete: "cascade" }),
   refundReason: text("refund_reason"),
   refundStatus: RefundStatusEnum().default("PENDING"),
   moderatorId: uuid("moderatorId").references(() => UserTable.id),
@@ -274,7 +274,7 @@ export const TaskCommentTable = pgTable("task_comments", {
     .references(() => TaskTable.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id),
+    .references(() => UserTable.id,{ onDelete: "cascade" }),
   content: text("content").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
