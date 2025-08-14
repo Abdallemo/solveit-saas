@@ -89,29 +89,29 @@ function SideBarForm() {
   const [comment, setComment] = useState("");
   const { currentWorkspace } = useWorkspace();
   const { monacoEditor } = useFeatureFlags();
-  const [comments] = useState(
-    [...(currentWorkspace?.task.taskComments ?? [])].sort((a, b) => {
+  const comments = [...(currentWorkspace?.task.taskComments ?? [])].sort(
+    (a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
       return dateA - dateB;
-    })
+    }
   );
+
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const {mutateAsync:createTaskCommentMuta,isPending} = useMutation({
+  const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
     onSuccess: () => {},
   });
-  async function handleSendComment  ()  {
-    if (comment.trim()) {
-    await  createTaskCommentMuta({
-        comment,
-        taskId: currentWorkspace?.taskId!,
-        userId: user?.id!,
-      });
-      setComment("");
-      router.refresh();
-    }
-  };
+  async function handleSendComment() {
+    if (!comment.trim()) return;
+    setComment("");
+    await createTaskCommentMuta({
+      comment,
+      taskId: currentWorkspace?.taskId!,
+      userId: user?.id!,
+    });
+    router.refresh();
+  }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -119,7 +119,9 @@ function SideBarForm() {
       handleSendComment();
     }
   };
-  function onRefresh() {}
+  function onRefresh() {
+    router.refresh();
+  }
   return (
     <div className="p-2 space-y-4 flex flex-col h-full">
       <div className="space-y-1 ">
@@ -172,7 +174,7 @@ function SideBarForm() {
             <Button
               size="sm"
               onClick={handleSendComment}
-              disabled={!comment.trim()||isPending}
+              disabled={!comment.trim() || isPending}
               className="self-end rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
               <Send className="h-4 w-4" />
             </Button>
@@ -229,25 +231,25 @@ function SideBarForm() {
     </div>
   );
 }
-
-interface CommentCardProps {
-  comment: {
+export type commentType = {
+  id: string;
+  content: string;
+  createdAt: Date | null;
+  userId: string;
+  taskId: string;
+  owner: {
+    name: string | null;
     id: string;
-    content: string;
+    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
+    image: string | null;
+    email: string | null;
+    password: string | null;
+    emailVerified: Date | null;
     createdAt: Date | null;
-    userId: string;
-    taskId: string;
-    owner: {
-      name: string | null;
-      id: string;
-      role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
-      image: string | null;
-      email: string | null;
-      password: string | null;
-      emailVerified: Date | null;
-      createdAt: Date | null;
-    };
   };
+};
+interface CommentCardProps {
+  comment: commentType;
   currentUserId: string;
 }
 
