@@ -6,6 +6,7 @@ import { createContext, useContext, useState, ReactNode } from "react";
 type WorkspaceContextType = {
   content: string;
   setContent: (c: string) => void;
+  setCurrentWorkspace:  React.Dispatch<React.SetStateAction<WorkpaceSchemReturnedType>>
   currentWorkspace:WorkpaceSchemReturnedType
   uploadedFiles: WorkspaceUploadedFileMeta[];
   setUploadedFiles:React.Dispatch<React.SetStateAction<WorkspaceUploadedFileMeta[]>>
@@ -24,7 +25,7 @@ export const WorkspaceProvider = ({
 }: WorkspacePorviderProps) => {
   const [content, setContent] = useState(workspace?.content ?? "");
   const [uploadedFiles, setUploadedFiles] = useState<WorkspaceUploadedFileMeta[]>(workspace?.workspaceFiles ?? []);
-  const [currentWorkspace] = useState(workspace);
+  const [currentWorkspace,setCurrentWorkspace] = useState(workspace);
   
   return (
     <WorkspaceContext.Provider
@@ -33,7 +34,8 @@ export const WorkspaceProvider = ({
         setContent,
         uploadedFiles,
         setUploadedFiles,
-        currentWorkspace
+        currentWorkspace,
+        setCurrentWorkspace
       }}>
       {children}
     </WorkspaceContext.Provider>
