@@ -794,6 +794,7 @@ export async function publishSolution(values: {
         .set({ status: "SUBMITTED", updatedAt: new Date() })
         .where(eq(TaskTable.id, workspace?.taskId));
     });
+    const updatedWorkspace = await getWorkspaceById(workspaceId, solverId);
     sendNotification({
       sender: "solveit@org.com",
       receiverId: workspace.task.poster.id!,
@@ -808,6 +809,7 @@ export async function publishSolution(values: {
     return {
       success: true,
       message: "Successfully published solution!" as const,
+      workspace:updatedWorkspace
     };
   } catch (error) {
     if (isError(error)) {
@@ -1049,6 +1051,7 @@ export async function createTaskComment(values: {
       taskId,
       userId,
     });
+    revalidatePath(`/`)
   } catch (error) {
     logger.error("unable to create comment", {
       message: (error as Error)?.message,
