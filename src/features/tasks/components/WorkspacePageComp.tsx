@@ -20,7 +20,7 @@ import { useRouter } from "next/navigation";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
-  const { content, currentWorkspace } = useWorkspace();
+  const { content, currentWorkspace,setCurrentWorkspace } = useWorkspace();
   const [progress, setProgress] = useState(0);
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -85,12 +85,12 @@ export default function WorkspacePageComp() {
     }
 
     try {
-      await publishSolutionMutation({
+     const { workspace}= await publishSolutionMutation({
         workspaceId: currentWorkspace.id,
         content: data.content,
         solverId: currentWorkspace.solverId,
       });
-
+      setCurrentWorkspace(workspace)
       toast.success("Published successfully", { id: "publish-solution" });
     } catch (err) {
       toast.error("Failed to publish", { id: "publish-solution" });
@@ -142,11 +142,11 @@ export default function WorkspacePageComp() {
                 <div className="mt-4  w-full">
                   <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
                     <span>{currentWorkspace?.task.title}</span>
-                    <span>{progress.toFixed()}% Complete</span>
+                    <span>{currentWorkspace?.task.status==="SUBMITTED" ?100:progress.toFixed()}% Complete</span>
                   </div>
                   <div className="flex flex-col w-full items-end">
                     <DeadlineProgress
-                      progress={progress}
+                      progress={currentWorkspace?.task.status==="SUBMITTED" ?100:progress}
                       setProgress={setProgress}
                       createdAt={currentWorkspace?.createdAt!}
                       deadlineValue={currentWorkspace?.task.deadline!}
