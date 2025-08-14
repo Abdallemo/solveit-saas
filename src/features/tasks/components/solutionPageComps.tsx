@@ -54,7 +54,7 @@ import { taskRefundSchemaType } from "@/features/tasks/server/action";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { useMutation } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { CommentCard } from "./richTextEdito/WorkspaceSidebar";
+import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
 
 function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
@@ -234,7 +234,7 @@ export default function SolutionPageComps({
   const { user } = useCurrentUser();
   const router = useRouter();
   const [comment, setComment] = useState("");
-  const [comments] = useState(
+  const [comments, setComments] = useState(
     [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
@@ -275,21 +275,37 @@ export default function SolutionPageComps({
     };
     return variants[status as keyof typeof variants] || variants.ASSIGNED;
   };
-  const {mutateAsync:createTaskCommentMuta,isPending} = useMutation({
+  const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
     onSuccess: () => {},
   });
-  async function handleSendComment  () {
-    if (comment.trim()) {
-      await createTaskCommentMuta({
-        comment,
-        taskId: solution?.taskId,
-        userId: user?.id!,
-      });
-      setComment("");
-      router.refresh();
-    }
-  };
+  async function handleSendComment() {
+    if (!comment.trim()) return;
+    const newComment: commentType = {
+      id: crypto.randomUUID(),
+      content: comment,
+      createdAt: new Date(),
+      userId: user!.id!,
+      taskId: solution!.taskId,
+      owner: {
+        name: user!.name ?? null,
+        id: user!.id!,
+        role: user!.role ?? null,
+        image: user!.image ?? null,
+        email: user!.email ?? null,
+        password: null,
+        emailVerified: null,
+        createdAt: null,
+      },
+    };
+    setComments((prev) => [...prev, newComment]);
+    setComment("");
+    await createTaskCommentMuta({
+      comment,
+      taskId: solution?.taskId,
+      userId: user?.id!,
+    });
+  }
 
   return (
     <div className="flex min-h-screen bg-background/10">
@@ -365,14 +381,16 @@ export default function SolutionPageComps({
           <CardContent>
             {comments.length > 0 && (
               <ScrollArea className="h-60 p-4">
-
-              <div className="space-y-4 mb-6">
-                {comments.map((comment) => (
-                  <CommentCard key={comment.id} comment={comment} currentUserId={user?.id!} />
-                ))}
-              </div>
+                <div className="space-y-4 mb-6">
+                  {comments.map((comment) => (
+                    <CommentCard
+                      key={comment.id}
+                      comment={comment}
+                      currentUserId={user?.id!}
+                    />
+                  ))}
+                </div>
               </ScrollArea>
-
             )}
             <Separator className="mb-4" />
             <div>
@@ -388,7 +406,10 @@ export default function SolutionPageComps({
                   onChange={(e) => setComment(e.target.value)}
                   className="flex-1 min-h-[80px] resize-none"
                 />
-                <Button className="self-end" onClick={handleSendComment} disabled={!comment.trim()||isPending}>
+                <Button
+                  className="self-end"
+                  onClick={handleSendComment}
+                  disabled={!comment.trim() || isPending}>
                   <Send className="h-4 w-4" />
                 </Button>
               </div>
