@@ -4,7 +4,7 @@ tmp_dir = "tmp"
 cmd = "go build -o ./bin/main.exe ./cmd"
 bin = "bin/main.exe"
 
-include_dir = ["."]
+include_dir = [".", "cmd", "internal"]
 exclude_dir = ["tmp", "bin"]
 
 include_ext = ["go"]
