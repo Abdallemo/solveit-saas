@@ -93,7 +93,13 @@ export default async function DashboardLayout({
       refetchInterval={30 * 60}
       refetchOnWindowFocus={true}>
       <StripeSubscriptionProvider value={stripeData}>
-        <SidebarProvider defaultOpen={defaultOpen}>
+        <SidebarProvider defaultOpen={defaultOpen}
+        style={
+        {
+          "--sidebar-width": "calc(var(--spacing) * 72)",
+          "--header-height": "calc(var(--spacing) * 12)",
+        } as React.CSSProperties
+      }>
           <ReactQueryProvider>
             <div className="flex h-screen w-full">
               <DashboardSidebar user={session?.user!} />
