@@ -10,6 +10,7 @@ import {
   Code2,
   Lock,
   RotateCcw,
+  User2,
 } from "lucide-react";
 import {
   Sheet,
@@ -19,7 +20,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { Ref, useEffect, useRef, useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import TextareaAutosize from "react-textarea-autosize";
@@ -38,8 +39,10 @@ import { toast } from "sonner";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn, getColorClass } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import useWebSocket from "@/hooks/useWebSocket";
+import { env } from "@/env/client";
 
 export default function WorkspaceSidebar({
   open,
@@ -82,6 +85,25 @@ export default function WorkspaceSidebar({
     </div>
   );
 }
+
+export type commentType = {
+  id: string;
+  content: string;
+  createdAt: Date | null;
+  userId: string;
+  taskId: string;
+  owner: {
+    name: string | null;
+    id: string;
+    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
+    image: string | null;
+    email: string | null;
+    password: string | null;
+    emailVerified: Date | null;
+    createdAt: Date | null;
+  };
+};
+
 function SideBarForm() {
   const { user } = useCurrentUser();
   const router = useRouter();
@@ -89,28 +111,59 @@ function SideBarForm() {
   const [comment, setComment] = useState("");
   const { currentWorkspace } = useWorkspace();
   const { monacoEditor } = useFeatureFlags();
-  const comments = [...(currentWorkspace?.task.taskComments ?? [])].sort(
-    (a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
-    }
-  );
-
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const latestCommentRef = useRef<HTMLDivElement>(null);
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
     onSuccess: () => {},
   });
+  const [comments, setComments] = useState<commentType[]>(
+    [...(currentWorkspace?.task.taskComments ?? [])].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    })
+  );
+  //on progress
+  useWebSocket<commentType>(
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/comments?task_id=${currentWorkspace?.taskId}`,
+    {
+      onMessage: (comment) => {
+        setComments((prev) => [...prev, comment]);
+      },
+    }
+  );
+  useEffect(() => {
+    if (latestCommentRef.current) {
+      latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [comments]);
+
   async function handleSendComment() {
     if (!comment.trim()) return;
+    //old
+    // const newComment: commentType = {
+    //   id: crypto.randomUUID(),
+    //   content: comment,
+    //   createdAt: new Date(),
+    //   userId: user!.id!,
+    //   taskId: currentWorkspace!.taskId,
+    //   owner: {
+    //     name: user!.name ?? null,
+    //     id: user!.id!,
+    //     role: user!.role ?? null,
+    //     image: user!.image ?? null,
+    //     email: user!.email ?? null,
+    //     password: null,
+    //     emailVerified: null,
+    //     createdAt: null,
+    //   },
+    // };
     setComment("");
     await createTaskCommentMuta({
       comment,
       taskId: currentWorkspace?.taskId!,
       userId: user?.id!,
     });
-    router.refresh();
   }
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -189,19 +242,10 @@ function SideBarForm() {
               <CardTitle className="text-sm font-medium flex items-center gap-2">
                 <MessageCircle className="h-4 w-4" />
                 Comments ({comments.length})
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={onRefresh}
-                  className="ml-auto h-7 w-7 p-0 hover:bg-muted/50 rounded-full">
-                  <RotateCcw
-                    className={`h-3 w-3 ${isRefreshing ? "animate-spin" : ""}`}
-                  />
-                </Button>
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="max-h-[300px] overflow-hidden">
+              <div className="flex-1 min-h-0">
                 {comments.length === 0 ? (
                   <div className="text-center py-8 text-muted-foreground">
                     <div className="bg-muted/30 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-3">
@@ -211,16 +255,19 @@ function SideBarForm() {
                     <p className="text-xs mt-1">Start the conversation above</p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-60 px-2">
-                    <div className="space-y-4 pr-2">
-                      {comments.map((commentItem) => (
+                  <ScrollArea className="h-85 w-full px-2">
+                    {comments.map((commentItem, index) => {
+                      const isLast = index === comments.length - 1;
+                      return (
                         <CommentCard
                           key={commentItem.id}
                           comment={commentItem}
                           currentUserId={user?.id!}
+                          ref={isLast ? latestCommentRef : null}
+                          compact={true}
                         />
-                      ))}
-                    </div>
+                      );
+                    })}
                   </ScrollArea>
                 )}
               </div>
@@ -231,107 +278,91 @@ function SideBarForm() {
     </div>
   );
 }
-export type commentType = {
-  id: string;
-  content: string;
-  createdAt: Date | null;
-  userId: string;
-  taskId: string;
-  owner: {
-    name: string | null;
-    id: string;
-    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
-    image: string | null;
-    email: string | null;
-    password: string | null;
-    emailVerified: Date | null;
-    createdAt: Date | null;
-  };
-};
+
 interface CommentCardProps {
   comment: commentType;
   currentUserId: string;
+  ref: Ref<HTMLDivElement>;
+  showRole?:boolean
+  compact?:boolean
 }
 
-export function CommentCard({ comment, currentUserId }: CommentCardProps) {
-  const isOwner = comment.owner.id === currentUserId;
+export function CommentCard (
+  { comment, currentUserId, compact = false, showRole = false ,ref}:CommentCardProps){
+    const isOwner = comment.owner.id === currentUserId
+    const displayName = isOwner ? "You" : comment.owner.name?.split(" ")[0] 
+    const createdAt = new Date(comment.createdAt as any)
 
-  return (
-    <div
-      className={cn(
-        "flex gap-3 group",
-        isOwner ? "flex-row-reverse" : "flex-row"
-      )}>
-      <div className="flex-shrink-0">
-        <Avatar className={cn("h-8 w-8", isOwner && "ring-2 ring-primary/20")}>
-          <AvatarImage src={comment.owner.image || "/placeholder.svg"} />
-          <AvatarFallback
-            className={cn(
-              "text-xs font-medium",
-              isOwner ? "bg-primary/10 text-primary" : "bg-muted"
-            )}>
-            {comment.owner.name?.slice(0, 2).toUpperCase()}
+    const formatDate = (date: Date) => {
+      const now = new Date()
+      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+
+      if (diffInHours < 24) {
+        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+      } else if (diffInHours < 168) {
+        // 7 days
+        return date.toLocaleDateString([], { weekday: "short" })
+      } else {
+        return date.toLocaleDateString([], { month: "short", day: "numeric" })
+      }
+    }
+
+    if (compact) {
+      return (
+        <div ref={ref} className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors">
+          <Avatar className="h-8 w-8 flex-shrink-0">
+            <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
+            <AvatarFallback className="text-xs">
+              {comment.owner.name ? comment.owner.name.charAt(0).toUpperCase() : <User2 className="h-4 w-4" />}
+            </AvatarFallback>
+          </Avatar>
+
+          <div className="min-w-0 space-y-1">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className={`text-sm font-medium truncate ${isOwner ? "text-primary" : "text-foreground"}`}>
+                  {displayName}
+                </span>
+                {showRole && comment.owner.role && (
+                  <Badge variant="secondary" className={`text-xs px-1.5 py-0.5 ${getColorClass(comment.owner.role)}`}>
+                    {comment.owner.role.toLowerCase()}
+                  </Badge>
+                )}
+              </div>
+              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(createdAt)}</span>
+            </div>
+
+            <p className="text-sm text-muted-foreground break-words w-40">{comment.content}</p>
+          </div>
+        </div>
+      )
+    }
+
+    return (
+      <div ref={ref} className="flex items-start gap-4 p-4 border-b border-border/50 last:border-b-0">
+        <Avatar className="h-10 w-10 flex-shrink-0">
+          <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
+          <AvatarFallback>
+            {comment.owner.name ? comment.owner.name.charAt(0).toUpperCase() : <User2 className="h-5 w-5" />}
           </AvatarFallback>
         </Avatar>
-      </div>
 
-      <div
-        className={cn("flex-1 min-w-0", isOwner && "flex flex-col items-end")}>
-        <div
-          className={cn(
-            "flex items-center gap-2 mb-1",
-            isOwner ? "flex-row-reverse" : "flex-row"
-          )}>
-          <div
-            className={cn(
-              "flex items-center gap-1.5",
-              isOwner && "flex-row-reverse"
-            )}>
-            <span className="text-xs font-medium text-foreground truncate">
-              {comment.owner.name?.split(" ")[0]}
-            </span>
-            {isOwner && (
-              <Badge variant="secondary" className="text-[10px] px-1.5 py-0.5">
-                You
-              </Badge>
-            )}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center justify-between gap-3 mb-2">
+            <div className="flex items-center gap-2">
+              <span className={`font-medium ${isOwner ? "text-primary" : "text-foreground"}`}>{displayName}</span>
+              {showRole && comment.owner.role && (
+                <Badge variant="secondary" className={`text-xs ${getColorClass(comment.owner.role)}`}>
+                  {comment.owner.role.toLowerCase()}
+                </Badge>
+              )}
+            </div>
+            <span className="text-sm text-muted-foreground">{formatDate(createdAt)}</span>
           </div>
-          <span className="text-[10px] text-muted-foreground">
-            {comment.createdAt!.toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </span>
-        </div>
 
-        <div
-          className={cn(
-            "relative rounded-2xl px-3 py-2 max-w-[85%] shadow-sm",
-            isOwner
-              ? "bg-primary text-primary-foreground rounded-br-md"
-              : "bg-muted/80 text-foreground rounded-bl-md",
-            "group-hover:shadow-md transition-shadow duration-200"
-          )}>
-          <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-            {comment.content}
-          </p>
-
-          <div
-            className={cn(
-              "absolute top-0 w-3 h-3",
-              isOwner
-                ? "right-0 translate-x-1 bg-primary"
-                : "left-0 -translate-x-1 bg-muted/80",
-              "clip-path-triangle"
-            )}
-            style={{
-              clipPath: isOwner
-                ? "polygon(0 0, 100% 0, 0 100%)"
-                : "polygon(100% 0, 0 0, 100% 100%)",
-            }}
-          />
+          <p className="text-sm text-foreground break-words">{comment.content}</p>
         </div>
       </div>
-    </div>
-  );
-}
+    )
+  }
+
