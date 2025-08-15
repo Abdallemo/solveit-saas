@@ -22,7 +22,7 @@ type AIRule struct {
 }
 
 func (s *PostgressStore) GetAIRules(ctx context.Context) ([]string, error) {
-	rows, err := s.db.Query(ctx, "SELECT rule_list FROM ai_rules")
+	rows, err := s.db.Query(ctx, "SELECT rule FROM ai_rules")
 	if err != nil {
 		return nil, err
 	}
@@ -30,11 +30,11 @@ func (s *PostgressStore) GetAIRules(ctx context.Context) ([]string, error) {
 
 	var allRules []string
 	for rows.Next() {
-		var r []string
+		var r string
 		if err := rows.Scan(&r); err != nil {
 			return nil, err
 		}
-		allRules = append(allRules, r...)
+		allRules = append(allRules, r)
 	}
 
 	return allRules, rows.Err()
