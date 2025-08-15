@@ -204,7 +204,7 @@ export default function DisplayListComponent({
           )
         )}
         {"blockedSolvers" in task ? (
-          <Button variant="default" size="sm" className="w-2/3 h-9" asChild>
+          <Button variant="success" size="sm" className="w-2/3 h-9" asChild>
             <Link href={`/dashboard/solver/workspace/start/${task.id}`}>
               {task.status === "IN_PROGRESS"
                 ? "Continue Workspace"
@@ -227,7 +227,7 @@ export default function DisplayListComponent({
   }
   function CardsView() {
     return (
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 ">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 ">
         {filteredItretable.map((task) => (
           <Card key={task.id} className="hover:shadow-md transition-shadow ">
             <CardHeader className="pb-3">
@@ -285,10 +285,10 @@ export default function DisplayListComponent({
 
   function ListView() {
     return (
-      <div className="bg-white rounded-lg border">
+      <div className="bg-sidebar rounded-lg border">
         {filteredItretable.map((task, index) => (
           <div key={task.id}>
-            <div className="p-4 hover:bg-gray-50 transition-colors">
+            <div className="p-4 transition-colors">
               <div className="flex items-center justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
@@ -298,18 +298,18 @@ export default function DisplayListComponent({
                     </Badge>
                     {statusUiCheck(task)}
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-1">
+                  <h3 className="font-semibold text-foreground mb-1">
                     {task.title}
                   </h3>
-                  <p className="text-gray-600 text-sm mb-2">
+                  <p className="text-foreground/70 text-sm mb-2">
                     {task.description}
                   </p>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500 w-full overflow-hidden">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-foreground w-full overflow-hidden">
                     <span>Posted by {task.poster.name}</span>
                     <span>{task.createdAt?.toLocaleDateString()}</span>
                     {task.deadline && <span>Due: {task.deadline}</span>}
                     {task.solver && (
-                      <span className="text-green-600">
+                      <span className="text-md text-green-500">
                         Solved by {task.solver.name}
                       </span>
                     )}
@@ -336,42 +336,42 @@ export default function DisplayListComponent({
   }
   function TableView() {
     return (
-      <div className="bg-white rounded-lg border overflow-hidden">
+      <div className="rounded-lg border overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+          <table className="w-full bg-sidebar">
+            <thead className=" border-b ">
               <tr>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">
                   Task
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">
                   Category
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">
                   Author
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">
                   Status
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900">Due</th>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">Due</th>
+                <th className="text-left p-4 font-medium text-foreground">
                   Price
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900">
+                <th className="text-left p-4 font-medium text-foreground">
                   Actions
                 </th>
-                <th className="text-left p-4 font-medium text-gray-900"></th>
+                <th className="text-left p-4 font-medium text-foreground"></th>
               </tr>
             </thead>
             <tbody>
               {filteredItretable.map((task) => (
-                <tr key={task.id} className="border-b hover:bg-gray-50">
+                <tr key={task.id} className="border-b">
                   <td className="p-4">
                     <div>
-                      <div className="font-medium text-gray-900">
+                      <div className="font-medium text-foreground">
                         {task.title}
                       </div>
-                      <div className="text-sm text-gray-500 mt-1 max-w-xs truncate">
+                      <div className="text-sm text-muted-foreground mt-1 max-w-xs truncate">
                         {task.description}
                       </div>
                     </div>
@@ -393,11 +393,11 @@ export default function DisplayListComponent({
                     </div>
                   </td>
                   <td className="p-4">{statusUiCheck(task)}</td>
-                  <td className="p-4 text-sm text-gray-600">
+                  <td className="p-4 text-sm text-muted-foreground">
                     {task.deadline || "No deadline"}
                   </td>
                   <td
-                    className={getColorClass(String(task.price), false, true)}>
+                    className={"text-sm"}>
                     RM{task.price?.toFixed(2)}
                   </td>
                   <td className="p-4">
@@ -422,8 +422,8 @@ export default function DisplayListComponent({
     }
   }
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto px-6 py-8 ">
+    <div className="h-full w-full bg-background">
+      <div className="max-w-8xl mx-auto px-6 py-8 ">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">{title}</h1>
           <Badge variant="outline" className="text-foreground">
