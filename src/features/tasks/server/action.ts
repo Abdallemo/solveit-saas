@@ -57,6 +57,7 @@ import type {
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { sendNotification } from "@/features/notifications/server/action";
 import { logger } from "@/lib/logging/winston";
+import { env } from "@/env/server";
 export type {
   catagoryType,
   userTasksType,
@@ -809,7 +810,7 @@ export async function publishSolution(values: {
     return {
       success: true,
       message: "Successfully published solution!" as const,
-      workspace:updatedWorkspace
+      workspace: updatedWorkspace,
     };
   } catch (error) {
     if (isError(error)) {
@@ -1036,6 +1037,7 @@ export async function getAllDisputes(): Promise<FlatDispute[]> {
     solutionContent: dispute.taskRefund.taskSolution.content,
   }));
 }
+
 export async function createTaskComment(values: {
   taskId: string;
   userId: string;
@@ -1046,12 +1048,34 @@ export async function createTaskComment(values: {
     if (!taskId || !userId || !comment) {
       throw new Error("all field are required ");
     }
-    await db.insert(TaskCommentTable).values({
-      content: comment,
-      taskId,
-      userId,
+    const id = await db
+      .insert(TaskCommentTable)
+      .values({
+        content: comment,
+        taskId,
+        userId,
+      })
+      .returning({ id: TaskCommentTable.id });
+    const result = await db.query.TaskCommentTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, id[0].id),
+      with: {
+        owner: true,
+      },
     });
-    revalidatePath(`/`)
+    if (result || result !== undefined) {
+      try {
+        await fetch(`${env.GO_API_URL}/send-comment`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${env.GO_API_AUTH}`,
+        },
+        body: JSON.stringify(result),
+      });
+      } catch (error) {
+        logger.error("unable to send comment ",error)
+      }
+    }
+    revalidatePath(`/`);
   } catch (error) {
     logger.error("unable to create comment", {
       message: (error as Error)?.message,
