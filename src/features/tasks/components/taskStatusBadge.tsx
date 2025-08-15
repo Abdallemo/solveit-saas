@@ -6,14 +6,14 @@ export default function GetStatusBadge(status: TaskStatusType) {
   switch (status) {
     case "OPEN":
       return (
-        <Badge variant="secondary" className="bg-green-100 text-green-800">
+        <Badge variant="secondary" className="bg-green-100 text-green-700">
           <Eye className="w-4 h-4"/>
           Open
         </Badge>
       );
     case "IN_PROGRESS":
       return (
-        <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
+        <Badge variant="secondary" className="bg-yellow-100 text-yellow-700">
           <Clock className="w-4 h-4" />
           In Progress
         </Badge>
@@ -26,14 +26,14 @@ export default function GetStatusBadge(status: TaskStatusType) {
       );
     case "SUBMITTED":
       return (
-        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+        <Badge variant="secondary" className="bg-cyan-100 text-cyan-600">
           <AlertCircle className="w-4 h-4" />
           Submited
         </Badge>
       );
     case "COMPLETED":
       return (
-        <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+        <Badge variant="secondary" className="bg-emerald-100 text-emerald-600">
           <CheckCircle className="w-4 h-4" />
           Completed
         </Badge>
