@@ -58,6 +58,7 @@ import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { sendNotification } from "@/features/notifications/server/action";
 import { logger } from "@/lib/logging/winston";
 import { env } from "@/env/server";
+import { GoHeaders } from "@/lib/go-config";
 export type {
   catagoryType,
   userTasksType,
@@ -1066,9 +1067,7 @@ export async function createTaskComment(values: {
       try {
         await fetch(`${env.GO_API_URL}/send-comment`, {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${env.GO_API_AUTH}`,
-        },
+        headers: GoHeaders ,
         body: JSON.stringify(result),
       });
       } catch (error) {
