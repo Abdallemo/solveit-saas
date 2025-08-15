@@ -31,6 +31,7 @@ import { NavSecondary } from "./NavSecondary";
 import { usePathname } from "next/navigation";
 import { Session } from "next-auth";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
+import { GalleryVerticalEnd } from "lucide-react";
 
 export default function DashboardSidebar({ user }: { user: Session["user"] }) {
   const pathname = usePathname();
@@ -61,8 +62,24 @@ export default function DashboardSidebar({ user }: { user: Session["user"] }) {
   };
 
   return (
-    <Sidebar variant="sidebar" collapsible="icon">
-      <SidebarHeader />
+    <Sidebar variant="sidebar" collapsible="icon" >
+      <SidebarHeader>
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" asChild>
+              <a href="#">
+                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+                  <GalleryVerticalEnd className="size-4" />
+                </div>
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span className="font-medium">Solveit</span>
+                  <span className="">v1.0.0</span>
+                </div>
+              </a>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
+      </SidebarHeader>
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>
