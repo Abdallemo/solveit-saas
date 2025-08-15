@@ -1,0 +1,39 @@
+package middleware
+
+import (
+	"net/http"
+	"os"
+	"strings"
+)
+
+type Middleware func(http.Handler) http.Handler
+
+func CreateStack(xs ...Middleware) Middleware {
+	return func(next http.Handler) http.Handler {
+		for i := len(xs) - 1; i >= 0; i-- {
+			x := xs[i]
+			next = x(next)
+		}
+		return next
+	}
+}
+func IsAuthorized(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		authHeader := r.Header.Get("Authorization")
+		if authHeader == "" {
+			http.Error(w, "missing Authorization header", http.StatusBadRequest)
+			return
+		}
+		parts := strings.SplitN(authHeader, "Bearer ", 2)
+		if len(parts) != 2 {
+			http.Error(w, "invalid Authorization format", http.StatusBadRequest)
+			return
+		}
+		token := strings.TrimSpace(parts[1])
+		if token != os.Getenv("GO_API_AUTH") {
+			http.Error(w, "invalid Authorization Token", http.StatusUnauthorized)
+			return
+		}
+		next.ServeHTTP(w, r)
+	})
+}
