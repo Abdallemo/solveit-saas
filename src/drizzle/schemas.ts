@@ -23,7 +23,7 @@ export const UserRole = pgEnum("role", [
   "SOLVER",
 ]);
 export const NotificationMethodsEnum = pgEnum("method", ["SYSTEM", "EMAIL"]);
-export const TierEnum = pgEnum("tier", ["POSTER", "SOLVER","SOLVER++"]);
+export const TierEnum = pgEnum("tier", ["POSTER", "SOLVER", "SOLVER++"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
   "SUCCEEDED",
@@ -258,7 +258,7 @@ export const RefundTable = pgTable("refunds", {
     .references(() => PaymentTable.id),
   taskId: uuid("task_id")
     .notNull()
-    .references(() => TaskTable.id,{ onDelete: "cascade" }),
+    .references(() => TaskTable.id, { onDelete: "cascade" }),
   refundReason: text("refund_reason"),
   refundStatus: RefundStatusEnum().default("PENDING"),
   moderatorId: uuid("moderatorId").references(() => UserTable.id),
@@ -274,7 +274,7 @@ export const TaskCommentTable = pgTable("task_comments", {
     .references(() => TaskTable.id, { onDelete: "cascade" }),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id,{ onDelete: "cascade" }),
+    .references(() => UserTable.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
@@ -393,8 +393,13 @@ export const MentorshipBookingTable = pgTable("mentorship_bookings", {
 });
 export const RulesTable = pgTable("ai_rules", {
   id: uuid("id").primaryKey().defaultRandom(),
-  ruleList: text("rule_list").array().default([]),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  rule: text("rule").notNull(),
+  description: text("decription").notNull(),
+  isActive: boolean("is_active").notNull(),
+  adminId: uuid("admin_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "no action" }),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
 });
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -434,10 +439,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
     fields: [UserTable.id],
     references: [AccountTable.userId],
   }),
-    owner: many(TaskCommentTable, {
+  owner: many(TaskCommentTable, {
     relationName: "owner",
   }),
-
 }));
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({
@@ -478,17 +482,17 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   blockedSolvers: many(BlockedTasksTable, {
     relationName: "blockedSolvers",
   }),
-    taskComments: many(TaskCommentTable, {
+  taskComments: many(TaskCommentTable, {
     relationName: "taskComments",
   }),
 }));
 export const TaskCommentTableRelations = relations(
   TaskCommentTable,
-  ({ one, }) => ({
+  ({ one }) => ({
     owner: one(UserTable, {
       fields: [TaskCommentTable.userId],
       references: [UserTable.id],
-      relationName:"owner"
+      relationName: "owner",
     }),
     taskComments: one(TaskTable, {
       fields: [TaskCommentTable.taskId],
