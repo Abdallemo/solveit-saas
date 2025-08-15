@@ -55,7 +55,7 @@ export default function WorkspaceEditor() {
   })
 
   return (
-    <div className="border rounded-md flex flex-col h-[650px] md:h-[800px] lg:h-[800px]" >
+    <div className="border rounded-md flex flex-col h-[650px] md:h-[800px] lg:h-[800px] bg-sidebar" >
       <MenuBar editor={editor} />
       <div className="flex-1 overflow-hidden">
         <EditorContent editor={editor} className="h-full overflow-y-auto" />
