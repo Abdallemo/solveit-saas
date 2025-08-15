@@ -43,6 +43,9 @@ async function saveSystemNotification({
   logger.info("found results", result);
   await fetch(`${env.GO_API_URL}/send-notification`, {
     method: "POST",
+    headers:{
+      "Authorization":`Bearer ${env.GO_API_AUTH}`
+    },
     body: JSON.stringify(result[0]),
   });
   return;
