@@ -2,28 +2,10 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
-	"log"
+	"github/abdallemo/solveit-saas/internal/auth"
 	"net/http"
-	"sync"
-
-	"github.com/gorilla/websocket"
+	"os"
 )
-
-var allowedHost = map[string]bool{
-	"http://localhost:3000":          true,
-	"https://solveit.up.railway.app": true,
-}
-
-var upgrader = websocket.Upgrader{
-	ReadBufferSize:  1 << 10,
-	WriteBufferSize: 1 << 10,
-	CheckOrigin: func(r *http.Request) bool {
-		//allowedUrl := os.Getenv("NEXTAUTH_URL")
-		origin := r.Header.Get("Origin")
-		return allowedHost[origin]
-	},
-}
 
 type Message struct {
 	ID         string `json:"id"`
@@ -35,98 +17,132 @@ type Message struct {
 	Read       bool   `json:"read"`
 	CreatedAt  string `json:"createdAt"`
 }
+
+type CommentOwner struct {
+	Name          string `json:"name"`
+	ID            string `json:"id"`
+	Role          string `json:"role"`
+	Image         string `json:"image"`
+	Email         string `json:"email"`
+	Password      string `json:"password"`
+	EmailVerified string `json:"emailVerified"`
+	CreatedAt     string `json:"createdAt"`
+}
+type Comment struct {
+	ID        string       `json:"id"`
+	Content   string       `json:"content"`
+	CreatedAt string       `json:"createdAt"`
+	UserId    string       `json:"userId"`
+	TaskId    string       `json:"taskId"`
+	Owner     CommentOwner `json:"owner"`
+}
+
 type wsNotification struct {
-	conns    map[string][]*websocket.Conn
+	hub      *WsHub
 	messages []Message
-	mu       sync.RWMutex
 }
 
-func (s *wsNotification) cleanUp(conn *websocket.Conn, userID string) {
-
-	defer conn.Close()
-	for {
-		_, _, err := conn.ReadMessage()
-		if err != nil {
-			fmt.Println("connection closed or error:", err)
-
-			s.mu.Lock()
-			conns := s.conns[userID]
-			activeConns := conns[:0]
-			for _, c := range conns {
-				if c != conn {
-					activeConns = append(activeConns, c)
-				}
-			}
-			s.conns[userID] = activeConns
-			s.mu.Unlock()
-			break
-		}
-	}
-
-}
-
-func NewWsNotification() *wsNotification {
+func NewWsNotification(hub *WsHub) *wsNotification {
 	return &wsNotification{
-		conns:    make(map[string][]*websocket.Conn),
+		hub:      hub,
 		messages: make([]Message, 0, 1<<10),
 	}
 }
 
 func (s *wsNotification) handleNotification(w http.ResponseWriter, r *http.Request) {
-	conn, err := upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		fmt.Println("faield to upgrade conn")
-		return
-	}
 	userID := r.URL.Query().Get("user_id")
 	if userID == "" {
-		conn.Close()
+		http.Error(w, "Missing user_id", http.StatusBadRequest)
 		return
 	}
-	s.mu.Lock()
-	s.conns[userID] = append(s.conns[userID], conn)
-	s.mu.Unlock()
 
-	go s.cleanUp(conn, userID)
-	fmt.Println("new Connection from client:", conn.RemoteAddr())
-	for usrid := range s.conns {
-		fmt.Println("current Active Users", usrid)
-	}
+	q := r.URL.Query()
+	q.Set("channel", "notif:"+userID)
+	r.URL.RawQuery = q.Encode()
 
+	s.hub.handleWS(w, r)
 }
 
 func (s *wsNotification) handleSendNotification(w http.ResponseWriter, r *http.Request) {
+
+	err := auth.IsAuthorized(r, os.Getenv("GO_API_AUTH"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
 	msg := Message{}
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
-		fmt.Println("err decoding,", err)
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
+
 	notification := Message{
-		ID:        msg.ID,
-		Content:   msg.Content,
-		SenderId:  msg.SenderId,
-		Subject:   msg.Subject,
-		Method:    msg.Method,
-		Read:      msg.Read,
-		CreatedAt: msg.CreatedAt,
+		ID:         msg.ID,
+		Content:    msg.Content,
+		ReceiverId: msg.ReceiverId,
+		SenderId:   msg.SenderId,
+		Subject:    msg.Subject,
+		Method:     msg.Method,
+		Read:       msg.Read,
+		CreatedAt:  msg.CreatedAt,
 	}
+
 	s.sendToUser(msg.ReceiverId, notification)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Notification sent"))
 }
+
 func (s *wsNotification) sendToUser(userID string, msg Message) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	conns := s.conns[userID]
-	activeConns := conns[:0]
-	for _, conn := range conns {
-		if err := conn.WriteJSON(msg); err != nil {
-			log.Println("Write error:", err)
-			continue
-		}
-		activeConns = append(activeConns, conn)
+	s.hub.sendToChannel("notif:"+userID, msg)
+}
+
+// -------------------- Comments WS --------------------
+
+type wsComments struct {
+	hub     *WsHub
+	comment []Comment
+}
+
+func NewWsComments(hub *WsHub) *wsComments {
+	return &wsComments{
+		hub:     hub,
+		comment: make([]Comment, 0, 1<<10),
 	}
-	s.conns[userID] = activeConns
+}
+
+func (s *wsComments) handleComments(w http.ResponseWriter, r *http.Request) {
+	taskID := r.URL.Query().Get("task_id")
+	if taskID == "" {
+		http.Error(w, "Missing task_id", http.StatusBadRequest)
+		return
+	}
+
+	q := r.URL.Query()
+	q.Set("channel", "comments:"+taskID)
+	r.URL.RawQuery = q.Encode()
+
+	s.hub.handleWS(w, r)
+}
+
+func (s *wsComments) handleSendComments(w http.ResponseWriter, r *http.Request) {
+	err := auth.IsAuthorized(r, os.Getenv("GO_API_AUTH"))
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+	comment := Comment{}
+	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	s.sendToTask(comment.TaskId, comment)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Comment sent"))
+}
+
+func (s *wsComments) sendToTask(taskID string, comment Comment) {
+	s.hub.sendToChannel("comments:"+taskID, comment)
 }
