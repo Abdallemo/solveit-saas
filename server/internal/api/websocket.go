@@ -2,9 +2,7 @@ package api
 
 import (
 	"encoding/json"
-	"github/abdallemo/solveit-saas/internal/auth"
 	"net/http"
-	"os"
 )
 
 type Message struct {
@@ -65,11 +63,6 @@ func (s *wsNotification) handleNotification(w http.ResponseWriter, r *http.Reque
 
 func (s *wsNotification) handleSendNotification(w http.ResponseWriter, r *http.Request) {
 
-	err := auth.IsAuthorized(r, os.Getenv("GO_API_AUTH"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
 	msg := Message{}
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -126,11 +119,6 @@ func (s *wsComments) handleComments(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *wsComments) handleSendComments(w http.ResponseWriter, r *http.Request) {
-	err := auth.IsAuthorized(r, os.Getenv("GO_API_AUTH"))
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
 	comment := Comment{}
 	if err := json.NewDecoder(r.Body).Decode(&comment); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
