@@ -25,6 +25,7 @@ export const env = createEnv({
         S3_ENDPOINT:z.string(),
         GO_API_URL:z.string(),
         STRIPE_SOLVER_PLUS_PRICE_ID:z.string(),
+        GO_API_AUTH:z.string(),
     },
     experimental__runtimeEnv:process.env,
 })
