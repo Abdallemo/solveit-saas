@@ -8,12 +8,15 @@ import (
 	"runtime"
 
 	"github/abdallemo/solveit-saas/internal/api"
+	"github/abdallemo/solveit-saas/internal/storage"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/credentials"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
+	"github.com/sashabaranov/go-openai"
 )
 
 func main() {
@@ -37,10 +40,18 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
+	dbUrl := os.Getenv("DATABASE_URL")
+	db, err := pgxpool.New(context.Background(), dbUrl)
+	if err != nil {
+		log.Fatal("unable to connect to database:", err)
+	}
+	defer db.Close()
+	store := storage.NewSPostgressStore(db)
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(os.Getenv("S3_ENDPOINT"))
 	})
-	server := api.NewServer(":3030", s3Client)
+	openaiClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
+	server := api.NewServer(":3030", s3Client, openaiClient, store)
 	log.Fatal(server.Run())
 }
