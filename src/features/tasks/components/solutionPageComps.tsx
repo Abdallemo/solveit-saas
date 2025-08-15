@@ -7,7 +7,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
@@ -55,6 +55,9 @@ import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import { useMutation } from "@tanstack/react-query";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
+import useWebSocket from "@/hooks/useWebSocket";
+import { env } from "@/env/client";
+import GetStatusBadge from "./taskStatusBadge";
 
 function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
@@ -232,18 +235,8 @@ export default function SolutionPageComps({
   solution: SolutionById;
 }) {
   const { user } = useCurrentUser();
-  const router = useRouter();
   const [comment, setComment] = useState("");
-  const [comments, setComments] = useState(
-    [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
-    })
-  );
-  if (!user || !user.id) {
-    router.back();
-  }
+  const latestCommentRef = useRef<HTMLDivElement>(null);
   const files = solution.solutionFiles.map((f) => {
     const {
       id,
@@ -264,41 +257,33 @@ export default function SolutionPageComps({
       uploadedAt,
     };
   });
+  const [comments, setComments] = useState(
+    [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
+      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return dateA - dateB;
+    })
+  );
+  useWebSocket<commentType>(
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/comments?task_id=${solution?.taskId}`,
+    {
+      onMessage: (comment) => {
+        setComments((prev) => [...prev, comment]);
+      },
+    }
+  );
+  useEffect(() => {
+    if (latestCommentRef.current) {
+      latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [comments]);
 
-  const getStatusBadge = (status: TaskStatusType) => {
-    const variants = {
-      ASSIGNED: "bg-green-100 text-green-600",
-      COMPLETED: "bg-green-100 text-green-800",
-      // pending: "bg-yellow-100 text-yellow-800",
-
-      CANCELED: "bg-red-100 text-red-800",
-    };
-    return variants[status as keyof typeof variants] || variants.ASSIGNED;
-  };
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
     onSuccess: () => {},
   });
   async function handleSendComment() {
     if (!comment.trim()) return;
-    const newComment: commentType = {
-      id: crypto.randomUUID(),
-      content: comment,
-      createdAt: new Date(),
-      userId: user!.id!,
-      taskId: solution!.taskId,
-      owner: {
-        name: user!.name ?? null,
-        id: user!.id!,
-        role: user!.role ?? null,
-        image: user!.image ?? null,
-        email: user!.email ?? null,
-        password: null,
-        emailVerified: null,
-        createdAt: null,
-      },
-    };
-    setComments((prev) => [...prev, newComment]);
     setComment("");
     await createTaskCommentMuta({
       comment,
@@ -316,10 +301,8 @@ export default function SolutionPageComps({
             <div className="flex items-center justify-between">
               <h2 className="text-xl text-foreground font-bold">Solution</h2>
               <div className="flex items-center space-x-2">
-                <Badge
-                  className={getStatusBadge(solution.taskSolution.status!)}>
-                  {solution.taskSolution.status}
-                </Badge>
+                {GetStatusBadge(solution.taskSolution.status!)}
+
                 <span className="text-sm text-foreground/60">
                   by {solution.taskSolution.solver?.name}
                 </span>
@@ -382,13 +365,17 @@ export default function SolutionPageComps({
             {comments.length > 0 && (
               <ScrollArea className="h-60 p-4">
                 <div className="space-y-4 mb-6">
-                  {comments.map((comment) => (
-                    <CommentCard
-                      key={comment.id}
-                      comment={comment}
-                      currentUserId={user?.id!}
-                    />
-                  ))}
+                  {comments.map((comment, index) => {
+                    const isLast = index === comments.length - 1;
+                    return (
+                      <CommentCard
+                        key={comment.id}
+                        comment={comment}
+                        currentUserId={user?.id!}
+                        ref={isLast ? latestCommentRef : null}
+                      />
+                    );
+                  })}
                 </div>
               </ScrollArea>
             )}
