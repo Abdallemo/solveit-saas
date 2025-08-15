@@ -35,7 +35,7 @@ export default function BridCarmComponent() {
         <BreadcrumbList>
           <BreadcrumbItem>
             <BreadcrumbLink
-              className="text-gray-700 hover:text-gray-900 font-medium"
+              className="text-foreground hover:text-foreground/50 font-medium"
               asChild
             >
               <Link href={`/dashboard/${role}`}>Dashboard</Link>
@@ -66,8 +66,8 @@ export default function BridCarmComponent() {
                     <span
                       className={`${
                         isLast
-                          ? "font-semibold text-gray-900"
-                          : "text-gray-400 cursor-default"
+                          ? "font-semibold text-foreground/90"
+                          : "text-foreground/40 cursor-default"
                       }`}
                     >
                       {pathSegment === "dashboard"
@@ -76,7 +76,7 @@ export default function BridCarmComponent() {
                     </span>
                   ) : (
                     <Link
-                      className="capitalize text-gray-500 hover:text-gray-700 transition-colors"
+                      className="capitalize text-foreground/50 hover:text-foreground/70 transition-colors"
                       href={
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
