@@ -5,12 +5,14 @@ import { s3 } from "@/lib/cloudFlairR2";
 import { scope } from "./media-types";
 import { env } from "@/env/server";
 import { logger } from "@/lib/logging/winston";
+import { GoHeaders } from "@/lib/go-config";
 
 
 export async function deleteFileFromR2(filePath: string) {
   try {
     const res =await fetch(`${env.GO_API_URL}/media`,{
       method:"DELETE",
+      headers: GoHeaders ,
       body:JSON.stringify({key:filePath})
     })
     if (!res.ok){
@@ -43,6 +45,7 @@ export async function uploadFiles({
   formData.append("scope", scope);
   try {
     const response = await fetch(url, {
+      headers: GoHeaders ,
       method: "POST",
       body: formData,
     });
