@@ -24,6 +24,7 @@ import {
   useNotificationMarkAllAsRead,
   useNotificationRead,
 } from "@/hooks/useNotification";
+import useWebSocket from "@/hooks/useWebSocket";
 export function getNotificationIcon(method: "SYSTEM" | "EMAIL") {
   switch (method) {
     case "EMAIL":
@@ -61,8 +62,6 @@ type Message = {
   method: "SYSTEM" | "EMAIL";
   read: boolean;
 };
-type ConnectionState = "connecting" | "connected" | "disconnected";
-
 export default function NotificationDropDown({
   initailAllNotifications,
 }: {
@@ -72,8 +71,6 @@ export default function NotificationDropDown({
   const [messages, setMessages] = useState<Message[]>(
     (initailAllNotifications ?? []).slice(0, 3)
   );
-  const [connectionState, setConnectionState] =
-    useState<ConnectionState>("connecting");
   const [isOpen, setIsOpen] = useState(false);
   const userId = user?.id;
   const unreadCount = messages.filter((msg) => !msg.read).length;
@@ -82,46 +79,20 @@ export default function NotificationDropDown({
   const { ReadMuta } = useNotificationRead();
   const { markAllAsReadMuta } = useNotificationMarkAllAsRead();
 
-  useEffect(() => {
-    if (!userId) return;
-    setConnectionState("connecting");
-    const ws = new WebSocket(
-      `${env.NEXT_PUBLIC_GO_API_WS_URL}/notification?user_id=${userId}`
-    );
-
-    ws.onopen = () => {
-      setConnectionState("connected");
-
-      console.log("WebSocket connected");
-    };
-
-    ws.onmessage = (event) => {
-      const msg: Message = JSON.parse(event.data);
-      setMessages((prev) => {
-        if (prev.some((m) => m.id === msg.id)) {
-          return prev;
-        }
-        return [msg, ...prev].slice(0, 3);
-      });
-      console.log("New notification:", msg);
-    };
-
-    ws.onerror = (error) => {
-      setConnectionState("disconnected");
-
-      // console.log("WebSocket error:", error)
-    };
-
-    ws.onclose = () => {
-      setConnectionState("disconnected");
-
-      console.log("WebSocket disconnected");
-    };
-
-    return () => {
-      ws.close();
-    };
-  }, [userId]);
+  useWebSocket<Message>(
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/notification?user_id=${userId}`,
+    {
+      onMessage: (msg) => {
+        setMessages((prev) => {
+          if (prev.some((m) => m.id === msg.id)) {
+            return prev;
+          }
+          return [msg, ...prev].slice(0, 3);
+        });
+      },
+      autoReconnect: false,
+    }
+  );
 
   const handleNotificationClick = async (notificationId: string) => {
     console.log("Notification clicked:", notificationId);
@@ -192,27 +163,6 @@ export default function NotificationDropDown({
         <div className="flex items-center justify-between p-4 border-b bg-muted/30">
           <div className="flex items-center gap-2">
             <h4 className="font-semibold text-base">Notifications</h4>
-            <div className="flex items-center gap-1">
-              {connectionState === "connected" && (
-                <Wifi className="h-3 w-3 text-green-500" />
-              )}
-              {connectionState === "connecting" && (
-                <Wifi className="h-3 w-3 text-yellow-500 animate-pulse" />
-              )}
-              {connectionState === "disconnected" && (
-                <WifiOff className="h-3 w-3 text-red-500" />
-              )}
-
-              {connectionState === "connected" && (
-                <span className="text-xs text-green-500">Connected</span>
-              )}
-              {connectionState === "connecting" && (
-                <span className=" text-xs text-yellow-500 ">Connecting...</span>
-              )}
-              {connectionState === "disconnected" && (
-                <span className=" text-xs text-red-500">Disconnected</span>
-              )}
-            </div>
           </div>
 
           {unreadCount > 0 && (
@@ -225,102 +175,101 @@ export default function NotificationDropDown({
             </Button>
           )}
         </div>
-
-        <ScrollArea className="max-h-96">
-          {messages.length > 0 ? (
-            <div className="divide-y">
-              {messages.map((notification) => (
-                <div
-                  key={notification.id}
-                  className={cn(
-                    "group relative p-4 cursor-pointer transition-colors",
-                    "hover:bg-accent/50",
-                    !notification.read && "bg-blue-50/50 dark:bg-blue-950/20"
-                  )}
-                  onClick={() => handleNotificationClick(notification.id)}>
-                  <div className="flex gap-3">
-                    <div
-                      className={cn(
-                        "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
-                        notification.method === "EMAIL"
-                          ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                          : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                      )}>
-                      {getNotificationIcon(notification.method)}
-                    </div>
-
-                    <div className="flex-1 min-w-0 space-y-1">
-                      <div className="flex items-start justify-between gap-2">
-                        <p
-                          className={cn(
-                            "text-sm font-medium leading-tight",
-                            !notification.read && "font-semibold"
-                          )}>
-                          {notification.subject || "New notification"}
-                        </p>
-
-                        <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                          {!notification.read && (
-                            <div className="w-2 h-2 bg-blue-500 rounded-full" />
-                          )}
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
-                            onClick={(e) =>
-                              handleDeleteNotification(notification.id, e)
-                            }>
-                            <X className="h-3 w-3" />
-                          </Button>
-                        </div>
+        <div>
+          <ScrollArea className="max-h-96 ">
+            {messages.length > 0 ? (
+              <div className="flex flex-col justify-between">
+                {messages.map((notification) => (
+                  <div
+                    key={notification.id}
+                    className={cn(
+                      "group relative p-4 cursor-pointer transition-colors",
+                      "hover:bg-accent/50",
+                      !notification.read && "bg-blue-50/50 dark:bg-blue-950/20"
+                    )}
+                    onClick={() => handleNotificationClick(notification.id)}>
+                    <div className="flex gap-3">
+                      <div
+                        className={cn(
+                          "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
+                          notification.method === "EMAIL"
+                            ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
+                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
+                        )}>
+                        {getNotificationIcon(notification.method)}
                       </div>
 
-                      <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-                        {notification.content}
-                      </p>
+                      <div className="flex-1 min-w-0 space-y-1">
+                        <div className="flex items-start justify-between gap-2">
+                          <p
+                            className={cn(
+                              "text-sm font-medium leading-tight",
+                              !notification.read && "font-semibold"
+                            )}>
+                            {notification.subject || "New notification"}
+                          </p>
 
-                      <div className="flex items-center justify-between pt-1">
-                        <span className="text-xs text-muted-foreground">
-                          {formatTimeAgo(notification.createdAt)}
-                        </span>
+                          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            {!notification.read && (
+                              <div className="w-2 h-2 bg-blue-500 rounded-full" />
+                            )}
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                              onClick={(e) =>
+                                handleDeleteNotification(notification.id, e)
+                              }>
+                              <X className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
 
-                        <Badge
-                          variant="secondary"
-                          className="text-xs px-2 py-0.5 h-5">
-                          {notification.method.toLowerCase()}
-                        </Badge>
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
+                          {notification.content}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-xs text-muted-foreground">
+                            {formatTimeAgo(notification.createdAt)}
+                          </span>
+
+                          <Badge
+                            variant="secondary"
+                            className="text-xs px-2 py-0.5 h-5">
+                            {notification.method.toLowerCase()}
+                          </Badge>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center py-12 px-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                <Bell className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <h3 className="font-medium text-base mb-2">No notifications</h3>
-              <p className="text-sm text-muted-foreground text-center max-w-sm">
-                New notifications will appear here when they arrive.
-              </p>
-            </div>
-          )}
-        </ScrollArea>
+                ))}
+                <DropdownMenuSeparator />
 
-        {messages.length > 0 && (
-          <>
-            <DropdownMenuSeparator />
-            <div className="p-2">
-              <Button
-                variant="ghost"
-                className="w-full justify-center text-sm h-9"
-                asChild>
-                <Link href={urlPrfix}>View all notifications</Link>
-              </Button>
-            </div>
-          </>
-        )}
+                <div className="p-2">
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-center text-sm h-9"
+                    asChild>
+                    <Link href={urlPrfix} onClick={()=>setIsOpen(prev=>!prev)}>View all notifications</Link>
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center py-12 px-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+                  <Bell className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <h3 className="font-medium text-base mb-2">No notifications</h3>
+                <p className="text-sm text-muted-foreground text-center max-w-sm">
+                  New notifications will appear here when they arrive.
+                </p>
+              </div>
+            )}
+          </ScrollArea>
+        </div>
+
+        {messages.length > 0 && <></>}
       </DropdownMenuContent>
     </DropdownMenu>
   );
