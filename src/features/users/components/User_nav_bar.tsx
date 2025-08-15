@@ -118,7 +118,9 @@ export function NavUser({ image, name, email, role,id }: AppUser) {
               </Link>
               <DropdownMenuItem>
                 <Bell />
+                <Link href={`/dashboard/notifications`}>
                 Notifications
+                </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
