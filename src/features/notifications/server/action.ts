@@ -3,6 +3,7 @@ import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { createTransporter } from "@/lib/email/createTransporter";
+import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -14,11 +15,11 @@ type NotificationProp = {
   receiverEmail?: string;
   body: ContentType;
 };
-export async function getAllNotification(receiverId: string,limit=3) {
+export async function getAllNotification(receiverId: string, limit = 3) {
   return await db.query.notifications.findMany({
     where: (table, fn) => fn.eq(table.receiverId, receiverId),
-    limit:limit,
-    orderBy:(n,{desc})=>[desc(n.createdAt)]
+    limit: limit,
+    orderBy: (n, { desc }) => [desc(n.createdAt)],
   });
 }
 async function saveSystemNotification({
@@ -43,9 +44,7 @@ async function saveSystemNotification({
   logger.info("found results", result);
   await fetch(`${env.GO_API_URL}/send-notification`, {
     method: "POST",
-    headers:{
-      "Authorization":`Bearer ${env.GO_API_AUTH}`
-    },
+    headers: GoHeaders ,
     body: JSON.stringify(result[0]),
   });
   return;
@@ -127,10 +126,12 @@ export async function sendNotificationByEmail({
 
   try {
     const result = await transporter.sendMail(mailOptions);
-    logger.info("Email sent to: "+receiverEmail, result.messageId);
+    logger.info("Email sent to: " + receiverEmail, result.messageId);
     return result;
   } catch (error) {
-    logger.error("Failed to send notification email. to:"+receiverEmail, {error:error});
+    logger.error("Failed to send notification email. to:" + receiverEmail, {
+      error: error,
+    });
     throw new Error("Failed to send notification email.");
   }
 }
@@ -177,11 +178,11 @@ export async function deleteNotification({
 export async function notificationReadUpdate({
   id,
   receiverId,
-  read
+  read,
 }: {
   id: string;
   receiverId: string;
-  read:boolean
+  read: boolean;
 }) {
   try {
     await db
@@ -191,7 +192,7 @@ export async function notificationReadUpdate({
         and(eq(notifications.id, id), eq(notifications.receiverId, receiverId))
       );
     revalidatePath("/dashboard");
-    return read
+    return read;
   } catch (error) {
     logger.error("failed to mark as read ", { id: id });
     throw new Error("failed to mark as read ");
