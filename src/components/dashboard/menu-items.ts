@@ -118,17 +118,12 @@ export const MenuItemsAdmin = [
     icon: LuBrain,
     child: [
       {
-        title: "AI Rules",
-        url: "/dashboard/admin/ai/rules",
-        icon: LuListChecks,
-      },
-      {
         title: "Moderation Logs",
         url: "/dashboard/admin/ai/logs",
         icon: LuHistory,
       },
       {
-        title: "AI Training Feedback",
+        title: "AI Feedback",
         url: "/dashboard/admin/ai/feedback",
         icon: LuStar,
       },
