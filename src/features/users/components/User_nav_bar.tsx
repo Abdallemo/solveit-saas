@@ -93,7 +93,7 @@ export function NavUser({ image, name, email, role,id }: AppUser) {
                     await createStripeCheckoutSession("SOLVER");
                   }}>
                   <Sparkles />
-                  Upgrade to Solver
+                  Become a Solver
                 </DropdownMenuItem>
               )}
               {role === "SOLVER" && subTier === "SOLVER" && (
