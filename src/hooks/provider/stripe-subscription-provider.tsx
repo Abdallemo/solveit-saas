@@ -10,6 +10,7 @@ export type StripeSubscriptionContextType = {
   status: string;
   nextBilling:Date | null
   subTier:TierType
+  price: number
 };
 
 const StripeSubscriptionContext = createContext<StripeSubscriptionContextType | null>(null);
