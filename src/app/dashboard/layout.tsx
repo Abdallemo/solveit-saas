@@ -23,7 +23,6 @@ import NotificationDropDown from "@/features/notifications/components/notificati
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { getWalletInfo } from "@/features/tasks/server/action";
 import ReactQueryProvider from "@/contexts/ReactQueryProvider";
-import { IceCreamBowlIcon } from "lucide-react";
 import BridCarmComponent from "@/components/BridCarmComponent";
 import { getAllNotification } from "@/features/notifications/server/action";
 const dbFlags = {
@@ -60,13 +59,17 @@ export default async function DashboardLayout({
     isCancelScheduled: false,
     status: "inactive",
     nextBilling: null,
-    subTier:subscription?.tier!
+    subTier: subscription?.tier!,
+    price: 0,
   };
 
   if (subscription?.stripeSubscriptionId) {
     const sub = await stripe.subscriptions.retrieve(
       subscription.stripeSubscriptionId
     );
+    const price = sub.items.data[0].price.unit_amount
+      ? sub.items.data[0].price.unit_amount / 100
+      : 0;
     stripeData = {
       cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
       isCancelScheduled: sub.cancel_at_period_end,
@@ -74,7 +77,8 @@ export default async function DashboardLayout({
       nextBilling: sub.current_period_end
         ? new Date(sub.current_period_end * 1000)
         : null,
-      subTier:subscription.tier
+      subTier: subscription.tier,
+      price,
     };
   }
   const session = await getServerSession();
@@ -93,13 +97,14 @@ export default async function DashboardLayout({
       refetchInterval={30 * 60}
       refetchOnWindowFocus={true}>
       <StripeSubscriptionProvider value={stripeData}>
-        <SidebarProvider defaultOpen={defaultOpen}
-        style={
-        {
-          "--sidebar-width": "calc(var(--spacing) * 72)",
-          "--header-height": "calc(var(--spacing) * 12)",
-        } as React.CSSProperties
-      }>
+        <SidebarProvider
+          defaultOpen={defaultOpen}
+          style={
+            {
+              "--sidebar-width": "calc(var(--spacing) * 72)",
+              "--header-height": "calc(var(--spacing) * 12)",
+            } as React.CSSProperties
+          }>
           <ReactQueryProvider>
             <div className="flex h-screen w-full">
               <DashboardSidebar user={session?.user!} />
