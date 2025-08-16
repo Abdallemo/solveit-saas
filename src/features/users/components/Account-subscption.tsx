@@ -2,7 +2,8 @@
 import { CardWrapper } from "@/components/card-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { UserRoleType } from "@/drizzle/schemas";
+import { TierType, UserRoleType } from "@/drizzle/schemas";
+import { plans } from "@/features/subscriptions/plans";
 import {
   createCancelSession,
   createStripeCheckoutSession,
@@ -25,6 +26,7 @@ const subscription = {
 
 export default function AccountSubscption() {
   const [isPending, startTransition] = useTransition();
+  const { subTier, price } = useStripeSubscription();
   const router = useRouter();
   const { user } = useCurrentUser();
   const { email, id, image, name, role } = user!;
@@ -40,41 +42,37 @@ export default function AccountSubscption() {
                 <div>
                   {" "}
                   <div className="flex items-center gap-2">
-                    <p className="text-sm font-medium">{subscription.name}</p>
+                    <p className="text-sm font-medium">
+                      {subTier.toLowerCase()}
+                    </p>
                     <Badge variant="outline" className="text-xs">
                       {role !== "POSTER" ? "Active" : "Inactive"}
                     </Badge>
                   </div>
-                  {role !== "POSTER" ? (
-                    <p className="text-xs text-muted-foreground">
-                      {role == "SOLVER" && "15RM"} / monthly
-                    </p>
-                  ) : (
-                    <p className="text-xs text-muted-foreground">
-                      {role == "POSTER" && "0RM"} / monthly
-                    </p>
-                  )}
+                  <p className="text-xs text-muted-foreground">
+                    RM{price} / monthly
+                  </p>
                 </div>
               </div>
-              <Billings role={role} />
+              <Billings tier={subTier} />
             </div>
           ),
         },
       ]}
-      footer={<PlanChange role={role} />}
+      footer={<PlanChange tier={subTier} />}
       footerClassName="flex flex-col h-full w-full"
       className=""
     />
   );
 }
 
-function Billings({ role }: { role: UserRoleType | undefined }) {
+function Billings({ tier }: { tier: TierType }) {
   const { cancelAt, isCancelScheduled, status, nextBilling } =
     useStripeSubscription();
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between text-sm">
-        {role !== "POSTER" && (
+        {tier !== "POSTER" && (
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-muted-foreground" />
             {isCancelScheduled ? (
@@ -93,14 +91,14 @@ function Billings({ role }: { role: UserRoleType | undefined }) {
     </div>
   );
 }
-function PlanChange({ role }: { role: UserRoleType | undefined }) {
+function PlanChange({ tier }: { tier: TierType }) {
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const { cancelAt, isCancelScheduled, status } = useStripeSubscription();
 
   return (
     <div className="flex flex-col space-y-2 w-full">
-      {role !== "POSTER" ? (
+      {tier !== "POSTER" ? (
         <Button
           variant="outline"
           size="sm"
