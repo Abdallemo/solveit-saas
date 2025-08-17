@@ -1,7 +1,7 @@
 "use client";
 
-import {useState } from "react";
-import { Mail, Bell, CreditCard } from "lucide-react";
+import { useState, useTransition } from "react";
+import { Mail, Bell, CreditCard, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,15 +28,21 @@ import { toast } from "sonner";
 import Loading from "@/app/loading";
 import AuthGate from "@/components/AuthGate";
 import { useAuthGate } from "@/hooks/useAuthGate";
+import { cardsType, ManageUserCreditCardPortal } from "@/features/payments/server/action";
+import { useRouter } from "next/navigation";
+import { Badge } from "@/components/ui/badge";
 export default function AccountComponent({
   isOauthUser,
+  cards,
 }: {
   isOauthUser: boolean;
+  cards: cardsType;
 }) {
   const { user } = useCurrentUser();
   const [emailNotification, SetEmailNotification] = useState<boolean>(false);
   const [pushNotification, setPushNotification] = useState<boolean>(false);
-
+  const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const { setTheme, theme } = useTheme();
 
   const { isLoading, isBlocked } = useAuthGate();
@@ -75,10 +81,7 @@ export default function AccountComponent({
                   <>
                     <div className="space-y-2">
                       <Label htmlFor="firstName">First name</Label>
-                      <Input
-                        id="firstName"
-                        defaultValue={user?.name ?? ""}
-                      />
+                      <Input id="firstName" defaultValue={user?.name ?? ""} />
                       <Label htmlFor="email">Email</Label>
                       <Input
                         disabled={isOauthUser}
@@ -206,79 +209,95 @@ export default function AccountComponent({
             ]}
           />
 
-          { !isOauthUser && <CardWrapper
-            title="Security"
-            sections={[
-              {
-                children: (
-                  <div className="flex flex-col gap-3">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="current-password"
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="new-password"
-                      type="password"
-                    />
+          {!isOauthUser && (
+            <CardWrapper
+              title="Security"
+              sections={[
+                {
+                  children: (
+                    <div className="flex flex-col gap-3">
+                      <Label htmlFor="current-password">Current Password</Label>
+                      <Input
+                        disabled={isOauthUser}
+                        id="current-password"
+                        type="password"
+                        autoComplete="new-password"
+                      />
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        disabled={isOauthUser}
+                        id="new-password"
+                        type="password"
+                      />
 
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="confirm-password"
-                      type="password"
-                    />
-                  </div>
-                ),
-              },
-            ]}
-            footer={
-              <>
-                <Button
-                  variant={"secondary"}
-                  onClick={() => toast.error("cancled")}>
-                  cancel
-                </Button>
-                <Button
-                  variant={"success"}
-                  onClick={() => toast.success("saved")}>
-                  save
-                </Button>
-              </>
-            }
-          />}
+                      <Label htmlFor="confirm-password">Confirm Password</Label>
+                      <Input
+                        disabled={isOauthUser}
+                        id="confirm-password"
+                        type="password"
+                      />
+                    </div>
+                  ),
+                },
+              ]}
+              footer={
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => toast.error("cancled")}>
+                    cancel
+                  </Button>
+                  <Button
+                    variant={"success"}
+                    onClick={() => toast.success("saved")}>
+                    save
+                  </Button>
+                </>
+              }
+            />
+          )}
           <CardWrapper
             title="Payment Methods"
             sections={[
               {
-                children: (
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-16 rounded bg-muted flex items-center justify-center">
-                        <CreditCard className="h-6 w-6" />
+                children:
+                  cards.length > 0 &&
+                  cards.map((card) => (
+                    <div
+                      className="flex items-center justify-between"
+                      key={card.id}>
+                      <div className="flex items-center gap-4">
+                        <div className="h-10 w-16 rounded bg-muted flex items-center justify-center">
+                          <CreditCard className="h-6 w-6" />
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium">
+                            •••• •••• •••• {card.last4}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            Expires {card.exp_month}/{card.exp_year}
+                          </p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          •••• •••• •••• 4242
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          Expires 12/24
-                        </p>
-                      </div>
+                      <Badge variant="outline" >
+                        {card.brand}
+                      </Badge>
                     </div>
-                    <Button variant="outline" size="sm">
-                      Edit
-                    </Button>
-                  </div>
-                ),
+                  )),
               },
             ]}
             footer={
-              <Button variant="outline" className="w-full">
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={isPending}
+                onClick={() =>
+                  startTransition(async () => {
+                    const url = (await ManageUserCreditCardPortal())!;
+                    router.push(url);
+                  })
+                }>
+                {isPending && <Loader2 className="animate-spin" />}
                 Add Payment Method
               </Button>
             }
@@ -290,7 +309,11 @@ export default function AccountComponent({
           <div className="flex justify-end gap-2">
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" className="cursor-pointer max-w-3xl w-full ">Delete account</Button>
+                <Button
+                  variant="destructive"
+                  className="cursor-pointer max-w-3xl w-full ">
+                  Delete account
+                </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
                 <AlertDialogHeader>
@@ -301,7 +324,9 @@ export default function AccountComponent({
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
-                  <AlertDialogCancel className="cursor-pointer">Cancel</AlertDialogCancel>
+                  <AlertDialogCancel className="cursor-pointer">
+                    Cancel
+                  </AlertDialogCancel>
                   <form action={DeleteUserAccount} className="">
                     <AlertDialogAction
                       className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-full"
