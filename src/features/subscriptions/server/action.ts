@@ -173,7 +173,7 @@ export async function createCancelSession() {
   redirect(portalSession.url);
 }
 
-export async function CreateUserSessionPortal() {
+export async function CreateUserSubSessionPortal() {
   const { id } = (await getServerUserSession())!;
   const referer = await getServerReturnUrl();
   if (id == null) return;
