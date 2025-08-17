@@ -19,6 +19,7 @@ import { eq } from "drizzle-orm";
 import { UserSubscriptionTable } from "@/drizzle/schemas";
 import type Stripe from "stripe";
 import { logger } from "@/lib/logging/winston";
+import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -73,17 +74,17 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
     const customerId = typeof customer === "string" ? customer : customer.id;
 
     logger.info("Inserting subscription for user:", { userId: userId });
-
+    console.log("---------------customer Id: " + customerId);
     await updateUserSubscription(
       {
         tier: "SOLVER",
         userId: userId,
-        stripeCustomerId: customerId,
         stripeSubscriptionId: sub.id,
         stripeSubscriptionItemId: sub.items.data[0].id,
       },
       "SOLVER",
-      userId
+      userId,
+      customerId
     );
   } catch (err) {
     logger.error("Failed to handle subscription creation:", { error: err });
@@ -92,18 +93,18 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
 }
 async function handleUpdate(subscription: Stripe.Subscription) {
   const tierSelected = SubMap[subscription.items.data[0].plan.id];
-  const userId = subscription.metadata.userId
+  const userId = subscription.metadata.userId;
+  const customerId =
+    typeof subscription.customer === "string"
+      ? subscription.customer
+      : subscription.customer.id;
   console.log("TIER TO :", tierSelected);
-  if (tierSelected === undefined ) {
-    logger.warn(
-      "Unknown price ID in subscription update:",
-    );
+  if (tierSelected === undefined) {
+    logger.warn("Unknown price ID in subscription update:");
     return;
   }
-  if (!userId){
-    logger.warn(
-      "undefined userId :",
-    );
+  if (!userId) {
+    logger.warn("undefined userId :");
     return;
   }
   await updateUserSubscription(
@@ -112,19 +113,20 @@ async function handleUpdate(subscription: Stripe.Subscription) {
       userId,
     },
     "SOLVER",
-    userId
+    userId,
+    customerId
   );
 }
 async function handleDelete(subscription: Stripe.Subscription) {
   const customer = subscription.customer;
   const customerId = typeof customer === "string" ? customer : customer.id;
   const userId = subscription.metadata.userId;
+
   logger.info("Handling subscription deletion for user:" + userId);
 
   await CancelUserSubscription(
-    eq(UserSubscriptionTable.stripeCustomerId, customerId),
+    eq(UserSubscriptionTable.stripeSubscriptionId, subscription.id),
     {
-      stripeCustomerId: null,
       stripeSubscriptionId: null,
       stripeSubscriptionItemId: null,
       tier: "POSTER",
@@ -140,8 +142,24 @@ async function handleTaskCreate(event: Stripe.Event) {
     const userId = event?.data.object?.metadata?.userId;
     const paymentIntentId = session.payment_intent as string;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+    const customerId =
+      typeof paymentIntent.customer === "string"
+        ? paymentIntent.customer
+        : paymentIntent.customer?.id;
     logger.info("found userId:" + userId);
     if (!userId) return;
+    const paymentMethodId =
+      typeof paymentIntent.payment_method === "string"
+        ? paymentIntent.payment_method
+        : paymentIntent.payment_method?.id;
+    await UpdateUserField({
+      id: userId,
+      data: { stripeCustomerId: customerId },
+    });
+    logger.info(`paymentMethodId for user ${userId} is : ${paymentMethodId}`);
+    await stripe.paymentMethods.update(paymentMethodId!, {
+      allow_redisplay: "always",
+    });
     const amount = session.amount_total! / 100;
     const paymentId = await taskPaymentInsetion(
       "HOLD",
