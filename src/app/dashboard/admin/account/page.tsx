@@ -1,5 +1,6 @@
 import AuthGate from "@/components/AuthGate";
 import { getServerUserSession } from "@/features/auth/server/actions";
+import { getAllCustomerPaymentMethods } from "@/features/payments/server/action";
 import AccountComponent from "@/features/users/components/poster/AccountComponent";
 import { isUserAccountOauth } from "@/features/users/server/actions";
 import React from "react";
@@ -9,6 +10,7 @@ export default async function PosterAccountPage() {
   if (!currentUser || !currentUser.id) return <AuthGate />;
 
   const isOauthUser = await isUserAccountOauth(currentUser.id);
+    const cards = await getAllCustomerPaymentMethods(currentUser.id)
 
-  return <AccountComponent isOauthUser={isOauthUser} />;
+  return <AccountComponent isOauthUser={isOauthUser} cards={cards} />;
 }
