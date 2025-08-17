@@ -7,7 +7,7 @@ import { plans } from "@/features/subscriptions/plans";
 import {
   createCancelSession,
   createStripeCheckoutSession,
-  CreateUserSessionPortal,
+  CreateUserSubSessionPortal,
 } from "@/features/subscriptions/server/action";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -104,7 +104,7 @@ function PlanChange({ tier }: { tier: TierType }) {
           size="sm"
           onClick={() =>
             startTransition(async () => {
-              const url = (await CreateUserSessionPortal())!;
+              const url = (await CreateUserSubSessionPortal())!;
               router.push(url);
             })
           }>
