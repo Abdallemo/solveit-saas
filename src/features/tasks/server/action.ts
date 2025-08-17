@@ -21,7 +21,11 @@ import { getServerUserSession } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
-import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import {
+  getServerUserSubscriptionById,
+  getUserById,
+  UpdateUserField,
+} from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import {
   calculateProgress,
@@ -84,7 +88,7 @@ export async function createTaskAction(
 ) {
   logger.info("starting creat Task prosess");
   const categoryId = await getTaskCatagoryId(category);
-
+  logger.info("passed userId in create Task action is:" + userId);
   if (!categoryId || categoryId == undefined) return;
   try {
     await db.transaction(async (dx) => {
@@ -147,13 +151,29 @@ export async function createTaksPaymentCheckoutSession(values: {
     const userSubscription = await getServerUserSubscriptionById(
       currentUser?.id!
     );
-
+    const user = await getUserById(userId);
+    if (!user || !user.id) return;
     if (!currentUser.email || !currentUser!.id) return;
     if (userSubscription?.tier == "SOLVER") return;
-
+    let customerId = user.stripeCustomerId;
+    if (!user.stripeCustomerId) {
+      const newCustomer = await stripe.customers.create({
+        email: currentUser.email,
+        name: user.name ?? "",
+        metadata: {
+          userId: userId,
+        },
+      });
+      customerId = newCustomer.id;
+      await UpdateUserField({
+        id: user.id,
+        data: { stripeCustomerId: customerId },
+      });
+    }
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      customer_email: currentUser.email,
+      customer: customerId!,
+
       line_items: [
         {
           price_data: {
@@ -167,6 +187,17 @@ export async function createTaksPaymentCheckoutSession(values: {
           quantity: 1,
         },
       ],
+
+      payment_method_types: ["card"],
+      payment_method_options: {
+        card: {
+          setup_future_usage: "off_session",
+        },
+      },
+      payment_intent_data: {
+        setup_future_usage: "off_session",
+      },
+
       metadata: {
         userId,
         deadlineStr,
@@ -174,6 +205,9 @@ export async function createTaksPaymentCheckoutSession(values: {
       },
       cancel_url: `${referer}`,
       success_url: `${referer}?session_id={CHECKOUT_SESSION_ID}`,
+      saved_payment_method_options: {
+        allow_redisplay_filters: ["always", "limited", "unspecified"],
+      },
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
@@ -192,7 +226,10 @@ export async function validateStripeSession(
   const session = await stripe.checkout.sessions.retrieve(sessionId);
   return session.payment_status === "paid";
 }
-
+export async function validatePaymentIntent(piId: string) {
+  const intent = await stripe.paymentIntents.retrieve(piId);
+  return intent.status === "succeeded";
+}
 export async function autoSaveDraftTask(
   title: string,
   description: string,
@@ -1066,12 +1103,12 @@ export async function createTaskComment(values: {
     if (result || result !== undefined) {
       try {
         await fetch(`${env.GO_API_URL}/send-comment`, {
-        method: "POST",
-        headers: GoHeaders ,
-        body: JSON.stringify(result),
-      });
+          method: "POST",
+          headers: GoHeaders,
+          body: JSON.stringify(result),
+        });
       } catch (error) {
-        logger.error("unable to send comment ",error)
+        logger.error("unable to send comment ", error);
       }
     }
     revalidatePath(`/`);
