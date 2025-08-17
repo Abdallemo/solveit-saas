@@ -7,7 +7,8 @@ import { logger } from "@/lib/logging/winston";
 export async function updateUserSubscription(
   values: typeof UserSubscriptionTable.$inferInsert,
   role: UserRole,
-  id: string
+  id: string,
+  stripeCustomerId:string
 ) {
   try {
     await db.transaction(async (dx) => {
@@ -17,7 +18,7 @@ export async function updateUserSubscription(
         .where(eq(UserSubscriptionTable.userId, id));
       await dx
         .update(UserTable)
-        .set({ role: role })
+        .set({ role: role,stripeCustomerId: stripeCustomerId })
         .where(eq(UserTable.id, id));
     });
     logger.info(`Sucessfully Updated User ${id}'s Subscription`)
@@ -46,7 +47,7 @@ export async function CancelUserSubscription(
 
     await dx
       .update(UserTable)
-      .set({ role: "POSTER" })
+      .set({ role: "POSTER",stripeCustomerId:null })
       .where(eq(UserTable.id, id!));
   });
 }
