@@ -257,7 +257,7 @@ export default function SolutionPageComps({
       uploadedAt,
     };
   });
-  const [comments, setComments] = useState(
+  const [comments, setComments] = useState<commentType[]>(
     [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
       const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
       const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
