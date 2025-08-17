@@ -1,7 +1,11 @@
 "use server";
 
 import { getServerUserSession } from "@/features/auth/server/actions";
-import { getServerUserSubscriptionById } from "@/features/users/server/actions";
+import {
+  getServerUserSubscriptionById,
+  getUserById,
+  UpdateUserField,
+} from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 import { plans } from "@/features/subscriptions/plans";
 import { redirect } from "next/navigation";
@@ -45,7 +49,7 @@ export async function getServerReturnUrl() {
 export async function createStripeCheckoutSession(tier: TierType) {
   const referer = await getServerReturnUrl();
   try {
-    const currentUser = await getServerUserSession();
+    const currentUser = await getServerUserSession(); //next_auth
     if (!currentUser?.id) redirect("/login");
     const userSubscription = await getServerUserSubscriptionById(
       currentUser?.id!
@@ -55,10 +59,28 @@ export async function createStripeCheckoutSession(tier: TierType) {
     if (!selectedPlan) throw new Error("Plan not found");
 
     if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier == "SOLVER") return; //chnaged here to test
+    if (userSubscription?.tier !== "POSTER") return;
+    const user = await getUserById(currentUser.id!);
+    if (!user || !user.id) return;
+    if (!currentUser.email || !currentUser!.id) return;
+    let customerId = user.stripeCustomerId;
+    if (!user.stripeCustomerId) {
+      const newCustomer = await stripe.customers.create({
+        email: currentUser.email,
+        name: user.name!,
+        metadata: {
+          userId: user.id,
+        },
+      });
+      customerId = newCustomer.id;
+      await UpdateUserField({
+        id: user.id,
+        data: { stripeCustomerId: customerId },
+      });
+    }
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
-      customer_email: currentUser!.email,
+      customer: customerId!,
       success_url: referer,
       cancel_url: referer,
       line_items: [
@@ -67,6 +89,8 @@ export async function createStripeCheckoutSession(tier: TierType) {
           quantity: 1,
         },
       ],
+      payment_method_collection: "if_required",
+      payment_method_types: ["card"],
       subscription_data: {
         metadata: {
           userId: currentUser!.id,
@@ -85,6 +109,8 @@ export async function createStripeCheckoutSession(tier: TierType) {
 
 export async function upgradeSolverToPlus(userId: string) {
   const return_url = await getServerReturnUrl();
+  const user = await getUserById(userId);
+  if (!user || !user.id) return;
   console.log("passed userid :", userId);
   const subscription = await getServerUserSubscriptionById(userId);
   if (
@@ -98,31 +124,31 @@ export async function upgradeSolverToPlus(userId: string) {
   console.log("found solver+ pirce id :", solverPlusPriceId);
   console.log(JSON.stringify(subscription));
   const session = await stripe.billingPortal.sessions.create({
-    customer: subscription.stripeCustomerId!,
+    customer: user.stripeCustomerId!,
     return_url,
   });
   redirect(session.url);
-
-  // await updateUserSubscriptionTier(userId, "SOLVER++");
 }
 
 export async function createCancelSession() {
-  const user = await getServerUserSession();
+  const { id } = (await getServerUserSession())!;
   const referer = await getServerReturnUrl();
 
-  if (!user) redirect("/login");
+  if (!id) redirect("/login");
 
-  const { id } = user;
-  logger.info("creating cancel Session for User: " + user.id, { user: user });
+  logger.info("creating cancel Session for User: " + id, { userId: id });
+  const user = await getUserById(id);
+  if (!user || !user.id) return;
+
   const subscription = await getServerUserSubscriptionById(id);
+  if (!subscription || !subscription.stripeSubscriptionId) return;
 
-  if (!subscription?.stripeCustomerId || !subscription.stripeSubscriptionId)
-    return;
+  if (!user?.stripeCustomerId || !subscription.stripeSubscriptionId) return;
 
   let portalSession: Stripe.Response<Stripe.BillingPortal.Session>;
   try {
     portalSession = await stripe.billingPortal.sessions.create({
-      customer: subscription.stripeCustomerId,
+      customer: user.stripeCustomerId,
       return_url: referer,
       flow_data: {
         type: "subscription_cancel",
@@ -150,14 +176,13 @@ export async function createCancelSession() {
 export async function CreateUserSessionPortal() {
   const { id } = (await getServerUserSession())!;
   const referer = await getServerReturnUrl();
-
   if (id == null) return;
-  const subscription = await getServerUserSubscriptionById(id);
+  const user = await getUserById(id);
 
-  if (subscription?.stripeCustomerId == null) return;
+  if (user?.stripeCustomerId == null) return;
 
   const portalSession = await stripe.billingPortal.sessions.create({
-    customer: subscription.stripeCustomerId,
+    customer: user?.stripeCustomerId,
     return_url: referer,
   });
   return portalSession.url;
