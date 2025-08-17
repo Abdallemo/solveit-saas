@@ -62,6 +62,7 @@ export const UserTable = pgTable("user", {
   email: text("email").unique(),
   password: text("password"),
   role: UserRole("role").default("POSTER"),
+  stripeCustomerId: text("stripe_customer_id"),
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
@@ -117,7 +118,6 @@ export const UserSubscriptionTable = pgTable("subscription", {
     .references(() => UserTable.id, { onDelete: "cascade" }),
   stripeSubscriptionItemId: text("stripe_subscription_item_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
-  stripeCustomerId: text("stripe_customer_id"),
   tier: TierEnum("tier").notNull(),
 });
 
