@@ -44,7 +44,8 @@ export async function ManageUserCreditCardPortal() {
   const configuration = await stripe.billingPortal.configurations.create({
     features: {
       customer_update: {
-        enabled: false,
+        enabled: true,
+        allowed_updates:["address"]
       },
       invoice_history: {
         enabled: false,
