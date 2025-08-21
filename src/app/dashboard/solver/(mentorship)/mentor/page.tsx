@@ -1,5 +1,5 @@
-export default function MentorPage() {
+export default function MentorSessionPage() {
   return (
-    <div>MentorPage</div>
+    <div>MentorSessionPage</div>
   )
 }
