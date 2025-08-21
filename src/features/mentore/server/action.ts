@@ -35,10 +35,8 @@ export async function validateMentorAccess() {
 
   return { user, usrSub };
 }
-export type MentorListType = Exclude<
-  Awaited<ReturnType<typeof getMentorListig>>,
-  any[]
->;
+export type MentorListType = Exclude<Awaited<ReturnType<typeof getMentorListig>>, any[]> & { availableTimes: AvailabilitySlot[] };
+
 export async function getMentorListig(t: "poster" | "solver++") {
   const { user, usrSub } = await validateMentorAccess();
   if (t === "solver++") {
@@ -51,6 +49,19 @@ export async function getMentorListig(t: "poster" | "solver++") {
     return results;
   }
 }
+export async function handleProfilePublishState(isPublished: boolean) {
+  const { user, usrSub } = await validateMentorAccess();
+  await db
+    .insert(MentorshipProfileTable)
+    .values({
+      userId: user.id!,
+      isPublished,
+    })
+    .onConflictDoUpdate({
+      target: MentorshipProfileTable.userId,
+      set: { isPublished },
+    });
+}
 export async function saveMentorListing(values: {
   title: string;
   avatar: string;
@@ -61,33 +72,27 @@ export async function saveMentorListing(values: {
   const { title, description, availableTimes, ratePerHour, avatar } = values;
   try {
     const { user, usrSub } = await validateMentorAccess();
-    const exsitPrf = await db.query.MentorshipProfileTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.userId, user.id!),
-    });
-    if (exsitPrf) {
-      await db
-        .update(MentorshipProfileTable)
-        .set({
-          title,
-          description,
-          avatar,
-          availableTimes: JSON.stringify(availableTimes),
-          ratePerHour: String(ratePerHour),
-        })
-        .where(eq(MentorshipProfileTable.id, user.id!));
-      logger.info("successfully saved mentor profile ");
-    } else {
-      await db.insert(MentorshipProfileTable).values({
+
+    await db
+      .insert(MentorshipProfileTable)
+      .values({
         userId: user.id!,
         title,
         description,
         avatar,
-
         availableTimes: JSON.stringify(availableTimes),
-        ratePerHour: String(ratePerHour),
+        ratePerHour,
+      })
+      .onConflictDoUpdate({
+        target: MentorshipProfileTable.userId!,
+        set: {
+          title,
+          description,
+          availableTimes: JSON.stringify(availableTimes),
+          ratePerHour,
+        },
       });
-      logger.info("successfully saved mentor profile ");
-    }
+    logger.info("successfully saved mentor profile ");
   } catch (error) {
     logger.error("unable to save mentor listing", {
       message: (error as Error).message,
@@ -95,5 +100,4 @@ export async function saveMentorListing(values: {
     });
     throw error;
   }
-  //rest ...
 }
