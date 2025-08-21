@@ -14,6 +14,7 @@ import {
   jsonb,
   varchar,
   decimal,
+  real,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 
@@ -193,7 +194,7 @@ export const TaskTable = pgTable("tasks", {
   }),
   visibility: TaskVisibility("visibility"),
   categoryId: uuid("category_id")
-    .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
+    .references(() => TaskCategoryTable.id, { onDelete: "no action" })
     .notNull(),
   paymentId: uuid("payment_id").references(() => PaymentTable.id, {
     onDelete: "cascade",
@@ -338,12 +339,13 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  avatar: text("avatar").notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  ratePerHour: decimal("rate_per_hour").notNull(),
-  availableTimes: json("available_times").notNull(),
+    .references(() => UserTable.id, { onDelete: "cascade" }).unique(),
+  avatar: text("avatar").notNull().default("/avatars/avatar-4.svg"),
+  title: text("title").notNull().default(""),
+  description: text("description").notNull().default(""),
+  ratePerHour: real("rate_per_hour").notNull().default(0),
+  availableTimes: json("available_times").notNull().default("[]"),
+  isPublished:boolean("is_published").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
