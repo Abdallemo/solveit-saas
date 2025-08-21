@@ -207,6 +207,7 @@ export async function createTaksPaymentCheckoutSession(values: {
       success_url: `${referer}?session_id={CHECKOUT_SESSION_ID}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
+        payment_method_save:"enabled"
       },
     });
 
