@@ -27,8 +27,14 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { AvailabilitySlot, MentorListType } from "../server/action";
+import {
+  AvailabilitySlot,
+  handleProfilePublishState,
+  MentorListType,
+  saveMentorListing,
+} from "../server/action";
 import { daysOfWeek, timeOptions } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 
 interface MentorData {
   name: string;
@@ -41,24 +47,61 @@ interface MentorData {
 }
 
 const defaultAvatars = [
-  "https://api.multiavatar.com/mentorA.svg",
-  "https://api.multiavatar.com/mentorB.svg",
-  "https://api.multiavatar.com/freelancerA.svg",
-  "https://api.multiavatar.com/freelancerB.svg",
-  "https://api.multiavatar.com/studentA.svg",
-  "https://api.multiavatar.com/studentB.svg",
-  "https://api.multiavatar.com/academicA.svg",
-  "https://api.multiavatar.com/academicB.svg",
-]
+  "/avatars/avatar-1.svg",
+  "/avatars/avatar-10.svg",
+  "/avatars/avatar-11.svg",
+  "/avatars/avatar-12.svg",
+  "/avatars/avatar-13.svg",
+  "/avatars/avatar-14.svg",
+  "/avatars/avatar-15.svg",
+  "/avatars/avatar-16.svg",
+  "/avatars/avatar-2.svg",
+  "/avatars/avatar-3.svg",
+  "/avatars/avatar-4.svg",
+  "/avatars/avatar-5.svg",
+  "/avatars/avatar-6.svg",
+  "/avatars/avatar-7.svg",
+  "/avatars/avatar-8.svg",
+  "/avatars/avatar-9.svg",
+];
 
-
-export function MentorProfile(MentorData1: { MentorData1: MentorListType }) {
-  const [isLoading, setIsLoading] = useState(false);
+export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorListType> }*/) {
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
+  const {mutate:prfileVisiblityMutate} = useMutation({
+    mutationFn: handleProfilePublishState,
+    onSuccess: () => {
+      toast.success(
+        mentorData.isPublished
+          ? "Your profile is now visible to mentees."
+          : "Your profile is now hidden from mentees.",
+        { id: "publish-profile" }
+      );
+    },
+    onError: () => {
+      toast.error(
+        mentorData.isPublished
+          ? "failed to make your profile visible"
+          : "failed to make your profile hidden",
+        { id: "publish-profile" }
+      );
+    },
+  });
+  const { mutateAsync: mentorListingMutate,isPending } = useMutation({
+    mutationFn: saveMentorListing,
+    onSuccess: () => {
+      toast.success("Your mentor profile has been successfully updated.", {
+        id: "save-mentor",
+      });
+    },
+    onError: (err) => {
+      toast.error("failed to update your mentor profile", {
+        id: "save-mentor",
+      });
+    },
+  });
   const [mentorData, setMentorData] = useState<MentorData>({
     name: "Alex Johnson",
-    avatar:
-      "https://api.multiavatar.com/mentorA.svg",
+    avatar: "/avatars/avatar-3.svg",
 
     title: "Senior Full-Stack Developer & Tech Mentor",
     description:
@@ -69,10 +112,11 @@ export function MentorProfile(MentorData1: { MentorData1: MentorListType }) {
       { day: "wednesday", start: "19:00", end: "22:00" },
       { day: "saturday", start: "10:00", end: "14:00" },
     ],
-    isPublished: true,
+    isPublished: false,
   });
 
   const addAvailabilitySlot = () => {
+    mentorData.availability
     const usedDays = mentorData.availability.map((slot) => slot.day);
     const availableDay =
       daysOfWeek.find((day) => !usedDays.includes(day)) || "monday";
@@ -111,21 +155,21 @@ export function MentorProfile(MentorData1: { MentorData1: MentorListType }) {
   };
 
   const handleSave = async () => {
-    setIsLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsLoading(false);
-
-    toast.success("Your mentor profile has been successfully updated.");
-    toast.success("data:" + JSON.stringify(mentorData.availability));
+    toast.loading("saving..", { id: "save-mentor" });
+    await mentorListingMutate({
+      avatar: mentorData.avatar,
+      title: mentorData.title,
+      description: mentorData.description,
+      availableTimes: mentorData.availability,
+      ratePerHour: Number(mentorData.hourlyRate),
+    });
   };
 
   const handlePublishToggle = (published: boolean) => {
     setMentorData((prev) => ({ ...prev, isPublished: published }));
-    toast.success(
-      published
-        ? "Your profile is now visible to mentees."
-        : "Your profile is now hidden from mentees."
-    );
+    toast.loading("updating..",{ id: "publish-profile" })
+    toast.info("current isPublished state: "+published)
+    prfileVisiblityMutate(published)
   };
 
   const handlePreview = () => {
@@ -484,10 +528,10 @@ export function MentorProfile(MentorData1: { MentorData1: MentorListType }) {
             <div className="flex flex-col sm:flex-row gap-3 pt-4">
               <Button
                 onClick={handleSave}
-                disabled={isLoading}
+                disabled={isPending}
                 className="flex-1">
                 <Save className="h-4 w-4 mr-2" />
-                {isLoading ? "Saving..." : "Save Changes"}
+                {isPending ? "Saving..." : "Save Changes"}
               </Button>
               <Button
                 variant="outline"
