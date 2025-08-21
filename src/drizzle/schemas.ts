@@ -13,6 +13,7 @@ import {
   json,
   jsonb,
   varchar,
+  decimal,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 
@@ -338,10 +339,11 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   userId: uuid("user_id")
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
-  title: text("title"),
-  description: text("description"),
-  ratePerHour: integer("rate_per_hour"),
-  availableTimes: text("available_times"),
+  avatar: text("avatar").notNull(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  ratePerHour: decimal("rate_per_hour").notNull(),
+  availableTimes: json("available_times").notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -510,7 +512,7 @@ export const BlockedTasksTableRelation = relations(
       references: [TaskTable.id],
     }),
     solver: one(UserTable, {
-      relationName: "user",
+      relationName: "solver",
 
       fields: [BlockedTasksTable.userId],
       references: [UserTable.id],
