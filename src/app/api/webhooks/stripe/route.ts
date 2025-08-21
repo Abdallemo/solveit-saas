@@ -20,6 +20,7 @@ import { UserSubscriptionTable } from "@/drizzle/schemas";
 import type Stripe from "stripe";
 import { logger } from "@/lib/logging/winston";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
+import { getServerUserSession } from "@/features/auth/server/actions";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -35,11 +36,24 @@ export async function POST(request: NextRequest) {
   const secret = env.STRIPE_WEBHOOK_SECRET;
   const body = await request.text();
   const event = stripe.webhooks.constructEvent(body, sig, secret);
+  const userSession = await getServerUserSession();
   switch (event.type) {
     case "checkout.session.completed":
       await handleTaskCreate(event);
       break;
+    case "payment_method.updated":
+      console.log(event);
+      const paymentMethod = event.data.object;
+      const res = await stripe.paymentMethods.update(paymentMethod.id, {
+        allow_redisplay: "always",
+        billing_details: {
+          name: userSession?.name!,
+          email: userSession?.email!,
+        },
+      });
 
+      console.log("res", res);
+      break;
     case "customer.subscription.updated":
       await handleUpdate(event.data.object);
       break;
