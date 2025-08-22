@@ -1,48 +1,30 @@
 import AuthGate from "@/components/AuthGate";
-import { TaskProvider } from "@/contexts/TaskContext";
+import { NewTaskProvider } from "@/contexts/TaskContextCopy";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
-import { getDraftTask } from "@/features/tasks/server/action";
+import {
+  getDraftTaskWithDefualtVal,
+} from "@/features/tasks/server/action";
 import { TaskSchema } from "@/features/tasks/server/task-types";
-
 export default async function Page() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate/>;
+  if (!currentUser || !currentUser.id) return <AuthGate />;
 
-  const draft = await getDraftTask(currentUser.id);
-
-  const {
-    content = "",
-    category = "",
-    deadline = "12h",
-    visibility = "public",
-    price = 10,
-    title = "",
-    description = "",
-    updatedAt,
-  } = draft ?? {};
-
+  const draft = await getDraftTaskWithDefualtVal(currentUser.id);
   const defaultValues: TaskSchema = {
-    title: title ?? "",
-    description: description ?? "",
-    content: content ?? "",
-    deadline: deadline ?? "12h",
-    visibility: visibility ?? "public",
-    category: category ?? "",
-    price: price ?? 10,
+    title: draft?.title ?? "",
+    description: draft?.description ?? "",
+    content: draft?.content ?? "",
+    deadline: draft?.deadline ?? "12h",
+    visibility: draft?.visibility ?? "public",
+    category: draft?.category ?? "",
+    price: draft?.price ?? 10,
   };
 
+  // console.log("initial draft:\n", draft);
   return (
-    <TaskProvider
-      dbContent={content!}
-      dbCategory={category!}
-      dbDeadline={deadline!}
-      dbPrice={price!}
-      dbVisibility={visibility!}
-      dbDescription={description!}
-      dbTitle={title}
-      updatedAt={updatedAt}>
+    <NewTaskProvider initialDraft={draft!}>
       <TaskCreationPage defaultValues={defaultValues} />
-    </TaskProvider>
+    </NewTaskProvider>
   );
 }
