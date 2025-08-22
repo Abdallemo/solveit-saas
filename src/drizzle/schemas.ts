@@ -143,7 +143,7 @@ export const PaymentTable = pgTable("payments", {
     .references(() => UserTable.id, { onDelete: "cascade" }),
   amount: integer("amount").notNull(),
   status: PaymentStatus("status").default("HOLD"),
-  stripePaymentIntentId: text("stripe_payment_intent_id"),
+  stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
   stripeChargeId: text("stripe_charge_id"),
   purpose: text("purpose"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
@@ -217,19 +217,20 @@ export const BlockedTasksTable = pgTable("blocked_tasks", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 export const TaskDraftTable = pgTable("task_drafts", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
   userId: uuid("user_id")
+    .references(() => UserTable.id, { onDelete: "cascade" })
     .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  description: text("description"),
-  content: text("content"),
-  category: text("category"),
-  deadline: text("deadline"),
+    .unique(),
+  title: text("title").default("").notNull(),
+  description: text("description").default("").notNull(),
+  content: text("content").default("").notNull(),
+  category: text("category").default("").notNull(),
+  deadline: text("deadline").default("12h").notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  uploadedFiles: json("uploadedFiles"),
-  visibility: TaskVisibility("visibility"),
-  price: integer("price"),
+  uploadedFiles: json("uploadedFiles").default("[]").notNull(),
+  visibility: TaskVisibility("visibility").default("public").notNull(),
+  price: integer("price").default(10).notNull(),
 });
 
 export const TaskFileTable = pgTable("task_files", {
@@ -339,13 +340,14 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
     .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }).unique(),
+    .references(() => UserTable.id, { onDelete: "cascade" })
+    .unique(),
   avatar: text("avatar").notNull().default("/avatars/avatar-4.svg"),
   title: text("title").notNull().default(""),
   description: text("description").notNull().default(""),
   ratePerHour: real("rate_per_hour").notNull().default(0),
   availableTimes: json("available_times").notNull().default("[]"),
-  isPublished:boolean("is_published").default(false),
+  isPublished: boolean("is_published").default(false),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
