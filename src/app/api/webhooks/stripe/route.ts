@@ -163,6 +163,7 @@ async function handleTaskCreate(event: Stripe.Event) {
   try {
     const session = event.data.object;
     const userId = event?.data.object?.metadata?.userId;
+    const draftTaskId = event?.data.object?.metadata?.draftTaskId;
     const paymentIntentId = session.payment_intent as string;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     const customerId =
@@ -170,18 +171,21 @@ async function handleTaskCreate(event: Stripe.Event) {
         ? paymentIntent.customer
         : paymentIntent.customer?.id;
 
-    
-
-    if (!userId) {
-      logger.warn("couldnt found userid: " + userId);
-      return;
-    }
-
     const paymentMethodId =
       typeof paymentIntent.payment_method === "string"
         ? paymentIntent.payment_method
         : paymentIntent.payment_method?.id;
+    
 
+    if (!userId || !draftTaskId || !customerId) {
+      logger.warn("couldnt found userId or DraftId " + userId);
+      return;
+    }
+    const draftTasks = await getDraftTask(userId, draftTaskId);
+    if (!draftTasks) {
+      logger.warn("unable to find any draft task for this user: " + userId);
+      return;
+    }
     await UpdateUserField({
       id: userId,
       data: { stripeCustomerId: customerId },
@@ -192,7 +196,6 @@ async function handleTaskCreate(event: Stripe.Event) {
     await stripe.paymentMethods.update(paymentMethodId!, {
       allow_redisplay: "always",
     });
-    const amount = session.amount_total! / 100;
     const paymentExist = await getPaymentByPaymentIntentId(paymentIntentId);
 
     if (paymentExist) {
@@ -202,21 +205,16 @@ async function handleTaskCreate(event: Stripe.Event) {
       return;
     }
 
+    const amount = session.amount_total! / 100;
     const paymentId = await taskPaymentInsetion(
       "HOLD",
       amount,
       userId,
-      "Task Payment",
-      paymentIntentId
+      paymentIntentId,
+      "Task Payment"
     );
     if (!paymentId) {
-      logger.warn("unable to insert paymentIntent for the payment table ")
-      return
-    };
-
-    const draftTasks = await getDraftTask(userId);
-    if (!draftTasks) {
-      logger.warn("unable to find any draft task for this user: "+userId)
+      logger.warn("unable to insert paymentIntent for the payment table ");
       return;
     }
 
@@ -238,8 +236,10 @@ async function handleTaskCreate(event: Stripe.Event) {
       !price ||
       !visibility ||
       !description
-    )
+    ) {
+      logger.warn("All task fields are requried");
       return;
+    }
 
     await createTaskAction(
       userId,
