@@ -54,8 +54,8 @@ export default function AccountComponent({
   if (isBlocked) return <AuthGate />;
 
   return (
-    <div className="w-full  " suppressHydrationWarning>
-      <div className="flex flex-col items-center gap-5 px-6 mb-10">
+    <div className="w-full  mt-5" suppressHydrationWarning>
+      <div className="flex flex-col items-center gap-5 px-6 ">
         <CardWrapper
           title="User Preferences"
           description="Manage your profiles, account settings, and preferences for your
