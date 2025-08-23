@@ -108,7 +108,7 @@ export default async function DashboardLayout({
           <ReactQueryProvider>
             <div className="flex h-screen w-full">
               <DashboardSidebar user={session?.user!} />
-              <div className="flex flex-col flex-1 overflow-auto">
+              <div className="flex flex-col flex-1 ">
                 <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
                   <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                     <div className="flex items-center">
@@ -130,7 +130,7 @@ export default async function DashboardLayout({
                   </div>
                 </header>
                 <FeatureFlagProvider flags={dbFlags}>
-                  <main className="flex-1">{children}</main>
+                  {children}
                 </FeatureFlagProvider>
               </div>
             </div>
