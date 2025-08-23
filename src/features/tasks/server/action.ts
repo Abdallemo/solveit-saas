@@ -203,31 +203,24 @@ export async function createTaksPaymentCheckoutSession(values: {
         userId,
         deadlineStr,
         type: "task_payment",
+        draftTaskId: draftTaskId,
       },
       cancel_url: `${referer}`,
-      success_url: `${referer}?session_id={CHECKOUT_SESSION_ID}`,
+      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/yourTasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
-        payment_method_save:"enabled"
+        payment_method_save: "enabled",
       },
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
-
-    console.log("session url" + session.url);
-    redirect(session.url); //todo breaking change
+    redirect(session.url);
   } catch (error) {
-    console.error(error);
     throw error;
   }
 }
 
-export async function validateStripeSession(
-  sessionId: string
-): Promise<boolean> {
-  const session = await stripe.checkout.sessions.retrieve(sessionId);
-  return session.payment_status === "paid";
-}
+
 export async function validatePaymentIntent(piId: string) {
   const intent = await stripe.paymentIntents.retrieve(piId);
   return intent.status === "succeeded";
