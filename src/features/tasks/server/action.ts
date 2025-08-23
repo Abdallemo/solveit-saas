@@ -3,6 +3,7 @@ import { workspaceFileType } from "./task-types";
 import db from "@/drizzle/db";
 import {
   BlockedTasksTable,
+  PaymentPorposeType,
   PaymentStatusType,
   PaymentTable,
   RefundTable,
@@ -279,6 +280,9 @@ export async function autoSaveDraftTask(
         uploadedFiles: parsedFiles,
       });
     }
+    return await db.query.TaskDraftTable.findFirst({
+      where: (table, fn) => fn.eq(table.userId, userId),
+    });
   } catch (e) {
     await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
   }
@@ -434,8 +438,8 @@ export async function taskPaymentInsetion(
   status: PaymentStatusType,
   amount: number,
   userId: string,
-  purpose?: string,
-  stripePaymentIntentId?: string,
+  stripePaymentIntentId: string,
+  purpose?: PaymentPorposeType,
   releaseDate?: Date,
   stripeChargeId?: string
 ) {
@@ -619,21 +623,36 @@ export async function getTaskFilesById(taskId: string) {
   });
   return files;
 }
-
-export async function getDraftTask(userId: string) {
-  logger.info("retreving from draft table", { userId: userId });
+export async function getDraftTaskWithDefualtVal(userId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
   });
+  if (!oldTask) return null;
+  return {
+    id: oldTask.id,
+    userId: oldTask.userId,
+    title: oldTask.title ?? "",
+    description: oldTask.description ?? "",
+    content: oldTask.content ?? "",
+    deadline: oldTask.deadline ?? "12h",
+    visibility: oldTask.visibility ?? "public",
+    category: oldTask.category ?? "",
+    price: oldTask.price ?? 10,
+    updatedAt: oldTask.updatedAt,
+  };
+}
+
+export async function getDraftTask(userId: string, draftId: string) {
+
+  const oldTask = await db.query.TaskDraftTable.findFirst({
+    where: (table, fn) =>
+      fn.and(eq(table.userId, userId), eq(table.id, draftId)),
+  });
   if (!oldTask) {
-    logger.warn("unabel to find oldTask", { userId: userId });
     return null;
   }
   return {
     ...oldTask,
-    uploadedFiles: Array.isArray(oldTask.uploadedFiles)
-      ? oldTask.uploadedFiles
-      : [],
   };
 }
 export async function deleteDraftTask(userId: string) {
