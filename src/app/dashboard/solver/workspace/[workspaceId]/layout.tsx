@@ -13,7 +13,7 @@ export default async function WorkspaceLayout({
   params: Promise<{ workspaceId: string }>;
 }) {
   
-  const {user} = await isAuthorized("SOLVER");
+  const {user} = await isAuthorized(["SOLVER"]);
   const { workspaceId } = await params;
   const currentWorkspace = await getWorkspaceById(workspaceId,user?.id!);
   if (!currentWorkspace) {
