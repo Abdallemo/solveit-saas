@@ -125,7 +125,9 @@
 
   body {
     @apply bg-sidebar text-foreground;
-    @apply scroll-smooth
+    @apply scroll-smooth font-sans ;
+     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 
   h1 {
@@ -149,6 +151,7 @@
   }
 
 }
+
 html {
   scroll-behavior: smooth;
 }
@@ -158,6 +161,7 @@ html {
     0% {
       transform: translateX(0);
     }
+
     100% {
       transform: translateX(-33.333333%);
     }
