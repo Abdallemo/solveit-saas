@@ -20,7 +20,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
     );
   }
 
-  await isAuthorized("POSTER");
+  await isAuthorized(["POSTER"]);
 
   return <>{children}</>;
 }
