@@ -1,13 +1,17 @@
 "use server";
 
 import db from "@/drizzle/db";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  getServerUserSession,
+  isAuthorized,
+} from "@/features/auth/server/actions";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getUserById } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
 export type cardsType = Awaited<
   ReturnType<typeof getAllCustomerPaymentMethods>
 >;
+export type paymentType = Awaited<ReturnType<typeof getAllPayments>>[number];
 export async function getAllCustomerPaymentMethods(userId: string) {
   if (!userId) return [];
   const user = await getUserById(userId);
@@ -46,7 +50,7 @@ export async function ManageUserCreditCardPortal() {
     features: {
       customer_update: {
         enabled: true,
-        allowed_updates:["address"]
+        allowed_updates: ["address"],
       },
       invoice_history: {
         enabled: false,
@@ -59,14 +63,39 @@ export async function ManageUserCreditCardPortal() {
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: user?.stripeCustomerId,
     return_url: referer,
-    configuration:configuration.id
+    configuration: configuration.id,
   });
   return portalSession.url;
 }
 
-export async function getPaymentByPaymentIntentId(stripePaymentIntentId:string) {
+export async function getPaymentByPaymentIntentId(
+  stripePaymentIntentId: string
+) {
   return await db.query.PaymentTable.findFirst({
-    where:(tb,fn)=>fn.eq(tb.stripePaymentIntentId,stripePaymentIntentId)
-  })
-  
+    where: (tb, fn) => fn.eq(tb.stripePaymentIntentId, stripePaymentIntentId),
+  });
+}
+export async function getAllPayments() {
+  await isAuthorized(["ADMIN"]);
+  const results = await db.query.PaymentTable.findMany({
+    with: {
+      payer: {
+        columns: {
+          emailVerified: true,
+          email: true,
+          image: true,
+          name: true,
+          stripeCustomerId: true,
+          role: true,
+        },
+      },
+    },
+  });
+  return results.map((p) => {
+    const { payer, ...payment } = p;
+    return {
+      ...payer,
+      ...payment,
+    };
+  });
 }
