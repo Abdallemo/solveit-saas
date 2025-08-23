@@ -22,7 +22,7 @@ export default function FileUploadUi({
   className,
 }: FileUploadProps) {
   // const { selectedFiles, setSelectedFiles } = useTask(); // Migrated from
-  const {selectedFiles,setSelectedFiles} = NewuseTask() // migrated to 
+  const { selectedFiles, setSelectedFiles } = NewuseTask(); // migrated to
 
   const [isDragging, setIsDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -106,10 +106,6 @@ export default function FileUploadUi({
           <div className="text-sm font-medium">
             Drop files here or click to browse
           </div>
-          <div className="text-xs text-muted-foreground">
-            PDF, DOC, JPG, PNG up to 10MB • {selectedFiles.length}/{maxFiles}{" "}
-            files
-          </div>
           <Button
             variant="outline"
             size="sm"
@@ -120,8 +116,8 @@ export default function FileUploadUi({
         </div>
       </div>
       {selectedFiles.length > 0 && (
-        <ScrollArea className="flex-1 ">
-          <div className="mt-2 space-y-2  bg-amber-40 h-[100px] overflow-scroll p-2">
+        <ScrollArea className="flex-1 flex flex-col gap-3 h-50">
+          <div className="mt-2 space-y-2  bg-amber-40 h-[120px] overflow-auto">
             {selectedFiles.map((file, index) => (
               <div
                 key={`${file.name}-${index}`}
@@ -135,6 +131,7 @@ export default function FileUploadUi({
                 </div>
                 <Button
                   variant="ghost"
+                  type="button"
                   size="sm"
                   onClick={() => removeFile(index)}
                   className="h-6 w-6 p-0">
