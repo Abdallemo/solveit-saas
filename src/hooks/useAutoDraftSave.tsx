@@ -3,17 +3,17 @@
 import { useEffect, useRef } from "react";
 import { debounce as lodashDebounce } from "lodash";
 
-type UseAutoSaveProps<T extends any[]> = {
-  autoSaveFn: (...args: T) => void | Promise<void>;
+type UseAutoSaveProps<T extends any[],RT > = {
+  autoSaveFn: (...args: T) => RT | Promise<RT>;
   autoSaveArgs: T;
   delay?: number;
 };
 
-export function useAutoSave<T extends any[]>({
+export function useAutoSave<T extends any[],RT>({
   autoSaveFn,
   autoSaveArgs,
   delay = 2000,
-}: UseAutoSaveProps<T>) {
+}: UseAutoSaveProps<T,RT>) {
   const debouncedAutoSave = useRef(
     lodashDebounce((...args: T) => {
       autoSaveFn(...args);
