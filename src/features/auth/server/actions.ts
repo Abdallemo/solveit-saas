@@ -201,12 +201,12 @@ export async function verifyVerificationToken(
   }
 }
 
-export async function isAuthorized(whichRole: UserRole | undefined) {
+export async function isAuthorized(whichRole: UserRole[] | undefined) {
   const user = await getServerUserSession() 
   if (!whichRole) return {authorized: false,};
-  if (!user ||!user?.role ) return {authorized: true,};
+  if (!user ||!user?.role ) return {authorized: false,};
 
-  if (whichRole == user.role) {
+  if (whichRole.includes(user.role)) {
     return { authorized: true, user:user};
   } else {
     redirect("/dashboard/");
