@@ -53,10 +53,10 @@ export default function TaskPostingEditor() {
   })
 
   return (
-    <div className="border rounded-md flex flex-col h-[650px] md:h-[800px] lg:h-[800px]" >
+    <div className="border rounded-md flex flex-col h-[600px] md:h-[800px] lg:h-[800px]" >
       <MenuBar editor={editor} />
       <div className="flex-1 overflow-hidden">
-        <EditorContent editor={editor} className="h-full overflow-y-auto" />
+        <EditorContent editor={editor} className="h-full overflow-y-auto " />
       </div>
     </div>
   )
