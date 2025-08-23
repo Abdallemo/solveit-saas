@@ -29,45 +29,21 @@ import {
 import { toast } from "sonner";
 import {
   AvailabilitySlot,
+  handleProfileAvatarState,
   handleProfilePublishState,
   MentorListType,
   saveMentorListing,
 } from "../server/action";
-import { daysOfWeek, timeOptions } from "@/lib/utils";
+import { daysOfWeek, defaultAvatars, timeOptions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
-interface MentorData {
-  name: string;
-  avatar: string;
-  title: string;
-  description: string;
-  hourlyRate: string;
-  availability: AvailabilitySlot[];
-  isPublished: boolean;
-}
-
-const defaultAvatars = [
-  "/avatars/avatar-1.svg",
-  "/avatars/avatar-10.svg",
-  "/avatars/avatar-11.svg",
-  "/avatars/avatar-12.svg",
-  "/avatars/avatar-13.svg",
-  "/avatars/avatar-14.svg",
-  "/avatars/avatar-15.svg",
-  "/avatars/avatar-16.svg",
-  "/avatars/avatar-2.svg",
-  "/avatars/avatar-3.svg",
-  "/avatars/avatar-4.svg",
-  "/avatars/avatar-5.svg",
-  "/avatars/avatar-6.svg",
-  "/avatars/avatar-7.svg",
-  "/avatars/avatar-8.svg",
-  "/avatars/avatar-9.svg",
-];
-
-export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorListType> }*/) {
+export function MentorProfile({
+  mentorDataa,
+}: {
+  mentorDataa: NonNullable<MentorListType>;
+}) {
   const [showAvatarSelector, setShowAvatarSelector] = useState(false);
-  const {mutate:prfileVisiblityMutate} = useMutation({
+  const { mutate: prfileVisiblityMutate } = useMutation({
     mutationFn: handleProfilePublishState,
     onSuccess: () => {
       toast.success(
@@ -86,7 +62,7 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
       );
     },
   });
-  const { mutateAsync: mentorListingMutate,isPending } = useMutation({
+  const { mutateAsync: mentorListingMutate, isPending } = useMutation({
     mutationFn: saveMentorListing,
     onSuccess: () => {
       toast.success("Your mentor profile has been successfully updated.", {
@@ -99,32 +75,30 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
       });
     },
   });
-  const [mentorData, setMentorData] = useState<MentorData>({
-    name: "Alex Johnson",
-    avatar: "/avatars/avatar-3.svg",
-
-    title: "Senior Full-Stack Developer & Tech Mentor",
-    description:
-      "I help developers level up their skills in React, Node.js, and system design. With 8+ years of experience at top tech companies, I provide practical guidance for career growth and technical excellence.",
-    hourlyRate: "75",
-    availability: [
-      { day: "tuesday", start: "18:00", end: "21:00" },
-      { day: "wednesday", start: "19:00", end: "22:00" },
-      { day: "saturday", start: "10:00", end: "14:00" },
-    ],
-    isPublished: false,
+  const { mutateAsync: mentorAvatarMutate, isPending: isSaving } = useMutation({
+    mutationFn: handleProfileAvatarState,
+    onSuccess: () => {
+      toast.success("Your profile avatar has been changed", {
+        id: "save-avatar",
+      });
+    },
+    onError: (err) => {
+      toast.error("failed to update your avatar profile", {
+        id: "save-avatar",
+      });
+    },
   });
+  const [mentorData, setMentorData] = useState(mentorDataa);
 
   const addAvailabilitySlot = () => {
-    mentorData.availability
-    const usedDays = mentorData.availability.map((slot) => slot.day);
+    const usedDays = mentorData.availableTimes.map((slot) => slot.day);
     const availableDay =
       daysOfWeek.find((day) => !usedDays.includes(day)) || "monday";
 
     setMentorData((prev) => ({
       ...prev,
-      availability: [
-        ...prev.availability,
+      availableTimes: [
+        ...prev.availableTimes,
         { day: availableDay, start: "09:00", end: "17:00" },
       ],
     }));
@@ -133,7 +107,7 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
   const removeAvailabilitySlot = (index: number) => {
     setMentorData((prev) => ({
       ...prev,
-      availability: prev.availability.filter((_, i) => i !== index),
+      availableTimes: prev.availableTimes.filter((_, i) => i !== index),
     }));
   };
 
@@ -144,7 +118,7 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
   ) => {
     setMentorData((prev) => ({
       ...prev,
-      availability: prev.availability.map((slot, i) =>
+      availableTimes: prev.availableTimes.map((slot, i) =>
         i === index ? { ...slot, [field]: value } : slot
       ),
     }));
@@ -157,29 +131,30 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
   const handleSave = async () => {
     toast.loading("saving..", { id: "save-mentor" });
     await mentorListingMutate({
+      displayName: mentorData.displayName,
       avatar: mentorData.avatar,
       title: mentorData.title,
       description: mentorData.description,
-      availableTimes: mentorData.availability,
-      ratePerHour: Number(mentorData.hourlyRate),
+      availableTimes: mentorData.availableTimes,
+      ratePerHour: Number(mentorData.ratePerHour),
     });
   };
 
   const handlePublishToggle = (published: boolean) => {
     setMentorData((prev) => ({ ...prev, isPublished: published }));
-    toast.loading("updating..",{ id: "publish-profile" })
-    toast.info("current isPublished state: "+published)
-    prfileVisiblityMutate(published)
+    toast.loading("updating..", { id: "publish-profile" });
+    prfileVisiblityMutate(published);
   };
 
   const handlePreview = () => {
     toast.success("Opening mentor profile preview...");
   };
 
-  const handleAvatarSelect = (avatarUrl: string) => {
+  const handleAvatarSelect = async (avatarUrl: string) => {
     setMentorData((prev) => ({ ...prev, avatar: avatarUrl }));
     setShowAvatarSelector(false);
-    toast.success("Your profile avatar has been changed");
+    toast.loading("saving profile...", { id: "save-avatar" });
+    await mentorAvatarMutate(avatarUrl);
   };
 
   const getValidEndTimes = (startTime: string) => {
@@ -202,13 +177,10 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                   <Avatar className="h-20 w-20">
                     <AvatarImage
                       src={mentorData.avatar || "/placeholder.svg"}
-                      alt={mentorData.name}
+                      alt={mentorData.displayName}
                     />
                     <AvatarFallback className="text-lg">
-                      {mentorData.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")}
+                      {mentorData.displayName.split("")[0]}
                     </AvatarFallback>
                   </Avatar>
                   <Button
@@ -257,9 +229,9 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
               <Label htmlFor="displayName">Display Name</Label>
               <Input
                 id="displayName"
-                value={mentorData.name}
+                value={mentorData.displayName}
                 onChange={(e) =>
-                  setMentorData((prev) => ({ ...prev, name: e.target.value }))
+                  setMentorData((prev) => ({ ...prev, displayName: e.target.value }))
                 }
                 placeholder="Your display name"
               />
@@ -307,7 +279,7 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">Hourly Rate</span>
                   <span className="font-medium">
-                    ${mentorData.hourlyRate}/hour
+                    RM{mentorData.ratePerHour}/hour
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -378,11 +350,12 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                 <Input
                   id="rate"
                   type="number"
-                  value={mentorData.hourlyRate}
+                  value={mentorData.ratePerHour}
+                  min={1}
                   onChange={(e) =>
                     setMentorData((prev) => ({
                       ...prev,
-                      hourlyRate: e.target.value,
+                      ratePerHour: Number(e.target.value),
                     }))
                   }
                   className="pl-10"
@@ -399,30 +372,30 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                   variant="outline"
                   size="sm"
                   onClick={addAvailabilitySlot}
-                  disabled={mentorData.availability.length >= 7}
+                  disabled={mentorData.availableTimes.length >= 7}
                   className="h-8 bg-transparent">
                   <Plus className="h-3 w-3 mr-1" />
                   Add Time Slot
                 </Button>
               </div>
 
-              {mentorData.availability.length === 0 ? (
+              {mentorData.availableTimes.length === 0 ? (
                 <div className="text-center py-8 text-muted-foreground">
-                  <p className="text-sm">No availability slots added yet.</p>
+                  <p className="text-sm">No availableTimes slots added yet.</p>
                   <p className="text-xs">
                     Click "Add Time Slot" to get started.
                   </p>
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {mentorData.availability.length >= 7 && (
+                  {mentorData.availableTimes.length >= 7 && (
                     <div className="text-center py-2 text-muted-foreground">
                       <p className="text-xs">
                         All days of the week have been added.
                       </p>
                     </div>
                   )}
-                  {mentorData.availability.map((slot, index) => (
+                  {mentorData.availableTimes.map((slot, index) => (
                     <div
                       key={index}
                       className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
@@ -439,7 +412,7 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                             .filter(
                               (day) =>
                                 day === slot.day ||
-                                !mentorData.availability.some(
+                                !mentorData.availableTimes.some(
                                   (otherSlot, otherIndex) =>
                                     otherIndex !== index &&
                                     otherSlot.day === day
@@ -502,13 +475,13 @@ export function MentorProfile(/*{mentorData}: { mentorData: NonNullable<MentorLi
                 </div>
               )}
 
-              {mentorData.availability.length > 0 && (
+              {mentorData.availableTimes.length > 0 && (
                 <div className="space-y-2">
                   <Label className="text-sm text-muted-foreground">
                     Current Availability:
                   </Label>
                   <div className="flex flex-wrap gap-2">
-                    {mentorData.availability.map((slot, index) => (
+                    {mentorData.availableTimes.map((slot, index) => (
                       <Badge
                         key={index}
                         variant="secondary"
