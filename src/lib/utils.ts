@@ -110,3 +110,21 @@ export const timeOptions = [
   "21:00",
   "22:00",
 ]
+export const defaultAvatars = [
+  "/avatars/avatar-1.svg",
+  "/avatars/avatar-10.svg",
+  "/avatars/avatar-11.svg",
+  "/avatars/avatar-12.svg",
+  "/avatars/avatar-13.svg",
+  "/avatars/avatar-14.svg",
+  "/avatars/avatar-15.svg",
+  "/avatars/avatar-16.svg",
+  "/avatars/avatar-2.svg",
+  "/avatars/avatar-3.svg",
+  "/avatars/avatar-4.svg",
+  "/avatars/avatar-5.svg",
+  "/avatars/avatar-6.svg",
+  "/avatars/avatar-7.svg",
+  "/avatars/avatar-8.svg",
+  "/avatars/avatar-9.svg",
+];
