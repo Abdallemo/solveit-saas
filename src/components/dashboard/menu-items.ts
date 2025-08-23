@@ -140,11 +140,6 @@ export const MenuItemsAdmin = [
     icon: LuDollarSign,
     child: [
       {
-        title: "All Transactions",
-        url: "/dashboard/admin/payments",
-        icon: LuDollarSign,
-      },
-      {
         title: "Pending/Hold",
         url: "/dashboard/admin/payments/hold",
         icon: LuListChecks,
