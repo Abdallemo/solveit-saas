@@ -136,7 +136,7 @@ export default function TaskCreationPage({
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   return (
-    <div className="flex h-full bg-background ">
+    <div className="flex h-full bg-background overflow-auto">
       <div className="flex-1 flex flex-col overflow-hidden">
         <header className="border-b p-4 flex items-center justify-between">
           <h1 className="text-2xl font-semibold">Post a Task</h1>
@@ -167,10 +167,11 @@ export default function TaskCreationPage({
                   it effectively.
                 </p>
               </div>
-              <div className="flex-1 overflow-auto p-4 pt-0">
-                <Suspense>
-                  <TaskPostingEditor />
-                </Suspense>
+              <div className="px-5 overflow-auto">
+              <Suspense>
+                <TaskPostingEditor />
+              </Suspense>
+
               </div>
             </div>
             <NewTaskSidebar open={isSheetOpen} setOpen={setIsSheetOpen} />
