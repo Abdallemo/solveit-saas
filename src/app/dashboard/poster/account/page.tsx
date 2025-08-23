@@ -6,10 +6,10 @@ import { isUserAccountOauth } from "@/features/users/server/actions";
 import React from "react";
 
 export default async function PosterAccountPage() {
-    const currentUser = await getServerUserSession();
-    if (!currentUser || !currentUser.id) return <AuthGate />;
-  
-    const isOauthUser = await isUserAccountOauth(currentUser.id);
-    const cards = await getAllCustomerPaymentMethods(currentUser.id)
-    return <AccountComponent isOauthUser={isOauthUser}  cards={cards}/>;
+  const currentUser = await getServerUserSession();
+  if (!currentUser || !currentUser.id) return <AuthGate />;
+
+  const isOauthUser = await isUserAccountOauth(currentUser.id);
+  const cards = await getAllCustomerPaymentMethods(currentUser.id);
+  return <AccountComponent isOauthUser={isOauthUser} cards={cards} />;
 }
