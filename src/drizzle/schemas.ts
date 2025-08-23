@@ -55,7 +55,7 @@ export const PaymentPorposeEnum = pgEnum("payment_porpose", [
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
 export type taskTableType = typeof TaskTable.$inferInsert;
-export type PaymentPorposeType= (typeof PaymentPorposeEnum.enumValues)[number];
+export type PaymentPorposeType = (typeof PaymentPorposeEnum.enumValues)[number];
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
@@ -453,6 +453,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   owner: many(TaskCommentTable, {
     relationName: "owner",
   }),
+  payer: many(PaymentTable, {
+    relationName: "payer",
+  }),
 }));
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({
@@ -599,3 +602,13 @@ export const RefundTableRelation = relations(RefundTable, ({ one, many }) => ({
     relationName: "refundModerator",
   }),
 }));
+
+export const PaymentTableRelation = relations(
+  PaymentTable,
+  ({ many, one }) => ({
+    payer: one(UserTable, {
+      fields: [PaymentTable.userId],
+      references: [UserTable.id],
+    }),
+  })
+);
