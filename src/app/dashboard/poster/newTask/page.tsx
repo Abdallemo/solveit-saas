@@ -1,5 +1,5 @@
 import AuthGate from "@/components/AuthGate";
-import { NewTaskProvider } from "@/contexts/TaskContextCopy";
+import { NewTaskProvider } from "@/contexts/TaskContext";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
 import {
