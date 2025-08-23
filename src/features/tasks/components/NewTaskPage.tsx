@@ -22,6 +22,8 @@ import { useFileUpload } from "@/hooks/useFile";
 import { env } from "@/env/client";
 import useStripeSessionValidate from "../lib/useStripeSessionValidate";
 import { NewuseTask } from "@/contexts/TaskContext";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { validateContentWithAi } from "@/features/Ai/server/action";
 
 export default function TaskCreationPage({
   defaultValues,
@@ -53,6 +55,17 @@ export default function TaskCreationPage({
     delay: 700,
   });
 
+  const { mutateAsync: validateContent, isPending } = useMutation({
+    mutationFn: validateContentWithAi,
+    onSuccess: (d) => {
+      toast.success("success: recieaved " + d.title + " " + d.violatesRules, {
+        id: "openai",
+      });
+    },
+    onError: (er) => {
+      toast.error(er.message);
+    },
+  });
   useEffect(() => {
     if (typeof window === "undefined") return;
     const doc = new DOMParser().parseFromString(content, "text/html");
@@ -91,6 +104,8 @@ export default function TaskCreationPage({
   if (isBlocked) return <AuthGate />;
   async function onSubmit(data: TaskSchema) {
     try {
+      // await validateContent(data.content);
+      // return;//openai
       toast.loading("uploading files", { id: "file-upload" });
       let uploadedFileMetadata: UploadedFileMeta[] | undefined;
       let uploadedFilesString: string | undefined;
@@ -143,7 +158,7 @@ export default function TaskCreationPage({
           <Button
             type="submit"
             form="task-form"
-            disabled={isDisabled || isUploading}
+            disabled={isDisabled || isUploading || isPending}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isUploading ? (
               <>
@@ -168,10 +183,9 @@ export default function TaskCreationPage({
                 </p>
               </div>
               <div className="px-5 overflow-auto">
-              <Suspense>
-                <TaskPostingEditor />
-              </Suspense>
-
+                <Suspense>
+                  <TaskPostingEditor />
+                </Suspense>
               </div>
             </div>
             <NewTaskSidebar open={isSheetOpen} setOpen={setIsSheetOpen} />
