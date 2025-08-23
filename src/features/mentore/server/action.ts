@@ -43,7 +43,7 @@ export async function getMentorListig(t: "poster" | "solver++") {
     const result = await db.query.MentorshipProfileTable.findFirst({
       where: (tb, fn) => fn.eq(tb.userId, user.id!),
     });
-    return result;
+    return {...result!,displayName:result?.displayName || user.name!};
   } else {
     const results = await db.query.MentorshipProfileTable.findMany();
     return results;
@@ -62,14 +62,28 @@ export async function handleProfilePublishState(isPublished: boolean) {
       set: { isPublished },
     });
 }
+export async function handleProfileAvatarState(avatar: string) {
+  const { user, usrSub } = await validateMentorAccess();
+  await db
+    .insert(MentorshipProfileTable)
+    .values({
+      userId: user.id!,
+      avatar,
+    })
+    .onConflictDoUpdate({
+      target: MentorshipProfileTable.userId,
+      set: { avatar },
+    });
+}
 export async function saveMentorListing(values: {
+  displayName: string;
   title: string;
   avatar: string;
   description: string;
   availableTimes: AvailabilitySlot[];
   ratePerHour: number;
 }) {
-  const { title, description, availableTimes, ratePerHour, avatar } = values;
+  const { displayName,title, description, availableTimes, ratePerHour, avatar } = values;
   try {
     const { user, usrSub } = await validateMentorAccess();
 
@@ -78,6 +92,7 @@ export async function saveMentorListing(values: {
       .values({
         userId: user.id!,
         title,
+        displayName,
         description,
         avatar,
         availableTimes: JSON.stringify(availableTimes),
@@ -86,6 +101,7 @@ export async function saveMentorListing(values: {
       .onConflictDoUpdate({
         target: MentorshipProfileTable.userId!,
         set: {
+          displayName,
           title,
           description,
           availableTimes: JSON.stringify(availableTimes),
