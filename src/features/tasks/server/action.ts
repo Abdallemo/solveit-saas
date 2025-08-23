@@ -142,8 +142,9 @@ export async function createTaksPaymentCheckoutSession(values: {
   price: number;
   userId: string;
   deadlineStr: string;
+  draftTaskId: string;
 }) {
-  const { price, userId, deadlineStr } = values;
+  const { price, userId, deadlineStr, draftTaskId } = values;
   const referer = await getServerReturnUrl();
   try {
     const currentUser = await getServerUserSession();
