@@ -35,7 +35,7 @@ export default async function ServerWrapper({
   const hasNext = pages < totalPages;
   return (
     <>
-      <StripeCheckoutSucessClient id={id} />
+      { id && <StripeCheckoutSucessClient id={id} /> }
       <DisplayListComponent
         title="Your Tasks"
         itretable={tasks}
