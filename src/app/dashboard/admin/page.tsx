@@ -4,7 +4,7 @@ import { getSummaryStats } from "@/features/users/server/actions";
 import { getLogs } from "@/lib/logging/action";
 export type StastType = Awaited<ReturnType<typeof getSummaryStats>>
 export default async function page() {
-  await isAuthorized("ADMIN");
+  await isAuthorized(["ADMIN"]);
   const serverLogs = await getLogs();
   const stats = await getSummaryStats();
   
