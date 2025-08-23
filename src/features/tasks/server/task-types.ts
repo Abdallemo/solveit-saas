@@ -6,6 +6,8 @@ import {
   getAllTasks,
   getAllTasksByRolePaginated,
   getAssignedTasksbyIdPaginated,
+  getDraftTask,
+  getDraftTaskWithDefualtVal,
   getPosterTasksbyIdPaginated,
   getSolutionById,
   getTasksbyId,
@@ -18,6 +20,8 @@ export type TaskFormValues = z.infer<typeof TaskFormSchema>;
 export type WorkpaceSchemType = z.infer<typeof WorkpaceSchem>;
 export type TaskSchema = z.infer<typeof taskSchema>;
 
+export type NewtaskDraftType = Exclude< Awaited<ReturnType<typeof getDraftTaskWithDefualtVal>>,null>;
+export type taskDraftType = Exclude< Awaited<ReturnType<typeof getDraftTask>>,null>;
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type SolverAssignedTaskType = Awaited<ReturnType<typeof getAssignedTasksbyIdPaginated>>["tasks"][number];
@@ -93,14 +97,14 @@ export const taskRefundSchema = z.object({
   reason: z.string().min(10, "please enter a valid reason!"),
 });
 export const taskSchema = z.object({
-  deadline: z.string().nonempty("Deadline is required"),
-  visibility: z.enum(["public", "private"]),
-  category: z.string().nonempty("Category is required"),
-  price: z.coerce.number().min(10, "Minimum price is 10"),
-  content: z.string().min(4, "Content is too short"),
-  title: z.string().min(4, "title is too short"),
-  description: z.string().min(4, "description is too short"),
-});
+  deadline: z.string().nonempty("Deadline is required").default("12h"),
+  visibility: z.enum(["public", "private"]).default("public"),
+  category: z.string().nonempty("Category is required").default(""),
+  price: z.coerce.number().min(10, "Minimum price is 10").default(10),
+  content: z.string().min(4, "Content is too short").default(""),
+  title: z.string().min(4, "title is too short").default(""),
+  description: z.string().min(4, "description is too short").default(""),
+}).passthrough();
 export const WorkpaceSchem = z.object({
   content: z.string().min(10, "Content is too short"),
 });
