@@ -2,8 +2,11 @@
 
 import db from "@/drizzle/db";
 import { RulesTable } from "@/drizzle/schemas";
+import { env } from "@/env/server";
+import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { revalidatePath } from "next/cache";
+import { z } from "zod";
 
 export async function addNewRule(values: {
   rule: string;
@@ -11,7 +14,7 @@ export async function addNewRule(values: {
   adminId: string;
   isActive: boolean;
 }) {
-  const { rule, adminId, description,isActive } = values;
+  const { rule, adminId, description, isActive } = values;
 
   if (!rule || !adminId || !description) {
     throw new Error("All fields are required");
@@ -21,9 +24,9 @@ export async function addNewRule(values: {
       rule,
       description,
       adminId,
-      isActive
+      isActive,
     });
-    revalidatePath("/dashboard/admin/ai")
+    revalidatePath("/dashboard/admin/ai");
     logger.info("Successfully added new Ai Rule By " + adminId);
   } catch (error) {
     logger.error("Unable to add new Rule by " + adminId, {
@@ -36,4 +39,33 @@ export async function addNewRule(values: {
 export type AiRule = Awaited<ReturnType<typeof getAllAiRules>>[number];
 export async function getAllAiRules() {
   return await db.query.RulesTable.findMany();
+}
+const openaiResSchema = z.object({
+  title: z.string(),
+  violatesRules: z.boolean(),
+});
+export type openaiResType = z.infer<typeof openaiResSchema>;
+export async function validateContentWithAi(content: string) {
+  try {
+    const res = await fetch(`${env.GO_API_URL}/openai`, {
+      method: "POST",
+      headers: GoHeaders,
+      body: JSON.stringify({ content: content }),
+    });
+    if (!res.ok) {
+      console.error(res.json());
+      throw new Error("unable to fetch");
+    }
+    const data = await res.json();
+    const validatedData = openaiResSchema.safeParse(data);
+    if (!validatedData.success) {
+      
+      logger.error("Invalid API response schema. from go service");
+      throw new Error("Invalid API response schema.");
+    }
+    return validatedData.data;
+  } catch (error) {
+    logger.error("failed to fetch goapi openai");
+    throw error;
+  }
 }
