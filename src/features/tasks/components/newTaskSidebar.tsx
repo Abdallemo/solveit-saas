@@ -65,7 +65,7 @@ export default function NewTaskSidebar({
     );
 
   return (
-    <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col ">
+    <div className="w-80 border-l bg-muted/20  flex flex-col ">
       <div className="p-4 border-b bg-background">
         <h2 className="font-medium">Task Details</h2>
       </div>
@@ -84,7 +84,7 @@ function SideBarForm() {
 
   const form = useFormContext<TaskSchema>();
   return (
-    <div className="p-3 space-y-4 shrink-0">
+    <div className="px-5 py-3 mb-3 space-y-4 overflow-x-auto">
       <FormField
         control={form.control}
         name="title"
@@ -231,12 +231,12 @@ function SideBarForm() {
 
       <Separator />
 
-      <div className="space-y-1">
+      <div className="space-y-1 overflow-auto ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi className="overflow-y-scroll" />
+        <FileUploadUi className="overflow-x-auto" />
       </div>
     </div>
   );
