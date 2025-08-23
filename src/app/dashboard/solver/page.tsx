@@ -4,7 +4,7 @@ import {
 
 export default async function page() {
 
-  await isAuthorized("SOLVER");
+  await isAuthorized(["SOLVER"]);
 
   return (
     <div className="flex flex-col w-full h-screen justify-center items-center">
