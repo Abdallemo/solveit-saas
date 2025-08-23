@@ -21,8 +21,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { ExampleCombobox } from "./CategorySelectWrapper";
-import { useTask } from "@/contexts/TaskContext";
+import { CategoryComps } from "./CategorySelectWrapper";
 import {
   FormControl,
   FormField,
@@ -33,6 +32,7 @@ import {
 import TextareaAutosize from "react-textarea-autosize";
 import { useFormContext } from "react-hook-form";
 import { TaskSchema } from "@/features/tasks/server/task-types";
+import { NewuseTask } from "@/contexts/TaskContext";
 
 export default function NewTaskSidebar({
   open,
@@ -47,7 +47,7 @@ export default function NewTaskSidebar({
     return (
       <Sheet open={open} onOpenChange={setOpen}>
         <Button
-        type="button"
+          type="button"
           size="icon"
           onClick={() => setOpen(true)}
           className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
@@ -75,15 +75,12 @@ export default function NewTaskSidebar({
 }
 
 function SideBarForm() {
+  // const { setDeadline } = useTask(); // migrating from
+
   const {
-    title,
-    description,
-    setTitle,
-    setDescription,
-    setPrice,
-    setVisibility,
-    setDeadline,
-  } = useTask();
+    draft: { title, description },
+    updateDraft,
+  } = NewuseTask();//m Mirating to
 
   const form = useFormContext<TaskSchema>();
   return (
@@ -104,7 +101,7 @@ function SideBarForm() {
                 value={title}
                 onChange={(e) => {
                   field.onChange(e.target.value);
-                  setTitle(e.target.value);
+                  updateDraft({ title: e.target.value });
                 }}
               />
             </FormControl>
@@ -127,7 +124,7 @@ function SideBarForm() {
                 {...field}
                 value={description}
                 onChange={(e) => {
-                  setDescription(e.target.value);
+                  updateDraft({ description: e.target.value });
 
                   field.onChange(e.target.value);
                 }}
@@ -148,7 +145,7 @@ function SideBarForm() {
               value={field.value}
               onValueChange={(val) => {
                 field.onChange(val);
-                setDeadline(val);
+                updateDraft({deadline:val});
               }}>
               <FormControl>
                 <SelectTrigger className=" w-full">
@@ -177,7 +174,7 @@ function SideBarForm() {
               value={field.value}
               onValueChange={(val) => {
                 field.onChange(val);
-                setVisibility(val as "public" | "private");
+                updateDraft({visibility:val as "public" | "private"});
               }}>
               <FormControl>
                 <SelectTrigger className=" w-full">
@@ -201,7 +198,7 @@ function SideBarForm() {
           <FormItem>
             <FormLabel>Category</FormLabel>
             <FormControl>
-              <ExampleCombobox value={field.value} onChange={field.onChange} />
+              <CategoryComps value={field.value} onChange={field.onChange} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -223,7 +220,7 @@ function SideBarForm() {
                 onChange={(e) => {
                   const val = Number(e.target.value);
                   field.onChange(val);
-                  setPrice(val);
+                  updateDraft({price:val});
                 }}
               />
             </FormControl>
@@ -239,7 +236,7 @@ function SideBarForm() {
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi  className="overflow-y-scroll"/>
+        <FileUploadUi className="overflow-y-scroll" />
       </div>
     </div>
   );
