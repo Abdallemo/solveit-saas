@@ -1,5 +1,6 @@
 "use server";
 
+import db from "@/drizzle/db";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getUserById } from "@/features/users/server/actions";
@@ -61,4 +62,11 @@ export async function ManageUserCreditCardPortal() {
     configuration:configuration.id
   });
   return portalSession.url;
+}
+
+export async function getPaymentByPaymentIntentId(stripePaymentIntentId:string) {
+  return await db.query.PaymentTable.findFirst({
+    where:(tb,fn)=>fn.eq(tb.stripePaymentIntentId,stripePaymentIntentId)
+  })
+  
 }
