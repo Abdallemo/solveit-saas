@@ -47,10 +47,15 @@ export const RefundStatusEnum = pgEnum("refund_status", [
   "REJECTED",
   "FAILED",
 ]);
+export const PaymentPorposeEnum = pgEnum("payment_porpose", [
+  "Task Payment",
+  "Mentor Booking",
+]);
 
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
 export type taskTableType = typeof TaskTable.$inferInsert;
+export type PaymentPorposeType= (typeof PaymentPorposeEnum.enumValues)[number];
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
