@@ -22,7 +22,7 @@ export default async function page() {
       "/api/auth/signout?callbackUrl=/login?error=account_deleted"
     );
   }
-  await isAuthorized("POSTER");
+  await isAuthorized(["POSTER"]);
   const userRole = await getServerUserSubscriptionById(currentUser?.id);
   const cache = Math.random() * 1000;
   return (
