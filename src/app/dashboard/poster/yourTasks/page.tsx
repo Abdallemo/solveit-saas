@@ -18,7 +18,7 @@ export default async function ServerWrapper({
   const { q, page, id } = await searchParams;
   const search = q ?? "";
   const pages = Number.parseInt(page ?? "1");
-  const limit = 6;
+  const limit = 8;
   const offset = (pages - 1) * limit;
 
   const { tasks, totalCount } = await getPosterTasksbyIdPaginated(
