@@ -7,13 +7,11 @@ import { common, createLowlight } from "lowlight"
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
 import Highlight from "@tiptap/extension-highlight"
 import MenuBar from "./MenuBar"
-import { useTask } from "@/contexts/TaskContext"
-import { useEffect } from "react"
-import { autoSaveDraftTask } from "../../server/action"
-import useCurrentUser from "@/hooks/useCurrentUser"
+import { NewuseTask } from "@/contexts/TaskContext"
 
 export default function TaskPostingEditor() {
-  const { content, setContent } = useTask()
+  // const { content, setContent } = useTask()// migrated
+  const {draft:{content},updateDraft} = NewuseTask()
 
   const lowlight = createLowlight(common)
   const editor = useEditor({
@@ -43,7 +41,7 @@ export default function TaskPostingEditor() {
       Image,
     ],
     onUpdate({ editor }) {
-      setContent(editor.getHTML())
+      updateDraft({content:editor.getHTML()})
     },
     content: content,
     immediatelyRender: false,
