@@ -23,6 +23,7 @@ export default function useStripeSessionValidate(
   });
   useEffect(() => {
     if (isLoadingTsk || hasShownToast.current) {
+      toast.loading("publishing..",{ id: "task-publish" })
       return;
     }
     if (!draftTaskExists) {
