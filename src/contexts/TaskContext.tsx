@@ -1,84 +1,54 @@
 "use client";
+import { NewtaskDraftType } from "@/features/tasks/server/task-types";
 import { createContext, useContext, useState, ReactNode } from "react";
 
+type Draft = Partial<NewtaskDraftType>;
+const initialType = {
+  content: "",
+  category: "",
+  deadline: "12h",
+  visibility: "public",
+  price: 10,
+  title: "",
+  description: "",
+};
 type TaskContextType = {
-  content: string;
-  setContent: (c: string) => void;
-  setTitle: (c: string) => void;
-  setDescription: (c: string) => void;
-  setDeadline: (d: string) => void;
-  setVisibility: (d: "public" | "private") => void;
   setSelectedFiles: (f: File[]) => void;
-  setCategory: (f: string) => void;
-  setPrice: (f: number) => void;
   selectedFiles: File[];
-  deadline: string;
-  visibility: "public" | "private";
-  title: string;
-  description: string;
-  category: string;
-  price: number;
+  draft: NewtaskDraftType;
+  updateDraft: (d: Draft) => void;
 };
 
-const TaskContext = createContext<TaskContextType | undefined>(undefined);
+const NewTaskContext = createContext<TaskContextType | undefined>(undefined);
 type TaskPorvideProps = {
   children: ReactNode;
-  dbCategory: string;
-  dbTitle: string;
-  dbDescription: string;
-  dbContent: string;
-  dbDeadline: string;
-  updatedAt?: Date;
-  dbVisibility: "public" | "private";
-  dbPrice: number;
+  initialDraft: NewtaskDraftType;
 };
-export const TaskProvider = ({
+export const NewTaskProvider = ({
   children,
-  dbContent,
-  dbCategory,
-  dbDeadline,
-  dbVisibility,
-  dbPrice,
-  dbTitle,
-  dbDescription,
-  updatedAt,
+  initialDraft,
 }: TaskPorvideProps) => {
-  const [content, setContent] = useState(dbContent);
-  const [title, setTitle] = useState(dbTitle);
-  const [description, setDescription] = useState(dbDescription);
-  const [deadline, setDeadline] = useState(dbDeadline);
-  const [visibility, setVisibility] = useState(dbVisibility);
-  const [category, setCategory] = useState(dbCategory);
-  const [price, setPrice] = useState(dbPrice);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [draft, setDraft] = useState(initialDraft ?? initialType);
+  const updateDraft = (updates: Draft) => {
+    setDraft((prev) => ({ ...prev, ...updates }));
+  };
 
   return (
-    <TaskContext.Provider
+    <NewTaskContext.Provider
       value={{
-        content,
-        setContent,
-        selectedFiles,
         setSelectedFiles,
-        deadline,
-        setDeadline,
-        visibility,
-        setVisibility,
-        category,
-        setCategory,
-        price,
-        setPrice,
-        description,
-         setDescription,
-        title,
-        setTitle,
+        draft,
+        selectedFiles,
+        updateDraft,
       }}>
       {children}
-    </TaskContext.Provider>
+    </NewTaskContext.Provider>
   );
 };
 
-export const useTask = () => {
-  const context = useContext(TaskContext);
+export const NewuseTask = () => {
+  const context = useContext(NewTaskContext);
   if (!context) throw new Error("useTask must be used within a TaskProvider");
   return context;
 };
