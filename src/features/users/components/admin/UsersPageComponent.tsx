@@ -70,6 +70,7 @@ import {
   AlertDialogCancel,
   AlertDialogAction,
 } from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const roles: { value: UserRoleType; label: string }[] = [
   { value: "ADMIN", label: "Admin" },
@@ -289,14 +290,12 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
               <TableRow key={user.id}>
                 <TableCell>
                   <div className="flex items-center space-x-3">
-                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-sm font-medium">
-                        {user.name
-                          ?.split(" ")
-                          .map((n) => n[0])
-                          .join("")}
-                      </span>
-                    </div>
+                    <Avatar className="size-6">
+                      <AvatarFallback>
+                        {user.name?.split("")[0].toUpperCase()}
+                      </AvatarFallback>
+                      <AvatarImage src={user.image!}></AvatarImage>
+                    </Avatar>
                     <div>
                       <div className="font-medium">{user.name}</div>
                       <div className="text-sm text-muted-foreground">
@@ -376,11 +375,13 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setUserToDelete(null)} className="cursor-pointer" >
+            <AlertDialogCancel
+              onClick={() => setUserToDelete(null)}
+              className="cursor-pointer">
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
-            className="bg-destructive hover:cursor-pointer text-white shadow-xs hover:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
+              className="bg-destructive hover:cursor-pointer text-white shadow-xs hover:bg-destructive/80 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60"
               onClick={() => {
                 if (userToDelete) {
                   handleUserDelete(userToDelete);
