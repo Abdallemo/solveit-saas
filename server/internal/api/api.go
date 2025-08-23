@@ -58,7 +58,7 @@ func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/media", s.handleDeleteMedia)
 	mux.HandleFunc("POST /api/v1/send-notification", s.wsNotif.handleSendNotification)
 	mux.HandleFunc("POST /api/v1/send-comment", s.wsComm.handleSendComments)
-	mux.HandleFunc("GET /api/v1/openai", s.hanleOpenAi)
+	mux.HandleFunc("POST /api/v1/openai", s.hanleOpenAi)
 }
 
 func (s *Server) Run() error {
