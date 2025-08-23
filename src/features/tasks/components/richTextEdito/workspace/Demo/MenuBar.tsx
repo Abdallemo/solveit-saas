@@ -18,7 +18,6 @@ import {
 } from "lucide-react";
 import type React from "react";
 import { FormEvent, useRef } from "react";
-// import { useTask } from "@/contexts/TaskContext";
 import { Toggle } from "@/components/ui/toggle";
 
 function toggleMergedCodeBlock(editor: Editor) {
