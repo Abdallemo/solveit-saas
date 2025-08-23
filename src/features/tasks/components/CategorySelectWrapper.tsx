@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { CheckIcon, ChevronsUpDownIcon } from "lucide-react";
+import { useState } from "react";
+import { CheckIcon, ChevronsUpDownIcon, Loader2 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -18,40 +18,50 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { catagoryType, getAllTaskCatagories } from "../server/action";
-import { useTask } from "@/contexts/TaskContext";
+import {getAllTaskCatagories } from "../server/action";
+import { NewuseTask } from "@/contexts/TaskContext";
+import { useQuery } from "@tanstack/react-query";
 
-interface ExampleComboboxProps {
+interface CategoryCompsProps {
   value: string;
   onChange: (value: string) => void;
   name?: string;
 }
 
-export function ExampleCombobox({ value, onChange }: ExampleComboboxProps) {
+export function CategoryComps({ value, onChange }: CategoryCompsProps) {
   const [open, setOpen] = useState(false);
-  const [categories, setCategories] = useState<catagoryType>([]);
-  const {setCategory} = useTask()
-  const [loading, setLoading] = useState(true);
+  // const { setCategory } = useTask(); // migrated from
+  const { updateDraft } = NewuseTask(); //Migrated to
+
+  const {data:fetchedCategories,isPending} = useQuery({
+    queryKey: ["category"],
+    queryFn: async () => await getAllTaskCatagories(),
+  });
+  // useEffect(() => {
   
-  useEffect(() => {
-    const fetchCategories = async () => {
-      try {
-        const fetched = await getAllTaskCatagories();
-        setCategories(fetched);
-      } catch (err) {
-        console.error("Failed to fetch categories:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchCategories();
-  }, []);
+  //   const fetchCategories = async () => {
+  //     try {
+  //       const fetched = await getAllTaskCatagories();
+  //       setCategories(fetched);
+  //     } catch (err) {
+  //       console.error("Failed to fetch categories:", err);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+  //   fetchCategories();
+  // }, []);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <Button variant="outline" role="combobox" className="w-full justify-between">
-          {value ? categories.find((cat) => cat.name === value)?.name : "Select Category..."}
+        <Button
+          variant="outline"
+          role="combobox"
+          className="w-full justify-between">
+          {value
+            ? fetchedCategories?.find((cat) => cat.name === value)?.name
+            : "Select Category..."}
           <ChevronsUpDownIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -61,17 +71,21 @@ export function ExampleCombobox({ value, onChange }: ExampleComboboxProps) {
           <CommandList>
             <CommandEmpty>No Category found.</CommandEmpty>
             <CommandGroup>
-              {categories.map((cat) => (
+              {isPending && <Loader2 className="animate-spin"/>}
+              {fetchedCategories?.map((cat) => (
                 <CommandItem
                   key={cat.id}
                   value={cat.name}
                   onSelect={() => {
-                    onChange(cat.name); 
-                      setCategory(cat.name);  
+                    onChange(cat.name);
+                    updateDraft({ category: cat.name });
                     setOpen(false);
                   }}>
                   <CheckIcon
-                    className={cn("mr-2 h-4 w-4", value === cat.name ? "opacity-100" : "opacity-0")}
+                    className={cn(
+                      "mr-2 h-4 w-4",
+                      value === cat.name ? "opacity-100" : "opacity-0"
+                    )}
                   />
                   {cat.name}
                 </CommandItem>
