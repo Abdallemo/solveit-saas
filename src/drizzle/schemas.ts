@@ -347,12 +347,13 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" })
     .unique(),
+  displayName: text("display_name").notNull().default(""),
   avatar: text("avatar").notNull().default("/avatars/avatar-4.svg"),
   title: text("title").notNull().default(""),
   description: text("description").notNull().default(""),
   ratePerHour: real("rate_per_hour").notNull().default(0),
   availableTimes: json("available_times").notNull().default("[]"),
-  isPublished: boolean("is_published").default(false),
+  isPublished: boolean("is_published").default(false).notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
