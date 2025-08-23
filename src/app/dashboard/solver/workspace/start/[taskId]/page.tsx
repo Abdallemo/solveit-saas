@@ -15,7 +15,7 @@ export default async function page({
 }: {
   params: Promise<{ taskId: string }>;
 }) {
-  const {user} = await isAuthorized("SOLVER");
+  const {user} = await isAuthorized(["SOLVER"]);
 
   const { taskId } = await params;
   const workspace = await getWorkspaceByTaskId(taskId,user?.id!);
