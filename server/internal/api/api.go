@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/go-redis/redis/v8"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -18,9 +19,13 @@ type Server struct {
 	s3Client     *s3.Client
 	openaiClient *openai.Client
 	store        storage.Storage
+	redisClient  *redis.Client
 }
 
-func NewServer(addr string, s3Client *s3.Client, openaiClient *openai.Client, store storage.Storage) *Server {
+func NewServer(addr string, s3Client *s3.Client,
+	openaiClient *openai.Client,
+	store storage.Storage,
+	redisClient *redis.Client) *Server {
 	hub := NewHub()
 
 	return &Server{
@@ -31,6 +36,7 @@ func NewServer(addr string, s3Client *s3.Client, openaiClient *openai.Client, st
 		s3Client:     s3Client,
 		openaiClient: openaiClient,
 		store:        store,
+		redisClient:  redisClient,
 	}
 }
 
