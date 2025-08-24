@@ -48,11 +48,11 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to connect to database:", err)
 	}
-	redisClient := redis.NewClient(&redis.Options{
-		Addr:     os.Getenv("REDIS_URL"),
-		Password: os.Getenv("REDIS_PASSWORD"),
-		DB:       0,
-	})
+	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+	if err != nil {
+		log.Fatal("unable to parse redis url")
+	}
+	redisClient := redis.NewClient(opt)
 	_, err = redisClient.Ping(ctx).Result()
 	if err != nil {
 		log.Fatal("unable to connect to redis instance")
