@@ -5,6 +5,7 @@ import { RulesTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
+import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -41,13 +42,18 @@ export async function getAllAiRules() {
   return await db.query.RulesTable.findMany();
 }
 const openaiResSchema = z.object({
-  title: z.string(),
   violatesRules: z.boolean(),
+});
+const autoSuggestResSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  category: z.string(),
+  price: z.number(),
 });
 export type openaiResType = z.infer<typeof openaiResSchema>;
 export async function validateContentWithAi(content: string) {
   try {
-    const res = await fetch(`${env.GO_API_URL}/openai`, {
+    const res = await fetch(`${env.GO_API_URL}/openai?task=moderation`, {
       method: "POST",
       headers: GoHeaders,
       body: JSON.stringify({ content: content }),
@@ -59,7 +65,6 @@ export async function validateContentWithAi(content: string) {
     const data = await res.json();
     const validatedData = openaiResSchema.safeParse(data);
     if (!validatedData.success) {
-      
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");
     }
@@ -67,5 +72,39 @@ export async function validateContentWithAi(content: string) {
   } catch (error) {
     logger.error("failed to fetch goapi openai");
     throw error;
+  }
+}
+export async function autoSuggestWithAi(fields: { content: string }) {
+  try {
+    const res = await fetch(`${env.GO_API_URL}/openai?task=autosuggestion`, {
+      method: "POST",
+      headers: GoHeaders,
+      body: JSON.stringify(fields),
+    });
+    if (!res.ok) {
+      console.error(res.json());
+      throw new Error("unable to fetch");
+    }
+    const data = await res.json();
+    const validatedData = autoSuggestResSchema.safeParse(data);
+    if (!validatedData.success) {
+      logger.error("Invalid API response schema. from go service");
+      throw new Error("Invalid API response schema.");
+    }
+    return validatedData.data;
+  } catch (error) {
+    logger.error("failed to fetch goapi openai");
+    throw error;
+  }
+}
+
+export async function deleteRule(id: string) {
+  try {
+    await db.delete(RulesTable).where(eq(RulesTable.id, id));
+  } catch (error) {
+    logger.error(
+      "unable to delete this rule, cause: " + (error as Error).message
+    );
+    throw new Error("unable to delete this rule");
   }
 }
