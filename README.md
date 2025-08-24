@@ -2,6 +2,8 @@
 # SolveIt – SaaS-Based Student Job Board for UTHM
 
 **SolveIt** is a comprehensive SaaS platform designed exclusively for **UTHM students**, enabling academic collaboration and peer-to-peer task solving with secure payments, AI-powered moderation, and a structured workspace.  
+<img width="1910" height="1023" alt="image" src="https://github.com/user-attachments/assets/f32c76d1-acba-4b37-ab0d-71ae2061e0f6" />
+<img width="1900" height="1015" alt="image" src="https://github.com/user-attachments/assets/e4c08f6e-7d4f-45c4-8017-6be7d02a093e" />
 
 ---
 
