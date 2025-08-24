@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,7 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Trash2, Plus, Edit2 } from "lucide-react";
-import { addNewRule, AiRule } from "../action";
+import { addNewRule, AiRule, deleteRule } from "../action";
 import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { z } from "zod";
@@ -23,12 +23,13 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/loading";
+import { useRouter } from "next/navigation";
 
 const AiSchema = z.object({
   rule: z
     .string()
-    .min(1, "A rule is required")
-    .max(50, "A rule must be less than 50 characters"),
+    .min(10, "A rule is required")
+    .max(90, "A rule must be less than 50 characters"),
   description: z.string().min(1, "A description is required"),
 });
 type AiSchemaFormData = z.infer<typeof AiSchema>;
@@ -39,12 +40,17 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
   const { id: adminId } = user!;
   const [isAddingRule, setIsAddingRule] = useState(false);
   const [editingRule, setEditingRule] = useState<AiRule | null>(null);
-
+  const router = useRouter()
   const form = useForm<AiSchemaFormData>({
     resolver: zodResolver(AiSchema),
     defaultValues: { rule: "", description: "" },
   });
-
+  useEffect(() => {
+    form.reset({
+      description: "",
+      rule: "",
+    });
+  }, [form]);
   const { mutate, isPending } = useMutation({
     mutationFn: addNewRule,
     onSuccess: () => {
@@ -55,6 +61,15 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
     },
     onError: (err) => {
       toast.error("Unable to add new rule: " + err.message, { id: "add-rule" });
+    },
+  });
+  const { mutateAsync: ruleDeleteMutate, isPending: isDeleting } = useMutation({
+    mutationFn: deleteRule,
+    onSuccess: () => {
+      toast.success("rule successfully deleted", { id: "delete-rule" });
+    },
+    onError: (e) => {
+      toast.error(e.message, { id: "delete-rule" });
     },
   });
 
@@ -77,7 +92,7 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
   const cancelEdit = () => {
     setEditingRule(null);
     setIsAddingRule(false);
-    form.reset();
+    form.reset({ description: "", rule: "" });
   };
   if (isLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
@@ -196,10 +211,16 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
                           <Edit2 className="w-4 h-4" />
                         </Button>
                         <Button
+                          disabled={isDeleting}
                           variant="outline"
                           size="sm"
                           // TODO: delete mutation here
-                          onClick={() => console.log("Delete", rule.id)}
+                          onClick={async () => {
+                            toast.loading("deleting..", { id: "delete-rule" });
+                            await ruleDeleteMutate(rule.id);
+                            router.refresh()
+                            
+                          }}
                           className="text-destructive hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
                         </Button>
