@@ -39,3 +39,21 @@ func (s *PostgressStore) GetAIRules(ctx context.Context) ([]string, error) {
 
 	return allRules, rows.Err()
 }
+func (s *PostgressStore) GetTaskCategories(ctx context.Context) ([]string, error) {
+	rows, err := s.db.Query(ctx, "SELECT name FROM task_categories")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var allRules []string
+	for rows.Next() {
+		var r string
+		if err := rows.Scan(&r); err != nil {
+			return nil, err
+		}
+		allRules = append(allRules, r)
+	}
+
+	return allRules, rows.Err()
+}
