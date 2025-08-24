@@ -610,6 +610,7 @@ export const PaymentTableRelation = relations(
     payer: one(UserTable, {
       fields: [PaymentTable.userId],
       references: [UserTable.id],
+      relationName:'payer'
     }),
   })
 );
