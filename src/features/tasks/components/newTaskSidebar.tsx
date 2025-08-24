@@ -9,17 +9,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FileText } from "lucide-react";
+import { FileText, Loader2, Wand2 } from "lucide-react";
 import FileUploadUi from "@/features/media/components/FileUploadUi";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CategoryComps } from "./CategorySelectWrapper";
 import {
@@ -33,13 +31,22 @@ import TextareaAutosize from "react-textarea-autosize";
 import { useFormContext } from "react-hook-form";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 import { NewuseTask } from "@/contexts/TaskContext";
+import { useMutation } from "@tanstack/react-query";
+import { autoSuggestWithAi } from "@/features/Ai/server/action";
+import { toast } from "sonner";
 
 export default function NewTaskSidebar({
+  isDisabled,
   open,
   setOpen,
+  handleSugestions,
+  isAutoSeggesting: isPending,
 }: {
+  isDisabled: boolean;
   open: boolean;
+  isAutoSeggesting: boolean;
   setOpen: (value: boolean) => void;
+  handleSugestions: () => void;
 }) {
   const isMobile = useIsMobile();
 
@@ -56,9 +63,23 @@ export default function NewTaskSidebar({
         <SheetContent side="right" className="w-80 sm:w-96">
           <SheetHeader>
             <SheetTitle>Task Details</SheetTitle>
+            <Button
+              disabled={isPending || isDisabled}
+              className="text-xs"
+              type="button"
+              variant={"outline"}
+              onClick={handleSugestions}>
+              {" "}
+              {isPending ? (
+                <Loader2 className=" size-4 animate-spin" />
+              ) : (
+                <Wand2 />
+              )}
+              Auto Suggest with Ai{" "}
+            </Button>
           </SheetHeader>
           <div className="mt-4 overflow-y-auto">
-            <SideBarForm />
+            <SideBarForm isPending={isPending} />
           </div>
         </SheetContent>
       </Sheet>
@@ -66,21 +87,31 @@ export default function NewTaskSidebar({
 
   return (
     <div className="w-80 border-l bg-muted/20  flex flex-col ">
-      <div className="p-4 border-b bg-background">
-        <h2 className="font-medium">Task Details</h2>
+      <div className="p-4 border-b bg-background flex justify-between items-center">
+        <h2 className="text-lg">Task Details</h2>
+        <Button
+          className="text-xs"
+          type="button"
+          disabled={isPending || isDisabled}
+          variant={"outline"}
+          onClick={handleSugestions}>
+          {" "}
+          {isPending ? <Loader2 className=" size-4 animate-spin" /> : <Wand2 />}
+          Auto Suggest with Ai{" "}
+        </Button>
       </div>
-      <SideBarForm />
+      <SideBarForm isPending={isPending} />
     </div>
   );
 }
 
-function SideBarForm() {
+function SideBarForm({ isPending }: { isPending: boolean }) {
   // const { setDeadline } = useTask(); // migrating from
 
   const {
     draft: { title, description },
     updateDraft,
-  } = NewuseTask();//m Mirating to
+  } = NewuseTask(); //m Mirating to
 
   const form = useFormContext<TaskSchema>();
   return (
@@ -92,18 +123,24 @@ function SideBarForm() {
           <FormItem>
             <FormLabel>Title</FormLabel>
             <FormControl>
-              <TextareaAutosize
-                minRows={1}
-                maxRows={2}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                placeholder="Task Title"
-                {...field}
-                value={title}
-                onChange={(e) => {
-                  field.onChange(e.target.value);
-                  updateDraft({ title: e.target.value });
-                }}
-              />
+              <div className="relative ">
+                <TextareaAutosize
+                  disabled={isPending}
+                  minRows={1}
+                  maxRows={2}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                  placeholder="Task Title"
+                  {...field}
+                  value={title}
+                  onChange={(e) => {
+                    field.onChange(e.target.value);
+                    updateDraft({ title: e.target.value });
+                  }}
+                />
+                {isPending && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin" />
+                )}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -116,19 +153,25 @@ function SideBarForm() {
           <FormItem>
             <FormLabel>Description</FormLabel>
             <FormControl>
-              <TextareaAutosize
-                minRows={1}
-                maxRows={2}
-                className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
-                placeholder="Task Description"
-                {...field}
-                value={description}
-                onChange={(e) => {
-                  updateDraft({ description: e.target.value });
+              <div className="relative">
+                <TextareaAutosize
+                  disabled={isPending}
+                  minRows={1}
+                  maxRows={2}
+                  className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
+                  placeholder="Task Description"
+                  {...field}
+                  value={description}
+                  onChange={(e) => {
+                    updateDraft({ description: e.target.value });
 
-                  field.onChange(e.target.value);
-                }}
-              />
+                    field.onChange(e.target.value);
+                  }}
+                />
+                {isPending && (
+                  <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 size-4 animate-spin" />
+                )}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -145,7 +188,7 @@ function SideBarForm() {
               value={field.value}
               onValueChange={(val) => {
                 field.onChange(val);
-                updateDraft({deadline:val});
+                updateDraft({ deadline: val });
               }}>
               <FormControl>
                 <SelectTrigger className=" w-full">
@@ -174,7 +217,7 @@ function SideBarForm() {
               value={field.value}
               onValueChange={(val) => {
                 field.onChange(val);
-                updateDraft({visibility:val as "public" | "private"});
+                updateDraft({ visibility: val as "public" | "private" });
               }}>
               <FormControl>
                 <SelectTrigger className=" w-full">
@@ -198,7 +241,16 @@ function SideBarForm() {
           <FormItem>
             <FormLabel>Category</FormLabel>
             <FormControl>
-              <CategoryComps value={field.value} onChange={field.onChange} />
+              <div className="relative">
+                <CategoryComps
+                  value={field.value}
+                  onChange={field.onChange}
+                  isPending={isPending}
+                />
+                {isPending && (
+                  <Loader2 className="absolute right-8 top-1/2 -translate-y-1/2 size-4 animate-spin" />
+                )}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -212,17 +264,23 @@ function SideBarForm() {
           <FormItem>
             <FormLabel>Price</FormLabel>
             <FormControl>
-              <Input
-                type="number"
-                min={10}
-                placeholder="Enter price"
-                {...field}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  field.onChange(val);
-                  updateDraft({price:val});
-                }}
-              />
+              <div className="relative">
+                <Input
+                  disabled={isPending}
+                  type="number"
+                  min={10}
+                  placeholder="Enter price"
+                  {...field}
+                  onChange={(e) => {
+                    const val = Number(e.target.value);
+                    field.onChange(val);
+                    updateDraft({ price: val });
+                  }}
+                />
+                {isPending && (
+                  <Loader2 className="absolute right-8 top-1/2 -translate-y-1/2 size-4 animate-spin" />
+                )}
+              </div>
             </FormControl>
             <FormMessage />
           </FormItem>

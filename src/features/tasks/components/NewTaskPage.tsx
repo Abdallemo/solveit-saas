@@ -23,14 +23,18 @@ import { env } from "@/env/client";
 import useStripeSessionValidate from "../lib/useStripeSessionValidate";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { validateContentWithAi } from "@/features/Ai/server/action";
+import {
+  autoSuggestWithAi,
+  validateContentWithAi,
+} from "@/features/Ai/server/action";
+import { Alert } from "@/components/ui/alert";
 
 export default function TaskCreationPage({
   defaultValues,
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, selectedFiles } = NewuseTask(); //new Migrations
+  const { draft, selectedFiles, updateDraft } = NewuseTask(); //new Migrations
   const { category, content, deadline, description, price, title, visibility } =
     draft;
   const currentUser = useCurrentUser();
@@ -39,7 +43,7 @@ export default function TaskCreationPage({
   const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const { uploadMutate, isUploading } = useFileUpload();
-
+  const [ruleVailation, setRuleVailation] = useState(false);
   useAutoSave({
     autoSaveFn: autoSaveDraftTask,
     autoSaveArgs: [
@@ -58,7 +62,8 @@ export default function TaskCreationPage({
   const { mutateAsync: validateContent, isPending } = useMutation({
     mutationFn: validateContentWithAi,
     onSuccess: (d) => {
-      toast.success("success: recieaved " + d.title + " " + d.violatesRules, {
+      setRuleVailation(d.violatesRules);
+      toast.success("valid content" , {
         id: "openai",
       });
     },
@@ -66,12 +71,37 @@ export default function TaskCreationPage({
       toast.error(er.message);
     },
   });
+  const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
+    {
+      mutationFn: autoSuggestWithAi,
+      onSuccess: (d) => {
+
+      },
+      onError: (er) => {
+        toast.error(er.message);
+      },
+    }
+  );
+  async function handleSugestions() {
+    toast.loading("checking...",{id:"autosuggestion"})
+    const res = await autoSuggest({
+      content: draft.content,
+    });
+    updateDraft({
+      category: res.category,
+      description: res.description,
+      price: res.price,
+      title: res.title,
+    });
+    toast.dismiss("autosuggestion")
+  }
+
   useEffect(() => {
     if (typeof window === "undefined") return;
     const doc = new DOMParser().parseFromString(content, "text/html");
     const text = doc.body.textContent?.trim() || "";
 
-    setIsDisabled(text.length < 5);
+    setIsDisabled(text.length < 40);
   }, [content]);
 
   const form = useForm({
@@ -104,8 +134,19 @@ export default function TaskCreationPage({
   if (isBlocked) return <AuthGate />;
   async function onSubmit(data: TaskSchema) {
     try {
-      // await validateContent(data.content);
-      // return;//openai
+      toast.loading("checking content againt our rules....", { id: "openai" });
+      const ruleRes = await validateContent(data.content);
+      if (ruleRes.violatesRules) {
+        toast.warning(
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold">Your task violates our posting rules. Try again.</span>
+            <span>If you believe this is a mistake, reach out to our support team.</span>
+          </div>,
+
+          { id: "openai" }
+        );
+        return; //todo will do in the server side too
+      }
       toast.loading("uploading files", { id: "file-upload" });
       let uploadedFileMetadata: UploadedFileMeta[] | undefined;
       let uploadedFilesString: string | undefined;
@@ -132,6 +173,7 @@ export default function TaskCreationPage({
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({
+        content,
         price,
         userId: user?.id!,
         deadlineStr: deadline,
@@ -158,7 +200,9 @@ export default function TaskCreationPage({
           <Button
             type="submit"
             form="task-form"
-            disabled={isDisabled || isUploading || isPending}
+            disabled={
+              isDisabled || isUploading || isPending || isAutoSeggesting
+            }
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isUploading ? (
               <>
@@ -188,7 +232,13 @@ export default function TaskCreationPage({
                 </Suspense>
               </div>
             </div>
-            <NewTaskSidebar open={isSheetOpen} setOpen={setIsSheetOpen} />
+            <NewTaskSidebar
+              isDisabled={isDisabled}
+              open={isSheetOpen}
+              setOpen={setIsSheetOpen}
+              handleSugestions={handleSugestions}
+              isAutoSeggesting={isAutoSeggesting}
+            />
           </form>
         </FormProvider>
       </div>

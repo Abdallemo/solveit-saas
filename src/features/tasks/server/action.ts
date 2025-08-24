@@ -64,6 +64,7 @@ import { sendNotification } from "@/features/notifications/server/action";
 import { logger } from "@/lib/logging/winston";
 import { env } from "@/env/server";
 import { GoHeaders } from "@/lib/go-config";
+import { validateContentWithAi } from "@/features/Ai/server/action";
 export type {
   catagoryType,
   userTasksType,
@@ -140,14 +141,17 @@ export async function createTaskAction(
   }
 }
 export async function createTaksPaymentCheckoutSession(values: {
+  content: string;
   price: number;
   userId: string;
   deadlineStr: string;
   draftTaskId: string;
 }) {
-  const { price, userId, deadlineStr, draftTaskId } = values;
+  const { price, userId, deadlineStr, draftTaskId, content } = values;
   const referer = await getServerReturnUrl();
   try {
+    const res = await validateContentWithAi(content);
+    if (res.violatesRules) return;
     const currentUser = await getServerUserSession();
     if (!currentUser?.id) redirect("/login");
     const userSubscription = await getServerUserSubscriptionById(
@@ -220,7 +224,6 @@ export async function createTaksPaymentCheckoutSession(values: {
     throw error;
   }
 }
-
 
 export async function validatePaymentIntent(piId: string) {
   const intent = await stripe.paymentIntents.retrieve(piId);
@@ -643,7 +646,6 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
 }
 
 export async function getDraftTask(userId: string, draftId: string) {
-
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) =>
       fn.and(eq(table.userId, userId), eq(table.id, draftId)),
