@@ -166,6 +166,8 @@ function NewPaymentColumns(
         );
       },
       cell: ({ row }) => {
+      const payment = row.original
+        if (!payment.releaseDate) return "Not yet released"
         return new Intl.DateTimeFormat("en-US", {
           year: "numeric",
           month: "numeric",
@@ -197,7 +199,7 @@ function NewPaymentColumns(
           hour: "2-digit",
           minute: "2-digit",
           hour12: true,
-        }).format(row.getValue("releaseDate"));
+        }).format(row.getValue("createdAt"));
       },
     },
     {
