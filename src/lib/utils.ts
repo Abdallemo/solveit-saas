@@ -8,46 +8,6 @@ export const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString();
 };
 
-export function parseDeadline(
-  value: string,
-  baseTime: Date = new Date()
-): Date | null {
-  const base = baseTime.getTime();
-  switch (value) {
-    case "12h":
-      return new Date(base + 12 * 60 * 60 * 1000);
-    case "24h":
-      return new Date(base + 24 * 60 * 60 * 1000);
-    case "48h":
-      return new Date(base + 48 * 60 * 60 * 1000);
-    case "3days":
-      return new Date(base + 3 * 24 * 60 * 60 * 1000);
-    case "7days":
-      return new Date(base + 7 * 24 * 60 * 60 * 1000);
-    default:
-      return null;
-  }
-}
-export function calculateProgress(
-  deadlineValue: string,
-  createdAt: Date
-): number {
-  const deadline = parseDeadline(deadlineValue, new Date(createdAt));
-  if (!deadline) return -1;
-
-  const now = new Date().getTime();
-  const created = new Date(createdAt).getTime();
-  const end = deadline.getTime();
-
-  const totalDuration = end - created;
-  const elapsed = now - created;
-
-  const percentage = Math.min(
-    Math.max((elapsed / totalDuration) * 100, 0),
-    100
-  );
-  return percentage;
-}
 export function isError(err: unknown): err is Error {
   return typeof err === "object" && err !== null && "message" in err;
 }
@@ -66,7 +26,7 @@ const badgeColors = [
 const objColors = [
   "text-neutral-900 font-semibold",
   // "text-blue-800",
-  // "text-yellow-800", 
+  // "text-yellow-800",
   // "text-pink-800",
   // "text-purple-800",
   // "text-purple-800",
@@ -91,7 +51,15 @@ export function getColorClass(name: string, bg = true, txt?: boolean) {
     return objColors[index];
   }
 }
-export const daysOfWeek = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"]
+export const daysOfWeek = [
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+  "sunday",
+];
 
 export const timeOptions = [
   "08:00",
@@ -109,7 +77,7 @@ export const timeOptions = [
   "20:00",
   "21:00",
   "22:00",
-]
+];
 export const defaultAvatars = [
   "/avatars/avatar-1.svg",
   "/avatars/avatar-10.svg",
