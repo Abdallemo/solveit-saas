@@ -28,12 +28,7 @@ import {
   UpdateUserField,
 } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import {
-  calculateProgress,
-  isError,
-  parseDeadline,
-  truncateText,
-} from "@/lib/utils";
+import { isError, truncateText } from "@/lib/utils";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
   and,
@@ -75,6 +70,43 @@ export type {
   assignTaskReturnType,
   taskRefundSchemaType,
 };
+
+function parseDeadline(value: string, baseTime: Date): Date | null {
+  const base = baseTime.getTime();
+  switch (value) {
+    case "12h":
+      return new Date(base + 12 * 60 * 60 * 1000);
+    case "24h":
+      return new Date(base + 24 * 60 * 60 * 1000);
+    case "48h":
+      return new Date(base + 48 * 60 * 60 * 1000);
+    case "3days":
+      return new Date(base + 3 * 24 * 60 * 60 * 1000);
+    case "7days":
+      return new Date(base + 7 * 24 * 60 * 60 * 1000);
+    default:
+      return null;
+  }
+}
+export async function calculateTaskProgress(solverId: string, taskId: string) {
+  const workspace = await getWorkspaceByTaskId(taskId, solverId);
+  if (!workspace) return -1;
+
+  const deadline = parseDeadline(
+    workspace.task.deadline!,
+    workspace.createdAt!
+  );
+  if (!deadline) return -1;
+
+  const startTime = workspace.createdAt!.getTime();
+  const currentTime = Date.now();
+
+  const timePassed = currentTime - startTime;
+  const totalTime = deadline.getTime() - startTime;
+
+
+  return Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
+}
 //the Magic Parts 🪄
 export async function createTaskAction(
   userId: string,
@@ -338,11 +370,7 @@ export async function assignTaskToSolverById(values: {
       method: ["system", "email"],
       body: {
         subject: "task Picked",
-        content: `you Task titiled ${result?.title} is picked by ${
-          result?.solver?.name
-        }\n you will reciev your solution on ${parseDeadline(
-          result?.deadline!
-        )}`,
+        content: `you Task titiled ${result?.title} is picked by ${result?.solver?.name}\n you will reciev your solution on `,
       },
     });
     revalidatePath(`/yourTasks/${taskId}`);
@@ -891,9 +919,9 @@ export async function handleTaskDeadline(task: TaskReturnType) {
   )
     return;
   if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
-    const deadlinePercentage = calculateProgress(
-      task.deadline,
-      task.assignedAt
+    const deadlinePercentage = await calculateTaskProgress(
+      task.solverId,
+      task.workspace.taskId
     );
     if (deadlinePercentage < 100) return;
 
