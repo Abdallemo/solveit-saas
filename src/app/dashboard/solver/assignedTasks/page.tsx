@@ -27,9 +27,9 @@ export default async function ServerWrapper({
     },
     true
   );
-  for (const task of tasks) {
-    await handleTaskDeadline(task)
-  }
+  // for (const task of tasks) {
+  //   await handleTaskDeadline(task)
+  // }
   const totalPages = Math.ceil(totalCount / limit)
   const hasPrevious = pages > 1
   const hasNext = pages < totalPages
