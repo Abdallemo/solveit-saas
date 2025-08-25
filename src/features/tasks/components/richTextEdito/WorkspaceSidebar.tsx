@@ -176,7 +176,7 @@ function SideBarForm() {
     router.refresh();
   }
   return (
-    <div className="p-2 space-y-4 flex flex-col h-full">
+    <div className="p-2 space-y-4 flex flex-col overflow-scroll">
       <div className="space-y-1 ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
