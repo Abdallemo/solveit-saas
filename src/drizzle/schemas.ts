@@ -296,7 +296,7 @@ export const WorkspaceTable = pgTable("workspaces", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   content: text("content"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" ,withTimezone:true}).defaultNow(),
 });
 
 export const WorkspaceFilesTable = pgTable("workspace_files", {
