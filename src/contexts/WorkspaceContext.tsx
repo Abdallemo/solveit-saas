@@ -4,6 +4,7 @@ import { WorkpaceSchemReturnedType } from "@/features/tasks/server/action";
 import { createContext, useContext, useState, ReactNode } from "react";
 
 type WorkspaceContextType = {
+  serverTime: string;
   content: string;
   setContent: (c: string) => void;
   setCurrentWorkspace:  React.Dispatch<React.SetStateAction<WorkpaceSchemReturnedType>>
@@ -17,19 +18,23 @@ const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
 );
 type WorkspacePorviderProps = {
   children: ReactNode;
-   workspace:WorkpaceSchemReturnedType
+  workspace:WorkpaceSchemReturnedType
+  serverCurrentTime:string
 };
 export const WorkspaceProvider = ({
   children,
-  workspace
+  workspace,
+  serverCurrentTime
 }: WorkspacePorviderProps) => {
   const [content, setContent] = useState(workspace?.content ?? "");
+  const [serverTime, ] = useState(serverCurrentTime);
   const [uploadedFiles, setUploadedFiles] = useState<WorkspaceUploadedFileMeta[]>(workspace?.workspaceFiles ?? []);
   const [currentWorkspace,setCurrentWorkspace] = useState(workspace);
   
   return (
     <WorkspaceContext.Provider
       value={{
+        serverTime,
         content,
         setContent,
         uploadedFiles,
