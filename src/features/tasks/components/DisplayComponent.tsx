@@ -43,7 +43,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -247,8 +247,13 @@ export default function DisplayListComponent({
             <CardContent className="pt-0">
               <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
                 <div className="flex items-center gap-1">
-                  <User className="w-4 h-4" />
-                  {task.poster.name}
+                  <Avatar className="size-4">
+                    <AvatarFallback>
+                      <User/>
+                    </AvatarFallback>
+                    <AvatarImage src={task.poster.image!}/>
+                  </Avatar>
+                  {task.poster.name?.split(" ")[0]}
                 </div>
                 {task.deadline && (
                   <div className="flex items-center gap-1">
