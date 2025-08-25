@@ -17,13 +17,15 @@ import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/dashboard/solver/loading";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { Progress } from "@/components/ui/progress";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
   const { content, currentWorkspace, setCurrentWorkspace } = useWorkspace();
-  const [progress, setProgress] = useState(0);
+
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const progress = DeadlineProgress();
   const router = useRouter();
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
@@ -151,17 +153,7 @@ export default function WorkspacePageComp() {
                     </span>
                   </div>
                   <div className="flex flex-col w-full items-end">
-                    <DeadlineProgress
-                      progress={
-                        currentWorkspace?.task.status === "SUBMITTED" ||
-                        currentWorkspace?.task.status === "COMPLETED"
-                          ? 100
-                          : progress
-                      }
-                      setProgress={setProgress}
-                      createdAt={currentWorkspace?.createdAt!}
-                      deadlineValue={currentWorkspace?.task.deadline!}
-                    />
+                    <Progress value={progress} className="h-2 w-full" />
                   </div>
                 </div>
               </div>
