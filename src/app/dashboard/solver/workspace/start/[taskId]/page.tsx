@@ -19,9 +19,11 @@ export default async function page({
 
   const { taskId } = await params;
   const workspace = await getWorkspaceByTaskId(taskId,user?.id!);
+
   if (!workspace){
     throw new Error("unable to find this worksapce")
   }
+  
   if (workspace?.task.status === "ASSIGNED") {
     await db.update(TaskTable)
             .set({ status: "IN_PROGRESS" })
