@@ -1,31 +1,30 @@
 "use client";
 
-import { Dispatch, SetStateAction, useEffect, useState } from "react";
-import { Progress } from "@/components/ui/progress"; // Adjust import as needed
-import { calculateProgress, parseDeadline } from "@/lib/utils";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useQuery } from "@tanstack/react-query";
+import { calculateTaskProgress } from "../server/action";
 
-interface DeadlineProgressProps {
-  createdAt: Date;
-  deadlineValue: string;
-  progress: number;
-  setProgress: Dispatch<SetStateAction<number>>;
-}
+export function DeadlineProgress() {
+  const { currentWorkspace } = useWorkspace();
+  const { data: progress, isLoading, refetch } = useQuery({
+    queryKey: ['progress', currentWorkspace?.id],
+    queryFn: async () => {
+      if (!currentWorkspace?.solverId || !currentWorkspace?.id) {
+        return 0;
+      }
+      return await calculateTaskProgress(
+        currentWorkspace.solverId,
+        currentWorkspace.taskId
+      );
+    },
+    refetchInterval: 10 * 1000, 
+    enabled: !!currentWorkspace?.solverId && !!currentWorkspace?.id,
+  });
 
-export function DeadlineProgress({
-  createdAt,
-  deadlineValue,
-  progress,
-  setProgress,
-}: DeadlineProgressProps) {
-  useEffect(() => {
-    setProgress(calculateProgress(deadlineValue, createdAt));
-    const interval = setInterval(
-      () => setProgress(calculateProgress(deadlineValue, createdAt)),
-      1000 * 60
-    );
 
-    return () => clearInterval(interval);
-  }, [createdAt, deadlineValue, setProgress]);
+  if (isLoading || progress === undefined) {
+    return 0;
+  }
 
-  return <Progress value={progress} className="h-2 w-full" />;
+  return progress;
 }
