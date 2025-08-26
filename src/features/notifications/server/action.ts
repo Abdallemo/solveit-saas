@@ -10,7 +10,7 @@ import { revalidatePath } from "next/cache";
 type ContentType = string | { content: string; subject: string };
 const DEFAULT_SUBJECT = "SolveIt Notification";
 type NotificationProp = {
-  sender: string;
+  sender?: string;
   receiverId?: string;
   receiverEmail?: string;
   body: ContentType;
@@ -37,7 +37,7 @@ async function saveSystemNotification({
       content,
       subject,
       receiverId: receiverId!,
-      senderId: sender,
+      senderId: sender!,
       read: false,
     })
     .returning();
@@ -137,7 +137,7 @@ export async function sendNotificationByEmail({
 }
 
 export async function sendNotification({
-  sender,
+  sender = "solveit@org.com",
   receiverId,
   receiverEmail,
   body,
