@@ -6,42 +6,50 @@ import {
   LucideBarChart3,
   LucidePieChart,
   LucideAlertTriangle,
+  LucideClipboardList,
+  LucideHistory,
+  LucideUsers,
+  LucideMonitor,
+  LucideBrain,
+  LucideSearch,
+  LucideSettings,
+  LucideStar,
+  LucideShieldCheck,
+  LucideDollarSign,
+  LucideBadgeDollarSign,
+  LucideListChecks,
+  LucideLayoutDashboard,
+  LucideCalendar,
+  LucideClipboardCheck,
+  LucideClipboardPlus,
+  LucideUserPlus,
+  LucideMessageCircle, // Replaced placeholder
+  LucidePencil, // Replaced placeholder
+  LucideFileQuestion, // Replaced placeholder
+  LucideTrendingUp, // Replaced placeholder
+  LucideHandshake, // Replaced placeholder
+  LucidePackage, // Replaced placeholder
+  LucideMessageSquare, // Replaced placeholder
+  LucideHandCoins, // Replaced placeholder
+  LucideChartLine, // Replaced placeholder
+  LucideListTodo, // Replaced placeholder
 } from "lucide-react";
-import {
-  LuArrowUpRight,
-  LuBadgeDollarSign,
-  LuBrain,
-  LuCalendar,
-  LuClipboardCheck,
-  LuClipboardList,
-  LuClipboardPlus,
-  LuDollarSign,
-  LuHistory,
-  LuLayoutDashboard,
-  LuListChecks,
-  LuMonitor,
-  LuSearch,
-  LuSettings,
-  LuShieldCheck,
-  LuStar,
-  LuUserPlus,
-  LuUsers,
-} from "react-icons/lu";
+
 export const MenuItemsModerator = [
   {
     title: "Dashboard",
     url: "/dashboard/moderator",
-    icon: LuLayoutDashboard,
+    icon: LucideLayoutDashboard,
   },
   {
     title: "Category Management",
     url: "/dashboard/moderator/categories",
-    icon: LuClipboardList,
+    icon: LucideClipboardList,
   },
   {
     title: "Dispute Management",
     url: "/dashboard/moderator/disputes",
-    icon: LuClipboardList,
+    icon: LucideHandshake,
     child: [
       {
         title: "Pending Review",
@@ -51,31 +59,31 @@ export const MenuItemsModerator = [
       {
         title: "Resolved Cases",
         url: "/dashboard/moderator/disputes/resolved",
-        icon: LuHistory,
+        icon: LucideClipboardCheck,
       },
     ],
   },
   {
     title: "Content Review",
     url: "/dashboard/moderator/content",
-    icon: LuMonitor,
+    icon: LucideMonitor,
     child: [
       {
         title: "Task Comments",
         url: "/dashboard/moderator/content/comments",
-        icon: LuClipboardList,
+        icon: LucideMessageSquare,
       },
       {
         title: "Mentor Messages",
         url: "/dashboard/moderator/content/mentor-messages",
-        icon: LuUsers,
+        icon: LucideUsers,
       },
     ],
   },
   {
     title: "Moderation Logs",
     url: "/dashboard/moderator/logs",
-    icon: LuHistory,
+    icon: LucideHistory,
   },
   {
     title: "Flagged Tasks",
@@ -85,7 +93,7 @@ export const MenuItemsModerator = [
   {
     title: "User Reports",
     url: "/dashboard/moderator/reports",
-    icon: LuSearch,
+    icon: LucideFileQuestion,
   },
 ];
 
@@ -93,17 +101,17 @@ export const MenuItemsAdmin = [
   {
     title: "Dashboard",
     url: "/dashboard/admin",
-    icon: LuLayoutDashboard,
+    icon: LucideLayoutDashboard,
   },
   {
     title: "User Management",
     url: "/dashboard/admin/users",
-    icon: LuUsers,
+    icon: LucideUsers,
     child: [
       {
         title: "Moderators",
         url: "/dashboard/admin/users/moderators",
-        icon: LuShieldCheck,
+        icon: LucideShieldCheck,
       },
       {
         title: "Pending Verifications",
@@ -115,34 +123,34 @@ export const MenuItemsAdmin = [
   {
     title: "AI Management",
     url: "/dashboard/admin/ai",
-    icon: LuBrain,
+    icon: LucideBrain,
     child: [
       {
         title: "Moderation Logs",
         url: "/dashboard/admin/ai/logs",
-        icon: LuHistory,
+        icon: LucideHistory,
       },
       {
         title: "AI Feedback",
         url: "/dashboard/admin/ai/feedback",
-        icon: LuStar,
+        icon: LucideStar,
       },
     ],
   },
   {
     title: "Subscription Management",
     url: "/dashboard/admin/subscriptions",
-    icon: LuBadgeDollarSign,
+    icon: LucideBadgeDollarSign,
   },
   {
     title: "Payment Management",
     url: "/dashboard/admin/payments",
-    icon: LuDollarSign,
+    icon: LucideDollarSign,
     child: [
       {
         title: "Pending/Hold",
         url: "/dashboard/admin/payments/hold",
-        icon: LuListChecks,
+        icon: LucideListChecks,
       },
     ],
   },
@@ -154,7 +162,7 @@ export const MenuItemsAdmin = [
   {
     title: "Site Settings",
     url: "/dashboard/admin/settings",
-    icon: LuSettings,
+    icon: LucideSettings,
   },
 ];
 
@@ -167,17 +175,17 @@ export const MenuItemsPoster = [
   {
     title: "Tasks & Jobs",
     url: "/dashboard/tasks",
-    icon: LuClipboardList,
+    icon: LucidePackage,
     child: [
       {
         title: "New Task/Job",
         url: "/dashboard/poster/newTask",
-        icon: LuClipboardPlus,
+        icon: LucideClipboardPlus,
       },
       {
         title: "Your Tasks/Jobs",
         url: "/dashboard/poster/yourTasks",
-        icon: LuListChecks,
+        icon: LucideListChecks,
       },
       {
         title: "Task Analytics",
@@ -188,28 +196,28 @@ export const MenuItemsPoster = [
   },
   {
     title: "Mentorship",
-    url: "/dashboard/poster/mentors",
-    icon: LuUsers,
+    url: "/dashboard/poster/#",
+    icon: LucideUsers,
     child: [
       {
         title: "Browse Mentors",
         url: "/dashboard/poster/mentors",
-        icon: LuSearch,
+        icon: LucideSearch,
       },
       {
         title: "Bookings",
         url: "/dashboard/poster/bookings",
-        icon: LuCalendar,
+        icon: LucideCalendar,
       },
       {
         title: "Past Sessions",
         url: "/dashboard/poster/history",
-        icon: LuHistory,
+        icon: LucideHistory,
       },
       {
         title: "Workspace",
         url: "/dashboard/poster/workspace",
-        icon: LuMonitor,
+        icon: LucideMonitor,
       },
     ],
   },
@@ -222,38 +230,59 @@ export const MenuItemsSolver = [
     icon: Home,
   },
   {
-    title: "Tasks & Jobs",
+    title: "Browse Tasks ",
     url: "/dashboard/tasks",
     icon: Bug,
     child: [
       {
         title: "Assigned Tasks",
         url: "/dashboard/solver/assignedTasks",
-        icon: LuClipboardCheck,
+        icon: LucideClipboardCheck,
+      },
+      {
+        title: "Disputes / Support",
+        url: "/dashboard/solver/disputes",
+        icon: LucideFileQuestion,
       },
       {
         title: "Earnings",
         url: "/dashboard/solver/earnings",
-        icon: LuDollarSign,
+        icon: LucideDollarSign,
       },
     ],
   },
   {
     title: "Mentorship",
     url: "/dashboard/solver/mentor",
-    icon: LuUsers,
+    icon: LucideUsers,
     child: [
       {
         title: "Mentor Listing",
         url: "/dashboard/solver/listing",
-        icon: LuUserPlus,
+        icon: LucideUserPlus,
       },
       {
         title: "My Reviews",
         url: "/dashboard/solver/reviews",
-        icon: LuStar,
+        icon: LucideStar,
       },
-      
+    ],
+  },
+  {
+    title: "Reputation & Reports",
+    url: "/dashboard/solver/reputation",
+    icon: LucideChartLine,
+    child: [
+      {
+        title: "My Reputation",
+        url: "/dashboard/solver/listing",
+        icon: LucideTrendingUp,
+      },
+      {
+        title: "My Analytics",
+        url: "/dashboard/solver/reviews",
+        icon: LucideBarChart3,
+      },
     ],
   },
 ];
