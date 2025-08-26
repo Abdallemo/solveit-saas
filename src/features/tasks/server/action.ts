@@ -928,10 +928,10 @@ export async function handleTaskDeadline(task: TaskReturnType) {
     try {
       const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
       if (alreadyBlocked) return;
-
+      sendNotification({method:["email","system"],body:`You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`})
       await db
         .update(TaskTable)
-        .set({ status: "OPEN", assignedAt: null })
+        .set({ status: "OPEN", assignedAt: null ,solverId:null})
         .where(
           and(
             eq(TaskTable.id, task.id),
