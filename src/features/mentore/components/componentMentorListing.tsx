@@ -34,7 +34,7 @@ import {
   MentorListType,
   saveMentorListing,
 } from "../server/action";
-import { daysOfWeek, defaultAvatars, timeOptions } from "@/lib/utils";
+import { daysInWeek, defaultAvatars, timeOptions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 
 export function MentorProfile({
@@ -93,7 +93,7 @@ export function MentorProfile({
   const addAvailabilitySlot = () => {
     const usedDays = mentorData.availableTimes.map((slot) => slot.day);
     const availableDay =
-      daysOfWeek.find((day) => !usedDays.includes(day)) || "monday";
+      daysInWeek.find((day) => !usedDays.includes(day)) || "monday";
 
     setMentorData((prev) => ({
       ...prev,
@@ -408,7 +408,7 @@ export function MentorProfile({
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {daysOfWeek
+                          {daysInWeek
                             .filter(
                               (day) =>
                                 day === slot.day ||
