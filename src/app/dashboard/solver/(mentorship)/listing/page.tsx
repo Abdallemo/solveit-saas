@@ -1,11 +1,11 @@
 import { MentorProfile } from "@/features/mentore/components/componentMentorListing";
-import { getMentorListig, MentorListType } from "@/features/mentore/server/action";
+import {
+  getMentorListigProfile,
+} from "@/features/mentore/server/action";
 
 export default async function MentorPage() {
-  let mentorData:MentorListType
-  try {
-    mentorData = await getMentorListig("solver++") as MentorListType
-  } catch (error) {}
+  const mentorData = await getMentorListigProfile();
+
   return (
     <div className="min-h-full bg-background">
       <div className="container mx-auto px-4 py-8">
@@ -15,7 +15,7 @@ export default async function MentorPage() {
             Manage your mentor profile and availability for mentees
           </p>
         </div>
-        <MentorProfile mentorDataa={mentorData!}/>
+        <MentorProfile mentorDataa={mentorData!} />
       </div>
     </div>
   );
