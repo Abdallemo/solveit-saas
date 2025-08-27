@@ -3,6 +3,7 @@ import { workspaceFileType } from "./task-types";
 import db from "@/drizzle/db";
 import {
   BlockedTasksTable,
+  PaymentPorposeEnumType,
   PaymentPorposeType,
   PaymentStatusType,
   PaymentTable,
@@ -217,7 +218,7 @@ export async function createTaksPaymentCheckoutSession(values: {
           price_data: {
             currency: "myr",
             product_data: {
-              name: `Task Payment`,
+              name: "Task Payment" as PaymentPorposeEnumType,
             },
             unit_amount: price * 100,
           },
@@ -239,7 +240,7 @@ export async function createTaksPaymentCheckoutSession(values: {
       metadata: {
         userId,
         deadlineStr,
-        type: "task_payment",
+        type: "Task Payment" as PaymentPorposeEnumType,
         draftTaskId: draftTaskId,
       },
       cancel_url: `${referer}`,
