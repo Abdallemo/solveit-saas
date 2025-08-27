@@ -16,12 +16,16 @@ import {
 } from "@/features/subscriptions/server/action";
 
 import { eq } from "drizzle-orm";
-import { UserSubscriptionTable } from "@/drizzle/schemas";
+import {
+  PaymentPorposeEnumType,
+  UserSubscriptionTable,
+} from "@/drizzle/schemas";
 import type Stripe from "stripe";
 import { logger } from "@/lib/logging/winston";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
+import { updateMentorBooking } from "@/features/mentore/server/action";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -41,7 +45,7 @@ export async function POST(request: NextRequest) {
     const userSession = await getServerUserSession();
     switch (event.type) {
       case "checkout.session.completed":
-        await handleTaskCreate(event);
+        await handleCheckout(event);
         break;
       case "payment_method.updated":
         console.log(event);
@@ -158,12 +162,12 @@ async function handleDelete(subscription: Stripe.Subscription) {
   );
 }
 
-async function handleTaskCreate(event: Stripe.Event) {
+async function handleCheckout(event: Stripe.Event) {
   if (event.type !== "checkout.session.completed") return;
   try {
     const session = event.data.object;
     const userId = event?.data.object?.metadata?.userId;
-    const draftTaskId = event?.data.object?.metadata?.draftTaskId;
+    const type = event?.data.object?.metadata?.type as PaymentPorposeEnumType;
     const paymentIntentId = session.payment_intent as string;
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
     const customerId =
@@ -175,22 +179,11 @@ async function handleTaskCreate(event: Stripe.Event) {
       typeof paymentIntent.payment_method === "string"
         ? paymentIntent.payment_method
         : paymentIntent.payment_method?.id;
-    
 
-    if (!userId || !draftTaskId || !customerId) {
+    if (!userId || !customerId) {
       logger.warn("couldnt found userId or DraftId " + userId);
       return;
     }
-    const draftTasks = await getDraftTask(userId, draftTaskId);
-    if (!draftTasks) {
-      logger.warn("unable to find any draft task for this user: " + userId);
-      return;
-    }
-    await UpdateUserField({
-      id: userId,
-      data: { stripeCustomerId: customerId },
-    });
-
     logger.info(`paymentMethodId for user ${userId} is : ${paymentMethodId}`);
 
     await stripe.paymentMethods.update(paymentMethodId!, {
@@ -204,20 +197,51 @@ async function handleTaskCreate(event: Stripe.Event) {
       );
       return;
     }
-
     const amount = session.amount_total! / 100;
     const paymentId = await taskPaymentInsetion(
       "HOLD",
       amount,
       userId,
       paymentIntentId,
-      "Task Payment"
+      type
     );
     if (!paymentId) {
       logger.warn("unable to insert paymentIntent for the payment table ");
       return;
     }
 
+    switch (type) {
+      case "Task Payment":
+        await handleTaskCreate(session, paymentId);
+        break;
+      case "Mentor Booking":
+        await handleMentorBooking(session, paymentId);
+        break;
+      default:
+        logger.warn("no task type associated with this session: " + session.id);
+        break;
+    }
+  } catch (error) {}
+}
+
+async function handleTaskCreate(
+  session: Stripe.Checkout.Session,
+  paymentId: string
+) {
+  const draftTaskId = session.metadata?.draftTaskId;
+  const userId = session.metadata?.userId;
+  if (!draftTaskId || !userId) {
+    logger.warn(
+      `[session: ${session.id}]\ncouldnt found draftId for user: ${userId} `
+    );
+    return;
+  }
+  const draftTasks = await getDraftTask(userId, draftTaskId);
+  if (!draftTasks) {
+    logger.warn("unable to find any draft task for this user: " + userId);
+    return;
+  }
+  try {
     const {
       title,
       description,
@@ -256,10 +280,31 @@ async function handleTaskCreate(event: Stripe.Event) {
   } catch (error) {
     logger.error("Failed To handle Task Creatio", {
       error: error,
-      stripeEventId: event.id,
+      stripeSession: session.id,
     });
     throw new Error(
       "Task Handle Webhook Failed due to: " + (error as Error).message
     );
+  }
+}
+
+async function handleMentorBooking(
+  session: Stripe.Checkout.Session,
+  paymentId: string
+) {
+  const bookingId = session.metadata?.bookingId;
+  const userId = session.metadata?.userId;
+  if (!bookingId || !userId) {
+    logger.warn(
+      `[session: ${session.id}]\nCouldnt found bookingId for user: ${userId} `
+    );
+    return;
+  }
+  const updatedBookingId = await updateMentorBooking(bookingId, paymentId);
+  if (updatedBookingId.length <= 0) {
+    logger.error("update Mentor Temperory Booking ");
+  }
+  if (updatedBookingId[0].bookingId === bookingId) {
+    logger.info("Succesfully updated Temperory Mentor Booking");
   }
 }
