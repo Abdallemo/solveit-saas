@@ -1,3 +1,4 @@
+import { AvailabilitySlot } from "@/features/mentore/server/action";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
@@ -51,15 +52,7 @@ export function getColorClass(name: string, bg = true, txt?: boolean) {
     return objColors[index];
   }
 }
-export const daysOfWeek = [
-  "monday",
-  "tuesday",
-  "wednesday",
-  "thursday",
-  "friday",
-  "saturday",
-  "sunday",
-];
+export const daysInWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
 
 export const timeOptions = [
   "08:00",
@@ -96,3 +89,8 @@ export const defaultAvatars = [
   "/avatars/avatar-8.svg",
   "/avatars/avatar-9.svg",
 ];
+export const calculateSlotDuration = (slot: AvailabilitySlot) => {
+  const [startHour, startMin] = slot.start.split(":").map(Number);
+  const [endHour, endMin] = slot.end.split(":").map(Number);
+  return endHour + endMin / 60 - (startHour + startMin / 60);
+};
