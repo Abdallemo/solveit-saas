@@ -15,8 +15,10 @@ import {
   varchar,
   decimal,
   real,
+  date,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
+import { AvailabilitySlot } from "@/features/mentore/server/action";
 
 export const UserRole = pgEnum("role", [
   "ADMIN",
@@ -51,6 +53,12 @@ export const PaymentPorposeEnum = pgEnum("payment_porpose", [
   "Task Payment",
   "Mentor Booking",
 ]);
+export const BookingSatatusEnum = pgEnum("booking_status", [
+  "PENDING",
+  "PAID",
+  "CANCELED",
+]);
+
 
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
@@ -62,6 +70,7 @@ export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
 export type PaymentStatusType = (typeof PaymentStatus.enumValues)[number];
 export type RefundStatusEnumType = (typeof RefundStatusEnum.enumValues)[number];
+export type PaymentPorposeEnumType = (typeof PaymentPorposeEnum.enumValues)[number];
 
 export const UserTable = pgTable("user", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -296,7 +305,10 @@ export const WorkspaceTable = pgTable("workspaces", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   content: text("content"),
-  createdAt: timestamp("created_at", { mode: "date" ,withTimezone:true}).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const WorkspaceFilesTable = pgTable("workspace_files", {
@@ -340,7 +352,6 @@ export const SolutionFilesTable = pgTable("solution_files", {
     .notNull()
     .references(() => WorkspaceFilesTable.id, { onDelete: "cascade" }),
 });
-
 export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -352,8 +363,37 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
   title: text("title").notNull().default(""),
   description: text("description").notNull().default(""),
   ratePerHour: real("rate_per_hour").notNull().default(0),
-  availableTimes: json("available_times").notNull().default("[]"),
+  availableTimes: json("available_times")
+    .notNull()
+    .$type<AvailabilitySlot[]>()
+    .default([]),
   isPublished: boolean("is_published").default(false).notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+});
+export const MentorshipSessionTable = pgTable("mentor_session", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  bookingId: uuid("booking_id")
+    .notNull()
+    .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
+  sessionDate: date("session_date",).notNull(),
+  timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+
+export const MentorshipBookingTable = pgTable("mentorship_bookings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  solverId: uuid("solver_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  posterId: uuid("student_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  price: integer("price"),
+  status: BookingSatatusEnum().default("PENDING").notNull(),
+  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
+    onDelete: "cascade",
+  }),
+  notes: text("notes"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
@@ -361,7 +401,7 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
   id: uuid("id").primaryKey().defaultRandom(),
   seesionId: uuid("seesion_id")
     .notNull()
-    .references(() => MentorSessionTable.id, { onDelete: "cascade" }),
+    .references(() => MentorshipSessionTable.id, { onDelete: "cascade" }),
   message: text("message"),
   sentBy: uuid("sent_by")
     .notNull()
@@ -380,29 +420,6 @@ export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
 });
 
-export const MentorSessionTable = pgTable("mentor_session", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  bookingId: uuid("booking_id")
-    .notNull()
-    .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-});
-
-export const MentorshipBookingTable = pgTable("mentorship_bookings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  solverId: uuid("solver_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  posterId: uuid("student_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  bookingTime: timestamp("booking_time", { mode: "date" }).notNull(),
-  durationMinutes: integer("duration_minutes").notNull(),
-  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
-    onDelete: "cascade",
-  }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-});
 export const RulesTable = pgTable("ai_rules", {
   id: uuid("id").primaryKey().defaultRandom(),
   rule: text("rule").notNull(),
@@ -610,7 +627,44 @@ export const PaymentTableRelation = relations(
     payer: one(UserTable, {
       fields: [PaymentTable.userId],
       references: [UserTable.id],
-      relationName:'payer'
+      relationName: "payer",
+    }),
+  })
+);
+export const MentorshipProfileRelations = relations(
+  MentorshipProfileTable,
+  ({ many }) => ({
+    bookings: many(MentorshipBookingTable, {
+      relationName: "solver",
+    }),
+  })
+);
+
+export const MentorshipBookingRelations = relations(
+  MentorshipBookingTable,
+  ({ one, many }) => ({
+    solver: one(MentorshipProfileTable, {
+      fields: [MentorshipBookingTable.solverId],
+      references: [MentorshipProfileTable.id],
+      relationName: "solver",
+    }),
+    poster: one(UserTable, {
+      fields: [MentorshipBookingTable.posterId],
+      references: [UserTable.id],
+    }),
+    bookedSessions: many(MentorshipSessionTable, {
+      relationName: "bookedSessions",
+    }),
+  })
+);
+
+export const MentorshipSessionRelations = relations(
+  MentorshipSessionTable,
+  ({ one }) => ({
+    bookedSessions: one(MentorshipBookingTable, {
+      fields: [MentorshipSessionTable.bookingId],
+      references: [MentorshipBookingTable.id],
+      relationName: "bookedSessions",
     }),
   })
 );
