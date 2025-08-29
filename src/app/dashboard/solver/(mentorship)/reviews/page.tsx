@@ -15,8 +15,8 @@ export default function MyReviewsPage() {
     totalReviews: 127,
     responseRate: 89,
     monthlyGrowth: 12,
-  }
-
+  } 
+ 
   const ratingBreakdown = [
     { stars: 5, count: 89, percentage: 70 },
     { stars: 4, count: 25, percentage: 20 },
