@@ -17,3 +17,4 @@ export const bookingSchema = z.object({
 });
 
 export type BookingFormData = z.infer<typeof bookingSchema>;
+
