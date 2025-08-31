@@ -67,7 +67,15 @@ export async function getMentorListigProfile() {
   const result = await db.query.MentorshipProfileTable.findFirst({
     where: (tb, fn) => fn.eq(tb.userId, user.id!),
   });
-  return { ...result!, displayName: result?.displayName || user.name! };
+  return {
+    ...result!,
+    displayName: result?.displayName || user.name!,
+    description: result?.description ?? "",
+    title: result?.title ?? "",
+    avatar:result?.avatar??"",
+    ratePerHour:result?.ratePerHour?? 0,
+    availableTimes:result?.availableTimes ?? []
+  };
 }
 
 export async function handleProfilePublishState(isPublished: boolean) {
@@ -147,7 +155,7 @@ export async function saveMentorListing(values: {
 }
 
 function toYMD(date: Date): string {
-  return format(date, "yyyy-MM-dd"); 
+  return format(date, "yyyy-MM-dd");
 }
 
 const getSessionKey = (dateYMD: string, slot: AvailabilitySlot) =>
@@ -166,7 +174,7 @@ export async function getMentorListigWithAvailbelDates() {
   });
   const bookedKeys = new Set(
     allBookedSessions.map((session) => {
-      const solverId = session.bookedSessions.solverId
+      const solverId = session.bookedSessions.solverId;
       return `${solverId}-${getSessionKey(
         session.sessionDate,
         session.timeSlot
@@ -190,11 +198,11 @@ export async function getMentorListigWithAvailbelDates() {
         const dateObj = addDays(weekStart, week * 7 + dayIndex);
         if (!isFuture(dateObj)) continue;
 
-        const ymd = toYMD(dateObj); 
+        const ymd = toYMD(dateObj);
         const key = `${mentor.userId}-${getSessionKey(ymd, slot)}`;
 
         if (!bookedKeys.has(key)) {
-          availableDates.push({ date: dateObj, slot }); 
+          availableDates.push({ date: dateObj, slot });
         }
       }
     }
