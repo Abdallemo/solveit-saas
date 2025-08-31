@@ -337,7 +337,7 @@ export function MentorProfile({
                 className="min-h-[120px] resize-none"
               />
               <p className="text-xs text-muted-foreground">
-                {mentorData.description.length}/500 characters
+                {mentorData.description.length ?? 0}/500 characters
               </p>
             </div>
 
