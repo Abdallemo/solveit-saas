@@ -80,7 +80,7 @@ export default function BridCarmComponent() {
                       href={
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
-                          : currentPath
+                          : `${currentPath}`
                       }
                     >
                       {pathSegment === "dashboard"
