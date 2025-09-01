@@ -52,7 +52,15 @@ export function getColorClass(name: string, bg = true, txt?: boolean) {
     return objColors[index];
   }
 }
-export const daysInWeek = ["sunday", "monday", "tuesday", "wednesday", "thursday", "friday", "saturday"];
+export const daysInWeek = [
+  "sunday",
+  "monday",
+  "tuesday",
+  "wednesday",
+  "thursday",
+  "friday",
+  "saturday",
+];
 
 export const timeOptions = [
   "08:00",
@@ -89,8 +97,15 @@ export const defaultAvatars = [
   "/avatars/avatar-8.svg",
   "/avatars/avatar-9.svg",
 ];
-export const calculateSlotDuration = (slot: AvailabilitySlot) => {
+export function calculateSlotDuration  (slot: AvailabilitySlot) {
   const [startHour, startMin] = slot.start.split(":").map(Number);
   const [endHour, endMin] = slot.end.split(":").map(Number);
   return endHour + endMin / 60 - (startHour + startMin / 60);
 };
+export function ToPascalCase(val: string) {
+  return val.charAt(0).toUpperCase() + val.slice(1);
+}
+export function getValidEndTimes(startTime: string) {
+  const startIndex = timeOptions.indexOf(startTime);
+  return timeOptions.filter((_, index) => index > startIndex);
+}
