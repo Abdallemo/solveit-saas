@@ -1,6 +1,5 @@
 import { MentorsBrowser } from "@/features/mentore/components/BrowseMentor"
 import {  getMentorListigWithAvailbelDates, MentorListType } from "@/features/mentore/server/action"
-import { logger } from "@/lib/logging/winston"
 
 export  default async function MentorsPage() {
   const mentorWithj = await getMentorListigWithAvailbelDates()
