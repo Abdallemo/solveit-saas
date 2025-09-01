@@ -15,7 +15,7 @@ export default async function MentorPage() {
             Manage your mentor profile and availability for mentees
           </p>
         </div>
-        <MentorProfile mentorDataa={mentorData!} />
+        <MentorProfile intialMentorData={mentorData!} />
       </div>
     </div>
   );
