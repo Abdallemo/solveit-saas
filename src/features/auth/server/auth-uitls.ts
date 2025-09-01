@@ -3,7 +3,8 @@ import { getVerificationTokenByEmail } from "./actions";
 import db from "@/drizzle/db";
 import { VerificationTokenTable } from "@/drizzle/schemas";
 import { eq } from "drizzle-orm";
-
+import type{ UserRole as userrole } from "../../../../types/next-auth";
+export type UserRole = userrole
 export async function generateVerificationToken(email: string,) {
     const delayInMs = 15 * 60 * 1000;
 
