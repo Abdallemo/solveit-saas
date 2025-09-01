@@ -35,7 +35,8 @@ import {
   LucideListTodo,
   LucideIcon,
   SquareDashedMousePointerIcon,
-  PackageOpen, // Replaced placeholder
+  PackageOpen,
+  Users, // Replaced placeholder
 } from "lucide-react";
 export type MenuItem = {
   type: "link" | "category";
@@ -140,7 +141,7 @@ export const MenuItemsAdmin: MenuItem[] = [
         type: "link",
         title: "Users",
         url: "/dashboard/admin/users",
-        icon: LucideShieldCheck,
+        icon: Users,
       },
       {
         type: "link",
