@@ -1,0 +1,414 @@
+"use client";
+
+import type React from "react";
+import { useState, useEffect, useRef, SVGProps } from "react";
+import type { MentorSession } from "@/features/mentore/server/types";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  Video,
+  Send,
+  Paperclip,
+  FileText,
+  User,
+  Clock,
+  CheckCheck,
+} from "lucide-react";
+import {
+  getIconForFileExtension,
+  removeFileExtension,
+  supportedExtentions,
+  truncateText,
+} from "@/lib/utils";
+import { usePathname, useRouter } from "next/navigation";
+import { useFileUpload } from "@/hooks/useFile";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMutation } from "@tanstack/react-query";
+import { toast } from "sonner";
+import { sendMentorMessages } from "../../server/action";
+import { env } from "@/env/client";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
+import useWebSocket from "@/hooks/useWebSocket";
+import {
+  MentorChatFileStatusType,
+  MentorChatStatusType,
+} from "@/drizzle/schemas";
+type messageType = {
+  id: string;
+  createdAt: Date | null;
+  seesionId: string;
+  message: string | null;
+  sentBy: string;
+  readAt: Date | null;
+  status: MentorChatStatusType;
+  chatOwner: {
+    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
+    id: string;
+    name: string | null;
+    email: string | null;
+    password: string | null;
+    stripeCustomerId: string | null;
+    emailVerified: Date | null;
+    image: string | null;
+    createdAt: Date | null;
+  };
+  chatFiles: {
+    id: string;
+    fileName: string;
+    fileType: string;
+    fileSize: number;
+    storageLocation: string;
+    filePath: string;
+    uploadedAt: Date | null;
+    uploadedById: string;
+    chatId: string;
+    status: MentorChatFileStatusType;
+  }[];
+};
+
+export default function MentorshipWorkspace({
+  mentorWorkspace: session,
+}: {
+  mentorWorkspace: MentorSession;
+}) {
+  const [chats, setChats] = useState(session?.chats);
+  const [messageInput, setMessageInput] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const messageRef = useRef<HTMLDivElement>(null);
+  const { uploadMutate, isUploading } = useFileUpload();
+  const { user } = useCurrentUser();
+  const router = useRouter();
+  const path = usePathname();
+  useWebSocket<messageType>(
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
+    {
+      onMessage: (message) => {
+        setChats((prev) => [...prev!, message]);
+      },
+    }
+  );
+  const { mutateAsync: sendMessage } = useMutation({
+    mutationFn: sendMentorMessages,
+    onError: () => {
+      toast.error("failed to send Message");
+    },
+  });
+  useEffect(() => {
+    if (messageRef.current) {
+      messageRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [session]);
+
+  if (!session) {
+    return (
+      <main className="w-full h-full flex items-center justify-center bg-background">
+        <div className="text-center space-y-2">
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center mx-auto">
+            <User className="h-6 w-6 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground">No session data available</p>
+        </div>
+      </main>
+    );
+  }
+
+  const { sessionDate, timeSlot } = session;
+  const allFiles = chats?.flatMap((chat) => chat.chatFiles) || [];
+
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() && selectedFiles.length === 0) return;
+
+    try {
+      const uploadedMeta: UploadedFileMeta[] = await uploadMutate({
+        files: selectedFiles,
+        scope: "metorship",
+        url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+      });
+
+      await sendMessage({
+        message: messageInput,
+        seesionId: session.id,
+        senderId: user?.id!,
+        uploadedFiles: uploadedMeta,
+      });
+
+      setMessageInput("");
+      setSelectedFiles([]);
+
+      router.refresh();
+    } catch (err) {
+      toast.error("Failed to send message");
+    }
+  };
+
+  const handleFileSelect = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const files = Array.from(event.target.files || []);
+    setSelectedFiles((prev) => [...prev, ...files]);
+  };
+
+
+  return (
+    <main className="w-full h-full flex bg-background">
+      <div className="flex-1 flex flex-col h-full">
+        <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="space-y-1">
+              <p className="font-medium">{sessionDate}</p>
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Clock className="h-3 w-3" />
+                <span>
+                  {timeSlot?.start} - {timeSlot?.end}
+                </span>
+              </div>
+            </div>
+          </div>
+          <Button
+            size="sm"
+            className="gap-2"
+            onClick={() => router.push(`${path}/video-call`)}>
+            <Video className="h-4 w-4" />
+            Video Call
+          </Button>
+        </div>
+
+        <ScrollArea className="flex-1 h-0">
+          <div className="p-6 space-y-6 max-h-[700px]">
+            {chats && chats.length > 0 ? (
+              chats.map((chat, index) => (
+                <div
+                  key={chat.id}
+                  ref={chats.length - 1 === index ? messageRef : null}
+                  className={`flex gap-3 ${
+                    user?.id === chat.sentBy ? "flex-row-reverse" : ""
+                  }`}>
+                  <Avatar className="h-9 w-9 shadow-sm">
+                    <AvatarFallback
+                      className={
+                        user?.id === chat.sentBy
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                  <div
+                    className={`flex-1 max-w-md space-y-2 ${
+                      user?.id === chat.sentBy ? "items-end" : "items-start"
+                    } flex flex-col`}>
+                    <div
+                      className={`flex items-center gap-2 ${
+                        user?.id === chat.sentBy ? "flex-row-reverse" : ""
+                      }`}>
+                      <p className="text-sm font-medium text-foreground">
+                        {chat.chatOwner.name}
+                      </p>
+                      <div className="flex items-center gap-1">
+                        <p className="text-xs text-muted-foreground">
+                          {chat.createdAt?.toLocaleTimeString()}
+                        </p>
+                        {user?.id === chat.sentBy && (
+                          <CheckCheck
+                            className={`h-3 w-3 ${
+                              chat.readAt
+                                ? "text-primary"
+                                : "text-muted-foreground"
+                            }`}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    {chat.message && (
+                      <div
+                        className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
+                          user?.id === chat.sentBy
+                            ? "bg-primary text-primary-foreground rounded-br-md"
+                            : "bg-muted rounded-bl-md"
+                        }`}>
+                        <p className="text-sm leading-relaxed">
+                          {chat.message}
+                        </p>
+                      </div>
+                    )}
+
+                    {chat.chatFiles.map((file) => (
+                      <div
+                        key={file.id}
+                        className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
+                        <FileIconComponent
+                          extension={
+                            file.fileName
+                              ?.split(".")
+                              .at(-1) as supportedExtentions
+                          }
+                          className="h-4 w-4 text-primary flex-shrink-0"
+                        />
+                        <span className="text-sm font-medium truncate flex-1 min-w-0">
+                          {truncateText(
+                            removeFileExtension(file.fileName!),
+                            10
+                          )}
+                          .{file.fileName?.split(".").at(-1)}
+                        </span>
+                        {file.status === "UPLOADING" && (
+                          <Badge variant="secondary" className="text-xs">
+                            Uploading…
+                          </Badge>
+                        )}
+                        {file.status === "DONE" && (
+                          <Badge variant="success" className="text-xs">
+                            done
+                          </Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))
+            ) : (
+              <div className="flex flex-col items-center justify-center h-64 space-y-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <User className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="text-center space-y-1">
+                  <p className="font-medium">No messages yet</p>
+                  <p className="text-sm text-muted-foreground">
+                    Start the conversation by sending a message
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <div className="border-t bg-card p-4 flex-shrink-0">
+          {selectedFiles.length > 0 && (
+            <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-dashed max-h-[120px] overflow-y-auto">
+              <p className="text-sm font-medium mb-2">Selected files:</p>
+              <div className="flex flex-wrap gap-2">
+                {selectedFiles.map((file, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border shadow-sm">
+                    <FileIconComponent
+                      extension={
+                        file.name?.split(".").at(-1) as supportedExtentions
+                      }
+                      className="h-4 w-4 text-primary flex-shrink-0"
+                    />
+                    <span className="text-sm">{file.name}</span>
+                    <button
+                      onClick={() =>
+                        setSelectedFiles((prev) =>
+                          prev.filter((_, i) => i !== index)
+                        )
+                      }
+                      className="ml-1 text-muted-foreground hover:text-destructive transition-colors">
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+          <div className="flex gap-3">
+            <Input
+              placeholder="Type your message..."
+              className="flex-1 h-10"
+              value={messageInput}
+              onChange={(e) => setMessageInput(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+            />
+            <div className="relative">
+              <input
+                type="file"
+                multiple
+                onChange={handleFileSelect}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+              />
+              <Button
+                size="icon"
+                variant="outline"
+                className="h-10 w-10 bg-transparent">
+                <Paperclip className="h-4 w-4" />
+              </Button>
+            </div>
+            <Button
+              size="icon"
+              onClick={handleSendMessage}
+              className="h-10 w-10"
+              disabled={!messageInput.trim() && selectedFiles.length === 0}>
+              <Send className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <div className="w-80 border-l bg-muted/20 flex flex-col h-full">
+        <div className="border-b bg-card px-4 py-4">
+          <div className="flex items-center gap-3">
+            <FileText className="h-4 w-4 text-primary" />
+            <h3 className="font-medium">Shared Files</h3>
+            <Badge variant="secondary" className="ml-auto">
+              {allFiles.length}
+            </Badge>
+          </div>
+        </div>
+
+        <ScrollArea className="flex-1 h-0">
+          {allFiles.length > 0 ? (
+            <div className="p-4 space-y-2">
+              {allFiles.map((file) => (
+                <div
+                  key={file.id}
+                  className="group flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer">
+                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                    <FileText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
+                      {file.fileName || "Untitled"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {file.uploadedAt?.toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="p-8 text-center space-y-4">
+              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+                <FileText className="h-8 w-8 text-muted-foreground" />
+              </div>
+              <div className="space-y-1">
+                <p className="font-medium">No files shared</p>
+                <p className="text-sm text-muted-foreground">
+                  Files will appear here when shared
+                </p>
+              </div>
+            </div>
+          )}
+        </ScrollArea>
+      </div>
+    </main>
+  );
+}
+
+export function FileIconComponent({
+  extension,
+  className,
+  ...props
+}: {
+  extension: supportedExtentions;
+  className?: string;
+} & SVGProps<SVGSVGElement>) {
+  const IconComponent = getIconForFileExtension(extension);
+
+  return <IconComponent className={className} {...props} />;
+}
