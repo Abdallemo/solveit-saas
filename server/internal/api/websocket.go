@@ -34,6 +34,12 @@ type Comment struct {
 	TaskId    string       `json:"taskId"`
 	Owner     CommentOwner `json:"owner"`
 }
+type SignalMessage struct {
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Type    string `json:"type"`
+	Payload string `json:"payload"`
+}
 
 type wsNotification struct {
 	hub      *WsHub
@@ -133,4 +139,18 @@ func (s *wsComments) handleSendComments(w http.ResponseWriter, r *http.Request) 
 
 func (s *wsComments) sendToTask(taskID string, comment Comment) {
 	s.hub.sendToChannel("comments:"+taskID, comment)
+}
+
+// -------------------- WebRTC Signalling WS --------------------
+func (s *Server) handleSendSignal(w http.ResponseWriter, r *http.Request) {
+	msg := SignalMessage{}
+	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
+		http.Error(w, "Invalid request", http.StatusBadRequest)
+		return
+	}
+
+	s.hub.sendToChannel("signaling:"+msg.To, msg)
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Signal sent"))
 }
