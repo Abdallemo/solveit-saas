@@ -20,15 +20,14 @@ import { Badge } from "@/components/ui/badge";
 import { CalendarIcon, Clock, DollarSign, Loader2 } from "lucide-react";
 import { format, isSameDay } from "date-fns";
 import { toast } from "sonner";
+import { createMentorBookingPaymentCheckout } from "@/features/mentore/server/action";
 import {
   MentorListigWithAvailbelDates,
   AvailabilitySlot,
-  createMentorBookingPaymentCheckout,
-} from "../server/action";
+} from "@/features/mentore/server/types";
 import { calculateSlotDuration } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { BookingFormData, bookingSchema } from "../server/types";
-
 
 interface BookingModalProps {
   mentor: MentorListigWithAvailbelDates;
