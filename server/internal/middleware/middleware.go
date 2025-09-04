@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"errors"
 	"net/http"
 	"os"
 	"strings"
@@ -36,4 +37,14 @@ func IsAuthorized(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+func IsAuthorizedWs(r *http.Request) error {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		return errors.New("unauthorized: session token not found")
+	}
+	if cookie.Value != os.Getenv("GO_API_AUTH") {
+		return errors.New("unauthorized: invalid session token")
+	}
+	return nil
 }
