@@ -12,9 +12,11 @@ import { Eye, Save, Star, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import {
   AvailabilitySlot,
+  MentorListType,
+} from "@/features/mentore/server/types";
+import {
   handleProfileAvatarState,
   handleProfilePublishState,
-  MentorListType,
   saveMentorListing,
 } from "../server/action";
 import { daysInWeek } from "@/lib/utils";
@@ -337,7 +339,8 @@ export function MentorProfile({
                   disabled={isPending || isSaving}
                   className="flex-1">
                   <Save className="h-4 w-4 mr-2" />
-                  {isPending && <Loader2 className="animate-spine"/> }Save Changes
+                  {isPending && <Loader2 className="animate-spine" />}Save
+                  Changes
                 </Button>
                 {false && (
                   <Button variant="outline" className="flex-1 bg-transparent">
