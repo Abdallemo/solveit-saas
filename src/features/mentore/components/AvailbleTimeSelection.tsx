@@ -1,5 +1,5 @@
 import { Label } from "@/components/ui/label";
-import { AvailabilitySlot } from "../server/action";
+import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Button } from "@/components/ui/button";
 import { Plus, Trash2 } from "lucide-react";
 import {
