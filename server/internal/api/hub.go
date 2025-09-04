@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"sync"
 
 	"github.com/gorilla/websocket"
@@ -20,7 +21,7 @@ var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
 		//allowedUrl := os.Getenv("NEXTAUTH_URL")
 		origin := r.Header.Get("Origin")
-		return allowedHost[origin]
+		return allowedHost[origin] || os.Getenv("NEXTAUTH_URL") == origin
 	},
 }
 
