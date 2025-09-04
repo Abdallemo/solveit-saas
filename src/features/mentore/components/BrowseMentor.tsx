@@ -30,7 +30,7 @@ import {
 } from "@/components/ui/pagination";
 import { Clock, Search, Star, Users, DollarSign } from "lucide-react";
 import { format, isSameDay } from "date-fns";
-import { MentorListigWithAvailbelDates } from "../server/action";
+import { MentorListigWithAvailbelDates } from "@/features/mentore/server/types";
 import { BookingModal } from "./booking-modal";
 
 interface MentorCardProps {
