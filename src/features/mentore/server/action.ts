@@ -3,6 +3,8 @@
 import db from "@/drizzle/db";
 import {
   MentorshipBookingTable,
+  MentorshipChatFilesTable,
+  MentorshipChatTable,
   MentorshipProfileTable,
   MentorshipSessionTable,
   PaymentPorposeEnumType,
@@ -18,20 +20,21 @@ import {
 } from "@/features/users/server/actions";
 import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
-import { and, eq, gte } from "drizzle-orm";
+import { and, count, eq, gte, or, sql } from "drizzle-orm";
 import { addDays, startOfWeek, isFuture, format, set } from "date-fns";
 import { calculateSlotDuration, daysInWeek } from "@/lib/utils";
-import { BookingFormData, bookingSchema } from "./types";
+import {
+  AvailabilitySlot,
+  BookingFormData,
+  bookingSchema,
+  MentorListigWithAvailbelDates,
+} from "@/features/mentore/server/types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { stripe } from "@/lib/stripe";
 import { env } from "@/env/server";
 import { redirect } from "next/navigation";
-
-export type AvailabilitySlot = {
-  day: string;
-  start: string;
-  end: string;
-};
+import { GoHeaders } from "@/lib/go-config";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 
 export async function validateMentorAccess() {
   const user = (await getServerUserSession())!;
@@ -54,13 +57,6 @@ export async function validateMentorAccess() {
 
   return { user, usrSub };
 }
-export type MentorListType = Exclude<
-  Awaited<ReturnType<typeof getMentorListigProfile>>,
-  any[]
->;
-export type MentorListigWithAvailbelDates = Awaited<
-  ReturnType<typeof getMentorListigWithAvailbelDates>
->[number];
 
 export async function getMentorListigProfile() {
   const { user, usrSub } = await validateMentorAccess();
@@ -72,9 +68,9 @@ export async function getMentorListigProfile() {
     displayName: result?.displayName || user.name!,
     description: result?.description ?? "",
     title: result?.title ?? "",
-    avatar:result?.avatar??"",
-    ratePerHour:result?.ratePerHour?? 0,
-    availableTimes:result?.availableTimes ?? []
+    avatar: result?.avatar ?? "",
+    ratePerHour: result?.ratePerHour ?? 0,
+    availableTimes: result?.availableTimes ?? [],
   };
 }
 
@@ -345,5 +341,102 @@ export async function updateMentorBooking(
       "failed to update Mentor Temperory Booking\n" + (error as Error).message
     );
     throw new Error("failed to update Mentor Temperory Booking");
+  }
+}
+
+export async function getMentorBookingSessions() {
+  const user = (await getServerUserSession())!;
+  if (!user || !user.id) {
+    throw new Error("Unauthorized");
+  }
+  const where = and(
+    or(
+      eq(MentorshipBookingTable.posterId, user.id!),
+      eq(MentorshipBookingTable.solverId, user.id!)
+    ),
+    eq(MentorshipBookingTable.status, "PAID")
+  );
+  const result = await db.query.MentorshipBookingTable.findMany({
+    where,
+    with: { bookedSessions: true, solver: true, poster: true },
+    orderBy: (tb, fn) => fn.desc(tb.createdAt),
+  });
+  const totol = result
+    .map((r) => {
+      return r.bookedSessions.length;
+    })
+    .reduce((a, b) => a + b);
+
+  return { result, totalCount: totol };
+}
+export async function getMentorSession(sessionId: string) {
+  if (!sessionId) return;
+  try {
+    const session = await db.query.MentorshipSessionTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, sessionId),
+      with: {
+        chats: {
+          with: { chatFiles: true, chatOwner: true },
+        },
+      },
+    });
+    return session;
+  } catch (error) {
+    logger.error("unable to fetch the session info", {
+      message: (error as Error).message,
+      cause: (error as Error).cause,
+      stack: (error as Error).stack,
+    });
+  }
+}
+export async function sendMentorMessages(values: {
+  seesionId: string;
+  senderId: string;
+  message: string;
+  uploadedFiles: UploadedFileMeta[];
+}) {
+  const { message, seesionId, senderId, uploadedFiles } = values;
+  console.warn("passed uploadedFile :\n", uploadedFiles);
+  if (!message || !seesionId || !senderId) return;
+
+  try {
+    // await fetch(`${env.GO_API_URL}/send-messages`, {
+    //   method: "POST",
+    //   headers: GoHeaders,
+    //   body: JSON.stringify(values),
+    // });
+    await db.transaction(async (dx) => {
+      const chat = await dx
+        .insert(MentorshipChatTable)
+        .values({
+          seesionId,
+          sentBy: senderId,
+          message,
+          status: "SENT",
+        })
+        .returning();
+
+      if (uploadedFiles && uploadedFiles.length > 0) {
+        console.warn("files ")
+        await Promise.all(
+          uploadedFiles.map((file) =>
+            
+            dx.insert(MentorshipChatFilesTable).values({
+              chatId: chat[0].id,
+              fileName: file.fileName,
+              filePath: file.filePath,
+              fileSize: file.fileSize,
+              fileType: file.fileType,
+              storageLocation: file.storageLocation,
+              uploadedById: senderId,
+              status: "DONE",
+            })
+          )
+        );
+      }
+    });
+  } catch (error) {
+    logger.error("unable to send message. cause:" + (error as Error).message);
+    throw new Error("unable to send message");
   }
 }
