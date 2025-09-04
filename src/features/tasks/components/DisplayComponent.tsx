@@ -427,7 +427,7 @@ export default function DisplayListComponent({
     }
   }
   return (
-    <div className="h-full w-full bg-background">
+    <div className="h-full w-full">
       <div className="max-w-8xl mx-auto px-6 py-8 ">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-4xl font-bold text-foreground">{title}</h1>
