@@ -57,6 +57,7 @@ func (s *Server) routes() *http.ServeMux {
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/notification", s.wsNotif.handleNotification)
 	mux.HandleFunc("GET /api/v1/comments", s.wsComm.handleComments)
+	mux.HandleFunc("GET /api/v1/signaling", s.handleSendSignal)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
