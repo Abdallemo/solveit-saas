@@ -20,7 +20,7 @@ export default async function PosterAccountPage() {
   const cards = await getAllCustomerPaymentMethods(currentUser.id);
   return (
     <div className="w-full">
-      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 sticky top-0 z-50">
+      <div className="border-b bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
