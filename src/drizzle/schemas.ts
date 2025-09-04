@@ -18,7 +18,7 @@ import {
   date,
 } from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
-import { AvailabilitySlot } from "@/features/mentore/server/action";
+import { AvailabilitySlot } from "@/features/mentore/server/types";
 
 export const UserRole = pgEnum("role", [
   "ADMIN",
@@ -35,6 +35,8 @@ export const PaymentStatus = pgEnum("payment_status", [
   "CANCELED",
   "REFUNDED",
 ]);
+export const MentorChatStatus = pgEnum("status", ["PENDING", "SENT"]);
+export const MentorChatFileStatus = pgEnum("status", ["UPLOADING", "DONE"]);
 export const TaskStatusEnum = pgEnum("task_status", [
   "OPEN",
   "ASSIGNED",
@@ -59,7 +61,6 @@ export const BookingSatatusEnum = pgEnum("booking_status", [
   "CANCELED",
 ]);
 
-
 export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
 export type taskTableType = typeof TaskTable.$inferInsert;
@@ -68,9 +69,13 @@ export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
+export type MentorChatStatusType = (typeof MentorChatStatus.enumValues)[number];
+export type MentorChatFileStatusType =
+  (typeof MentorChatFileStatus.enumValues)[number];
 export type PaymentStatusType = (typeof PaymentStatus.enumValues)[number];
 export type RefundStatusEnumType = (typeof RefundStatusEnum.enumValues)[number];
-export type PaymentPorposeEnumType = (typeof PaymentPorposeEnum.enumValues)[number];
+export type PaymentPorposeEnumType =
+  (typeof PaymentPorposeEnum.enumValues)[number];
 
 export const UserTable = pgTable("user", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -375,7 +380,7 @@ export const MentorshipSessionTable = pgTable("mentor_session", {
   bookingId: uuid("booking_id")
     .notNull()
     .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
-  sessionDate: date("session_date",).notNull(),
+  sessionDate: date("session_date").notNull(),
   timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
@@ -406,18 +411,26 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
   sentBy: uuid("sent_by")
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
+  status: MentorChatStatus("status"),
   readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
+  id: uuid("id").primaryKey().defaultRandom().notNull(),
   chatId: uuid("chat_id")
     .notNull()
     .references(() => MentorshipChatTable.id, { onDelete: "cascade" }),
-  filePath: text("file_Path").notNull(),
-  fileName: text("file_name"),
+  uploadedById: uuid("uploaded_by_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  fileName: text("file_name").notNull(),
+  fileType: text("file_type").notNull(),
+  fileSize: integer("file_size").notNull(),
+  storageLocation: text("file_location").notNull(),
+  filePath: text("file_path").notNull(),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
+  status: MentorChatFileStatus("status"),
 });
 
 export const RulesTable = pgTable("ai_rules", {
@@ -473,6 +486,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   }),
   payer: many(PaymentTable, {
     relationName: "payer",
+  }),
+  chatOwner: many(MentorshipChatTable, {
+    relationName: "chatOwner",
   }),
 }));
 
@@ -634,7 +650,7 @@ export const PaymentTableRelation = relations(
 export const MentorshipProfileRelations = relations(
   MentorshipProfileTable,
   ({ many }) => ({
-    bookings: many(MentorshipBookingTable, {
+    solver: many(MentorshipBookingTable, {
       relationName: "solver",
     }),
   })
@@ -645,7 +661,7 @@ export const MentorshipBookingRelations = relations(
   ({ one, many }) => ({
     solver: one(MentorshipProfileTable, {
       fields: [MentorshipBookingTable.solverId],
-      references: [MentorshipProfileTable.id],
+      references: [MentorshipProfileTable.userId],
       relationName: "solver",
     }),
     poster: one(UserTable, {
@@ -660,11 +676,42 @@ export const MentorshipBookingRelations = relations(
 
 export const MentorshipSessionRelations = relations(
   MentorshipSessionTable,
-  ({ one }) => ({
+  ({ one, many }) => ({
     bookedSessions: one(MentorshipBookingTable, {
       fields: [MentorshipSessionTable.bookingId],
       references: [MentorshipBookingTable.id],
       relationName: "bookedSessions",
+    }),
+    chats: many(MentorshipChatTable, {
+      relationName: "chat",
+    }),
+  })
+);
+export const MentorshipChatTableRelations = relations(
+  MentorshipChatTable,
+  ({ one, many }) => ({
+    session: one(MentorshipSessionTable, {
+      fields: [MentorshipChatTable.seesionId],
+      references: [MentorshipSessionTable.id],
+      relationName: "chat",
+    }),
+    chatFiles: many(MentorshipChatFilesTable, {
+      relationName: "chatFiles",
+    }),
+    chatOwner: one(UserTable, {
+      fields: [MentorshipChatTable.sentBy],
+      references: [UserTable.id],
+      relationName: "chatOwner",
+    }),
+  })
+);
+export const MentorshipChatFilesTableRelations = relations(
+  MentorshipChatFilesTable,
+  ({ one }) => ({
+    chat: one(MentorshipChatTable, {
+      fields: [MentorshipChatFilesTable.chatId],
+      references: [MentorshipChatTable.id],
+      relationName: "chatFiles",
     }),
   })
 );
