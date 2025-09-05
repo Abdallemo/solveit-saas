@@ -1,5 +1,4 @@
 "use client";
-
 import type React from "react";
 import DocViewer from "react-doc-viewer";
 import { useState, useEffect, useRef, SVGProps } from "react";
@@ -26,6 +25,7 @@ import {
   fileExtention,
   formatDateAndTime,
   getIconForFileExtension,
+  isCode,
   isDoc,
   isImage,
   removeFileExtension,
@@ -55,7 +55,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import Image from "next/image";
-
+import Test from "@/app/test/page";
 type SocketMessage = {
   id: string;
   seesionId: string;
@@ -75,7 +75,6 @@ type SocketMessage = {
     status: MentorChatFileStatusType;
   }[];
 };
-
 export default function MentorshipWorkspace({
   mentorWorkspace: session,
 }: {
@@ -126,7 +125,6 @@ export default function MentorshipWorkspace({
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [chats, session]);
-
   if (!session) {
     return (
       <main className="w-full h-full flex items-center justify-center bg-background">
@@ -139,19 +137,14 @@ export default function MentorshipWorkspace({
       </main>
     );
   }
-
   const { sessionDate, timeSlot } = session;
   const allFiles = chats?.flatMap((chat) => chat.chatFiles) || [];
-
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
-
     const text = messageInput;
     const files = selectedFiles;
-
     setMessageInput("");
     setSelectedFiles([]);
-
     try {
       if (text.trim()) {
         sendMessage({
@@ -161,16 +154,13 @@ export default function MentorshipWorkspace({
           uploadedFiles: [],
         });
       }
-
       if (files.length > 0) {
         setUploadingFiles(files);
-
         const uploadedMeta: UploadedFileMeta[] = await uploadMutate({
           files,
           scope: "mentorship",
           url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
         });
-
         sendMessage({
           message: "",
           seesionId: session.id,
@@ -184,14 +174,12 @@ export default function MentorshipWorkspace({
       setUploadingFiles([]);
     }
   };
-
   const handleFileSelect = async (
     event: React.ChangeEvent<HTMLInputElement>
   ) => {
     const files = Array.from(event.target.files || []);
     setSelectedFiles((prev) => [...prev, ...files]);
   };
-
   return (
     <main className="w-full h-full flex bg-background">
       <div className="flex-1 flex flex-col h-full">
@@ -215,7 +203,6 @@ export default function MentorshipWorkspace({
             Video Call
           </Button>
         </div>
-
         <ScrollArea className="flex-1 h-[500px] p-5">
           <div className="p-6 space-y-6 max-h-[500px]">
             {chats && chats.length > 0 ? (
@@ -240,7 +227,6 @@ export default function MentorshipWorkspace({
                         </AvatarFallback>
                         <AvatarImage src={chat.chatOwner.image!} />
                       </Avatar>
-
                       <div
                         className={`flex-1 max-w-md space-y-2 flex flex-col ${
                           isCurrentUser ? "items-end" : "items-start"
@@ -267,7 +253,6 @@ export default function MentorshipWorkspace({
                             )}
                           </div>
                         </div>
-
                         {chat.message && (
                           <div
                             className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
@@ -280,7 +265,6 @@ export default function MentorshipWorkspace({
                             </p>
                           </div>
                         )}
-
                         {chat.chatFiles.map((file) => (
                           <FileChatCardComps
                             opt={
@@ -310,25 +294,32 @@ export default function MentorshipWorkspace({
                 })}
                 <div ref={messageRef} />
                 <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogContent className="flex flex-col justify-center items-center w-[700px]">
-                    <DialogHeader>
+                  <DialogContent className="sm:max-w-[calc(100vw-300px)] lg:max-w-[calc(100vw-500px)] xl:max-w-[calc(100vw-600px)] h-[calc(100vh-100px)] flex flex-col justify-center items-center p-4">
+                    <DialogHeader className="w-full h-full">
                       <DialogTitle></DialogTitle>
                       {/* DEMO */}
                       {isImage(fileExtention(filePreview?.fileName!)) && (
                         <Image
                           alt={filePreview?.fileName!}
                           src={filePreview?.storageLocation!}
-                          width={400}
-                          height={400}
+                          width={0}
+                          height={0}
+                          sizes="100vw"
+                          style={{ width: "100%", height: "auto" }}
+                          className="object-contain max-h-full max-w-full"
                         />
                       )}
-
+                      {isCode(fileExtention(filePreview?.fileName!)) && (
+                        <div className="w-full h-full">
+                          <Test />
+                        </div>
+                      )}
                       {isDoc(fileExtention(filePreview?.fileName!)) && (
                         <iframe
                           src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
                             filePreview?.storageLocation!
                           )}`}
-                          className="w-full h-[600px] rounded-lg shadow-md border"
+                          className="w-full h-full rounded-lg shadow-md border"
                         />
                       )}
                     </DialogHeader>
@@ -348,7 +339,6 @@ export default function MentorshipWorkspace({
                         </p>
                         <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       </div>
-
                       <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
                         <FileIconComponent
                           extension={
@@ -381,7 +371,6 @@ export default function MentorshipWorkspace({
             )}
           </div>
         </ScrollArea>
-
         <div className="border-t bg-card p-4 flex-shrink-0">
           {selectedFiles.length > 0 && (
             <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-dashed max-h-[120px] overflow-y-auto">
@@ -444,7 +433,6 @@ export default function MentorshipWorkspace({
           </div>
         </div>
       </div>
-
       <div className="w-80 border-l  flex flex-col h-full p-5 gap-2">
         <div className="border-b bg-card px-4 py-4">
           <div className="flex items-center gap-3">
@@ -455,7 +443,6 @@ export default function MentorshipWorkspace({
             </Badge>
           </div>
         </div>
-
         <ScrollArea className="flex-1 h-0">
           {allFiles.length > 0 ? (
             <div className="flex flex-col w-fit h-100 gap-2 ">
