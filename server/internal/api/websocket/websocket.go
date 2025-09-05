@@ -46,14 +46,20 @@ type WsNotification struct {
 	messages []Message
 }
 type WsSignalling struct {
-	hub      *WsHub
-	messages SignalMessage
+	hub    *WsHub
+	signal []SignalMessage
 }
 
 func NewWsNotification(hub *WsHub) *WsNotification {
 	return &WsNotification{
 		hub:      hub,
 		messages: make([]Message, 0, 1<<10),
+	}
+}
+func NewWsWsSignalling(hub *WsHub) *WsSignalling {
+	return &WsSignalling{
+		hub:    hub,
+		signal: make([]SignalMessage, 0, 1<<10),
 	}
 }
 
