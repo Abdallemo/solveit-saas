@@ -2,8 +2,14 @@ import { useMutation } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { uploadFiles } from "@/features/media/server/action";
 import { deleteFileFromWorkspace } from "@/features/tasks/server/action";
-
-export function useFileUpload() {
+type FileUploadProps = {
+  successMsg?: boolean;
+  onSucessAction?: () => void;
+};
+export function useFileUpload({
+  onSucessAction,
+  successMsg = true,
+}: FileUploadProps) {
   const {
     mutateAsync: uploadMutate,
     isPending: isUploading,
@@ -11,9 +17,15 @@ export function useFileUpload() {
     error: uploadError,
   } = useMutation({
     mutationFn: uploadFiles,
-    onSuccess: () => {
-      toast.success("Files uploaded successfully!", { id: "file-upload" });
-    },
+    onSuccess: onSucessAction
+      ? () => onSucessAction()
+      : () => {
+          if (successMsg) {
+            toast.success("Files uploaded successfully!", {
+              id: "file-upload",
+            });
+          }
+        },
     onError: (error) => {
       toast.error(`File upload failed: ${error.message}`, {
         id: "file-upload",
