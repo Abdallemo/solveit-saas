@@ -33,7 +33,7 @@ export default function FileUploadSolver({
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
-  const { uploadMutate, isUploading } = useFileUpload();
+  const { uploadMutate, isUploading } = useFileUpload({});
   const {
     mutateAsync: deleteFile,
     isPending: isDeleting,
