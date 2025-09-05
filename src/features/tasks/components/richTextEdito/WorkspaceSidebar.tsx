@@ -43,6 +43,7 @@ import { cn, getColorClass } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
 import useWebSocket from "@/hooks/useWebSocket";
 import { env } from "@/env/client";
+import { publicUserType } from "@/features/users/server/user-types";
 
 export default function WorkspaceSidebar({
   open,
@@ -92,16 +93,7 @@ export type commentType = {
   createdAt: Date | null;
   userId: string;
   taskId: string;
-  owner: {
-    name: string | null;
-    id: string;
-    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
-    image: string | null;
-    email: string | null;
-    password: string | null;
-    emailVerified: Date | null;
-    createdAt: Date | null;
-  };
+  owner: publicUserType
 };
 
 function SideBarForm() {
