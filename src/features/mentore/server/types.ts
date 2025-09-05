@@ -26,7 +26,7 @@ export type MentorSession = Awaited<ReturnType<typeof getMentorSession>>;
 export type MentorChatSession = Exclude<
   Awaited<ReturnType<typeof getMentorSession>>,
   undefined
->;
+>['chats'][number];
 
 export const bookingSchema = z.object({
   sessions: z
