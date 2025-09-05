@@ -37,6 +37,7 @@ export function ProfileSelection({
             </AvatarFallback>
           </Avatar>
           <Button
+            type="button"
             size="sm"
             variant="secondary"
             className="absolute -bottom-1 -right-1 h-7 w-7 rounded-full p-0"
