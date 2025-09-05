@@ -18,6 +18,7 @@ type Server struct {
 	wsNotif      *websocket.WsNotification
 	wsComm       *websocket.WsComments
 	wsSig        *websocket.WsSignalling
+	wsChat       *websocket.WsMentorChat
 	s3Client     *s3.Client
 	openaiClient *openai.Client
 	store        storage.Storage
@@ -35,6 +36,7 @@ func NewServer(addr string, s3Client *s3.Client,
 		hub:          hub,
 		wsNotif:      websocket.NewWsNotification(hub),
 		wsComm:       websocket.NewWsComments(hub),
+		wsChat:       websocket.NewMentorChat(hub),
 		s3Client:     s3Client,
 		openaiClient: openaiClient,
 		store:        store,
@@ -59,12 +61,14 @@ func (s *Server) routes() *http.ServeMux {
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/notification", s.wsNotif.HandleNotification)
 	mux.HandleFunc("GET /api/v1/comments", s.wsComm.HandleComments)
+	mux.HandleFunc("GET /api/v1/mentorship", s.wsChat.HandleMentorChats)
 	mux.HandleFunc("GET /api/v1/signaling", s.wsSig.HandleSendSignal)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/send-notification", s.wsNotif.HandleSendNotification)
 	mux.HandleFunc("POST /api/v1/send-comment", s.wsComm.HandleSendComments)
+	mux.HandleFunc("POST /api/v1/send-mentorshipChats", s.wsChat.HandleSendMentorChats)
 	mux.HandleFunc("POST /api/v1/media", s.handleUploadMedia)
 	mux.HandleFunc("DELETE /api/v1/media", s.handleDeleteMedia)
 	mux.HandleFunc("POST /api/v1/openai", s.hanleOpenAi)
