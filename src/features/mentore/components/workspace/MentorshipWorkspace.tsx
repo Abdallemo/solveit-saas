@@ -2,7 +2,10 @@
 
 import type React from "react";
 import { useState, useEffect, useRef, SVGProps } from "react";
-import type { MentorSession } from "@/features/mentore/server/types";
+import type {
+  MentorChatSession,
+  MentorSession,
+} from "@/features/mentore/server/types";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +19,10 @@ import {
   User,
   Clock,
   CheckCheck,
+  Loader2,
 } from "lucide-react";
 import {
+  formatDateAndTime,
   getIconForFileExtension,
   removeFileExtension,
   supportedExtentions,
@@ -32,29 +37,14 @@ import { sendMentorMessages } from "../../server/action";
 import { env } from "@/env/client";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import useWebSocket from "@/hooks/useWebSocket";
-import {
-  MentorChatFileStatusType,
-  MentorChatStatusType,
-} from "@/drizzle/schemas";
-type messageType = {
+import { MentorChatFileStatusType } from "@/drizzle/schemas";
+
+type SocketMessage = {
   id: string;
-  createdAt: Date | null;
   seesionId: string;
-  message: string | null;
   sentBy: string;
-  readAt: Date | null;
-  status: MentorChatStatusType;
-  chatOwner: {
-    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER" | null;
-    id: string;
-    name: string | null;
-    email: string | null;
-    password: string | null;
-    stripeCustomerId: string | null;
-    emailVerified: Date | null;
-    image: string | null;
-    createdAt: Date | null;
-  };
+  message: string | null;
+  createdAt: string;
   chatFiles: {
     id: string;
     fileName: string;
@@ -77,23 +67,45 @@ export default function MentorshipWorkspace({
   const [chats, setChats] = useState(session?.chats);
   const [messageInput, setMessageInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const messageRef = useRef<HTMLDivElement>(null);
   const { uploadMutate, isUploading } = useFileUpload();
   const { user } = useCurrentUser();
   const router = useRouter();
   const path = usePathname();
-  useWebSocket<messageType>(
+  useWebSocket<SocketMessage>(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
     {
-      onMessage: (message) => {
-        setChats((prev) => [...prev!, message]);
+      onMessage: (msg) => {
+        setChats((prev) => {
+          const owner =
+            prev?.find((c) => c.sentBy === msg.sentBy)?.chatOwner ||
+            chats?.find((c) => c.sentBy === msg.sentBy)?.chatOwner;
+          const recieavedMsg: MentorChatSession = {
+            ...msg,
+            createdAt: new Date(msg.createdAt),
+            chatOwner: owner!,
+            chatFiles: msg.chatFiles ?? [],
+            readAt: null,
+          };
+          return [...prev!, recieavedMsg];
+        });
+        if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
+          setUploadingFiles([]);
+        }
       },
     }
   );
-  const { mutateAsync: sendMessage } = useMutation({
+  const { mutate: sendMessage } = useMutation({
     mutationFn: sendMentorMessages,
     onError: () => {
       toast.error("failed to send Message");
+    },
+    onSuccess: (data) => {
+      if (data) {
+        setChats((prev) => [...(prev || []), data]);
+      }
+      router.refresh();
     },
   });
   useEffect(() => {
@@ -121,26 +133,42 @@ export default function MentorshipWorkspace({
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
 
+    const text = messageInput;
+    const files = selectedFiles;
+
+    setMessageInput("");
+    setSelectedFiles([]);
+
     try {
-      const uploadedMeta: UploadedFileMeta[] = await uploadMutate({
-        files: selectedFiles,
-        scope: "metorship",
-        url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
-      });
+      if (text.trim()) {
+        sendMessage({
+          message: text,
+          seesionId: session.id,
+          sentBy: user?.id!,
+          uploadedFiles: [],
+        });
+      }
 
-      await sendMessage({
-        message: messageInput,
-        seesionId: session.id,
-        senderId: user?.id!,
-        uploadedFiles: uploadedMeta,
-      });
+      if (files.length > 0) {
+        setUploadingFiles(files);
 
-      setMessageInput("");
-      setSelectedFiles([]);
+        const uploadedMeta: UploadedFileMeta[] = await uploadMutate({
+          files,
+          scope: "mentorship",
+          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+        });
 
-      router.refresh();
+        sendMessage({
+          message: "",
+          seesionId: session.id,
+          sentBy: user?.id!,
+          uploadedFiles: uploadedMeta,
+        });
+        setUploadingFiles([]);
+      }
     } catch (err) {
       toast.error("Failed to send message");
+      setUploadingFiles([]);
     }
   };
 
@@ -150,7 +178,6 @@ export default function MentorshipWorkspace({
     const files = Array.from(event.target.files || []);
     setSelectedFiles((prev) => [...prev, ...files]);
   };
-
 
   return (
     <main className="w-full h-full flex bg-background">
@@ -176,100 +203,128 @@ export default function MentorshipWorkspace({
           </Button>
         </div>
 
-        <ScrollArea className="flex-1 h-0">
-          <div className="p-6 space-y-6 max-h-[700px]">
+        <ScrollArea className="flex-1 h-[500px] p-5">
+          <div className="p-6 space-y-6 max-h-[500px]">
             {chats && chats.length > 0 ? (
-              chats.map((chat, index) => (
-                <div
-                  key={chat.id}
-                  ref={chats.length - 1 === index ? messageRef : null}
-                  className={`flex gap-3 ${
-                    user?.id === chat.sentBy ? "flex-row-reverse" : ""
-                  }`}>
-                  <Avatar className="h-9 w-9 shadow-sm">
-                    <AvatarFallback
-                      className={
-                        user?.id === chat.sentBy
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted"
-                      }>
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  </Avatar>
-                  <div
-                    className={`flex-1 max-w-md space-y-2 ${
-                      user?.id === chat.sentBy ? "items-end" : "items-start"
-                    } flex flex-col`}>
+              <>
+                {chats.map((chat, index) => {
+                  const isCurrentUser = user?.id === chat.sentBy;
+                  return (
                     <div
-                      className={`flex items-center gap-2 ${
-                        user?.id === chat.sentBy ? "flex-row-reverse" : ""
+                      key={chat.id}
+                      ref={chats.length - 1 === index ? messageRef : null}
+                      className={`flex gap-3 ${
+                        isCurrentUser ? "flex-row-reverse" : "flex-row"
                       }`}>
-                      <p className="text-sm font-medium text-foreground">
-                        {chat.chatOwner.name}
-                      </p>
-                      <div className="flex items-center gap-1">
-                        <p className="text-xs text-muted-foreground">
-                          {chat.createdAt?.toLocaleTimeString()}
-                        </p>
-                        {user?.id === chat.sentBy && (
-                          <CheckCheck
-                            className={`h-3 w-3 ${
-                              chat.readAt
-                                ? "text-primary"
-                                : "text-muted-foreground"
-                            }`}
-                          />
+                      <Avatar className="h-9 w-9 shadow-sm">
+                        <AvatarFallback
+                          className={
+                            isCurrentUser
+                              ? "bg-primary text-primary-foreground"
+                              : "bg-muted"
+                          }>
+                          <User className="h-4 w-4" />
+                        </AvatarFallback>
+                      </Avatar>
+
+                      <div
+                        className={`flex-1 max-w-md space-y-2 flex flex-col ${
+                          isCurrentUser ? "items-end" : "items-start"
+                        }`}>
+                        <div
+                          className={`flex items-center gap-2 ${
+                            isCurrentUser ? "flex-row-reverse" : ""
+                          }`}>
+                          <p className="text-sm font-medium text-foreground">
+                            {chat.chatOwner.name}
+                          </p>
+                          <div className="flex items-center gap-1">
+                            <p className="text-xs text-muted-foreground">
+                              {formatDateAndTime(chat.createdAt!)}
+                            </p>
+                            {isCurrentUser && (
+                              <CheckCheck
+                                className={`h-3 w-3 ${
+                                  chat.readAt
+                                    ? "text-primary"
+                                    : "text-muted-foreground"
+                                }`}
+                              />
+                            )}
+                          </div>
+                        </div>
+
+                        {chat.message && (
+                          <div
+                            className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
+                              isCurrentUser
+                                ? "bg-primary text-primary-foreground rounded-br-md"
+                                : "bg-muted rounded-bl-md"
+                            }`}>
+                            <p className="text-sm leading-relaxed">
+                              {chat.message}
+                            </p>
+                          </div>
                         )}
+
+                        {chat.chatFiles.map((file) => (
+                          <div
+                            key={file.id}
+                            className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
+                            <FileIconComponent
+                              extension={
+                                file.fileName
+                                  ?.split(".")
+                                  .at(-1) as supportedExtentions
+                              }
+                              className="h-4 w-4 text-primary flex-shrink-0"
+                            />
+                            <span className="text-sm font-medium truncate flex-1 min-w-0">
+                              {truncateText(
+                                removeFileExtension(file.fileName!),
+                                10
+                              )}
+                              .{file.fileName?.split(".").at(-1)}
+                            </span>
+                          </div>
+                        ))}
                       </div>
                     </div>
+                  );
+                })}
 
-                    {chat.message && (
-                      <div
-                        className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
-                          user?.id === chat.sentBy
-                            ? "bg-primary text-primary-foreground rounded-br-md"
-                            : "bg-muted rounded-bl-md"
-                        }`}>
-                        <p className="text-sm leading-relaxed">
-                          {chat.message}
+                {uploadingFiles.map((file) => (
+                  <div key={file.name} className="flex gap-3 flex-row-reverse">
+                    <Avatar className="h-9 w-9 shadow-sm">
+                      <AvatarFallback className="bg-primary text-primary-foreground">
+                        <User className="h-4 w-4" />
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 max-w-md flex flex-col items-end space-y-2">
+                      <div className="flex items-center gap-2 flex-row-reverse">
+                        <p className="text-sm font-medium text-foreground">
+                          {user?.name || "You"}
                         </p>
+                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       </div>
-                    )}
 
-                    {chat.chatFiles.map((file) => (
-                      <div
-                        key={file.id}
-                        className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
+                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
                         <FileIconComponent
                           extension={
-                            file.fileName
-                              ?.split(".")
-                              .at(-1) as supportedExtentions
+                            file.name?.split(".").at(-1) as supportedExtentions
                           }
                           className="h-4 w-4 text-primary flex-shrink-0"
                         />
                         <span className="text-sm font-medium truncate flex-1 min-w-0">
-                          {truncateText(
-                            removeFileExtension(file.fileName!),
-                            10
-                          )}
-                          .{file.fileName?.split(".").at(-1)}
+                          {truncateText(removeFileExtension(file.name!), 10)}.
+                          {file.name?.split(".").at(-1)}
                         </span>
-                        {file.status === "UPLOADING" && (
-                          <Badge variant="secondary" className="text-xs">
-                            Uploading…
-                          </Badge>
-                        )}
-                        {file.status === "DONE" && (
-                          <Badge variant="success" className="text-xs">
-                            done
-                          </Badge>
-                        )}
+                        <Loader2 className="h-4 w-4 animate-spin" />
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              ))
+                ))}
+              </>
             ) : (
               <div className="flex flex-col items-center justify-center h-64 space-y-4">
                 <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
