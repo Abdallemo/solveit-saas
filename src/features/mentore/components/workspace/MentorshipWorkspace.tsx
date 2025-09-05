@@ -20,6 +20,7 @@ import {
   Clock,
   CheckCheck,
   Loader2,
+  User2,
 } from "lucide-react";
 import {
   fileExtention,
@@ -28,6 +29,7 @@ import {
   isCode,
   isDoc,
   isImage,
+  isVideo,
   removeFileExtension,
   supportedExtentions,
   truncateText,
@@ -49,32 +51,12 @@ import {
 import {
   Dialog,
   DialogContent,
-  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
 } from "@/components/ui/dialog";
 import Image from "next/image";
 import Test from "@/app/test/page";
-type SocketMessage = {
-  id: string;
-  seesionId: string;
-  sentBy: string;
-  message: string | null;
-  createdAt: string;
-  chatFiles: {
-    id: string;
-    fileName: string;
-    fileType: string;
-    fileSize: number;
-    storageLocation: string;
-    filePath: string;
-    uploadedAt: Date | null;
-    uploadedById: string;
-    chatId: string;
-    status: MentorChatFileStatusType;
-  }[];
-};
+
 export default function MentorshipWorkspace({
   mentorWorkspace: session,
 }: {
@@ -85,35 +67,31 @@ export default function MentorshipWorkspace({
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const messageRef = useRef<HTMLDivElement>(null);
-  const { uploadMutate, isUploading } = useFileUpload();
+  const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
   const router = useRouter();
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
-  useWebSocket<SocketMessage>(
+  useWebSocket<MentorChatSession>(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
     {
       onMessage: (msg) => {
-        setChats((prev) => {
-          const owner =
-            prev?.find((c) => c.sentBy === msg.sentBy)?.chatOwner ||
-            chats?.find((c) => c.sentBy === msg.sentBy)?.chatOwner;
-          const recieavedMsg: MentorChatSession = {
+        setChats((prev) => [
+          ...prev!,
+          {
             ...msg,
-            createdAt: new Date(msg.createdAt),
-            chatOwner: owner!,
-            chatFiles: msg.chatFiles ?? [],
+            createdAt: new Date(msg.createdAt!),
             readAt: null,
-          };
-          return [...prev!, recieavedMsg];
-        });
+          },
+        ]);
         if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
           setUploadingFiles([]);
         }
       },
     }
   );
+
   const { mutate: sendMessage } = useMutation({
     mutationFn: sendMentorMessages,
     onError: () => {
@@ -124,7 +102,7 @@ export default function MentorshipWorkspace({
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chats, session]);
+  }, [chats, session,uploadingFiles]);
   if (!session) {
     return (
       <main className="w-full h-full flex items-center justify-center bg-background">
@@ -167,7 +145,7 @@ export default function MentorshipWorkspace({
           sentBy: user?.id!,
           uploadedFiles: uploadedMeta,
         });
-        setUploadingFiles([]);
+       
       }
     } catch (err) {
       toast.error("Failed to send message");
@@ -208,7 +186,8 @@ export default function MentorshipWorkspace({
             {chats && chats.length > 0 ? (
               <>
                 {chats.map((chat, index) => {
-                  const isCurrentUser = user?.id === chat.sentBy;
+                  const isCurrentUser = chat.chatOwner.id === user?.id;
+
                   return (
                     <div
                       key={chat.id}
@@ -223,9 +202,13 @@ export default function MentorshipWorkspace({
                               ? "bg-primary text-primary-foreground"
                               : "bg-muted"
                           }>
-                          <User className="h-4 w-4" />
+                          {chat?.chatOwner ? (
+                            chat?.chatOwner.name?.charAt(0).toUpperCase()
+                          ) : (
+                            <User2 className="h-4 w-4" />
+                          )}
                         </AvatarFallback>
-                        <AvatarImage src={chat.chatOwner.image!} />
+                        <AvatarImage src={chat.chatOwner.image ?? ""} />
                       </Avatar>
                       <div
                         className={`flex-1 max-w-md space-y-2 flex flex-col ${
@@ -268,7 +251,7 @@ export default function MentorshipWorkspace({
                         {chat.chatFiles.map((file) => (
                           <FileChatCardComps
                             opt={
-                              <img
+                              <Image
                                 src={file.storageLocation!}
                                 alt={file.fileName!}
                                 className="w-10 h-10"
@@ -297,7 +280,7 @@ export default function MentorshipWorkspace({
                   <DialogContent className="sm:max-w-[calc(100vw-300px)] lg:max-w-[calc(100vw-500px)] xl:max-w-[calc(100vw-600px)] h-[calc(100vh-100px)] flex flex-col justify-center items-center p-4">
                     <DialogHeader className="w-full h-full">
                       <DialogTitle></DialogTitle>
-                      {/* DEMO */}
+
                       {isImage(fileExtention(filePreview?.fileName!)) && (
                         <Image
                           alt={filePreview?.fileName!}
@@ -307,6 +290,13 @@ export default function MentorshipWorkspace({
                           sizes="100vw"
                           style={{ width: "100%", height: "auto" }}
                           className="object-contain max-h-full max-w-full"
+                        />
+                      )}
+                      {isVideo(fileExtention(filePreview?.fileName!)) && (
+                        <video
+                          src={filePreview?.storageLocation!}
+                          autoPlay
+                          controls
                         />
                       )}
                       {isCode(fileExtention(filePreview?.fileName!)) && (
@@ -329,29 +319,31 @@ export default function MentorshipWorkspace({
                   <div key={file.name} className="flex gap-3 flex-row-reverse">
                     <Avatar className="h-9 w-9 shadow-sm">
                       <AvatarFallback className="bg-primary text-primary-foreground">
-                        <User className="h-4 w-4" />
+                        {user?.name ? (
+                          user?.name.charAt(0).toUpperCase()
+                        ) : (
+                          <User2 className="h-4 w-4" />
+                        )}
                       </AvatarFallback>
+                      <AvatarImage src={user?.image ?? ""} />
                     </Avatar>
                     <div className="flex-1 max-w-md flex flex-col items-end space-y-2">
                       <div className="flex items-center gap-2 flex-row-reverse">
                         <p className="text-sm font-medium text-foreground">
                           {user?.name || "You"}
                         </p>
-                        <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />
                       </div>
-                      <div className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
-                        <FileIconComponent
-                          extension={
-                            file.name?.split(".").at(-1) as supportedExtentions
-                          }
-                          className="h-4 w-4 text-primary flex-shrink-0"
-                        />
-                        <span className="text-sm font-medium truncate flex-1 min-w-0">
-                          {truncateText(removeFileExtension(file.name!), 10)}.
-                          {file.name?.split(".").at(-1)}
-                        </span>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      </div>
+                      <FileChatCardComps
+                        key={file.name}
+                        loading
+                        file={{
+                          fileName: file.name,
+                          filePath: "",
+                          fileSize: file.size,
+                          fileType: file.type,
+                          storageLocation: "",
+                        }}
+                      />
                     </div>
                   </div>
                 ))}
