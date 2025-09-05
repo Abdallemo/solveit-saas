@@ -421,7 +421,11 @@ export async function sendMentorMessages(values: {
           message,
         })
         .returning();
-
+      await fetch(`${env.GO_API_URL}/send-messages`, {
+        method: "POST",
+        headers: GoHeaders,
+        body: JSON.stringify(values),
+      });
       if (uploadedFiles && uploadedFiles.length > 0) {
         console.warn("files ");
         await Promise.all(
@@ -443,11 +447,14 @@ export async function sendMentorMessages(values: {
     const result = await db.query.MentorshipChatTable.findFirst({
       where: eq(MentorshipChatTable.id, newChat.id),
       with: {
-        chatOwner: true,
         chatFiles: true,
       },
     });
-    return result;
+    await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
+      method: "POST",
+      headers: GoHeaders,
+      body: JSON.stringify(result),
+    });
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
