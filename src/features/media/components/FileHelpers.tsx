@@ -7,7 +7,7 @@ import {
 } from "@/lib/utils";
 import { SVGProps } from "react";
 import { UploadedFileMeta } from "../server/media-types";
-import { Download } from "lucide-react";
+import { Download, Loader2 } from "lucide-react";
 import {
   Tooltip,
   TooltipContent,
@@ -32,11 +32,13 @@ export function FileChatCardComps({
   action,
   downloadAction,
   opt,
+  loading = false,
 }: {
   file: UploadedFileMeta;
   action?: () => void;
   downloadAction?: () => void;
   opt?: any;
+  loading?: boolean;
 }) {
   return (
     // <Tooltip >
@@ -45,6 +47,9 @@ export function FileChatCardComps({
       onClick={action}
       className="relative flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group">
       <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+        {loading && (
+          <Loader2 className="animate-spin absolute w-8 h-8 text-blue-600/30 dark:text-blue-400/30" />
+        )}
         <FileIconComponent
           extension={fileExtention(file.fileName)}
           className="h-5 w-5 text-blue-600 dark:text-blue-400"
@@ -52,7 +57,7 @@ export function FileChatCardComps({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-          {truncateText(removeFileExtension(file.fileName!), 15)}.
+          {truncateText(removeFileExtension(file.fileName!), 10)}.
           {file.fileName?.split(".").at(-1)}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
