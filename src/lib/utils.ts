@@ -133,7 +133,19 @@ export type VideoType = "mp4" | "mov";
 export type AudioType = "mp3" | "wav";
 export type ArchiveType = "zip" | "rar";
 export type DocType = "doc" | "docx" | "xls" | "xlsx" | "csv" | "pptx";
-export type CodeType = "js" | "jsx" | "ts" | "tsx" | "html" | "css" | "json";
+export type CodeType =
+  | "js"
+  | "jsx"
+  | "ts"
+  | "tsx"
+  | "html"
+  | "css"
+  | "json"
+  | "txt"
+  | "ejs"
+  | "go"
+  | "c"
+  | "cpp";
 export type supportedExtentions =
   | ImageType
   | AudioType
@@ -200,6 +212,20 @@ const imageExtensions: ImageType[] = ["jpg", "jpeg", "png", "gif", "svg"];
 const videoExtensions: VideoType[] = ["mp4", "mov"];
 const audioExtensions: AudioType[] = ["mp3", "wav"];
 const docExtensions: DocType[] = ["csv", "doc", "docx", "xls", "xlsx", "pptx"];
+const codeExtensions: CodeType[] = [
+  "css",
+  "html",
+  "js",
+  "json",
+  "jsx",
+  "ts",
+  "tsx",
+  "txt",
+  "c",
+  "cpp",
+  "ejs",
+  "go",
+];
 
 export function isImage(ext: supportedExtentions): ext is ImageType {
   return imageExtensions.includes(ext as ImageType);
@@ -214,4 +240,8 @@ export function isAudio(ext: supportedExtentions): ext is AudioType {
 }
 export function isDoc(ext: supportedExtentions): ext is DocType {
   return docExtensions.includes(ext as DocType);
+}
+
+export function isCode(ext: supportedExtentions): ext is CodeType {
+  return codeExtensions.includes(ext as CodeType);
 }
