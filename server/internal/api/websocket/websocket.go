@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"github/abdallemo/solveit-saas/internal/user"
 	"net/http"
 )
 
@@ -16,23 +17,13 @@ type Message struct {
 	CreatedAt  string `json:"createdAt"`
 }
 
-type CommentOwner struct {
-	Name          string `json:"name"`
-	ID            string `json:"id"`
-	Role          string `json:"role"`
-	Image         string `json:"image"`
-	Email         string `json:"email"`
-	Password      string `json:"password"`
-	EmailVerified string `json:"emailVerified"`
-	CreatedAt     string `json:"createdAt"`
-}
 type Comment struct {
-	ID        string       `json:"id"`
-	Content   string       `json:"content"`
-	CreatedAt string       `json:"createdAt"`
-	UserId    string       `json:"userId"`
-	TaskId    string       `json:"taskId"`
-	Owner     CommentOwner `json:"owner"`
+	ID        string          `json:"id"`
+	Content   string          `json:"content"`
+	CreatedAt string          `json:"createdAt"`
+	UserId    string          `json:"userId"`
+	TaskId    string          `json:"taskId"`
+	Owner     user.PublicUser `json:"owner"`
 }
 type SignalMessage struct {
 	From    string `json:"from"`
