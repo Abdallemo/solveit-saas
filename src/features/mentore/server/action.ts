@@ -411,8 +411,8 @@ export async function sendMentorMessages(values: {
     //   headers: GoHeaders,
     //   body: JSON.stringify(values),
     // });
-    let newChat;
-    await db.transaction(async (dx) => {
+
+    const newChat = await db.transaction(async (dx) => {
       const chat = await dx
         .insert(MentorshipChatTable)
         .values({
@@ -421,7 +421,6 @@ export async function sendMentorMessages(values: {
           message,
         })
         .returning();
-      newChat = chat[0];
 
       if (uploadedFiles && uploadedFiles.length > 0) {
         console.warn("files ");
@@ -439,9 +438,10 @@ export async function sendMentorMessages(values: {
           )
         );
       }
+      return chat[0];
     });
     const result = await db.query.MentorshipChatTable.findFirst({
-      where: eq(MentorshipChatTable.id, newChat?.id!),
+      where: eq(MentorshipChatTable.id, newChat.id),
       with: {
         chatOwner: true,
         chatFiles: true,
