@@ -35,6 +35,7 @@ import { env } from "@/env/server";
 import { redirect } from "next/navigation";
 import { GoHeaders } from "@/lib/go-config";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { revalidatePath } from "next/cache";
 
 export async function validateMentorAccess() {
   const user = (await getServerUserSession())!;
@@ -361,11 +362,14 @@ export async function getMentorBookingSessions() {
     with: { bookedSessions: true, solver: true, poster: true },
     orderBy: (tb, fn) => fn.desc(tb.createdAt),
   });
-  const totol = result
-    .map((r) => {
-      return r.bookedSessions.length;
-    })
-    .reduce((a, b) => a + b);
+  const totol =
+    result.length > 0
+      ? result
+          .map((r) => {
+            return r.bookedSessions.length;
+          })
+          .reduce((a, b) => a + b)
+      : 0;
 
   return { result, totalCount: totol };
 }
@@ -391,36 +395,38 @@ export async function getMentorSession(sessionId: string) {
 }
 export async function sendMentorMessages(values: {
   seesionId: string;
-  senderId: string;
+  sentBy: string;
   message: string;
   uploadedFiles: UploadedFileMeta[];
 }) {
-  const { message, seesionId, senderId, uploadedFiles } = values;
+  const { message, seesionId, sentBy, uploadedFiles } = values;
   console.warn("passed uploadedFile :\n", uploadedFiles);
-  if (!message || !seesionId || !senderId) return;
+  if (!seesionId || !sentBy) return;
 
   try {
+    // allways send these data
+    //Todo
     // await fetch(`${env.GO_API_URL}/send-messages`, {
     //   method: "POST",
     //   headers: GoHeaders,
     //   body: JSON.stringify(values),
     // });
+    let newChat;
     await db.transaction(async (dx) => {
       const chat = await dx
         .insert(MentorshipChatTable)
         .values({
           seesionId,
-          sentBy: senderId,
+          sentBy: sentBy,
           message,
-          status: "SENT",
         })
         .returning();
+      newChat = chat[0];
 
       if (uploadedFiles && uploadedFiles.length > 0) {
-        console.warn("files ")
+        console.warn("files ");
         await Promise.all(
           uploadedFiles.map((file) =>
-            
             dx.insert(MentorshipChatFilesTable).values({
               chatId: chat[0].id,
               fileName: file.fileName,
@@ -428,13 +434,20 @@ export async function sendMentorMessages(values: {
               fileSize: file.fileSize,
               fileType: file.fileType,
               storageLocation: file.storageLocation,
-              uploadedById: senderId,
-              status: "DONE",
+              uploadedById: sentBy,
             })
           )
         );
       }
     });
+    const result = await db.query.MentorshipChatTable.findFirst({
+      where: eq(MentorshipChatTable.id, newChat?.id!),
+      with: {
+        chatOwner: true,
+        chatFiles: true,
+      },
+    });
+    return result;
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
