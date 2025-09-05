@@ -2,9 +2,9 @@
 
 import { useState } from "react";
 import { MonacoEditor } from "@/components/editors/MonocaEditor";
-
+type Files = { [key: string]: string };
 export default function Test() {
-  const [files, setFiles] = useState({
+  const [files, setFiles] = useState<Files>({
     "example.js": `// Welcome to Monaco Editor!
 console.log('Hello, World!');
 
