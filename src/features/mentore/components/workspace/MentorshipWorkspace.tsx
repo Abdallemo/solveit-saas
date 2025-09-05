@@ -1,6 +1,7 @@
 "use client";
 
 import type React from "react";
+import DocViewer from "react-doc-viewer";
 import { useState, useEffect, useRef, SVGProps } from "react";
 import type {
   MentorChatSession,
@@ -10,7 +11,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
   Video,
   Send,
@@ -22,8 +23,11 @@ import {
   Loader2,
 } from "lucide-react";
 import {
+  fileExtention,
   formatDateAndTime,
   getIconForFileExtension,
+  isDoc,
+  isImage,
   removeFileExtension,
   supportedExtentions,
   truncateText,
@@ -38,6 +42,19 @@ import { env } from "@/env/client";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import useWebSocket from "@/hooks/useWebSocket";
 import { MentorChatFileStatusType } from "@/drizzle/schemas";
+import {
+  FileChatCardComps,
+  FileIconComponent,
+} from "@/features/media/components/FileHelpers";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import Image from "next/image";
 
 type SocketMessage = {
   id: string;
@@ -73,6 +90,8 @@ export default function MentorshipWorkspace({
   const { user } = useCurrentUser();
   const router = useRouter();
   const path = usePathname();
+  const [open, setOpen] = useState(false);
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   useWebSocket<SocketMessage>(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
     {
@@ -101,18 +120,12 @@ export default function MentorshipWorkspace({
     onError: () => {
       toast.error("failed to send Message");
     },
-    onSuccess: (data) => {
-      if (data) {
-        setChats((prev) => [...(prev || []), data]);
-      }
-      router.refresh();
-    },
   });
   useEffect(() => {
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [session]);
+  }, [chats, session]);
 
   if (!session) {
     return (
@@ -212,7 +225,7 @@ export default function MentorshipWorkspace({
                   return (
                     <div
                       key={chat.id}
-                      ref={chats.length - 1 === index ? messageRef : null}
+                      ref={index === chats.length - 1 ? messageRef : null}
                       className={`flex gap-3 ${
                         isCurrentUser ? "flex-row-reverse" : "flex-row"
                       }`}>
@@ -225,6 +238,7 @@ export default function MentorshipWorkspace({
                           }>
                           <User className="h-4 w-4" />
                         </AvatarFallback>
+                        <AvatarImage src={chat.chatOwner.image!} />
                       </Avatar>
 
                       <div
@@ -268,31 +282,58 @@ export default function MentorshipWorkspace({
                         )}
 
                         {chat.chatFiles.map((file) => (
-                          <div
+                          <FileChatCardComps
+                            opt={
+                              <img
+                                src={file.storageLocation!}
+                                alt={file.fileName!}
+                                className="w-10 h-10"
+                              />
+                            }
                             key={file.id}
-                            className="flex items-center gap-2 px-3 py-2 rounded-lg border bg-card">
-                            <FileIconComponent
-                              extension={
-                                file.fileName
-                                  ?.split(".")
-                                  .at(-1) as supportedExtentions
-                              }
-                              className="h-4 w-4 text-primary flex-shrink-0"
-                            />
-                            <span className="text-sm font-medium truncate flex-1 min-w-0">
-                              {truncateText(
-                                removeFileExtension(file.fileName!),
-                                10
-                              )}
-                              .{file.fileName?.split(".").at(-1)}
-                            </span>
-                          </div>
+                            file={{
+                              fileName: file.fileName,
+                              filePath: file.filePath,
+                              fileSize: file.fileSize,
+                              fileType: file.fileType,
+                              storageLocation: file.storageLocation,
+                            }}
+                            action={() => {
+                              setFilePreview(file);
+                              setOpen((prev) => !prev);
+                            }}
+                          />
                         ))}
                       </div>
                     </div>
                   );
                 })}
+                <div ref={messageRef} />
+                <Dialog open={open} onOpenChange={setOpen}>
+                  <DialogContent className="flex flex-col justify-center items-center w-[700px]">
+                    <DialogHeader>
+                      <DialogTitle></DialogTitle>
+                      {/* DEMO */}
+                      {isImage(fileExtention(filePreview?.fileName!)) && (
+                        <Image
+                          alt={filePreview?.fileName!}
+                          src={filePreview?.storageLocation!}
+                          width={400}
+                          height={400}
+                        />
+                      )}
 
+                      {isDoc(fileExtention(filePreview?.fileName!)) && (
+                        <iframe
+                          src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+                            filePreview?.storageLocation!
+                          )}`}
+                          className="w-full h-[600px] rounded-lg shadow-md border"
+                        />
+                      )}
+                    </DialogHeader>
+                  </DialogContent>
+                </Dialog>
                 {uploadingFiles.map((file) => (
                   <div key={file.name} className="flex gap-3 flex-row-reverse">
                     <Avatar className="h-9 w-9 shadow-sm">
@@ -404,7 +445,7 @@ export default function MentorshipWorkspace({
         </div>
       </div>
 
-      <div className="w-80 border-l bg-muted/20 flex flex-col h-full">
+      <div className="w-80 border-l  flex flex-col h-full p-5 gap-2">
         <div className="border-b bg-card px-4 py-4">
           <div className="flex items-center gap-3">
             <FileText className="h-4 w-4 text-primary" />
@@ -417,23 +458,22 @@ export default function MentorshipWorkspace({
 
         <ScrollArea className="flex-1 h-0">
           {allFiles.length > 0 ? (
-            <div className="p-4 space-y-2">
+            <div className="flex flex-col w-fit h-100 gap-2 ">
               {allFiles.map((file) => (
-                <div
+                <FileChatCardComps
                   key={file.id}
-                  className="group flex items-center gap-3 p-3 rounded-xl border bg-card hover:bg-accent/50 hover:shadow-sm transition-all cursor-pointer">
-                  <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                    <FileText className="h-4 w-4 text-primary" />
-                  </div>
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <p className="text-sm font-medium truncate group-hover:text-primary transition-colors">
-                      {file.fileName || "Untitled"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {file.uploadedAt?.toLocaleDateString()}
-                    </p>
-                  </div>
-                </div>
+                  file={{
+                    fileName: file.fileName,
+                    filePath: file.filePath,
+                    fileSize: file.fileSize,
+                    fileType: file.fileType,
+                    storageLocation: file.storageLocation,
+                  }}
+                  action={() => {
+                    setFilePreview(file);
+                    setOpen((prev) => !prev);
+                  }}
+                />
               ))}
             </div>
           ) : (
@@ -453,17 +493,4 @@ export default function MentorshipWorkspace({
       </div>
     </main>
   );
-}
-
-export function FileIconComponent({
-  extension,
-  className,
-  ...props
-}: {
-  extension: supportedExtentions;
-  className?: string;
-} & SVGProps<SVGSVGElement>) {
-  const IconComponent = getIconForFileExtension(extension);
-
-  return <IconComponent className={className} {...props} />;
 }
