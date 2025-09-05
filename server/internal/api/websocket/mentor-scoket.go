@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"github/abdallemo/solveit-saas/internal/user"
 	"net/http"
 )
 
@@ -19,13 +20,14 @@ type ChatFile struct {
 }
 
 type Chat struct {
-	ID        string     `json:"id"`
-	SessionId string     `json:"seesionId"`
-	SentBy    string     `json:"sentBy"`
-	Message   string     `json:"message"`
-	CreatedAt string     `json:"createdAt"`
-	ReadAt    string     `json:"readAt"`
-	ChatFile  []ChatFile `json:"chatFiles"`
+	ID        string          `json:"id"`
+	SessionId string          `json:"seesionId"`
+	SentBy    string          `json:"sentBy"`
+	Message   string          `json:"message"`
+	CreatedAt string          `json:"createdAt"`
+	ReadAt    string          `json:"readAt"`
+	ChatFile  []ChatFile      `json:"chatFiles"`
+	ChatOwner user.PublicUser `json:"chatOwner"`
 }
 type WsMentorChat struct {
 	hub   *WsHub
@@ -66,6 +68,7 @@ func (s *WsMentorChat) HandleSendMentorChats(w http.ResponseWriter, r *http.Requ
 		CreatedAt: msg.CreatedAt,
 		ReadAt:    msg.ReadAt,
 		ChatFile:  msg.ChatFile,
+		ChatOwner: msg.ChatOwner,
 	}
 
 	s.sendToUser(msg.SessionId, chat)
