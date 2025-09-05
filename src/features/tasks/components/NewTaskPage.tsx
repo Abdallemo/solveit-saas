@@ -42,7 +42,7 @@ export default function TaskCreationPage({
   const [isDisabled, setIsDisabled] = useState(true);
   const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { uploadMutate, isUploading } = useFileUpload();
+  const { uploadMutate, isUploading } = useFileUpload({});
   const [ruleVailation, setRuleVailation] = useState(false);
   useAutoSave({
     autoSaveFn: autoSaveDraftTask,
