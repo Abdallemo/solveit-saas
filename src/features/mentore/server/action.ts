@@ -448,6 +448,12 @@ export async function sendMentorMessages(values: {
       where: eq(MentorshipChatTable.id, newChat.id),
       with: {
         chatFiles: true,
+        chatOwner: {
+          columns: {
+            password:false,
+            stripeCustomerId:false
+          },
+        },
       },
     });
     await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
