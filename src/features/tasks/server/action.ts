@@ -105,7 +105,6 @@ export async function calculateTaskProgress(solverId: string, taskId: string) {
   const timePassed = currentTime - startTime;
   const totalTime = deadline.getTime() - startTime;
 
-
   return Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
 }
 //the Magic Parts 🪄
@@ -929,10 +928,13 @@ export async function handleTaskDeadline(task: TaskReturnType) {
     try {
       const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
       if (alreadyBlocked) return;
-      sendNotification({method:["email","system"],body:`You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`})
+      sendNotification({
+        method: ["email", "system"],
+        body: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
+      });
       await db
         .update(TaskTable)
-        .set({ status: "OPEN", assignedAt: null ,solverId:null})
+        .set({ status: "OPEN", assignedAt: null, solverId: null })
         .where(
           and(
             eq(TaskTable.id, task.id),
@@ -1142,7 +1144,12 @@ export async function createTaskComment(values: {
     const result = await db.query.TaskCommentTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, id[0].id),
       with: {
-        owner: true,
+        owner: {
+          columns: {
+            password: false,
+            stripeCustomerId: false,
+          },
+        },
       },
     });
     if (result || result !== undefined) {
