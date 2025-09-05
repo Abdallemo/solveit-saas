@@ -301,7 +301,7 @@ export const TaskCommentTable = pgTable("task_comments", {
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
-export const WorkspaceTable = pgTable("workspaces", {
+export const WorkspaceTable = pgTable("solution_workspaces", {
   id: uuid("id").primaryKey().defaultRandom(),
   taskId: uuid("task_id")
     .notNull()
@@ -316,7 +316,7 @@ export const WorkspaceTable = pgTable("workspaces", {
   }).defaultNow(),
 });
 
-export const WorkspaceFilesTable = pgTable("workspace_files", {
+export const WorkspaceFilesTable = pgTable("solution_workspace_files", {
   id: uuid("id").primaryKey().defaultRandom(),
   workspaceId: uuid("workspace_id")
     .notNull()
@@ -411,7 +411,6 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
   sentBy: uuid("sent_by")
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
-  status: MentorChatStatus("status"),
   readAt: timestamp("read_at", { mode: "date" }),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
@@ -430,7 +429,6 @@ export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
   storageLocation: text("file_location").notNull(),
   filePath: text("file_path").notNull(),
   uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
-  status: MentorChatFileStatus("status"),
 });
 
 export const RulesTable = pgTable("ai_rules", {
