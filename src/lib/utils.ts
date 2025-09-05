@@ -1,7 +1,17 @@
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-
+import {
+  FileText,
+  FileCode,
+  FileImage,
+  FileArchive,
+  FileVideo,
+  FileAudio,
+  FileSpreadsheet,
+  FileJson,
+  FileType,
+} from "lucide-react";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
@@ -118,43 +128,24 @@ export function getValidEndTimes(startTime: string) {
   return timeOptions.filter((_, index) => index > startIndex);
 }
 
-import {
-  FileText,
-  FileCode,
-  FileImage,
-  FileArchive,
-  FileVideo,
-  FileAudio,
-  FileSpreadsheet,
-  FileJson,
-  FileType,
-} from "lucide-react";
+export type ImageType = "jpg" | "jpeg" | "png" | "gif" | "svg";
+export type VideoType = "mp4" | "mov";
+export type AudioType = "mp3" | "wav";
+export type ArchiveType = "zip" | "rar";
+export type DocType = "doc" | "docx" | "xls" | "xlsx" | "csv" | "pptx";
+export type CodeType = "js" | "jsx" | "ts" | "tsx" | "html" | "css" | "json";
 export type supportedExtentions =
-  | "pdf"
-  | "doc"
-  | "docx"
-  | "js"
-  | "jsx"
-  | "ts"
-  | "tsx"
-  | "html"
-  | "css"
-  | "json"
-  | "jpg"
-  | "jpeg"
-  | "png"
-  | "gif"
-  | "svg"
-  | "zip"
-  | "rar"
-  | "mp4"
-  | "mov"
-  | "mp3"
-  | "wav"
-  | "xls"
-  | "xlsx"
-  | "csv";
+  | ImageType
+  | AudioType
+  | VideoType
+  | ArchiveType
+  | DocType
+  | CodeType
+  | "pdf";
 
+export function fileExtention(fileName: string) {
+  return fileName?.split(".").at(-1) as supportedExtentions;
+}
 export const getIconForFileExtension = (extension: supportedExtentions) => {
   switch (extension) {
     case "pdf":
@@ -204,4 +195,23 @@ export function removeFileExtension(fileName: string) {
     return trimmedName;
   }
   return trimmedName.substring(0, lastDotIndex);
+}
+const imageExtensions: ImageType[] = ["jpg", "jpeg", "png", "gif", "svg"];
+const videoExtensions: VideoType[] = ["mp4", "mov"];
+const audioExtensions: AudioType[] = ["mp3", "wav"];
+const docExtensions: DocType[] = ["csv", "doc", "docx", "xls", "xlsx", "pptx"];
+
+export function isImage(ext: supportedExtentions): ext is ImageType {
+  return imageExtensions.includes(ext as ImageType);
+}
+
+export function isVideo(ext: supportedExtentions): ext is VideoType {
+  return videoExtensions.includes(ext as VideoType);
+}
+
+export function isAudio(ext: supportedExtentions): ext is AudioType {
+  return audioExtensions.includes(ext as AudioType);
+}
+export function isDoc(ext: supportedExtentions): ext is DocType {
+  return docExtensions.includes(ext as DocType);
 }
