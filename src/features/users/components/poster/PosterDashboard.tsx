@@ -13,29 +13,25 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart";
 
-import { PosterActivityOverview } from "./PosterActivityOverview";
+import { PosterActivityOverview, statsDataType } from "./PosterActivityOverview";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+// const chartData = [
+//   { date: "2024-08-01", postedTasks: 30, expenses: 120, mentorSessions: 1 },
+//   { date: "2024-08-02", postedTasks: 24, expenses: 80, mentorSessions: 0 },
+//   { date: "2024-08-03", postedTasks: 45, expenses: 200, mentorSessions: 2 },
+//   { date: "2024-08-04", postedTasks: 16, expenses: 60, mentorSessions: 1 },
+//   { date: "2024-08-05", postedTasks: 56, expenses: 150, mentorSessions: 3 },
+//   { date: "2024-08-06", postedTasks: 26, expenses: 100, mentorSessions: 1 },
+//   { date: "2024-08-07", postedTasks: 35, expenses: 90, mentorSessions: 2 },
+// ];
 
-export default function PosterDashboard() {
+export default function PosterDashboard({chartData}:{chartData:statsDataType[]}) {
   const path = usePathname();
-  const statsData = [
-    { name: "Mon", postedTasks: 2, expenses: 120, mentorSessions: 1 },
-    { name: "Tue", postedTasks: 3, expenses: 150, mentorSessions: 0 },
-    { name: "Wed", postedTasks: 1, expenses: 80, mentorSessions: 2 },
-    { name: "Thu", postedTasks: 4, expenses: 200, mentorSessions: 1 },
-    { name: "Fri", postedTasks: 3, expenses: 170, mentorSessions: 1 },
-  ];
 
-  const postedConfig = {
+  const posterChartConfigs = {
     postedTasks: { label: "Posted Tasks", color: "#3b82f6" },
-  } satisfies ChartConfig;
-
-  const expenseConfig = {
     expenses: { label: "Expenses (RM)", color: "#ef4444" },
-  } satisfies ChartConfig;
-
-  const sessionConfig = {
     mentorSessions: { label: "Mentor Sessions", color: "#10b981" },
   } satisfies ChartConfig;
 
@@ -85,15 +81,28 @@ export default function PosterDashboard() {
             <CheckCircle className="text-blue-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.postedTasks, 0)}
+            {chartData.reduce((sum, d) => sum + d.postedTasks, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Total tasks posted this week
           </p>
           <div className="w-full h-40">
-            <ChartContainer config={postedConfig} className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+            <ChartContainer
+              config={{ postedTasks: posterChartConfigs.postedTasks }}
+              className="w-full h-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  }}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
@@ -107,22 +116,34 @@ export default function PosterDashboard() {
           </div>
         </div>
 
-        {/* Expenses */}
         <div className="p-6 bg-background/20 rounded-2xl shadow-md">
           <div className="flex justify-between items-center mb-4">
             <h2 className="font-semibold text-lg">Expenses</h2>
             <Wallet className="text-red-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            RM{statsData.reduce((sum, d) => sum + d.expenses, 0)}
+            RM{chartData.reduce((sum, d) => sum + d.expenses, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Total spent this week
           </p>
           <div className="w-full h-40">
-            <ChartContainer config={expenseConfig} className="w-full h-full">
-              <LineChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+            <ChartContainer
+              config={{ expenses: posterChartConfigs.expenses }}
+              className="w-full h-full">
+              <LineChart accessibilityLayer data={chartData}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  }}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
@@ -143,15 +164,28 @@ export default function PosterDashboard() {
             <BookOpen className="text-green-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.mentorSessions, 0)}
+            {chartData.reduce((sum, d) => sum + d.mentorSessions, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Sessions booked this week
           </p>
           <div className="w-full h-40">
-            <ChartContainer config={sessionConfig} className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+            <ChartContainer
+              config={{ mentorSessions: posterChartConfigs.mentorSessions }}
+              className="w-full h-full">
+              <BarChart accessibilityLayer data={chartData}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(value) => {
+                    const date = new Date(value);
+                    return date.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    });
+                  }}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
@@ -167,7 +201,10 @@ export default function PosterDashboard() {
       </section>
 
       <section className="mb-12">
-        <PosterActivityOverview />
+        <PosterActivityOverview
+          chartConfig={posterChartConfigs}
+          chartData={chartData}
+        />
       </section>
     </div>
   );
