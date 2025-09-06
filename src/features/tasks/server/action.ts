@@ -3,6 +3,8 @@ import { workspaceFileType } from "./task-types";
 import db from "@/drizzle/db";
 import {
   BlockedTasksTable,
+  MentorshipBookingTable,
+  MentorshipSessionTable,
   PaymentPorposeEnumType,
   PaymentPorposeType,
   PaymentStatusType,
@@ -16,10 +18,15 @@ import {
   TaskFileTable,
   TaskTable,
   UserRoleType,
+  UserSubscriptionTable,
+  UserTable,
   WorkspaceFilesTable,
   WorkspaceTable,
 } from "@/drizzle/schemas";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  getServerUserSession,
+  isAuthorized,
+} from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -35,12 +42,16 @@ import {
   and,
   asc,
   count,
+  countDistinct,
   eq,
+  gte,
   ilike,
   inArray,
   isNull,
   not,
   or,
+  sql,
+  sum,
 } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -61,6 +72,8 @@ import { logger } from "@/lib/logging/winston";
 import { env } from "@/env/server";
 import { GoHeaders } from "@/lib/go-config";
 import { validateContentWithAi } from "@/features/Ai/server/action";
+import { unionAll } from "drizzle-orm/pg-core";
+
 export type {
   catagoryType,
   userTasksType,
@@ -1170,4 +1183,221 @@ export async function createTaskComment(values: {
       stack: (error as Error)?.stack,
     });
   }
+}
+
+export async function getPosterStats(range: string = "7 days") {
+  const { user } = await isAuthorized(["POSTER"]);
+  if (!user?.id) return [];
+  const taskStats = db
+    .select({
+      date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      postedTasks: count(TaskTable.id).as("postedTasks"),
+      mentorSessions: sql<number>`0`.as("mentorSessions"),
+      expenses: sum(TaskTable.price).as("expenses"),
+    })
+    .from(TaskTable)
+    .where(
+      and(
+        eq(TaskTable.posterId, user.id),
+        sql`${TaskTable.createdAt} > current_date - interval '7 days'`
+      )
+    )
+    .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const mentorStats = db
+    .select({
+      date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      postedTasks: sql<number>`0`.as("postedTasks"),
+      mentorSessions: count(MentorshipBookingTable.id).as("mentorSessions"),
+      expenses: sum(MentorshipBookingTable.price).as("expenses"),
+    })
+    .from(MentorshipBookingTable)
+    .where(
+      and(
+        eq(MentorshipBookingTable.posterId, user.id),
+        sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
+      )
+    )
+    .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const merged = unionAll(taskStats, mentorStats).as("merged");
+
+  const result = await db
+    .select({
+      date: merged.date,
+      postedTasks: sum(merged.postedTasks),
+      mentorSessions: sum(merged.mentorSessions),
+      expenses: sum(merged.expenses),
+    })
+    .from(merged)
+    .groupBy(merged.date)
+    .orderBy(merged.date);
+
+  return result.map((res) => {
+    return {
+      ...res,
+      expenses: Number(res.expenses),
+      mentorSessions: Number(res.mentorSessions),
+      postedTasks: Number(res.postedTasks),
+    };
+  });
+}
+
+export async function getSolverStats(range: string = "30 days") {
+  const { user } = await isAuthorized(["SOLVER"]);
+  if (!user?.id) return [];
+
+  const taskStats = db
+    .select({
+      date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      allTasks: count(TaskTable.id).as("allTasks"),
+      solvedTasks: sql<number>`sum(
+        case when ${TaskTable.status} = 'COMPLETED' then 1 else 0 end
+      )`.as("solvedTasks"),
+      inProgressTasks: sql<number>`sum(
+        case when ${TaskTable.status} = 'IN_PROGRESS' then 1 else 0 end
+      )`.as("inProgressTasks"),
+      mentorSessions: sql<number>`0`.as("mentorSessions"),
+      earnings: sum(TaskTable.price).as("earnings"),
+    })
+    .from(TaskTable)
+    .where(
+      and(
+        eq(TaskTable.solverId, user.id),
+        sql`${TaskTable.createdAt} > current_date - interval '30 days'`
+      )
+    )
+    .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const mentorStats = db
+    .select({
+      date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      allTasks: sql<number>`0`.as("allTasks"),
+      solvedTasks: sql<number>`0`.as("solvedTasks"),
+      inProgressTasks: sql<number>`0`.as("inProgressTasks"),
+      mentorSessions: count(MentorshipSessionTable.id).as("mentorSessions"),
+      earnings: sum(MentorshipBookingTable.price).as("earnings"),
+    })
+    .from(MentorshipBookingTable)
+    .leftJoin(
+      MentorshipSessionTable,
+      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
+    )
+    .where(
+      and(
+        eq(MentorshipBookingTable.solverId, user.id),
+        sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
+      )
+    )
+    .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const merged = unionAll(taskStats, mentorStats).as("merged");
+
+  const result = await db
+    .select({
+      date: merged.date,
+      allTasks: sum(merged.allTasks).as("allTasks"),
+      solvedTasks: sum(merged.solvedTasks).as("solvedTasks"),
+      inProgressTasks: sum(merged.inProgressTasks).as("inProgressTasks"),
+      mentorSessions: sum(merged.mentorSessions).as("mentorSessions"),
+      earnings: sum(merged.earnings).as("earnings"),
+    })
+    .from(merged)
+    .groupBy(merged.date)
+    .orderBy(merged.date);
+
+  return result.map((res) => ({
+    ...res,
+    earnings: Number(res.earnings) || 0,
+    mentorSessions: Number(res.mentorSessions) || 0,
+    allTasks: Number(res.allTasks) || 0,
+    solvedTasks: Number(res.solvedTasks) || 0,
+    inProgressTasks: Number(res.inProgressTasks) || 0,
+  }));
+}
+
+export async function getAdminStats(range: string = "30 days") {
+  const { user } = await isAuthorized(["ADMIN"]);
+  if (!user?.id) return [];
+
+  const users = db
+    .select({
+      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      users: count(UserTable.id).mapWith(Number).as("users"),
+      newUsers:
+        sql<number>`sum(case when ${UserTable.createdAt} > current_date - interval '7 days' then 1 else 0 end)`.as(
+          "newUsers"
+        ),
+      revenue: sql<number>`0`.as("revenue"),
+      subscriptions: sql<number>`0`.as("subscriptions"),
+    })
+    .from(UserTable)
+    .where(sql`${UserTable.createdAt} > current_date - interval '30 days'`)
+    .groupBy(sql`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const revenue = db
+    .select({
+      date: sql<string>`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      users: sql<number>`0`.as("users"),
+      newUsers: sql<number>`0`.as("newUsers"),
+      revenue: sum(PaymentTable.amount).mapWith(Number).as("revenue"),
+      subscriptions: sql<number>`0`.as("subscriptions"),
+    })
+    .from(PaymentTable)
+    .where(sql`${PaymentTable.createdAt} > current_date - interval '30 days'`)
+    .groupBy(sql`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const subs = db
+    .select({
+      date: sql<string>`to_char(${UserSubscriptionTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      users: sql<number>`0`.as("users"),
+      newUsers: sql<number>`0`.as("newUsers"),
+      revenue: sql<number>`0`.as("revenue"),
+      subscriptions: countDistinct(
+        UserSubscriptionTable.stripeSubscriptionItemId
+      )
+        .mapWith(Number)
+        .as("subscriptions"),
+    })
+    .from(UserSubscriptionTable)
+    .where(
+      sql`${UserSubscriptionTable.createdAt} > current_date - interval '30 days'`
+    )
+    .groupBy(sql`to_char(${UserSubscriptionTable.createdAt}, 'YYYY-MM-DD')`);
+
+  const merged = unionAll(users, revenue, subs).as("merged");
+
+  const result = await db
+    .select({
+      date: merged.date,
+      users: sum(merged.users).as("users"),
+      newUsers: sum(merged.newUsers).as("newUsers"),
+      revenue: sum(merged.revenue).as("revenue"),
+      subscriptions: sum(merged.subscriptions).as("subscriptions"),
+    })
+    .from(merged)
+    .groupBy(merged.date)
+    .orderBy(merged.date);
+
+  return result.map((res) => ({
+    date: res.date,
+    users: Number(res.users) || 0,
+    newUsers: Number(res.newUsers) || 0,
+    revenue: Number(res.revenue) || 0,
+    subscriptions: Number(res.subscriptions) || 0,
+  }));
 }
