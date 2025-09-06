@@ -1,7 +1,5 @@
-export default async function page() {
-  
-  return (
-    <div>Moderator Dashbaord </div>
-  )
-}
+import ModeratorDashboard from "@/features/users/components/mod/ModeratorDashboard";
 
+export default async function page() {
+  return <ModeratorDashboard />;
+}
