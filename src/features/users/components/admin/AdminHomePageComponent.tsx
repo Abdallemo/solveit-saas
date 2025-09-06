@@ -40,18 +40,49 @@ import {
   AreaChart,
 } from "recharts";
 import Link from "next/link";
-import { AdminActivityOverview } from "./AdminActivityOverview";
+import { AdminActivityOverview, statsDataType } from "./AdminActivityOverview";
 import { LogsTyep } from "@/lib/logging/action";
 const statsData = [
-  { date: "2024-08-01", users: 12, revenue: 1200, subscriptions: 1 },
-  { date: "2024-08-02", users: 15, revenue: 1500, subscriptions: 5 },
-  { date: "2024-08-03", users: 9, revenue: 1000, subscriptions: 2 },
-  { date: "2024-08-04", users: 20, revenue: 2000, subscriptions: 0 },
-  { date: "2024-08-06", users: 18, revenue: 1700, subscriptions: 8 },
+  {
+    date: "2024-08-01",
+    users: 12,
+    revenue: 1200,
+    subscriptions: 1,
+    newUsers: 1,
+  },
+  {
+    date: "2024-08-02",
+    users: 15,
+    revenue: 1500,
+    subscriptions: 5,
+    newUsers: 1,
+  },
+  {
+    date: "2024-08-03",
+    users: 9,
+    revenue: 1000,
+    subscriptions: 2,
+    newUsers: 1,
+  },
+  {
+    date: "2024-08-04",
+    users: 20,
+    revenue: 2000,
+    subscriptions: 0,
+    newUsers: 1,
+  },
+  {
+    date: "2024-08-06",
+    users: 18,
+    revenue: 1700,
+    subscriptions: 8,
+    newUsers: 1,
+  },
 ];
 
 const usersConfig = {
-  users: { label: "New Users", color: "#3b82f6" },
+  users: { label: "All Users", color: "#3b82f6" },
+  newUsers: { label: "New Users", color: "#10b981" },
   subscriptions: { label: "Subcriptions", color: "#10b981" },
   revenue: { label: "Revenue (RM)", color: "#f59e0b" },
 } satisfies ChartConfig;
@@ -88,8 +119,10 @@ const quickActions = [
 
 export default function AdminDashboard({
   serverLogs,
+  statsData
 }: {
   serverLogs: LogsTyep;
+  statsData: statsDataType[];
 }) {
   return (
     <div className="w-full h-full px-5">
@@ -131,11 +164,15 @@ export default function AdminDashboard({
             {statsData.reduce((sum, d) => sum + d.users, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            New users this week
+            All Users: {statsData.reduce((sum, d) => sum + d.users, 0)} • New
+            Users This Weak: {statsData.reduce((sum, d) => sum + d.newUsers, 0)}
           </p>
           <div className="w-full h-40">
             <ChartContainer
-              config={{ users: usersConfig.users }}
+              config={{
+                users: usersConfig.users,
+                newUsers: usersConfig.newUsers,
+              }}
               className="w-full h-full">
               <BarChart accessibilityLayer data={statsData}>
                 <XAxis
@@ -154,6 +191,11 @@ export default function AdminDashboard({
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Bar dataKey="users" fill="var(--color-users)" radius={4} />
+                <Bar
+                  dataKey="newUsers"
+                  fill="var(--color-newUsers)"
+                  radius={4}
+                />
               </BarChart>
             </ChartContainer>
           </div>
@@ -209,7 +251,7 @@ export default function AdminDashboard({
             RM{statsData.reduce((sum, d) => sum + d.revenue, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Revenue earned this week
+            Revenue earned this month
           </p>
           <div className="w-full h-40">
             <ChartContainer
@@ -242,7 +284,7 @@ export default function AdminDashboard({
           </div>
         </div>
       </section>
-      <Tabs defaultValue="activity" >
+      <Tabs defaultValue="activity">
         <TabsList className="w-full">
           <TabsTrigger value="activity">Activity Overview</TabsTrigger>
           <TabsTrigger value="logs">Realtime Logs</TabsTrigger>
