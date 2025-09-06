@@ -140,6 +140,7 @@ export const UserSubscriptionTable = pgTable("subscription", {
   stripeSubscriptionItemId: text("stripe_subscription_item_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   tier: TierEnum("tier").notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 
 export const SolverProfileTable = pgTable("solver_profile", {
