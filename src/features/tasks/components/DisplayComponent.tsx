@@ -188,7 +188,10 @@ export default function DisplayListComponent({
       <>
         {"blockedSolvers" in task ? (
           <Button variant="outline" asChild className="w-1/3">
-            <Link href={`/dashboard/tasks/${task.id}`}>
+            <Link
+              href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
+                task.id
+              }`}>
               <SquareArrowUpRight />
             </Link>
           </Button>
@@ -196,7 +199,9 @@ export default function DisplayListComponent({
           (task.status === "SUBMITTED" || task.status === "COMPLETED") && (
             <Button variant="outline" size="sm" asChild>
               <Link
-                href={`/dashboard/tasks/${task.id}/solutions/${task.taskSolution.id}`}>
+                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
+                  task.id
+                }/solutions/${task.taskSolution.id}`}>
                 <SquareArrowUpRight className="w-4 h-4 mr-1" />
                 View Solution
               </Link>
@@ -219,7 +224,7 @@ export default function DisplayListComponent({
           </Button>
         ) : (
           <Button size="sm" asChild>
-            <Link href={`/dashboard/tasks/${task.id}`}>View Details</Link>
+            <Link href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${task.id}`}>View Details</Link>
           </Button>
         )}
       </>
@@ -249,9 +254,9 @@ export default function DisplayListComponent({
                 <div className="flex items-center gap-1">
                   <Avatar className="size-4">
                     <AvatarFallback>
-                      <User/>
+                      <User />
                     </AvatarFallback>
-                    <AvatarImage src={task.poster.image!}/>
+                    <AvatarImage src={task.poster.image!} />
                   </Avatar>
                   {task.poster.name?.split(" ")[0]}
                 </div>
@@ -358,7 +363,9 @@ export default function DisplayListComponent({
                 <th className="text-left p-4 font-medium text-foreground">
                   Status
                 </th>
-                <th className="text-left p-4 font-medium text-foreground">Due</th>
+                <th className="text-left p-4 font-medium text-foreground">
+                  Due
+                </th>
                 <th className="text-left p-4 font-medium text-foreground">
                   Price
                 </th>
@@ -401,10 +408,7 @@ export default function DisplayListComponent({
                   <td className="p-4 text-sm text-muted-foreground">
                     {task.deadline || "No deadline"}
                   </td>
-                  <td
-                    className={"text-sm"}>
-                    RM{task.price?.toFixed(2)}
-                  </td>
+                  <td className={"text-sm"}>RM{task.price?.toFixed(2)}</td>
                   <td className="p-4">
                     <div className="flex gap-1">{actionButtoneCheck(task)}</div>
                   </td>
