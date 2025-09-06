@@ -13,7 +13,6 @@ import Link from "next/link";
 import { ChevronRight } from "lucide-react";
 
 function formatBreadcrumbText(text: string) {
-
   if (/^[0-9a-fA-F-]{10,}$/.test(text)) {
     return `${text.slice(0, 6)}…${text.slice(-4)}`;
   }
@@ -29,6 +28,7 @@ export default function BridCarmComponent() {
 
   const paths = pathName.split("/").filter(Boolean);
 
+  // special case: just /dashboard
   if (paths.length === 1 && paths[0] === "dashboard") {
     return (
       <Breadcrumb>
@@ -52,11 +52,14 @@ export default function BridCarmComponent() {
     <Breadcrumb>
       <BreadcrumbList className="flex items-center gap-2 text-sm">
         {paths.map((pathSegment, index) => {
-          if (pathSegment === role) return null;
-
           currentPath += `/${pathSegment}`;
           const isLast = index === paths.length - 1;
           const isDisabled = pathSegment === "solutions";
+
+          // ✅ Skip rendering the role, but still keep it in currentPath
+          if (pathSegment === role) {
+            return null;
+          }
 
           return (
             <Fragment key={pathSegment}>
@@ -80,7 +83,7 @@ export default function BridCarmComponent() {
                       href={
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
-                          : `${currentPath}`
+                          : currentPath
                       }
                     >
                       {pathSegment === "dashboard"
@@ -91,9 +94,7 @@ export default function BridCarmComponent() {
                 </BreadcrumbLink>
               </BreadcrumbItem>
 
-              {!isLast && (
-                <ChevronRight className="w-4 h-4 text-gray-400" />
-              )}
+              {!isLast && <ChevronRight className="w-4 h-4 text-gray-400" />}
             </Fragment>
           );
         })}
