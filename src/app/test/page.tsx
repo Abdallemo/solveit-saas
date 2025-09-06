@@ -1,90 +1,78 @@
 "use client";
 
-import { useState } from "react";
-import { MonacoEditor } from "@/components/editors/MonocaEditor";
-type Files = { [key: string]: string };
-export default function Test() {
-  const [files, setFiles] = useState<Files>({
-    "example.js": `// Welcome to Monaco Editor!
-console.log('Hello, World!');
+import { Bar, BarChart, CartesianGrid, XAxis } from "recharts";
 
-function greet(name) {
-  return \`Hello, \${name}!\`;
-}
+import {
+  ChartConfig,
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
+} from "@/components/ui/chart";
 
-// Try editing this file or add new ones!
-greet('Developer');`,
-    "styles.css": `/* Add your styles here */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
-}
+const chartData = [
+  { month: "January", desktop: 186, mobile: 80 },
+  { month: "February", desktop: 305, mobile: 200 },
+  { month: "March", desktop: 237, mobile: 120 },
+  { month: "April", desktop: 73, mobile: 190 },
+  { month: "May", desktop: 209, mobile: 130 },
+  { month: "June", desktop: 214, mobile: 140 },
+];
 
-.button {
-  background: #007acc;
-  color: white;
-  border: none;
-  padding: 10px 20px;
-  border-radius: 4px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
+const chartConfig = {
+  desktop: {
+    label: "Desktop",
+    color: "#2563eb",
+  },
+  mobile: {
+    label: "Mobile",
+    color: "#60a5fa",
+  },
+} satisfies ChartConfig;
 
-.button:hover {
-  background: #005a9e;
-}`,
-    "README.md": `# Monaco Editor Demo
-
-This is a consolidated Monaco Editor component that includes:
-
-- File sidebar with add/delete functionality
-- Syntax highlighting for multiple languages
-- Clean, modern UI with proper theming
-- Easy to integrate and extend
-
-## Features
-
-- **Modular Design**: Single component with all functionality
-- **File Management**: Add, delete, and switch between files
-- **Syntax Support**: JavaScript, TypeScript, CSS, HTML, JSON, and more
-- **Callbacks**: onChange, onSave, onFileAdd, onFileDelete
-- **Customizable**: Theme, height, and styling options
-`,
-  });
-
-  const handleFilesChange = (filename: string, content: string) => {
-    setFiles((prev) => ({ ...prev, [filename]: content }));
-  };
-
-  const handleSave = (filename: string, content: string) => {
-    console.log(`Saving ${filename}:`, content);
-  };
-
-  const handleFileAdd = (filename: string) => {
-    setFiles((prev) => ({ ...prev, [filename]: "" }));
-    console.log(`Added new file: ${filename}`);
-  };
-
-  const handleFileDelete = (filename: string) => {
-    setFiles((prev) => {
-      const newFiles = { ...prev };
-      delete newFiles[filename];
-      return newFiles;
-    });
-    console.log(`Deleted file: ${filename}`);
-  };
-
+export default function Component() {
   return (
-    <MonacoEditor
-      files={files}
-      onChange={handleFilesChange}
-      onSave={handleSave}
-      onFileAdd={handleFileAdd}
-      onFileDelete={handleFileDelete}
-      height="800px"
-      theme="vs-dark"
-      className="shadow-lg"
-    />
+    <main className="w-screen h-screen flex flex-col items-center justify-center ">
+      <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <div className="w-full h-full">
+          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <BarChart accessibilityLayer data={chartData}>
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value) => value.slice(0, 3)}
+              />
+              <CartesianGrid vertical={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+              <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        </div>
+
+        <div className="w-full h-full">
+          <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <BarChart accessibilityLayer data={chartData}>
+              <XAxis
+                dataKey="month"
+                tickLine={false}
+                tickMargin={10}
+                axisLine={false}
+                tickFormatter={(value) => value.slice(0, 3)}
+              />
+              <CartesianGrid vertical={false} />
+              <ChartTooltip content={<ChartTooltipContent />} />
+              <ChartLegend content={<ChartLegendContent />} />
+              <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+              <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+            </BarChart>
+          </ChartContainer>
+        </div>
+      </div>
+    </main>
   );
 }
