@@ -55,8 +55,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import Image from "next/image";
-import Test from "@/app/test/page";
+import { MonacoEditor } from "@/components/editors/MonocaEditor";
 
+type Files = { [key: string]: string };
 export default function MentorshipWorkspace({
   mentorWorkspace: session,
 }: {
@@ -73,6 +74,28 @@ export default function MentorshipWorkspace({
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
+  const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
+  const handleFilesChange = (filename: string, content: string) => {
+    setFiles((prev) => ({ ...prev, [filename]: content }));
+  };
+
+  const handleSave = (filename: string, content: string) => {
+    console.log(`Saving ${filename}:`, content);
+  };
+
+  const handleFileAdd = (filename: string) => {
+    setFiles((prev) => ({ ...prev, [filename]: "" }));
+    console.log(`Added new file: ${filename}`);
+  };
+
+  const handleFileDelete = (filename: string) => {
+    setFiles((prev) => {
+      const newFiles = { ...prev };
+      delete newFiles[filename];
+      return newFiles;
+    });
+    console.log(`Deleted file: ${filename}`);
+  };
   useWebSocket<MentorChatSession>(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
     {
@@ -102,7 +125,7 @@ export default function MentorshipWorkspace({
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chats, session,uploadingFiles]);
+  }, [chats, session, uploadingFiles]);
   if (!session) {
     return (
       <main className="w-full h-full flex items-center justify-center bg-background">
@@ -145,7 +168,6 @@ export default function MentorshipWorkspace({
           sentBy: user?.id!,
           uploadedFiles: uploadedMeta,
         });
-       
       }
     } catch (err) {
       toast.error("Failed to send message");
@@ -301,7 +323,16 @@ export default function MentorshipWorkspace({
                       )}
                       {isCode(fileExtention(filePreview?.fileName!)) && (
                         <div className="w-full h-full">
-                          <Test />
+                          <MonacoEditor
+                            files={files}
+                            onChange={handleFilesChange}
+                            onSave={handleSave}
+                            onFileAdd={handleFileAdd}
+                            onFileDelete={handleFileDelete}
+                            height="800px"
+                            theme="vs-dark"
+                            className="shadow-lg"
+                          />
                         </div>
                       )}
                       {isDoc(fileExtention(filePreview?.fileName!)) && (
