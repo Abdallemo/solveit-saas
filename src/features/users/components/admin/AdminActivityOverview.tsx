@@ -26,10 +26,11 @@ import {
 } from "@/components/ui/select";
 import { useState } from "react";
 
-type statsDataType = {
+export type statsDataType = {
   date: string;
   users: number;
   revenue: number;
+   newUsers: number;
   subscriptions: number;
 };
 export function AdminActivityOverview({
