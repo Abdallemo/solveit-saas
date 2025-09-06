@@ -26,35 +26,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-const chartData = [
-  { date: "2024-08-01", posted: 3, expenses: 120, sessions: 1 },
-  { date: "2024-08-02", posted: 2, expenses: 80, sessions: 0 },
-  { date: "2024-08-03", posted: 4, expenses: 200, sessions: 2 },
-  { date: "2024-08-04", posted: 1, expenses: 60, sessions: 1 },
-  { date: "2024-08-05", posted: 5, expenses: 150, sessions: 3 },
-  { date: "2024-08-06", posted: 2, expenses: 100, sessions: 1 },
-  { date: "2024-08-07", posted: 3, expenses: 90, sessions: 2 },
-];
+export type statsDataType = {
+  date: string;
+  postedTasks: number;
+  expenses: number;
+  mentorSessions: number;
+};
 
-const chartConfig = {
-  posted: {
-    label: "Posted Tasks",
-    color: "var(--chart-1)",
-  },
-  expenses: {
-    label: "Expenses",
-    color: "var(--chart-2)",
-  },
-  sessions: {
-    label: "Mentor Sessions",
-    color: "var(--chart-3)",
-  },
-} satisfies ChartConfig;
-
-export function PosterActivityOverview() {
+export function PosterActivityOverview({chartConfig,chartData}:{chartData:statsDataType[],chartConfig:ChartConfig}) {
   const [timeRange, setTimeRange] = React.useState("7d");
 
-  const filteredData = chartData;
 
   return (
     <Card className="pt-0">
@@ -62,14 +43,13 @@ export function PosterActivityOverview() {
         <div className="grid flex-1 gap-1">
           <CardTitle>Activity Overview</CardTitle>
           <CardDescription>
-            Overview of posts, expenses & mentorship sessions
+            Overview of posts, expenses & mentorship mentorSessions
           </CardDescription>
         </div>
         <Select value={timeRange} onValueChange={setTimeRange}>
           <SelectTrigger
             className="hidden w-[160px] rounded-lg sm:ml-auto sm:flex"
-            aria-label="Select a value"
-          >
+            aria-label="Select a value">
             <SelectValue placeholder="Last 7 days" />
           </SelectTrigger>
           <SelectContent className="rounded-xl">
@@ -89,19 +69,18 @@ export function PosterActivityOverview() {
       <CardContent className="px-2 pt-4 sm:px-6 sm:pt-6">
         <ChartContainer
           config={chartConfig}
-          className="aspect-auto h-[250px] w-full"
-        >
-          <AreaChart data={filteredData}>
+          className="aspect-auto h-[250px] w-full">
+          <AreaChart data={chartData}>
             <defs>
               <linearGradient id="fillPosted" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-posted)"
+                  stopColor="var(--color-postedTasks)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-posted)"
+                  stopColor="var(--color-postedTasks)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -120,12 +99,12 @@ export function PosterActivityOverview() {
               <linearGradient id="fillSessions" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-sessions)"
+                  stopColor="var(--color-mentorSessions)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-sessions)"
+                  stopColor="var(--color-mentorSessions)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -160,10 +139,10 @@ export function PosterActivityOverview() {
               }
             />
             <Area
-              dataKey="posted"
+              dataKey="postedTasks"
               type="natural"
               fill="url(#fillPosted)"
-              stroke="var(--color-posted)"
+              stroke="var(--color-postedTasks)"
               stackId="a"
             />
             <Area
@@ -174,10 +153,10 @@ export function PosterActivityOverview() {
               stackId="a"
             />
             <Area
-              dataKey="sessions"
+              dataKey="mentorSessions"
               type="natural"
               fill="url(#fillSessions)"
-              stroke="var(--color-sessions)"
+              stroke="var(--color-mentorSessions)"
               stackId="a"
             />
             <ChartLegend content={<ChartLegendContent />} />
