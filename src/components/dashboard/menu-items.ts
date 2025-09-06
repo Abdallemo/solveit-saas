@@ -239,7 +239,7 @@ export const MenuItemsPoster:MenuItem[] = [
       {
         type: "link",
         title: "Browse Public Tasks",
-        url: "/dashboard/tasks",
+        url: "/dashboard/poster/tasks",
         icon: SquareDashedMousePointerIcon,
       },
       {
@@ -312,7 +312,7 @@ export const MenuItemsSolver:MenuItem[] = [
       {
         type: "link",
         title: "Browse Available Tasks",
-        url: "/dashboard/tasks",
+        url: "/dashboard/solver/tasks",
         icon: PackageOpen,
       },
       {
