@@ -18,32 +18,29 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
-export default function SolverDashboardLanding() {
-  const statsData = [
-    { name: "Mon", tasks: 2, earnings: 50 },
-    { name: "Tue", tasks: 3, earnings: 80 },
-    { name: "Wed", tasks: 2, earnings: 100 },
-    { name: "Thu", tasks: 4, earnings: 104 },
-    { name: "Fri", tasks: 3, earnings: 120 },
-  ];
+type SolverStats = {
+  earnings: number;
+  mentorSessions: number;
+  allTasks: number;
+  solvedTasks: number;
+  inProgressTasks: number;
+  date: string;
+};
 
-  const mentorData = [
-    { name: "Mon", mentorship: 1 },
-    { name: "Tue", mentorship: 2 },
-    { name: "Wed", mentorship: 2 },
-    { name: "Thu", mentorship: 3 },
-    { name: "Fri", mentorship: 3 },
-  ];
-
-  const upcomingTasks = [
-    { id: 1, title: "Website Redesign Review", due: "2 days" },
-    { id: 2, title: "API Integration Testing", due: "4 days" },
-    { id: 3, title: "Mentorship Session Prep", due: "5 days" },
-  ];
+export default function SolverDashboardLanding({
+  stats,
+}: {
+  stats: SolverStats[];
+}) {
+  const path = usePathname();
 
   const tasksConfig = {
-    tasks: { label: "Tasks", color: "#3b82f6" },
+    allTasks: { label: "All Tasks", color: "#3b82f6" },
+    solvedTasks: { label: "Solved", color: "#10b981" },
+    inProgressTasks: { label: "In Progress", color: "#f59e0b" },
   } satisfies ChartConfig;
 
   const earningsConfig = {
@@ -51,22 +48,58 @@ export default function SolverDashboardLanding() {
   } satisfies ChartConfig;
 
   const mentorshipConfig = {
-    mentorship: { label: "Mentorship", color: "#8b5cf6" },
+    mentorSessions: { label: "Mentorship", color: "#8b5cf6" },
   } satisfies ChartConfig;
 
+  const upcomingTasks = [
+    { id: 1, title: "Website Redesign Review", due: "2 days" },
+    { id: 2, title: "API Integration Testing", due: "4 days" },
+    { id: 3, title: "Mentorship Session Prep", due: "5 days" },
+  ];
+
+  const quickActions = [
+    { name: "Browse Tasks", href: `${path}/tasks` },
+    { name: "Assigned Tasks", href: `${path}/assigned` },
+    { name: "Mentorship Sessions", href: `${path}/mentorship` },
+    { name: "Earnings History", href: `${path}/earnings` },
+  ];
+
+  const tickFormatter = (value: string) =>
+    new Date(value).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+    });
+
   return (
-    <div className="w-full h-full p-8">
-      {/* Header */}
-      <header className="flex justify-between items-center mb-12">
+    <div className="w-full h-full px-5">
+      <header className="flex justify-between items-center mb-9 pt-4">
         <div>
           <h1 className="text-4xl font-bold">Solver Dashboard</h1>
           <p className="text-muted-foreground mt-1">
             Monitor your tasks, earnings, and mentorship activity at a glance.
           </p>
         </div>
-        <Badge className="bg-blue-50 text-blue-700 border-blue-200 px-4 py-2 rounded-full">
-          Solver++
-        </Badge>
+        <div className="flex gap-2">
+          <div className="flex flex-col">
+            <div className="flex flex-wrap gap-4">
+              {quickActions.map((action, idx) => (
+                <Button
+                  asChild
+                  key={idx}
+                  variant="outline"
+                  className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl"
+                >
+                  <Link href={action.href}>
+                    {action.name} <ArrowRight className="w-4 h-4" />
+                  </Link>
+                </Button>
+              ))}
+            </div>
+          </div>
+          <Badge className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
+            Solver++
+          </Badge>
+        </div>
       </header>
 
       <section className="grid md:grid-cols-3 gap-8 mb-12">
@@ -76,19 +109,35 @@ export default function SolverDashboardLanding() {
             <CheckCircle className="text-blue-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.tasks, 0)}
+            {stats.reduce((sum, d) => sum + d.allTasks, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            In Progress: 3 • Pending Review: 1
+            Solved: {stats.reduce((s, d) => s + d.solvedTasks, 0)} • In Progress:{" "}
+            {stats.reduce((s, d) => s + d.inProgressTasks, 0)}
           </p>
           <div className="w-full h-40">
             <ChartContainer config={tasksConfig} className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+              <BarChart accessibilityLayer data={stats}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={tickFormatter}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="tasks" fill="var(--color-tasks)" radius={4} />
+                <Bar dataKey="allTasks" fill="var(--color-allTasks)" radius={4} />
+                <Bar
+                  dataKey="solvedTasks"
+                  fill="var(--color-solvedTasks)"
+                  radius={4}
+                />
+                <Bar
+                  dataKey="inProgressTasks"
+                  fill="var(--color-inProgressTasks)"
+                  radius={4}
+                />
               </BarChart>
             </ChartContainer>
           </div>
@@ -100,15 +149,20 @@ export default function SolverDashboardLanding() {
             <DollarSign className="text-green-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            RM{statsData.reduce((sum, d) => sum + d.earnings, 0)}
+            RM{stats.reduce((sum, d) => sum + d.earnings, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
             Target: RM200 • Last Month: RM104
           </p>
           <div className="w-full h-40">
             <ChartContainer config={earningsConfig} className="w-full h-full">
-              <LineChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+              <LineChart accessibilityLayer data={stats}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={tickFormatter}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
@@ -130,22 +184,27 @@ export default function SolverDashboardLanding() {
             <Users className="text-purple-500 w-6 h-6" />
           </div>
           <div className="text-3xl font-bold mb-2">
-            {mentorData.reduce((sum, d) => sum + d.mentorship, 0)}
+            {stats.reduce((sum, d) => sum + d.mentorSessions, 0)}
           </div>
           <p className="text-sm text-muted-foreground mb-4">
-            Sessions this week
+            Sessions this period
           </p>
           <div className="w-full h-40">
             <ChartContainer config={mentorshipConfig} className="w-full h-full">
-              <LineChart accessibilityLayer data={mentorData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
+              <LineChart accessibilityLayer data={stats}>
+                <XAxis
+                  dataKey="date"
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={tickFormatter}
+                />
                 <CartesianGrid vertical={false} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <ChartLegend content={<ChartLegendContent />} />
                 <Line
                   type="monotone"
-                  dataKey="mentorship"
-                  stroke="var(--color-mentorship)"
+                  dataKey="mentorSessions"
+                  stroke="var(--color-mentorSessions)"
                   strokeWidth={3}
                   dot={false}
                 />
@@ -165,31 +224,12 @@ export default function SolverDashboardLanding() {
               key={task.id}
               className="p-4 bg-background/20 rounded-xl shadow-md flex justify-between items-center"
             >
-              <div>
-                <p className="font-medium">{task.title}</p>
-                <p className="text-sm text-muted-foreground">
-                  Due in {task.due}
-                </p>
-              </div>
+              <p className="font-medium">{task.title}</p>
+              <span className="text-sm text-muted-foreground">
+                Due in {task.due}
+              </span>
             </div>
           ))}
-        </div>
-      </section>
-
-      <section>
-        <h2 className="text-2xl font-bold mb-4">Quick Actions</h2>
-        <div className="flex flex-wrap gap-4">
-          {["Browse Tasks", "Assigned Tasks", "Mentorship Sessions", "Earnings History"].map(
-            (action, idx) => (
-              <Button
-                key={idx}
-                variant="outline"
-                className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl"
-              >
-                {action} <ArrowRight className="w-4 h-4" />
-              </Button>
-            )
-          )}
         </div>
       </section>
     </div>
