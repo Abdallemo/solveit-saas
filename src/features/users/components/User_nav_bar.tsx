@@ -2,6 +2,7 @@
 
 import {
   BadgeCheck,
+  Banknote,
   Bell,
   ChevronsUpDown,
   CreditCard,
@@ -28,17 +29,20 @@ import {
 import { signOut } from "next-auth/react";
 import { AppUser } from "../../../../types/next-auth";
 import Link from "next/link";
-import { createStripeCheckoutSession, upgradeSolverToPlus } from "@/features/subscriptions/server/action";
+import {
+  createStripeCheckoutSession,
+  upgradeSolverToPlus,
+} from "@/features/subscriptions/server/action";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
-import useCurrentUser from "@/hooks/useCurrentUser";
 
-export function NavUser({ image, name, email, role,id }: AppUser) {
+export function NavUser({ image, name, email, role, id }: AppUser) {
   const { subTier } = useStripeSubscription();
   const { isMobile, openMobile, setOpenMobile, setOpen, open, toggleSidebar } =
     useSidebar();
   const closeMobileSidebar = () => {
     if (isMobile && openMobile) setOpenMobile(false);
   };
+  const urlPrfx = `/dashboard/${role?.toLocaleLowerCase()}`;
 
   return (
     <SidebarMenu>
@@ -89,6 +93,7 @@ export function NavUser({ image, name, email, role,id }: AppUser) {
             <DropdownMenuGroup>
               {role === "POSTER" && (
                 <DropdownMenuItem
+                  className="cursor-pointer"
                   onSelect={async () => {
                     await createStripeCheckoutSession("SOLVER");
                   }}>
@@ -98,6 +103,8 @@ export function NavUser({ image, name, email, role,id }: AppUser) {
               )}
               {role === "SOLVER" && subTier === "SOLVER" && (
                 <DropdownMenuItem
+                  className="cursor-pointer"
+                  
                   onSelect={async () => {
                     await upgradeSolverToPlus(id!);
                   }}>
@@ -108,18 +115,26 @@ export function NavUser({ image, name, email, role,id }: AppUser) {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <Link
-                href={`/dashboard/${role?.toLocaleLowerCase()}/account`}
-                onClick={closeMobileSidebar}>
-                <DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`${urlPrfx}/account`}
+                  onClick={closeMobileSidebar}
+                  className="cursor-pointer">
                   <BadgeCheck />
                   Account
-                </DropdownMenuItem>
-              </Link>
-              <DropdownMenuItem>
-                <Bell />
-                <Link href={`/dashboard/notifications`}>
-                Notifications
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`${urlPrfx}/billings`} className="cursor-pointer">
+                  <Banknote /> Billings
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link
+                  href={`/dashboard/notifications`}
+                  className="cursor-pointer">
+                  <Bell />
+                  Notifications
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

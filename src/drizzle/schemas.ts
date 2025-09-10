@@ -84,6 +84,8 @@ export const UserTable = pgTable("user", {
   password: text("password"),
   role: UserRole("role").default("POSTER"),
   stripeCustomerId: text("stripe_customer_id"),
+  stripeAccountId: text("stripe_account_id"),
+
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),

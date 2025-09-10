@@ -291,8 +291,8 @@ export default function AccountComponent({
               disabled={isPending}
               onClick={() =>
                 startTransition(async () => {
-                  const url = (await ManageUserCreditCardPortal())!;
-                  router.push(url);
+                  const url = (await ManageUserCreditCardPortal())!
+                  router.push(url)
                 })
               }>
               {isPending && <Loader2 className="animate-spin" />}
@@ -336,5 +336,5 @@ export default function AccountComponent({
         </AlertDialog>
       </div>
     </div>
-  );
+  )
 }

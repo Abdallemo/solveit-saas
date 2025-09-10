@@ -76,7 +76,6 @@ export async function EmailSignInAction(
         return { success: "Confirmation Email Send. please check your mail" };
       }
     }
-
   } catch (error) {
     if (error instanceof AuthError) {
       switch (error.type) {
@@ -90,7 +89,7 @@ export async function EmailSignInAction(
     throw error;
   }
 
-  return { success:'OK' };
+  return { success: "OK" };
 }
 
 export async function EmailRegisterAction(
@@ -202,15 +201,14 @@ export async function verifyVerificationToken(
 }
 
 export async function isAuthorized(whichRole: UserRole[] | undefined) {
-  const user = await getServerUserSession() 
-  if (!whichRole) return {authorized: false,};
-  if (!user ||!user?.role ) return {authorized: false,};
+  const user = await getServerUserSession();
+  if (!whichRole) return { authorized: false, user: null };
+  if (!user || !user?.role) return { authorized: false, user: null };
 
-  if (whichRole.includes(user.role)) {
-    return { authorized: true, user:user};
-  } else {
+  if (!whichRole.includes(user.role)) {
     redirect("/dashboard/");
   }
+  return { authorized: true, user: user };
 }
 
 export async function DeleteUserAccount() {

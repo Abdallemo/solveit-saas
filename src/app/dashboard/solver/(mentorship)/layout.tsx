@@ -12,7 +12,7 @@ export default async function MentorLayout({
     await validateMentorAccess();
   } catch (error) {
     if (error instanceof MentorError) {
-      return <MentorGate  />;
+      return <MentorGate />;
     }
   }
   return <>{children}</>;
