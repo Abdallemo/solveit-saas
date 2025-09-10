@@ -8,6 +8,7 @@ import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 
 import type { NextAuthConfig } from "next-auth";
 import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
+import { CreateUserStripeConnectAccount } from "@/features/payments/server/action";
 
 export const {
   handlers,
@@ -33,6 +34,7 @@ export const {
     },
     async createUser({ user }) {
       await CreateUserSubsciption({ tier: "POSTER", userId: user.id! });
+      CreateUserStripeConnectAccount(user.email!, user.id!);
     },
   },
   pages: {
