@@ -1,6 +1,7 @@
 "use server";
 
 import db from "@/drizzle/db";
+import { env } from "@/env/server";
 import {
   getServerUserSession,
   isAuthorized,
@@ -8,6 +9,7 @@ import {
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
+import { User } from "next-auth";
 import { redirect } from "next/navigation";
 export type cardsType = Awaited<
   ReturnType<typeof getAllCustomerPaymentMethods>
@@ -108,42 +110,63 @@ export async function getStripeConnectAccount() {
 export async function handlerStripeConnect() {
   const { user } = await isAuthorized(["POSTER", "SOLVER"]);
   if (!user || !user.id) return;
-  const urlprix = `/dashboard/${user.role?.toLocaleLowerCase()}/billings?user=${
-    user.id
-  }`;
+  const urlprix = `${
+    env.NEXTAUTH_URL
+  }/dashboard/${user.role?.toLocaleLowerCase()}/billings?user=${user.id}`;
+  console.log(
+    `trying to account link for user with account id : ${user.stripeAccountId} and url :${urlprix}`
+  );
   const session = await stripe.accountLinks.create({
-    account: "",
+    account: user.stripeAccountId!,
     type: "account_onboarding",
     collect: "currently_due",
     return_url: urlprix,
     refresh_url: urlprix,
+    collection_options: {
+      fields: "currently_due",
+      future_requirements: "omit",
+    },
   });
+  console.log(`redirecting to ${session.url}`);
   return redirect(session.url);
 }
-export async function CreateUserStripeConnectAccount(
-  email: string,
-  userId: string
-) {
+export async function CreateUserStripeConnectAccount(user: User) {
   const account = await stripe.accounts.create({
-    type: "express",
-
-    email: email,
-
+    type: "standard",
+    email: user.email!,
+    business_type: "individual",
     capabilities: {
-      card_payments: {
-        requested: true,
+      card_payments: { requested: true },
+      transfers: { requested: true },
+    },
+    individual: {
+      first_name: user.name!,
+      last_name: user.name!,
+      email: user.email!,
+      dob: {
+        day: 1,
+        month: 1,
+        year: 1990,
       },
-
-      transfers: {
-        requested: true,
+      address: {
+        line1: "123 Test Street",
+        city: "Kuala Lumpur",
+        postal_code: "43000",
+        state: "Selangor",
+        country: "MY",
       },
     },
-    business_type: "individual",
-    
+    business_profile: {
+      mcc: "5734",
+      product_description:
+        "SolveIt is a student job board where students post and solve academic tasks.",
+      url: env.NEXTAUTH_URL,
+    },
   });
+  console.log(account.id, account.type);
 
   await UpdateUserField({
-    id: userId,
+    id: user.id!,
     data: { stripeAccountId: account.id },
   });
 }
