@@ -1,18 +1,18 @@
 "use server";
 
+import db from "@/drizzle/db";
 import {
-  UserTable,
-  UserSubscriptionTable,
-  UserRoleType,
+  PaymentTable,
   RefundTable,
   TaskTable,
-  PaymentTable,
+  UserRoleType,
+  UserSubscriptionTable,
+  UserTable,
 } from "@/drizzle/schemas";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { count, eq, sql, sum } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
-import { getServerUserSession } from "@/features/auth/server/actions";
-import db from "@/drizzle/db";
 
 //* User Types
 
@@ -326,4 +326,11 @@ export async function isUserAccountOauth(userId: string): Promise<boolean> {
     console.error("Error checking if user is OAuth:", error);
     return false;
   }
+}
+export async function handleUserOnboarding() {
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  if (!user|| user) return;
+  await db.transaction(async tx=>{
+    
+  })
 }
