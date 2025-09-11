@@ -1,15 +1,16 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import Logo from "@/components/marketing/logo";
+import FeaturePanelWithAnimation from "@/features/auth/components/feature-panel";
+import RegisterCard from "@/features/auth/register/components/regsiterCard";
 import { EmailRegisterAction } from "@/features/auth/server/actions";
-import { useState, useTransition } from "react";
 import {
   registerFormSchema,
   registerInferedTypes,
 } from "@/features/auth/server/auth-types";
-import RegisterCard from "@/features/auth/register/components/regsiterCard";
-import Logo from "@/components/marketing/logo";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useState, useTransition } from "react";
+import { useForm } from "react-hook-form";
 export default function Register() {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string>("");
@@ -59,7 +60,9 @@ export default function Register() {
           success={success}
         />
       </div>
-      <div className=" inset-0 md:flex items-center justify-center text-white  bg-primary font-bold px-4 pointer-events-none text-3xl text-center md:text-4xl lg:text-7xl w-full hidden"></div>
+      <div className="inset-0 md:flex items-center justify-center w-full hidden">
+        <FeaturePanelWithAnimation />
+      </div>
     </div>
   );
 }
