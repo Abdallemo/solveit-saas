@@ -6,7 +6,7 @@ import {
   UserCheck,
 } from "lucide-react";
 
-const features = [
+export const features = [
   {
     name: "AI Task Matching",
     description:
