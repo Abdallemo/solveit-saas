@@ -1,10 +1,10 @@
 "use client";
-import React, { Suspense } from "react";
+import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
+import { GalleryVerticalEnd } from "lucide-react";
+import { Session } from "next-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Session } from "next-auth";
-import { GalleryVerticalEnd } from "lucide-react";
-import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
+import { Suspense } from "react";
 
 import {
   MenuItem,
@@ -31,10 +31,10 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-import { NavUser } from "./User_nav_bar";
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
-import { NavSecondary } from "./NavSecondary";
 import { UserRole } from "@/features/auth/server/auth-uitls";
+import { NavSecondary } from "./NavSecondary";
+import { NavUser } from "./User_nav_bar";
 
 const roleMenuMap: Record<UserRole, MenuItem[]> = {
   POSTER: MenuItemsPoster,
@@ -139,7 +139,7 @@ function MenuRenderer({
   return (
     <>
       {items.map((item) => (
-        <SidebarMenuItem key={item.title}>
+        <SidebarMenuItem key={item.title} >
           {item.type === "category" ? (
             <SidebarMenuButton>
               <item.icon />
@@ -152,7 +152,7 @@ function MenuRenderer({
                 href={item.url}
                 className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                   isActive(item.url, true)
-                    ? "bg-foreground/10 text-foreground"
+                    ? "bg-primary text-sidebar-primary-foreground"
                     : ""
                 }`}>
                 <item.icon />
