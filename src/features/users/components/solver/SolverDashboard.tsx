@@ -1,25 +1,32 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  CalendarDays,
-  DollarSign,
-  Users,
-  ArrowRight,
-  CheckCircle,
-} from "lucide-react";
-import { BarChart, Bar, LineChart, Line, XAxis, CartesianGrid } from "recharts";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+  ArrowRight,
+  CalendarDays,
+  CheckCircle,
+  DollarSign,
+  Users,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 type SolverStats = {
   earnings: number;
@@ -87,8 +94,7 @@ export default function SolverDashboardLanding({
                   asChild
                   key={idx}
                   variant="outline"
-                  className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl"
-                >
+                  className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl">
                   <Link href={action.href}>
                     {action.name} <ArrowRight className="w-4 h-4" />
                   </Link>
@@ -96,122 +102,140 @@ export default function SolverDashboardLanding({
               ))}
             </div>
           </div>
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
+          <Badge variant={"success"} className="rounded-full">
             Solver++
           </Badge>
         </div>
       </header>
 
       <section className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Active Tasks</h2>
-            <CheckCircle className="text-blue-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {stats.reduce((sum, d) => sum + d.allTasks, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Solved: {stats.reduce((s, d) => s + d.solvedTasks, 0)} • In Progress:{" "}
-            {stats.reduce((s, d) => s + d.inProgressTasks, 0)}
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer config={tasksConfig} className="w-full h-full">
-              <BarChart accessibilityLayer data={stats}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={tickFormatter}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="allTasks" fill="var(--color-allTasks)" radius={4} />
-                <Bar
-                  dataKey="solvedTasks"
-                  fill="var(--color-solvedTasks)"
-                  radius={4}
-                />
-                <Bar
-                  dataKey="inProgressTasks"
-                  fill="var(--color-inProgressTasks)"
-                  radius={4}
-                />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-lg">Active Tasks</h2>
+                <CheckCircle className="w-6 h-6" />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              {stats.reduce((sum, d) => sum + d.allTasks, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Solved: {stats.reduce((s, d) => s + d.solvedTasks, 0)} • In
+              Progress: {stats.reduce((s, d) => s + d.inProgressTasks, 0)}
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer config={tasksConfig} className="w-full h-full">
+                <BarChart accessibilityLayer data={stats}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={tickFormatter}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="allTasks" fill="var(--chart-2)" radius={4} />
+                  <Bar dataKey="solvedTasks" fill="var(--chart-1)" radius={4} />
+                  <Bar
+                    dataKey="inProgressTasks"
+                    fill="var(--chart-4)"
+                    radius={4}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Monthly Earnings</h2>
-            <DollarSign className="text-green-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            RM{stats.reduce((sum, d) => sum + d.earnings, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Target: RM200 • Last Month: RM104
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer config={earningsConfig} className="w-full h-full">
-              <LineChart accessibilityLayer data={stats}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={tickFormatter}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="earnings"
-                  stroke="var(--color-earnings)"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {" "}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-lg">Monthly Earnings</h2>
+                <DollarSign className="w-6 h-6" />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              RM{stats.reduce((sum, d) => sum + d.earnings, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Target: RM200 • Last Month: RM104
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer config={earningsConfig} className="w-full h-full">
+                <LineChart accessibilityLayer data={stats}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={tickFormatter}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Line
+                    type="monotone"
+                    dataKey="earnings"
+                    stroke="var(--chart-5)"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Mentorship</h2>
-            <Users className="text-purple-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {stats.reduce((sum, d) => sum + d.mentorSessions, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Sessions this period
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer config={mentorshipConfig} className="w-full h-full">
-              <LineChart accessibilityLayer data={stats}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={tickFormatter}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line
-                  type="monotone"
-                  dataKey="mentorSessions"
-                  stroke="var(--color-mentorSessions)"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader>
+            <CardTitle>
+              {" "}
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="font-semibold text-lg">Mentorship</h2>
+                <Users className=" w-6 h-6" />
+              </div>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              {stats.reduce((sum, d) => sum + d.mentorSessions, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Sessions this period
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={mentorshipConfig}
+                className="w-full h-full">
+                <LineChart accessibilityLayer data={stats}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={tickFormatter}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Line
+                    type="monotone"
+                    dataKey="mentorSessions"
+                    stroke="var(--chart-2)"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="mb-12">
@@ -220,15 +244,14 @@ export default function SolverDashboardLanding({
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
           {upcomingTasks.map((task) => (
-            <div
-              key={task.id}
-              className="p-4 bg-background/20 rounded-xl shadow-md flex justify-between items-center"
-            >
-              <p className="font-medium">{task.title}</p>
-              <span className="text-sm text-muted-foreground">
-                Due in {task.due}
-              </span>
-            </div>
+            <Card key={task.id}>
+              <CardHeader className="flex justify-between items-center">
+                <CardTitle>
+                  <p className="font-medium">{task.title}</p>
+                </CardTitle>
+                <CardDescription> Due in {task.due}</CardDescription>
+              </CardHeader>
+            </Card>
           ))}
         </div>
       </section>
