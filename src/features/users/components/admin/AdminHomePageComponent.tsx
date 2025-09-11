@@ -9,39 +9,29 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { LogsTyep } from "@/lib/logging/action";
 import {
-  Users,
-  CheckSquare,
-  DollarSign,
-  Shield,
+  AlertCircle,
   AlertTriangle,
   ArrowRight,
-  AlertCircle,
+  CheckSquare,
+  DollarSign,
   Info,
   Server,
+  Users,
 } from "lucide-react";
-import {
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Line,
-  LineChart,
-  XAxis,
-  Area,
-  AreaChart,
-} from "recharts";
 import Link from "next/link";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { AdminActivityOverview, statsDataType } from "./AdminActivityOverview";
-import { LogsTyep } from "@/lib/logging/action";
 const statsData = [
   {
     date: "2024-08-01",
@@ -119,7 +109,7 @@ const quickActions = [
 
 export default function AdminDashboard({
   serverLogs,
-  statsData
+  statsData,
 }: {
   serverLogs: LogsTyep;
   statsData: statsDataType[];
@@ -148,141 +138,153 @@ export default function AdminDashboard({
               </Button>
             ))}
           </div>
-          <Badge className="bg-green-50 text-green-700 border-green-200 rounded-full">
+          <Badge variant={"success"} className="rounded-full">
             System Healthy
           </Badge>
         </div>
       </header>
 
       <section className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Users</h2>
-            <Users className="text-blue-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.users, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            All Users: {statsData.reduce((sum, d) => sum + d.users, 0)} • New
-            Users This Weak: {statsData.reduce((sum, d) => sum + d.newUsers, 0)}
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{
-                users: usersConfig.users,
-                newUsers: usersConfig.newUsers,
-              }}
-              className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="users" fill="var(--color-users)" radius={4} />
-                <Bar
-                  dataKey="newUsers"
-                  fill="var(--color-newUsers)"
-                  radius={4}
-                />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="font-semibold text-lg">Users</CardTitle>
+            <CardDescription>
+              <Users className="w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {" "}
+            <div className="text-3xl font-bold mb-2">
+              {statsData.reduce((sum, d) => sum + d.users, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              All Users: {statsData.reduce((sum, d) => sum + d.users, 0)} • New
+              Users This Weak:{" "}
+              {statsData.reduce((sum, d) => sum + d.newUsers, 0)}
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{
+                  users: usersConfig.users,
+                  newUsers: usersConfig.newUsers,
+                }}
+                className="w-full h-full">
+                <BarChart accessibilityLayer data={statsData}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    }}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="users" fill="var(--chart-1)" radius={4} />
+                  <Bar dataKey="newUsers" fill="var(--chart-2)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
 
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Subscriptions</h2>
-            <CheckSquare className="text-green-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((_, d) => d.subscriptions + d.subscriptions, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Subscriped users this week
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{ subscriptions: usersConfig.subscriptions }}
-              className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="subscriptions"
-                  fill="var(--color-subscriptions)"
-                  radius={4}
-                />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        </div>
-
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Revenue</h2>
-            <DollarSign className="text-yellow-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            RM{statsData.reduce((sum, d) => sum + d.revenue, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Revenue earned this month
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{ revenue: usersConfig.revenue }}
-              className="w-full h-full">
-              <LineChart accessibilityLayer data={statsData}>
-                <XAxis
-                  dataKey="date"
-                  tickLine={false}
-                  axisLine={false}
-                  tickFormatter={(value) => {
-                    const date = new Date(value);
-                    return date.toLocaleDateString("en-US", {
-                      month: "short",
-                      day: "numeric",
-                    });
-                  }}
-                />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line
-                  dataKey="revenue"
-                  stroke="var(--color-revenue)"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="font-semibold text-lg">
+              Subscriptions
+            </CardTitle>
+            <CardDescription>
+              <CheckSquare className="w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {" "}
+            <div className="text-3xl font-bold mb-2">
+              {statsData.reduce((_, d) => d.subscriptions + d.subscriptions, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Subscriped users this week
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{ subscriptions: usersConfig.subscriptions }}
+                className="w-full h-full">
+                <BarChart accessibilityLayer data={statsData}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    }}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar
+                    dataKey="subscriptions"
+                    fill="var(--chart-2)"
+                    radius={4}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="font-semibold text-lg">Revenue</CardTitle>
+            <CardDescription>
+              <DollarSign className=" w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              RM{statsData.reduce((sum, d) => sum + d.revenue, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Revenue earned this month
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{ revenue: usersConfig.revenue }}
+                className="w-full h-full">
+                <LineChart accessibilityLayer data={statsData}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    }}
+                  />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Line
+                    dataKey="revenue"
+                    stroke="var(--chart-5)"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card> 
       </section>
       <Tabs defaultValue="activity">
         <TabsList className="w-full">
