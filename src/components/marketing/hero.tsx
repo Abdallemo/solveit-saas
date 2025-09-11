@@ -132,7 +132,7 @@ export default function Hero() {
                 ease: "linear",
               }}
               whileHover={{ scale: 1.02 }}>
-              SolveIt
+              Solveit
               <motion.div
                 className="absolute inset-0 bg-gradient-to-br from-primary/20 via-indigo-500/20 to-purple-600/20 blur-2xl -z-10"
                 animate={{
