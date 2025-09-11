@@ -1,14 +1,14 @@
 import NextAuth from "next-auth";
 
-import { DrizzleAdapter } from "@auth/drizzle-adapter";
-import { AccountTable, UserTable } from "@/drizzle/schemas";
 import db from "@/drizzle/db";
-import authConfig from "./auth.config";
+import { AccountTable, UserTable } from "@/drizzle/schemas";
 import { getUserById, UpdateUserField } from "@/features/users/server/actions";
+import { DrizzleAdapter } from "@auth/drizzle-adapter";
+import authConfig from "./auth.config";
 
-import type { NextAuthConfig } from "next-auth";
-import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 import { CreateUserStripeConnectAccount } from "@/features/payments/server/action";
+import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
+import type { NextAuthConfig } from "next-auth";
 
 export const {
   handlers,
@@ -34,7 +34,7 @@ export const {
     },
     async createUser({ user }) {
       await CreateUserSubsciption({ tier: "POSTER", userId: user.id! });
-      CreateUserStripeConnectAccount(user.email!, user.id!);
+      CreateUserStripeConnectAccount(user);
     },
   },
   pages: {
