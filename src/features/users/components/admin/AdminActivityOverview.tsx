@@ -30,7 +30,7 @@ export type statsDataType = {
   date: string;
   users: number;
   revenue: number;
-   newUsers: number;
+  newUsers: number;
   subscriptions: number;
 };
 export function AdminActivityOverview({
@@ -79,39 +79,39 @@ export function AdminActivityOverview({
           className="aspect-auto h-[250px] w-full">
           <AreaChart data={filteredData}>
             <defs>
-              <linearGradient id="fillPosted" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillAllUser" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-users)"
+                  stopColor="var(--chart-1)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-users)"
+                  stopColor="var(--chart-1)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillExpenses" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillRevenue" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-revenue)"
+                  stopColor="vvar(--chart-2)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-revenue)"
+                  stopColor="vvar(--chart-2)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
-              <linearGradient id="fillSessions" x1="0" y1="0" x2="0" y2="1">
+              <linearGradient id="fillSubscription" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="5%"
-                  stopColor="var(--color-subscriptions)"
+                  stopColor="var(--chart-5)"
                   stopOpacity={0.8}
                 />
                 <stop
                   offset="95%"
-                  stopColor="var(--color-subscriptions)"
+                  stopColor="var(--chart-5)"
                   stopOpacity={0.1}
                 />
               </linearGradient>
@@ -148,22 +148,22 @@ export function AdminActivityOverview({
             <Area
               dataKey="users"
               type="natural"
-              fill="url(#fillPosted)"
-              stroke="var(--color-users)"
+              fill="url(#fillAllUser)"
+              stroke="var(--chart-1)"
               stackId="a"
             />
             <Area
               dataKey="revenue"
               type="natural"
-              fill="url(#fillExpenses)"
-              stroke="var(--color-revenue)"
+              fill="url(#fillRevenue)"
+              stroke="var(--chart-5)"
               stackId="a"
             />
             <Area
               dataKey="subscriptions"
               type="natural"
-              fill="url(#fillSessions)"
-              stroke="var(--color-subscriptions)"
+              fill="url(#fillSubscription)"
+              stroke="var(--chart-2)"
               stackId="a"
             />
             <ChartLegend content={<ChartLegendContent />} />
