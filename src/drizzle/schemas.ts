@@ -1,24 +1,22 @@
-import { sql } from "drizzle-orm";
-import {
-  timestamp,
-  pgTable,
-  text,
-  primaryKey,
-  integer,
-  pgEnum,
-  uuid,
-  boolean,
-  check,
-  numeric,
-  json,
-  jsonb,
-  varchar,
-  decimal,
-  real,
-  date,
-} from "drizzle-orm/pg-core";
 import { relations } from "@/drizzle/relations";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
+import { sql } from "drizzle-orm";
+import {
+  boolean,
+  check,
+  date,
+  integer,
+  json,
+  numeric,
+  pgEnum,
+  pgTable,
+  primaryKey,
+  real,
+  text,
+  timestamp,
+  uuid,
+  varchar
+} from "drizzle-orm/pg-core";
 
 export const UserRole = pgEnum("role", [
   "ADMIN",
@@ -89,6 +87,19 @@ export const UserTable = pgTable("user", {
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+export const UserDetails = pgTable("user_details", {
+  userId: uuid("user_id")
+    .primaryKey()
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  onboardingCompleted: boolean("onboarding_completed").default(false),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  dateOfBirth: date("date_of_birth"),
+  address: text("address"),
+  business: text("business"),
+  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
 export const AccountTable = pgTable(
@@ -482,6 +493,10 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
     fields: [UserTable.id],
     references: [AccountTable.userId],
   }),
+  userDetails: one(UserDetails, {
+    fields: [UserTable.id],
+    references: [UserDetails.userId],
+  }),
   owner: many(TaskCommentTable, {
     relationName: "owner",
   }),
@@ -496,6 +511,12 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
 export const accountRelations = relations(AccountTable, ({ one }) => ({
   user: one(UserTable, {
     fields: [AccountTable.userId],
+    references: [UserTable.id],
+  }),
+}));
+export const userDetailsRelations = relations(UserDetails, ({ one }) => ({
+  user: one(UserTable, {
+    fields: [UserDetails.userId],
     references: [UserTable.id],
   }),
 }));
