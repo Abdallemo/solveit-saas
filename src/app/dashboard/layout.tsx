@@ -1,30 +1,30 @@
 import React, { ReactNode } from "react";
 
+import BridCarmComponent from "@/components/BridCarmComponent";
+import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
+import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import {
   getServerSession,
   getServerUserSession,
 } from "@/features/auth/server/actions";
+import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
+import { getAllNotification } from "@/features/notifications/server/action";
+import { getWalletInfo } from "@/features/tasks/server/action";
+import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import {
   getServerUserSubscriptionById,
   getUserById,
 } from "@/features/users/server/actions";
-import { stripe } from "@/lib/stripe";
 import {
   StripeSubscriptionContextType,
   StripeSubscriptionProvider,
 } from "@/hooks/provider/stripe-subscription-provider";
-import DashboardSidebar from "@/features/users/components/DashboardSidebar";
-import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
+import { stripe } from "@/lib/stripe";
 import { SessionProvider } from "next-auth/react";
-import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
-import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
-import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
-import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
-import { getWalletInfo } from "@/features/tasks/server/action";
-import ReactQueryProvider from "@/contexts/ReactQueryProvider";
-import BridCarmComponent from "@/components/BridCarmComponent";
-import { getAllNotification } from "@/features/notifications/server/action";
+import { redirect } from "next/navigation";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -109,7 +109,7 @@ export default async function DashboardLayout({
             <div className="flex h-screen w-full">
               <DashboardSidebar user={session?.user!} />
               <div className="flex flex-col flex-1 ">
-                <header className="sticky top-0 z-10 bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 border-b">
+                <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                   <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                     <div className="flex items-center">
                       <SidebarTrigger className="mr-2" />
