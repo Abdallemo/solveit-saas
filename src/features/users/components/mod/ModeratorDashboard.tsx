@@ -1,27 +1,32 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  CalendarDays,
-  Users,
-  ArrowRight,
-  CheckCircle,
-  TrendingUp,
-  Shield,
-  CheckSquare,
-} from "lucide-react";
-import { BarChart, Bar, LineChart, Line, XAxis, CartesianGrid } from "recharts";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   ChartConfig,
   ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
   ChartLegend,
   ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
 } from "@/components/ui/chart";
+import {
+  ArrowRight,
+  CalendarDays,
+  CheckCircle,
+  CheckSquare,
+  Shield,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
 export default function ModeratorDashboard() {
   const path = usePathname();
@@ -78,7 +83,7 @@ export default function ModeratorDashboard() {
   ];
 
   return (
-    <div className="w-full h-full px-5">
+    <div className="w-full h-full px-5 bg-background">
       <header className="flex justify-between items-center mb-9 pt-4">
         <div>
           <h1 className="text-4xl font-bold">Moderator Dashboard</h1>
@@ -103,99 +108,115 @@ export default function ModeratorDashboard() {
               ))}
             </div>
           </div>
-          <Badge className="bg-blue-50 text-blue-700 border-blue-200 rounded-full">
+          <Badge variant={"success"} className="rounded-full">
             Moderator++
           </Badge>
         </div>
       </header>
 
       <section className="grid md:grid-cols-3 gap-8 mb-12">
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Tasks</h2>
-            <CheckSquare className="text-green-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.tasks, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Tasks created this week
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{ tasks: chartConfigs.tasks }}
-              className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar dataKey="tasks" fill="var(--color-tasks)" radius={4} />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        </div>
-
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Reported Tasks</h2>
-            <Shield className="text-red-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.reportedTasks, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Total reported tasks this week
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{ reportedTasks: chartConfigs.reportedTasks }}
-              className="w-full h-full">
-              <BarChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Bar
-                  dataKey="reportedTasks"
-                  fill="var(--color-reportedTasks)"
-                  radius={4}
-                />
-              </BarChart>
-            </ChartContainer>
-          </div>
-        </div>
-
-        <div className="p-6 bg-background/20 rounded-2xl shadow-md">
-          <div className="flex justify-between items-center mb-4">
-            <h2 className="font-semibold text-lg">Resolved Reports</h2>
-            <CheckCircle className="text-blue-500 w-6 h-6" />
-          </div>
-          <div className="text-3xl font-bold mb-2">
-            {statsData.reduce((sum, d) => sum + d.resolvedReports, 0)}
-          </div>
-          <p className="text-sm text-muted-foreground mb-4">
-            Reports resolved this week
-          </p>
-          <div className="w-full h-40">
-            <ChartContainer
-              config={{ resolvedReports: chartConfigs.resolvedReports }}
-              className="w-full h-full">
-              <LineChart accessibilityLayer data={statsData}>
-                <XAxis dataKey="name" tickLine={false} axisLine={false} />
-                <CartesianGrid vertical={false} />
-                <ChartTooltip content={<ChartTooltipContent />} />
-                <ChartLegend content={<ChartLegendContent />} />
-                <Line
-                  dataKey="resolvedReports"
-                  stroke="var(--color-resolvedReports)"
-                  strokeWidth={3}
-                  dot={false}
-                />
-              </LineChart>
-            </ChartContainer>
-          </div>
-        </div>
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="font-semibold text-lg">Tasks</CardTitle>
+            <CardDescription>
+              <CheckSquare className="text-green-500 w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              {statsData.reduce((sum, d) => sum + d.tasks, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Tasks created this week
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{ tasks: chartConfigs.tasks }}
+                className="w-full h-full">
+                <BarChart accessibilityLayer data={statsData}>
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar dataKey="tasks" fill="var(--chart-1)" radius={4} />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex justify-between items-center ">
+            <CardTitle className="font-semibold text-lg">
+              Reported Tasks
+            </CardTitle>
+            <CardDescription>
+              {" "}
+              <Shield className="text-red-500 w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {" "}
+            <div className="text-3xl font-bold mb-2">
+              {statsData.reduce((sum, d) => sum + d.reportedTasks, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Total reported tasks this week
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{ reportedTasks: chartConfigs.reportedTasks }}
+                className="w-full h-full">
+                <BarChart accessibilityLayer data={statsData}>
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Bar
+                    dataKey="reportedTasks"
+                    fill="var(--chart-3)"
+                    radius={4}
+                  />
+                </BarChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="flex justify-between items-center">
+            <CardTitle className="font-semibold text-lg">
+              Resolved Reports
+            </CardTitle>
+            <CardDescription>
+              <CheckCircle className="text-blue-500 w-6 h-6" />
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold mb-2">
+              {statsData.reduce((sum, d) => sum + d.resolvedReports, 0)}
+            </div>
+            <p className="text-sm text-muted-foreground">
+              Reports resolved this week
+            </p>
+            <div className="w-full h-40">
+              <ChartContainer
+                config={{ resolvedReports: chartConfigs.resolvedReports }}
+                className="w-full h-full">
+                <LineChart accessibilityLayer data={statsData}>
+                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                  <CartesianGrid vertical={false} />
+                  <ChartTooltip content={<ChartTooltipContent />} />
+                  <ChartLegend content={<ChartLegendContent />} />
+                  <Line
+                    dataKey="resolvedReports"
+                    stroke="var(--chart-2)"
+                    strokeWidth={3}
+                    dot={false}
+                  />
+                </LineChart>
+              </ChartContainer>
+            </div>
+          </CardContent>
+        </Card>
       </section>
 
       <section className="mb-12">
