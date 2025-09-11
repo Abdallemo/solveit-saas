@@ -7,7 +7,6 @@ import AccountComponent from "@/features/users/components/poster/AccountComponen
 import { isUserAccountOauth } from "@/features/users/server/actions";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 export default async function PosterAccountPage() {
   const currentUser = await getServerUserSession();
@@ -19,7 +18,7 @@ export default async function PosterAccountPage() {
   const refress = await getServerReturnUrl();
   return (
     <div className="w-full">
-      <div className="border-b bg-bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-bg-sidebar/60 sticky top-0 z-50">
+      <div className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-bg-background/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
