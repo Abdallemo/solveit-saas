@@ -1,12 +1,6 @@
 "use server";
-import { auth, signIn, signOut } from "@/lib/auth";
-import {
-  loginFormSchema,
-  loginInferedTypes,
-  registerFormSchema,
-  registerInferedTypes,
-} from "./auth-types";
-import bcrypt from "bcryptjs";
+import db from "@/drizzle/db";
+import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 import {
   CreateUser,
   DeleteUserFromDb,
@@ -14,14 +8,21 @@ import {
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
-import { DEFAULT_LOGIN_REDIRECT } from "@/routes";
-import { AuthError } from "next-auth";
-import db from "@/drizzle/db";
-import { generateVerificationToken } from "./auth-uitls";
+import { getUserByIdCached } from "@/features/users/server/db";
+import { auth, signIn, signOut } from "@/lib/auth";
 import { sendVerificationEmail } from "@/lib/nodemailer";
-import { UserRole } from "../../../../types/next-auth";
+import bcrypt from "bcryptjs";
+import { AuthError } from "next-auth";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
-import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
+import { UserRole } from "../../../../types/next-auth";
+import {
+  loginFormSchema,
+  loginInferedTypes,
+  registerFormSchema,
+  registerInferedTypes,
+} from "./auth-types";
+import { generateVerificationToken } from "./auth-uitls";
 // import { verificationTokens } from "@/drizzle/schemas";
 // import { eq } from "drizzle-orm";
 
@@ -203,12 +204,18 @@ export async function verifyVerificationToken(
 export async function isAuthorized(whichRole: UserRole[] | undefined) {
   const user = await getServerUserSession();
   if (!whichRole) return { authorized: false, user: null };
-  if (!user || !user?.role) return { authorized: false, user: null };
+  if (!user || !user?.role || !user.id)
+    return redirect("/api/auth/signout?callbackUrl=/login");
+  const userDb = await getUserByIdCached(user.id);
+  if (!userDb)
+    return redirect(
+      "/api/auth/signout?callbackUrl=/login?error=account_deleted"
+    );
 
   if (!whichRole.includes(user.role)) {
     redirect("/dashboard/");
   }
-  return { authorized: true, user: user };
+  return { authorized: true, user: userDb };
 }
 
 export async function DeleteUserAccount() {
@@ -222,5 +229,6 @@ export async function DeleteUserAccount() {
   if (!existingUser || !existingUser.id) return;
 
   await DeleteUserFromDb(user.id);
+  revalidateTag(`user-${user.id}`);
   await signOut();
 }
