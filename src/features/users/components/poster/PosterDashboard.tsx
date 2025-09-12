@@ -65,11 +65,11 @@ export default function PosterDashboard({
                   </Link>
                 </Button>
               ))}
-            </div>
-          </div>
           <Badge variant={"success"} className=" rounded-full">
             Poster++
           </Badge>
+            </div>
+          </div>
         </div>
       </header>
 
