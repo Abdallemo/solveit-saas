@@ -137,10 +137,10 @@ export default function AdminDashboard({
                 </Link>
               </Button>
             ))}
+            <Badge variant={"success"} className="rounded-full">
+              System Healthy
+            </Badge>
           </div>
-          <Badge variant={"success"} className="rounded-full">
-            System Healthy
-          </Badge>
         </div>
       </header>
 
@@ -284,7 +284,7 @@ export default function AdminDashboard({
               </ChartContainer>
             </div>
           </CardContent>
-        </Card> 
+        </Card>
       </section>
       <Tabs defaultValue="activity">
         <TabsList className="w-full">
