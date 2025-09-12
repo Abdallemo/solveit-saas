@@ -5,7 +5,6 @@ import SolverDashboard from "@/features/users/components/solver/SolverDashboard"
 export default async function page() {
   await isAuthorized(["SOLVER"]);
   const data = await getSolverStats();
-  console.log(data);
   return (
     <div className="w-full h-full">
       <SolverDashboard stats={data} />
