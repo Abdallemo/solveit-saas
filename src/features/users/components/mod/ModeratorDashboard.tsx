@@ -106,11 +106,11 @@ export default function ModeratorDashboard() {
                   </Link>
                 </Button>
               ))}
+              <Badge variant={"success"} className="rounded-full">
+                Moderator++
+              </Badge>
             </div>
           </div>
-          <Badge variant={"success"} className="rounded-full">
-            Moderator++
-          </Badge>
         </div>
       </header>
 
