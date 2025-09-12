@@ -1,5 +1,6 @@
 import { relations } from "@/drizzle/relations";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
+import { Address, Business } from "@/features/users/server/user-types";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -15,7 +16,7 @@ import {
   text,
   timestamp,
   uuid,
-  varchar
+  varchar,
 } from "drizzle-orm/pg-core";
 
 export const UserRole = pgEnum("role", [
@@ -83,6 +84,9 @@ export const UserTable = pgTable("user", {
   role: UserRole("role").default("POSTER"),
   stripeCustomerId: text("stripe_customer_id"),
   stripeAccountId: text("stripe_account_id"),
+  stripeAccountLinked: boolean("stripe_account_linked")
+    .notNull()
+    .default(false),
 
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
@@ -93,12 +97,12 @@ export const UserDetails = pgTable("user_details", {
     .primaryKey()
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
-  onboardingCompleted: boolean("onboarding_completed").default(false),
+  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   firstName: text("first_name"),
   lastName: text("last_name"),
   dateOfBirth: date("date_of_birth"),
-  address: text("address"),
-  business: text("business"),
+  address: json("address").$type<Address>(),
+  business: json("business").$type<Business>(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
 });
 
