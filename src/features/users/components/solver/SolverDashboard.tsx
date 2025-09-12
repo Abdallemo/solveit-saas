@@ -100,11 +100,11 @@ export default function SolverDashboardLanding({
                   </Link>
                 </Button>
               ))}
+              <Badge variant={"success"} className="rounded-full">
+                Solver++
+              </Badge>
             </div>
           </div>
-          <Badge variant={"success"} className="rounded-full">
-            Solver++
-          </Badge>
         </div>
       </header>
 
