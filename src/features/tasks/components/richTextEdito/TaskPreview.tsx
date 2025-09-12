@@ -1,11 +1,11 @@
 "use client";
-import { useEditor, EditorContent } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import Image from "@tiptap/extension-image";
-import TextAlign from "@tiptap/extension-text-align";
-import { common, createLowlight } from "lowlight";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
+import TextAlign from "@tiptap/extension-text-align";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
 
 export default function TaskPreview({ content }: { content: string }) {
   const lowlight = createLowlight(common);
@@ -48,7 +48,7 @@ export default function TaskPreview({ content }: { content: string }) {
     },
   });
   return (
-    <div className="border rounded-md flex flex-col h-100 w-full">
+    <div className="border rounded-md flex flex-col h-[500px] w-full">
       <div className="flex-1 overflow-hidden">
         <EditorContent editor={editor} className="h-full overflow-y-auto" />
       </div>

@@ -1,20 +1,5 @@
 "use client";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { useEffect, useRef, useState, useTransition } from "react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { Textarea } from "@/components/ui/textarea";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -25,38 +10,43 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { FormField } from "@/components/ui/form";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
+import { env } from "@/env/client";
+import { FilesTable } from "@/features/media/components/FilesTable";
+import { taskRefundSchemaType } from "@/features/tasks/server/action";
+import { taskRefundSchema } from "@/features/tasks/server/task-types";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import useWebSocket from "@/hooks/useWebSocket";
+import { formatDateAndTime, formatDates } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { TooltipContent } from "@radix-ui/react-tooltip";
+import { useMutation } from "@tanstack/react-query";
 import {
-  Send,
-  ThumbsUp,
-  ThumbsDown,
   CheckCircle,
-  XCircle,
   Loader2,
+  Send,
+  ThumbsDown,
+  ThumbsUp,
+  XCircle,
 } from "lucide-react";
-import { SolutionPreview } from "./richTextEdito/TaskPreview";
+import { useRouter } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
+import { FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
 import {
   acceptSolution,
   createTaskComment,
   requestRefund,
   type SolutionById,
 } from "../server/action";
-import type { TaskStatusType } from "@/drizzle/schemas";
-import { FilesTable } from "@/features/media/components/FilesTable";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
-import { FormField } from "@/components/ui/form";
-import { FormProvider, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
-import { TooltipContent } from "@radix-ui/react-tooltip";
-import { taskRefundSchemaType } from "@/features/tasks/server/action";
-import { taskRefundSchema } from "@/features/tasks/server/task-types";
-import { useMutation } from "@tanstack/react-query";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { SolutionPreview } from "./richTextEdito/TaskPreview";
 import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
-import useWebSocket from "@/hooks/useWebSocket";
-import { env } from "@/env/client";
 import GetStatusBadge from "./taskStatusBadge";
 
 function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
@@ -156,7 +146,7 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
           <Button
             onClick={() => setOpen(true)}
             variant="destructive"
-            className="flex items-center space-x-2">
+            className="flex items-center space-x-2 ">
             <XCircle className="h-4 w-4" />
             <span>Request Refund</span>
           </Button>
@@ -170,29 +160,26 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
                 indicates that the solution does not meet your requirements.
                 Please note that refund requests will be reviewed by our team.
               </AlertDialogDescription>
-              <AlertDialogHeader>
-                <FormField
-                  control={control}
-                  name="reason"
-                  render={({ field }) => (
-                    <Textarea
-                      value={reason}
-                      rows={2}
-                      placeholder="Reason of refund"
-                      onChange={(e) => {
-                        field.onChange(e.target.value);
-                      }}
-                    />
-                  )}
-                />
-              </AlertDialogHeader>
+              <FormField
+                control={control}
+                name="reason"
+                render={({ field }) => (
+                  <Textarea
+                    value={reason}
+                    rows={2}
+                    placeholder="Reason of refund"
+                    onChange={(e) => {
+                      field.onChange(e.target.value);
+                    }}
+                  />
+                )}
+              />
             </AlertDialogHeader>
 
-            <AlertDialogFooter>
+            <AlertDialogFooter className="mt-4">
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-
               {isValid ? (
-                <Button
+                <AlertDialogAction
                   type="submit"
                   className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
                   {isPending ? (
@@ -203,16 +190,18 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
                   ) : (
                     "Yes, Request Refund"
                   )}
-                </Button>
+                </AlertDialogAction>
               ) : (
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    <Button
-                      variant={"destructive"}
-                      disabled={false}
-                      className="opacity-45 cursor-not-allowed">
-                      Yes, Request Refund
-                    </Button>
+                    <AlertDialogAction asChild>
+                      <Button
+                        disabled={false}
+                        className="opacity-45 cursor-not-allowed"
+                        variant={"destructive"}>
+                        Yes, Request Refund
+                      </Button>
+                    </AlertDialogAction>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p className="text-xs ">
@@ -295,7 +284,6 @@ export default function SolutionPageComps({
   return (
     <div className="flex min-h-screen bg-background/10">
       <div className="flex-1 p-8 gap-3 flex flex-col">
-        <BreadcrumbSolution />
         <Card className="mb-6 mt-6">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -309,24 +297,13 @@ export default function SolutionPageComps({
               </div>
             </div>
             <div className="flex items-center space-x-4 text-sm text-gray-500">
-              <span>Submitted {solution.createdAt?.toLocaleString()}</span>
+              <span>Submitted {formatDateAndTime(solution.createdAt!)}</span>
               <span>•</span>
-              <span>Updated {solution.updatedAt?.toLocaleDateString()}</span>
+              <span>Updated {formatDates(solution.updatedAt!)}</span>
             </div>
           </CardHeader>
           <CardContent>
             <SolutionPreview content={solution.content!} />
-
-            {solution.taskSolution.posterId === user?.id &&
-              solution.taskSolution.status !== "COMPLETED" &&
-              !solution.taskSolution.taskRefund && (
-                <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
-                  <AcceptSolutionDialog solution={solution} />
-                  <RequestRefundDialog solution={solution} />
-                </div>
-              )}
-
-            <Separator className="my-6" />
 
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-4">
@@ -345,12 +322,14 @@ export default function SolutionPageComps({
                   <span>Not helpful ({"1"})</span>
                 </Button>
               </div>
-              {/* TODO */}
-              {false && (
-                <Badge className="bg-yellow-100 text-yellow-800">
-                  ⭐ Best Solution
-                </Badge>
-              )}
+              {solution.taskSolution.posterId === user?.id &&
+                solution.taskSolution.status !== "COMPLETED" &&
+                !solution.taskSolution.taskRefund && (
+                  <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg">
+                    <AcceptSolutionDialog solution={solution} />
+                    <RequestRefundDialog solution={solution} />
+                  </div>
+                )}
             </div>
           </CardContent>
         </Card>
@@ -405,25 +384,5 @@ export default function SolutionPageComps({
         </Card>
       </div>
     </div>
-  );
-}
-
-export function BreadcrumbSolution() {
-  return (
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/">explore tasks</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbLink href="/components">task_0001</BreadcrumbLink>
-        </BreadcrumbItem>
-        <BreadcrumbSeparator />
-        <BreadcrumbItem>
-          <BreadcrumbPage>solution</BreadcrumbPage>
-        </BreadcrumbItem>
-      </BreadcrumbList>
-    </Breadcrumb>
   );
 }

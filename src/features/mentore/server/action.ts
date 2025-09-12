@@ -9,20 +9,12 @@ import {
   MentorshipSessionTable,
   PaymentPorposeEnumType,
 } from "@/drizzle/schemas";
+import { env } from "@/env/server";
 import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
-import {
-  getServerUserSubscriptionById,
-  getUserById,
-  UpdateUserField,
-} from "@/features/users/server/actions";
-import { MentorError, SubscriptionError } from "@/lib/Errors";
-import { logger } from "@/lib/logging/winston";
-import { and, count, eq, gte, or, sql } from "drizzle-orm";
-import { addDays, startOfWeek, isFuture, format, set } from "date-fns";
-import { calculateSlotDuration, daysInWeek } from "@/lib/utils";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 import {
   AvailabilitySlot,
   BookingFormData,
@@ -30,12 +22,19 @@ import {
   MentorListigWithAvailbelDates,
 } from "@/features/mentore/server/types";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
-import { stripe } from "@/lib/stripe";
-import { env } from "@/env/server";
-import { redirect } from "next/navigation";
+import {
+  getServerUserSubscriptionById,
+  getUserById,
+  UpdateUserField,
+} from "@/features/users/server/actions";
+import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
-import { revalidatePath } from "next/cache";
+import { logger } from "@/lib/logging/winston";
+import { stripe } from "@/lib/stripe";
+import { calculateSlotDuration, daysInWeek } from "@/lib/utils";
+import { addDays, format, isFuture, startOfWeek } from "date-fns";
+import { and, eq, or } from "drizzle-orm";
+import { redirect } from "next/navigation";
 
 export async function validateMentorAccess() {
   const user = (await getServerUserSession())!;
@@ -209,7 +208,18 @@ export async function getMentorListigWithAvailbelDates() {
 
   return mentorsWithFilteredAvailability;
 }
-
+export async function cleanPendingBookign(booking_id: string) {
+  try {
+    await db
+      .delete(MentorshipBookingTable)
+      .where(
+        and(
+          eq(MentorshipBookingTable.id, booking_id),
+          eq(MentorshipBookingTable.status, "PENDING")
+        )
+      );
+  } catch (error) {}
+}
 export async function createMentorBookingPaymentCheckout(values: {
   data: BookingFormData;
   mentor: MentorListigWithAvailbelDates;
@@ -309,7 +319,7 @@ export async function createMentorBookingPaymentCheckout(values: {
         bookingId,
       },
       cancel_url: `${referer}?booking_id=${bookingId}`,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/bookings/?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
+      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/sessions/?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
         payment_method_save: "enabled",
@@ -335,7 +345,7 @@ export async function updateMentorBooking(
         paymentId,
       })
       .where(eq(MentorshipBookingTable.id, bookingId))
-      .returning({ bookingId: MentorshipBookingTable.id });
+      .returning();
     return result;
   } catch (error) {
     logger.error(
@@ -450,8 +460,8 @@ export async function sendMentorMessages(values: {
         chatFiles: true,
         chatOwner: {
           columns: {
-            password:false,
-            stripeCustomerId:false
+            password: false,
+            stripeCustomerId: false,
           },
         },
       },

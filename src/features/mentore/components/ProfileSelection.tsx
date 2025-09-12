@@ -52,6 +52,7 @@ export function ProfileSelection({
               <span className="text-sm font-medium">Choose Avatar</span>
               <Button
                 size="sm"
+                type="button"
                 variant="ghost"
                 className="h-6 w-6 p-0"
                 onClick={() => setShowAvatarSelector(false)}>
@@ -62,6 +63,7 @@ export function ProfileSelection({
               {defaultAvatars.map((currentAvatar, index) => (
                 <button
                   key={index}
+                  type="button"
                   onClick={() => handleAvatarSelect(currentAvatar)}
                   className="relative group">
                   <Avatar className="h-12 w-12 transition-all group-hover:ring-2 group-hover:ring-primary">
