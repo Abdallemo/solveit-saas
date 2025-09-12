@@ -1,4 +1,3 @@
-import { UserTable } from "@/drizzle/schemas";
 import { UserRole } from "@/features/auth/server/auth-uitls";
 
 export type publicUserType = {
@@ -11,3 +10,21 @@ export type publicUserType = {
   createdAt: Date | null;
 };
 
+export type OnboardingFormData = {
+  first_name: string;
+  last_name: string;
+  dob: Date | undefined;
+  address: Address;
+  business_profile: Business;
+};
+
+export type Address = {
+  line1: string;
+  city: string;
+  postal_code: string;
+  state: string;
+  country: string;
+};
+export type Business = {
+  mcc?: string;
+};

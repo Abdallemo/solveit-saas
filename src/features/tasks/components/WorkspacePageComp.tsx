@@ -1,23 +1,24 @@
 "use client";
-import { Suspense, useEffect, useState } from "react";
+import Loading from "@/app/dashboard/solver/loading";
+import AuthGate from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
-import { useForm, FormProvider, FieldErrors } from "react-hook-form";
+import { Progress } from "@/components/ui/progress";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
-import { toast } from "sonner";
+import { useMutation } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Suspense, useEffect, useState } from "react";
+import { FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
+import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
+import { DeadlineProgress } from "./DeadlineProgress";
 import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
 import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { DeadlineProgress } from "./DeadlineProgress";
-import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
-import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { useAuthGate } from "@/hooks/useAuthGate";
-import AuthGate from "@/components/AuthGate";
-import Loading from "@/app/dashboard/solver/loading";
-import { useMutation } from "@tanstack/react-query";
-import { useRouter } from "next/navigation";
-import { Progress } from "@/components/ui/progress";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
@@ -54,7 +55,7 @@ export default function WorkspacePageComp() {
     const doc = new DOMParser().parseFromString(content!, "text/html");
     const text = doc.body.textContent?.trim() || "";
 
-    setIsDisabled(text.length < 5);
+    setIsDisabled(text.length < 35);
   }, [content]);
 
   const form = useForm<WorkpaceSchemType>({
@@ -143,7 +144,12 @@ export default function WorkspacePageComp() {
               <div className="p-4 pb-2  flex justify-between items-center">
                 <div className="mt-4  w-full">
                   <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
-                    <span>{currentWorkspace?.task.title}</span>
+                    <Link
+                      className="underline"
+                      target="_blank"
+                      href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}>
+                      {currentWorkspace?.task.title}
+                    </Link>
                     <span>
                       {currentWorkspace?.task.status === "SUBMITTED" ||
                       currentWorkspace?.task.status === "COMPLETED"

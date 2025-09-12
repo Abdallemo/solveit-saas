@@ -1,15 +1,26 @@
 "use server";
 
 import db from "@/drizzle/db";
+import { UserDetails } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
-import { getUserById, UpdateUserField } from "@/features/users/server/actions";
+import {
+  getUserById,
+  UpdateUserField,
+  UserDbType,
+} from "@/features/users/server/actions";
+import { OnboardingFormData } from "@/features/users/server/user-types";
+import { UnauthorizedError } from "@/lib/Errors";
+import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { User } from "next-auth";
+import { toYMD } from "@/lib/utils";
+import { subYears } from "date-fns";
+import { eq } from "drizzle-orm";
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 export type cardsType = Awaited<
   ReturnType<typeof getAllCustomerPaymentMethods>
@@ -122,15 +133,14 @@ export async function handlerStripeConnect() {
     collect: "currently_due",
     return_url: urlprix,
     refresh_url: urlprix,
-    collection_options: {
-      fields: "currently_due",
-      future_requirements: "omit",
-    },
   });
   console.log(`redirecting to ${session.url}`);
   return redirect(session.url);
 }
-export async function CreateUserStripeConnectAccount(user: User) {
+export async function CreateUserStripeConnectAccount(
+  values: OnboardingFormData,
+  user: UserDbType
+) {
   const account = await stripe.accounts.create({
     type: "standard",
     email: user.email!,
@@ -140,33 +150,72 @@ export async function CreateUserStripeConnectAccount(user: User) {
       transfers: { requested: true },
     },
     individual: {
-      first_name: user.name!,
-      last_name: user.name!,
+      first_name: values.first_name,
+      last_name: values.last_name,
       email: user.email!,
       dob: {
-        day: 1,
-        month: 1,
-        year: 1990,
+        day: values.dob?.getDate()!,
+        month: values.dob?.getMonth()! + 1,
+        year: values.dob?.getFullYear()!,
       },
-      address: {
-        line1: "123 Test Street",
-        city: "Kuala Lumpur",
-        postal_code: "43000",
-        state: "Selangor",
-        country: "MY",
-      },
+      address: values.address,
+      phone: "+15555550123",
     },
     business_profile: {
-      mcc: "5734",
+      mcc:
+        values.business_profile.mcc === "5734"
+          ? values.business_profile.mcc
+          : "5734",
       product_description:
         "SolveIt is a student job board where students post and solve academic tasks.",
-      url: env.NEXTAUTH_URL,
+      url:
+        process.env.NODE_ENV === "development"
+          ? "https://solveit.up.railway.app"
+          : env.NEXTAUTH_URL,
     },
   });
-  console.log(account.id, account.type);
 
   await UpdateUserField({
     id: user.id!,
     data: { stripeAccountId: account.id },
   });
+}
+export async function handleUserOnboarding(values: OnboardingFormData) {
+  try {
+    if (!values) throw new Error("all fields are required");
+    const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+    if (!user) throw new UnauthorizedError();
+    if (user.userDetails.onboardingCompleted)
+      throw new Error("Already record exist");
+    const dob =
+      values.dob instanceof Date ? values.dob : new Date(values.dob as any);
+    const minDate = new Date("1900-01-01");
+    const maxDate = subYears(new Date(), 13);
+
+    if (dob > maxDate || dob < minDate) {
+      throw new Error(
+        "You must be at least 13 years of age to use the platform and receive funds"
+      );
+    }
+    await db
+      .update(UserDetails)
+      .set({
+        userId: user.id,
+        address: values.address,
+        business: values.business_profile,
+        dateOfBirth: toYMD(dob),
+        firstName: values.first_name,
+        lastName: values.last_name,
+        onboardingCompleted: true,
+      })
+      .where(eq(UserDetails.userId, user.id));
+    await CreateUserStripeConnectAccount({ ...values, dob }, user); //==> synchronous job
+    revalidateTag(`user-${user.id}`);
+  } catch (error) {
+    logger.error("unable to save user details", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error("something went wrong");
+  }
 }

@@ -171,7 +171,7 @@ function MenuRenderer({
                       href={cld.url}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
                         isActive(cld.url)
-                          ? "bg-foreground/10 text-foreground"
+                          ? "bg-primary text-sidebar-primary-foreground"
                           : ""
                       }`}>
                       <cld.icon />

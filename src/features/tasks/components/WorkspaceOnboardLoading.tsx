@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Loader2, Sparkles, Zap, CheckCircle } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { CheckCircle, Loader2, Sparkles, Zap } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const loadingSteps = [
   {
@@ -77,7 +77,7 @@ export default function WorkspaceOnboarding({
       clearInterval(progressInterval);
       clearTimeout(stepTimer);
     };
-  }, [currentStep])
+  }, [currentStep]);
 
   useEffect(() => {
     if (isComplete) {
@@ -87,15 +87,15 @@ export default function WorkspaceOnboarding({
 
       return () => clearTimeout(redirectTimeout);
     }
-  }, [isComplete, workspaceId, router])
+  }, [isComplete, workspaceId, router]);
 
   const currentStepData =
     loadingSteps[currentStep] || loadingSteps[loadingSteps.length - 1];
   const IconComponent = currentStepData.icon;
 
   return (
-    <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <Card className="w-full max-w-md shadow-2xl border-white/20 bg-white/95 dark:bg-gray-900/95 backdrop-blur-sm">
+    <div className="fixed inset-0 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <Card className="w-full max-w-md shadow-2xl  backdrop-blur-sm">
         <CardContent className="p-8">
           <div className="text-center space-y-8">
             <div className="space-y-2">

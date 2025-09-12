@@ -1,22 +1,33 @@
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { clsx, type ClassValue } from "clsx";
-import { twMerge } from "tailwind-merge";
+import { format } from "date-fns";
 import {
-  FileText,
+  FileArchive,
+  FileAudio,
   FileCode,
   FileImage,
-  FileArchive,
-  FileVideo,
-  FileAudio,
-  FileSpreadsheet,
   FileJson,
-  FileType,
+  FileSpreadsheet,
+  FileText,
+  FileVideo,
 } from "lucide-react";
+import { twMerge } from "tailwind-merge";
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
+export function toYMD(date: Date): string {
+  return format(date, "yyyy-MM-dd");
+}
 export const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString();
+  return new Date(dateString).toLocaleDateString(undefined, {
+    timeZone: "UTC",
+  });
+};
+
+export const formatDates = (dateString: Date) => {
+  return dateString.toLocaleDateString(undefined, {
+    timeZone: "UTC",
+  });
 };
 export const formatDateAndTime = (date: Date) => {
   return date.toLocaleDateString("en-US", {

@@ -9,8 +9,8 @@ import {
   UserSubscriptionTable,
   UserTable,
 } from "@/drizzle/schemas";
-import { isAuthorized } from "@/features/auth/server/actions";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
+import { stripe } from "@/lib/stripe";
 import { count, eq, sql, sum } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
 
@@ -29,11 +29,15 @@ export async function CreateUser(values: registerInferedTypes) {
 }
 export async function DeleteUserFromDb(id: string) {
   if (id) {
-    db.transaction(async (tx) => {
-      await tx.delete(UserTable).where(eq(UserTable.id, id));
+    const s = await db.transaction(async (tx) => {
+      const deletedAcount = await tx
+        .delete(UserTable)
+        .where(eq(UserTable.id, id))
+        .returning({ accountId: UserTable.stripeAccountId });
       await tx
         .delete(UserSubscriptionTable)
         .where(eq(UserSubscriptionTable.userId, id));
+      await stripe.accounts.del(deletedAcount[0].accountId!);
     });
   }
 }
@@ -49,6 +53,10 @@ export async function getUserByEmail(email: string) {
   }
 }
 export type allUsersType = Awaited<ReturnType<typeof getAllUsers>>;
+export type UserDbType = Exclude<
+  Awaited<ReturnType<typeof getUserById>>,
+  undefined | null
+>;
 
 export async function getAllUsers() {
   const allUsers = await db.query.UserTable.findMany();
@@ -233,6 +241,7 @@ export async function getUserById(id: string) {
   try {
     const result = await db.query.UserTable.findFirst({
       where: (table, fn) => fn.eq(table.id, id),
+      with: { userDetails: true },
     });
     return result;
   } catch (error) {
@@ -326,11 +335,4 @@ export async function isUserAccountOauth(userId: string): Promise<boolean> {
     console.error("Error checking if user is OAuth:", error);
     return false;
   }
-}
-export async function handleUserOnboarding() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
-  if (!user|| user) return;
-  await db.transaction(async tx=>{
-    
-  })
 }

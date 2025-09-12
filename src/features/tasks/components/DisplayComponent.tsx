@@ -1,29 +1,23 @@
 "use client";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Command,
-  CommandInput,
-  CommandList,
   CommandEmpty,
   CommandGroup,
+  CommandInput,
   CommandItem,
+  CommandList,
 } from "@/components/ui/command";
-import {
-  Search,
-  SquareArrowUpRight,
-  User,
-  Grid3X3,
-  List,
-  Table,
-  Clock,
-  Check,
-  ChevronsUpDown,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Pagination,
@@ -35,27 +29,32 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Separator } from "@/components/ui/separator";
+import { TaskStatusType } from "@/drizzle/schemas";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { cn, getColorClass } from "@/lib/utils";
+import {
+  Check,
+  ChevronsUpDown,
+  Clock,
+  Grid3X3,
+  List,
+  Search,
+  SquareArrowUpRight,
+  Table
+} from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import GetStatusBadge from "./taskStatusBadge";
 import {
   PosterTasksFiltred,
   SolverAssignedTaskType,
 } from "../server/task-types";
-import { TaskStatusType } from "@/drizzle/schemas";
-import { useSearchParams, useRouter } from "next/navigation";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { cn, getColorClass } from "@/lib/utils";
+import GetStatusBadge from "./taskStatusBadge";
 type DisplayComponentProps = {
   itretable: SolverAssignedTaskType[] | PosterTasksFiltred[];
   totalCount: number;
@@ -224,7 +223,12 @@ export default function DisplayListComponent({
           </Button>
         ) : (
           <Button size="sm" asChild>
-            <Link href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${task.id}`}>View Details</Link>
+            <Link
+              href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
+                task.id
+              }`}>
+              View Details
+            </Link>
           </Button>
         )}
       </>
@@ -234,7 +238,9 @@ export default function DisplayListComponent({
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 ">
         {filteredItretable.map((task) => (
-          <Card key={task.id} className="hover:shadow-md transition-shadow ">
+          <Card
+            key={task.id}
+            className="hover:shadow-lg ">
             <CardHeader className="pb-3">
               <div className="flex items-start justify-between">
                 <Badge className={getColorClass(categoryMap[task.categoryId])}>
@@ -250,14 +256,16 @@ export default function DisplayListComponent({
               </CardDescription>
             </CardHeader>
             <CardContent className="pt-0">
-              <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+              <div className="flex items-center gap-4 text-sm mb-2">
                 <div className="flex items-center gap-1">
-                  <Avatar className="size-4">
-                    <AvatarFallback>
-                      <User />
-                    </AvatarFallback>
-                    <AvatarImage src={task.poster.image!} />
-                  </Avatar>
+                  {task.posterId !== currentUser?.id! && (
+                    <Avatar className="size-4">
+                      <AvatarFallback>
+                       {task.poster.name?.charAt(0).toUpperCase()}
+                      </AvatarFallback>
+                      <AvatarImage src={task.poster.image!} />
+                    </Avatar>
+                  )}
                   {task.poster.name?.split(" ")[0]}
                 </div>
                 {task.deadline && (
@@ -266,11 +274,9 @@ export default function DisplayListComponent({
                     Due: {task.deadline}
                   </div>
                 )}
-                <p className={getColorClass(String(task.price), false, true)}>
-                  RM{task.price?.toFixed(2)}
-                </p>
+                <p className={""}>RM{task.price?.toFixed(2)}</p>
               </div>
-              <div className="text-xs text-gray-400 mb-2">
+              <div className="text-xs  mb-2">
                 Posted: {task.createdAt?.toLocaleDateString()}
               </div>
               {task.solverId && task.solver && (
@@ -283,7 +289,7 @@ export default function DisplayListComponent({
               )}
             </CardContent>
             <CardFooter className="pt-0">
-              <div className="flex  w-full items-center gap-1">
+              <div className="flex  w-full items-center justify-between">
                 {actionButtoneCheck(task)}
               </div>
             </CardFooter>

@@ -1,17 +1,19 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { Mail, Bell, CreditCard, Loader2 } from "lucide-react";
+import { CardWrapper } from "@/components/card-wrapper";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { useTheme } from "next-themes";
+import { Switch } from "@/components/ui/switch";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { Bell, CreditCard, Loader2, Mail } from "lucide-react";
+import { useTheme } from "next-themes";
+import { useState, useTransition } from "react";
 import AccountSubscption from "../Account-subscption";
-import { CardWrapper } from "@/components/card-wrapper";
 
+import Loading from "@/app/loading";
+import AuthGate from "@/components/AuthGate";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,17 +25,16 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Badge } from "@/components/ui/badge";
 import { DeleteUserAccount } from "@/features/auth/server/actions";
-import { toast } from "sonner";
-import Loading from "@/app/loading";
-import AuthGate from "@/components/AuthGate";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import {
   cardsType,
   ManageUserCreditCardPortal,
 } from "@/features/payments/server/action";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
-import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
 export default function AccountComponent({
   isOauthUser,
   cards,
@@ -45,9 +46,23 @@ export default function AccountComponent({
   const [emailNotification, SetEmailNotification] = useState<boolean>(false);
   const [pushNotification, setPushNotification] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
+
   const router = useRouter();
   const { setTheme, theme } = useTheme();
-
+  const [open, setOpen] = useState(false);
+  const { mutateAsync: DeleteAccountMutation, isPending: isDeleting } =
+    useMutation({
+      mutationFn: DeleteUserAccount,
+      // onError: () =>
+      //   toast.error("something went wrong try again", {
+      //     action: {
+      //       label: <RotateCcw size={"10"} />,
+      //       onClick: async () => {
+      //         await DeleteAccountMutation();
+      //       },
+      //     },
+      //   }),
+    });
   const { isLoading, isBlocked } = useAuthGate();
 
   if (isLoading) return <Loading />;
@@ -291,8 +306,8 @@ export default function AccountComponent({
               disabled={isPending}
               onClick={() =>
                 startTransition(async () => {
-                  const url = (await ManageUserCreditCardPortal())!
-                  router.push(url)
+                  const url = (await ManageUserCreditCardPortal())!;
+                  router.push(url);
                 })
               }>
               {isPending && <Loader2 className="animate-spin" />}
@@ -304,7 +319,7 @@ export default function AccountComponent({
 
         <AccountSubscption />
 
-        <AlertDialog >
+        <AlertDialog open={open||isDeleting} onOpenChange={setOpen}>
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
@@ -320,21 +335,23 @@ export default function AccountComponent({
                 account and remove your data from our servers.
               </AlertDialogDescription>
             </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="cursor-pointer">
+            <AlertDialogFooter className="w-full ">
+              <AlertDialogCancel className="cursor-pointer w-1/2">
                 Cancel
               </AlertDialogCancel>
-              <form action={DeleteUserAccount} className="">
-                <AlertDialogAction
-                  className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-full"
-                  type="submit">
-                  Continue
-                </AlertDialogAction>
-              </form>
+              <AlertDialogAction
+                onClick={async () => {
+                  await DeleteAccountMutation();
+                }}
+                disabled={isDeleting}
+                className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-1/2">
+                {isDeleting && <Loader2 className="animate-spin" />}
+                Continue
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
     </div>
-  )
+  );
 }
