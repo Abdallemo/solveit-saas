@@ -3,10 +3,10 @@ import { getServerUserSession } from "@/features/auth/server/actions";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
 import TaskPreview from "@/features/tasks/components/richTextEdito/TaskPreview";
-import {  getTaskFilesById, getTasksbyId } from "@/features/tasks/server/action";
-import {  Loader2 } from "lucide-react";
+import { getTaskFilesById, getTasksbyId } from "@/features/tasks/server/action";
+import { Loader2 } from "lucide-react";
 import { redirect } from "next/navigation";
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 const isValidUuid = (uuid: string) => {
   return /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
     uuid
@@ -37,7 +37,7 @@ export default async function Page({
  
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10">
-      <div className="w-full flex flex-col items-end ">
+      <div className="w-full flex flex-col items-end gap-3">
         {currentUser.role === "SOLVER" && task.solverId !== currentUser.id && !task.solver && (
           <AssignTaskButton taskId={id} userId={currentUser.id} />
         )}
