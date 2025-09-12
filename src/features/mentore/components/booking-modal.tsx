@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import * as z from "zod";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -11,22 +11,21 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge";
-import { CalendarIcon, Clock, DollarSign, Loader2 } from "lucide-react";
-import { format, isSameDay } from "date-fns";
-import { toast } from "sonner";
+import { Textarea } from "@/components/ui/textarea";
 import { createMentorBookingPaymentCheckout } from "@/features/mentore/server/action";
 import {
-  MentorListigWithAvailbelDates,
   AvailabilitySlot,
+  MentorListigWithAvailbelDates,
 } from "@/features/mentore/server/types";
 import { calculateSlotDuration } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { format, isSameDay } from "date-fns";
+import { CalendarIcon, Clock, DollarSign, Loader2 } from "lucide-react";
+import { useCallback, useMemo, useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
 import { BookingFormData, bookingSchema } from "../server/types";
 
 interface BookingModalProps {
@@ -316,13 +315,14 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
               type="submit"
               disabled={isSubmitting || sessions.length === 0}
               className="flex-1">
-              {isSubmitting && (
+              {isSubmitting ? (
                 <>
                   <Loader2 className="animate-spin" />
                   Booking...
                 </>
+              ) : (
+                " Book Session"
               )}
-              Book Session
             </Button>
           </div>
         </form>
