@@ -74,7 +74,7 @@ export default function Login() {
         />
       </div>
 
-      <div className="inset-0 md:flex items-center justify-center w-full hidden">
+      <div className="inset-0 md:flex items-center justify-center w-full from-primary/5 via-background to-accent/10 overflow-hidden">
         <FeaturePanelWithAnimation />
       </div>
     </div>
