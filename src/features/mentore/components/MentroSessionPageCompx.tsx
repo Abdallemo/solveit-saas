@@ -1,25 +1,24 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { formatDate, formatDateAndTime, getColorClass } from "@/lib/utils";
 import {
-  User,
-  Search,
   Calendar,
-  Clock,
-  Users,
   ChevronDown,
   ChevronRight,
+  Clock,
+  Search,
+  Users
 } from "lucide-react";
-import { formatDate, formatDateAndTime, getColorClass } from "@/lib/utils";
-import { AvailabilitySlot, MentorBookingSessions } from "../server/types";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useMemo, useState } from "react";
+import { AvailabilitySlot, MentorBookingSessions } from "../server/types";
 
 export function SessionsList({
   booking: { result: bookings, totalCount },
