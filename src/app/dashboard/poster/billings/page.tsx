@@ -1,9 +1,17 @@
 import { BillingGate } from "@/components/AuthGate";
 import {
-  getStripeConnectAccount,
-  handlerStripeConnect,
-} from "@/features/payments/server/action";
+  getServerUserSession
+} from "@/features/auth/server/actions";
+import { handlerStripeConnect } from "@/features/payments/server/action";
+import { getUserById } from "@/features/users/server/actions";
 
-export default function page() {
-  return <BillingGate action={handlerStripeConnect} />;
+export default async function Page() {
+  const user = await getServerUserSession();
+  if (!user || !user.id) return;
+  const userDb = await getUserById(user.id);
+  if (!userDb) return;
+  console.log(userDb.stripeAccountLinked);
+  if (!userDb.stripeAccountLinked)
+    return <BillingGate action={handlerStripeConnect} />;
+  return <div>Linked</div>;
 }
