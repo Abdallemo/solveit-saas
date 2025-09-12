@@ -3,7 +3,6 @@ import { UploadedFileMeta } from "@/features/media/server/media-types";
 
 import {
   createTaskAction,
-  deleteDraftTask,
   getDraftTask,
   taskPaymentInsetion,
 } from "@/features/tasks/server/action";
@@ -15,17 +14,19 @@ import {
   updateUserSubscription,
 } from "@/features/subscriptions/server/action";
 
-import { eq } from "drizzle-orm";
+import db from "@/drizzle/db";
 import {
   PaymentPorposeEnumType,
   UserSubscriptionTable,
+  UserTable,
 } from "@/drizzle/schemas";
-import type Stripe from "stripe";
-import { logger } from "@/lib/logging/winston";
-import { getUserById, UpdateUserField } from "@/features/users/server/actions";
 import { getServerUserSession } from "@/features/auth/server/actions";
-import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
 import { updateMentorBooking } from "@/features/mentore/server/action";
+import { sendNotification } from "@/features/notifications/server/action";
+import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
+import { logger } from "@/lib/logging/winston";
+import { eq } from "drizzle-orm";
+import type Stripe from "stripe";
 
 export async function GET() {
   return new Response("Webhook route is active", { status: 200 });
@@ -69,6 +70,9 @@ export async function POST(request: NextRequest) {
 
       case "customer.subscription.deleted":
         await handleDelete(event.data.object);
+        break;
+      case "account.updated":
+        await hadleStripeConnect(event.data.object);
         break;
 
       default:
@@ -300,11 +304,28 @@ async function handleMentorBooking(
     );
     return;
   }
-  const updatedBookingId = await updateMentorBooking(bookingId, paymentId);
-  if (updatedBookingId.length <= 0) {
+  const updatedBooking = await updateMentorBooking(bookingId, paymentId);
+  if (updatedBooking.length <= 0) {
     logger.error("update Mentor Temperory Booking ");
   }
-  if (updatedBookingId[0].bookingId === bookingId) {
+  if (updatedBooking[0].id === bookingId) {
     logger.info("Succesfully updated Temperory Mentor Booking");
   }
+  sendNotification({
+    body: "A Student booked a session! please check the session page",
+    method: ["email", "system"],
+    receiverId: updatedBooking[0].solverId,
+  });
+}
+async function hadleStripeConnect(account: Stripe.Account) {
+  const d = await db
+    .update(UserTable)
+    .set({
+      stripeAccountLinked:
+        account.capabilities?.transfers === "pending" ||
+        account.capabilities?.transfers === "inactive"
+          ? false
+          : true,
+    })
+    .where(eq(UserTable.stripeAccountId, account.id));
 }
