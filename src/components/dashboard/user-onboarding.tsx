@@ -1,9 +1,10 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import {
   Form,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -23,37 +24,24 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { handleUserOnboarding } from "@/features/payments/server/action";
+import { OnboardingFormData } from "@/features/users/server/user-types";
 import { cn } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useLocalStorage } from "@uidotdev/usehooks";
-import { format } from "date-fns";
+import { format, subYears } from "date-fns";
 import {
   Building,
   CalendarIcon,
   ChevronLeft,
   ChevronRight,
+  Loader2,
   MapPin,
   User,
 } from "lucide-react";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-
-interface OnboardingFormData {
-  first_name: string;
-  last_name: string;
-  dob: Date | undefined;
-  address: {
-    line1: string;
-    city: string;
-    postal_code: string;
-    state: string;
-    country: string;
-  };
-  business_profile: {
-    mcc: string;
-  };
-}
 
 const steps = [
   {
@@ -100,7 +88,17 @@ export default function OnboardingForm() {
   const form = useForm<OnboardingFormData>({
     defaultValues: onboarding || defaultValues,
   });
-  const {} = useMutation({})
+  const minDate = new Date("1900-01-01");
+  const maxDate = subYears(new Date(), 13);
+  const { mutateAsync: saveOnboardingDb, isPending } = useMutation({
+    mutationFn: handleUserOnboarding,
+    onSuccess: () => {
+      setCurrentStep(1);
+      form.reset(defaultValues);
+      saveOnboarding(defaultValues);
+    },
+    onError: (e) => toast.error(e.message),
+  });
   const formValues = form.watch();
   useEffect(() => {
     saveOnboarding({
@@ -113,7 +111,7 @@ export default function OnboardingForm() {
   }, [formValues, saveOnboarding]);
 
   const onSubmit = async (data: OnboardingFormData) => {
-    toast.success(JSON.stringify(data, null, 2));
+    await saveOnboardingDb(data);
   };
 
   const validateStep = async (step: number) => {
@@ -170,7 +168,7 @@ export default function OnboardingForm() {
                 First, tell us a bit about yourself
               </p>
             </div>
-            <div className="space-y-4">
+            <div className="space-y-4 ">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   control={form.control}
@@ -218,6 +216,7 @@ export default function OnboardingForm() {
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Date of Birth</FormLabel>
+
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
@@ -241,12 +240,13 @@ export default function OnboardingForm() {
                         selected={field.value}
                         captionLayout="dropdown"
                         onSelect={field.onChange}
-                        disabled={(date) =>
-                          date > new Date() || date < new Date("1900-01-01")
-                        }
+                        disabled={(date) => date > maxDate || date < minDate}
                       />
                     </PopoverContent>
                   </Popover>
+                  <FormDescription>
+                    must be 13 years and above
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -375,7 +375,7 @@ export default function OnboardingForm() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl w-3xl  mx-auto">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
@@ -412,43 +412,46 @@ export default function OnboardingForm() {
         </p>
       </div>
 
-      <Card>
-        <CardContent className="p-8">
-          <Form {...form}>
+      <Form {...form}>
+        <Card className=" flex flex-col">
+          <CardContent className="p-8">
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               {renderStepContent()}
             </form>
+          </CardContent>
+          <CardFooter className="flex items-center justify-between  gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={prevStep}
+              disabled={currentStep === 1}
+              className="flex items-center space-x-2 bg-transparent w-1/2">
+              <ChevronLeft className="w-4 h-4" />
+              <span>Previous</span>
+            </Button>
 
-            <div className="flex justify-between pt-6">
+            {currentStep < steps.length ? (
               <Button
                 type="button"
-                variant="outline"
-                onClick={prevStep}
-                disabled={currentStep === 1}
-                className="flex items-center space-x-2 bg-transparent">
-                <ChevronLeft className="w-4 h-4" />
-                <span>Previous</span>
+                onClick={nextStep}
+                className="flex items-center space-x-2 w-1/2">
+                <span>Continue</span>
+                <ChevronRight className="w-4 h-4" />
               </Button>
-
-              {currentStep < steps.length ? (
+            ) : (
+              <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
                 <Button
-                  type="button"
-                  onClick={nextStep}
-                  className="flex items-center space-x-2">
-                  <span>Continue</span>
-                  <ChevronRight className="w-4 h-4" />
+                  disabled={isPending}
+                  type="submit"
+                  className="flex items-center space-x-2 w-full">
+                  {isPending && <Loader2 className="animate-spin" />}
+                  <span>Complete Setup</span>
                 </Button>
-              ) : (
-                <form onSubmit={form.handleSubmit(onSubmit)}>
-                  <Button type="submit" className="flex items-center space-x-2">
-                    <span>Complete Setup</span>
-                  </Button>
-                </form>
-              )}
-            </div>
-          </Form>
-        </CardContent>
-      </Card>
+              </form>
+            )}
+          </CardFooter>
+        </Card>
+      </Form>
     </div>
   );
 }
