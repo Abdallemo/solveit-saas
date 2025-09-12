@@ -1,11 +1,11 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import { ArrowRight, Mouse } from "lucide-react";
 import Link from "next/link";
-import { animate, motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { MinimalLogoTicker } from "./LogoTicker";
 import { techLogos } from "./mockdata";
-import { useState, useEffect } from "react";
 
 export default function Hero() {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
@@ -46,7 +46,7 @@ export default function Hero() {
     <div className="relative">
       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
         <motion.div
-          className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-r from-primary/20 to-purple-500/20 rounded-full blur-xl"
+          className="absolute top-1/4 left-1/4 w-32 h-32 bg-gradient-to-br from-primary/5 via-background to-accent/10 rounded-full blur-xl"
           variants={{
             animate: {
               y: [-10, 10, -10],
@@ -60,7 +60,7 @@ export default function Hero() {
           animate="animate"
         />
         <motion.div
-          className="absolute top-3/4 right-1/4 w-24 h-24 bg-gradient-to-r from-indigo-500/20 to-primary/20 rounded-full blur-xl"
+          className="absolute top-3/4 right-1/4 w-24 h-24 bg-gradient-to-br from-primary/5 via-background to-accent/10 rounded-full blur-xl"
           variants={{
             animate: {
               y: [-10, 10, -10],
@@ -75,7 +75,7 @@ export default function Hero() {
           transition={{ delay: 2 }}
         />
         <motion.div
-          className="absolute top-1/2 right-1/3 w-16 h-16 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 rounded-full blur-lg"
+          className="absolute top-1/2 right-1/3 w-16 h-16 bg-gradient-to-br from-primary/5 via-background to-accent/10 rounded-full blur-lg"
           variants={{
             animate: {
               y: [-10, 10, -10],
@@ -91,7 +91,7 @@ export default function Hero() {
         />
 
         <motion.div
-          className="absolute w-96 h-96 bg-gradient-to-r from-primary/10 to-purple-500/10 rounded-full blur-3xl"
+          className="absolute w-96 h-96 bg-gradient-to-br from-primary/5 via-background to-accent/10 rounded-full blur-3xl"
           animate={{
             x: mousePosition.x - 192,
             y: mousePosition.y - 192,
