@@ -53,47 +53,7 @@ export default function FeaturePanelWithAnimation() {
   return (
     <div className="relative h-full bg-gradient-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
       <div className="absolute inset-0">
-        <motion.div
-          className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.6, 0.3],
-            x: [0, 20, 0],
-            y: [0, -10, 0],
-          }}
-          transition={{
-            duration: 8,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-          }}
-        />
-        <motion.div
-          className="absolute bottom-32 right-16 w-24 h-24 bg-accent/20 rounded-full blur-lg"
-          animate={{
-            y: [0, -20, 0],
-            scale: [1, 1.1, 1],
-            rotate: [0, 180, 360],
-          }}
-          transition={{
-            duration: 6,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-            delay: 1,
-          }}
-        />
-        <motion.div
-          className="absolute top-1/2 left-1/4 w-16 h-16 bg-muted/30 rounded-full blur-md"
-          animate={{
-            opacity: [0.2, 0.5, 0.2],
-            scale: [0.8, 1.2, 0.8],
-          }}
-          transition={{
-            duration: 4,
-            repeat: Number.POSITIVE_INFINITY,
-            ease: "easeInOut",
-            delay: 2,
-          }}
-        />
+        <Motion3DBackground />
       </div>
 
       {/* Main content */}
@@ -281,5 +241,52 @@ export default function FeaturePanelWithAnimation() {
         </motion.div> */}
       </div>
     </div>
+  );
+}
+export function Motion3DBackground() {
+  return (
+    <>
+      <motion.div
+        className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.3, 0.6, 0.3],
+          x: [0, 20, 0],
+          y: [0, -10, 0],
+        }}
+        transition={{
+          duration: 8,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+        }}
+      />
+      <motion.div
+        className="absolute bottom-32 right-16 w-24 h-24 bg-accent/20 rounded-full blur-lg"
+        animate={{
+          y: [0, -20, 0],
+          scale: [1, 1.1, 1],
+          rotate: [0, 180, 360],
+        }}
+        transition={{
+          duration: 6,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+          delay: 1,
+        }}
+      />
+      <motion.div
+        className="absolute top-1/2 left-1/4 w-16 h-16 bg-muted/30 rounded-full blur-md"
+        animate={{
+          opacity: [0.2, 0.5, 0.2],
+          scale: [0.8, 1.2, 0.8],
+        }}
+        transition={{
+          duration: 4,
+          repeat: Number.POSITIVE_INFINITY,
+          ease: "easeInOut",
+          delay: 2,
+        }}
+      />
+    </>
   );
 }
