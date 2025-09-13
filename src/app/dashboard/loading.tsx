@@ -1,4 +1,8 @@
-import { Skeleton } from "@/components/ui/skeleton"
+"use client";
+
+import { useCookies } from "next-client-cookies";
+
+import DashboardLoading from "@/components/dashboard/dashboard-loading";
 import {
   Sidebar,
   SidebarContent,
@@ -6,30 +10,40 @@ import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarHeader,
-  SidebarInset,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
   SidebarMenuSubItem,
   SidebarProvider,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function DashboardSkeleton() {
+  const cookieStore = useCookies();
+  const defaultOpen = cookieStore.get("sidebar_state") === "true";
+
   return (
-    <SidebarProvider defaultOpen style={
+    <SidebarProvider
+      defaultOpen={defaultOpen}
+      style={
         {
           "--sidebar-width": "calc(var(--spacing) * 72)",
           "--header-height": "calc(var(--spacing) * 12)",
         } as React.CSSProperties
       }>
-      <AppSidebarSkeleton />
-     
+      <div className="flex h-screen w-full">
+        <AppSidebarSkeleton />
+
+        <main className="flex flex-col flex-1 ">
+          <DashboardLoading />
+        </main>
+      </div>
     </SidebarProvider>
-  )
+  );
 }
 
-function AppSidebarSkeleton() {
+export function AppSidebarSkeleton() {
   return (
     <Sidebar>
       <SidebarHeader>
@@ -42,7 +56,6 @@ function AppSidebarSkeleton() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {/* Dashboard - Active item */}
               <SidebarMenuItem>
                 <SidebarMenuButton className="bg-sidebar-accent">
                   <Skeleton className="h-4 w-4" />
@@ -50,7 +63,6 @@ function AppSidebarSkeleton() {
                 </SidebarMenuButton>
               </SidebarMenuItem>
 
-              {/* Tasks & Jobs with sub-items */}
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Skeleton className="h-4 w-4" />
@@ -72,7 +84,6 @@ function AppSidebarSkeleton() {
                 </SidebarMenuSub>
               </SidebarMenuItem>
 
-              {/* Mentorship with sub-items */}
               <SidebarMenuItem>
                 <SidebarMenuButton>
                   <Skeleton className="h-4 w-4" />
@@ -141,5 +152,5 @@ function AppSidebarSkeleton() {
         </SidebarMenu>
       </SidebarFooter>
     </Sidebar>
-  )
+  );
 }
