@@ -1,4 +1,4 @@
-import React, { ReactNode } from "react";
+import React, { ReactNode, Suspense } from "react";
 
 import BridCarmComponent from "@/components/BridCarmComponent";
 import OnboardingForm from "@/components/dashboard/user-onboarding-lazyloaded";
@@ -7,18 +7,12 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { FeatureFlagProvider } from "@/contexts/FeatureFlagContext";
 import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import { Motion3DBackground } from "@/features/auth/components/feature-panel";
-import {
-  getServerSession,
-  getServerUserSession,
-} from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
 import { getAllNotification } from "@/features/notifications/server/action";
-import { getWalletInfo } from "@/features/tasks/server/action";
+import { getWalletInfo } from "@/features/tasks/server/data";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
-import {
-  getServerUserSubscriptionById,
-  getUserById,
-} from "@/features/users/server/actions";
+import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import {
   StripeSubscriptionContextType,
   StripeSubscriptionProvider,
@@ -27,6 +21,7 @@ import { stripe } from "@/lib/stripe";
 import { SessionProvider } from "next-auth/react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import DashboardSkeleton, { AppSidebarSkeleton } from "./loading";
 const dbFlags = {
   monacoEditor: false,
   experimental3DViewer: false,
@@ -39,23 +34,24 @@ export default async function DashboardLayout({
 }: {
   children: ReactNode;
 }) {
-  const user = await getServerUserSession();
-  if (!user) {
-    return redirect("/api/auth/signout?callbackUrl=/login");
-  }
-  const { id, role } = user;
+  return (
+    <Suspense fallback={<DashboardSkeleton />}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </Suspense>
+  );
+}
 
-  if (!id || !role) {
-    return redirect("/api/auth/signout?callbackUrl=/login");
-  }
-  const userInDb = await getUserById(id);
-  if (!userInDb) {
-    return redirect(
-      "/api/auth/signout?callbackUrl=/login?error=account_deleted"
-    );
-  }
+async function DashboardLayoutContent({ children }: { children: ReactNode }) {
+  const { user, session } = await isAuthorized(
+    ["ADMIN", "MODERATOR", "POSTER", "SOLVER"],
+    { useCache: false }
+  );
 
-  const subscription = await getServerUserSubscriptionById(userInDb.id);
+  const cookieStore = await cookies();
+  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
+  const { pending, availabel } = await getWalletInfo(user.id);
+  const allNotifications = await getAllNotification(user.id);
+  const subscription = await getServerUserSubscriptionById(user.id);
   let stripeData: StripeSubscriptionContextType = {
     cancelAt: null,
     isCancelScheduled: false,
@@ -64,7 +60,6 @@ export default async function DashboardLayout({
     subTier: subscription?.tier!,
     price: 0,
   };
-
   if (subscription?.stripeSubscriptionId) {
     const sub = await stripe.subscriptions.retrieve(
       subscription.stripeSubscriptionId
@@ -83,14 +78,10 @@ export default async function DashboardLayout({
       price,
     };
   }
-  const session = await getServerSession();
-  if (!session?.user || !session.user.id) {
-    return redirect("/api/auth/signout?callbackUrl=/login");
+  if (!user.emailVerified) {
+    return redirect("/account-deactivated");
   }
-  const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const { pending, availabel } = await getWalletInfo(session.user.id);
-  const allNotifications = await getAllNotification(userInDb.id!);
+
   return (
     <SessionProvider
       session={session}
@@ -107,15 +98,17 @@ export default async function DashboardLayout({
             } as React.CSSProperties
           }>
           <ReactQueryProvider>
-            {(userInDb.role === "SOLVER" || userInDb.role === "POSTER") &&
-            !userInDb?.userDetails.onboardingCompleted ? (
+            {(user.role === "SOLVER" || user.role === "POSTER") &&
+            !user?.userDetails.onboardingCompleted ? (
               <div className="relative flex flex-col justify-center items-center  h-screen w-full bg-gradient-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
                 <Motion3DBackground />
                 <OnboardingForm />
               </div>
             ) : (
               <div className="flex h-screen w-full">
-                <DashboardSidebar user={session?.user!} />
+                <Suspense fallback={<AppSidebarSkeleton />}>
+                  <DashboardSidebar user={session?.user!} />
+                </Suspense>
                 <div className="flex flex-col flex-1 ">
                   <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
