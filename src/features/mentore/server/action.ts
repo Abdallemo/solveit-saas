@@ -226,9 +226,9 @@ export async function createMentorBookingPaymentCheckout(values: {
 }) {
   const referer = await getServerReturnUrl();
   try {
-    const { user: currentUser, authorized } = await isAuthorized(["POSTER"]);
+    const { user: currentUser } = await isAuthorized(["POSTER"]);
     const { data, mentor } = values;
-    if (!authorized || !currentUser?.id) throw new Error("unAuthorized");
+    if (!currentUser.id) throw new Error("unAuthorized");
     const validData = bookingSchema.safeParse(data);
     const userId = currentUser.id;
     if (!validData.success) throw new Error("all fields are requred");
