@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 import bcrypt from "bcryptjs";
 import "dotenv/config";
 import db from "./db";
-import { PaymentTable, TaskTable, UserTable } from "./schemas";
+import { PaymentTable, TaskTable, UserDetails, UserTable } from "./schemas";
 const categoryId = "76836f5c-eaf9-4404-927b-c969ea538446";
 const programmingTaskContents = [
   `
@@ -78,7 +78,9 @@ async function main() {
       password: hashedPassword,
     })
     .returning();
-
+  await db
+    .insert(UserDetails)
+    .values({ userId: user.id, onboardingCompleted: true });
   if (!user) throw new Error("❌ Failed to create user");
   console.log(`✅ Created user ${user.email} (${user.id})`);
 
@@ -104,6 +106,7 @@ async function main() {
   console.log(`✅ Created ${payments.length} payments`);
 
   const tasks = await db
+
     .insert(TaskTable)
     .values(
       payments.map((payment, idx) => ({
@@ -112,6 +115,7 @@ async function main() {
         content: programmingTaskContents[idx % programmingTaskContents.length],
         price: payment.amount,
         posterId: user.id,
+        visibility: "public",
         categoryId,
         paymentId: payment.id,
         deadline: "12h",
