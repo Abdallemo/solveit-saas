@@ -1,6 +1,6 @@
+import { getServerSession } from "@/features/auth/server/actions";
 import { redirect } from "next/navigation";
 import { UserRole } from "../../../types/next-auth";
-import { getServerSession } from "@/features/auth/server/actions";
 
 export default async function DashboardCheckingComponent() {
   const session = await getServerSession();

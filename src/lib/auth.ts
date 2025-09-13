@@ -33,7 +33,9 @@ export const {
     },
     async createUser({ user }) {
       await CreateUserSubsciption({ tier: "POSTER", userId: user.id! });
-      await db.insert(UserDetails).values({ userId: user.id! });
+      await db
+        .insert(UserDetails)
+        .values({ userId: user.id!, onboardingCompleted: false });
     },
   },
   pages: {

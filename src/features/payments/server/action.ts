@@ -114,7 +114,7 @@ export async function getAllPayments() {
   });
 }
 export async function getStripeConnectAccount() {
-  const { user, authorized } = await isAuthorized(["POSTER", "SOLVER"]);
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
   if (!user || !user.id) return;
 }
 

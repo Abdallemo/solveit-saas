@@ -1,4 +1,12 @@
 "use client";
+import { Button } from "@/components/ui/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -9,31 +17,20 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
-import { FileText, Loader2, Wand2 } from "lucide-react";
-import FileUploadUi from "@/features/media/components/FileUploadUi";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { useIsMobile } from "@/hooks/use-mobile";
-import { CategoryComps } from "./CategorySelectWrapper";
-import {
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import TextareaAutosize from "react-textarea-autosize";
-import { useFormContext } from "react-hook-form";
-import { TaskSchema } from "@/features/tasks/server/task-types";
 import { NewuseTask } from "@/contexts/TaskContext";
-import { useMutation } from "@tanstack/react-query";
-import { autoSuggestWithAi } from "@/features/Ai/server/action";
-import { toast } from "sonner";
+import FileUploadUi from "@/features/media/components/FileUploadUi";
+import { TaskSchema } from "@/features/tasks/server/task-types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { FileText, Loader2, Wand2 } from "lucide-react";
+import { useFormContext } from "react-hook-form";
+import TextareaAutosize from "react-textarea-autosize";
+import { CategoryComps } from "./CategorySelectWrapper";
 
 export default function NewTaskSidebar({
   isDisabled,

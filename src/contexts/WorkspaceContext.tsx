@@ -1,7 +1,7 @@
 "use client";
 import { WorkspaceUploadedFileMeta } from "@/features/media/server/media-types";
-import { WorkpaceSchemReturnedType } from "@/features/tasks/server/action";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 type WorkspaceContextType = {
   serverTime: string;

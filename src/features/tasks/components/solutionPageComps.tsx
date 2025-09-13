@@ -19,8 +19,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { env } from "@/env/client";
 import { FilesTable } from "@/features/media/components/FilesTable";
-import { taskRefundSchemaType } from "@/features/tasks/server/action";
-import { taskRefundSchema } from "@/features/tasks/server/task-types";
+import { taskRefundSchema, taskRefundSchemaType } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
 import { formatDateAndTime, formatDates } from "@/lib/utils";
@@ -43,8 +42,10 @@ import {
   acceptSolution,
   createTaskComment,
   requestRefund,
-  type SolutionById,
 } from "../server/action";
+import {
+  SolutionById
+} from "../server/task-types";
 import { SolutionPreview } from "./richTextEdito/TaskPreview";
 import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
 import GetStatusBadge from "./taskStatusBadge";

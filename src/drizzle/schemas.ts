@@ -229,14 +229,14 @@ export const TaskTable = pgTable("tasks", {
   solverId: uuid("solver_id").references(() => UserTable.id, {
     onDelete: "cascade",
   }),
-  visibility: TaskVisibility("visibility"),
+  visibility: TaskVisibility("visibility").default("public"),
   categoryId: uuid("category_id")
     .references(() => TaskCategoryTable.id, { onDelete: "no action" })
     .notNull(),
   paymentId: uuid("payment_id").references(() => PaymentTable.id, {
     onDelete: "cascade",
   }),
-  deadline: text("deadline"),
+  deadline: text("deadline").default("12h"),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
   status: TaskStatusEnum("task_status").default("OPEN"),
@@ -288,6 +288,11 @@ export const TaskFileTable = pgTable("task_files", {
 export const TaskCategoryTable = pgTable("task_categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
+  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+});
+export const TaskDeadlineTable = pgTable("task_deadline", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  deadline: text("deadline").unique().notNull(),
   createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
 });
 

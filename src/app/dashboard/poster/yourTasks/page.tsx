@@ -1,10 +1,10 @@
 import { getServerUserSession } from "@/features/auth/server/actions";
+import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
+import StripeCheckoutSucessClient from "@/features/tasks/components/stripeCheckoutSucessClient";
 import {
   getAllCategoryMap,
   getPosterTasksbyIdPaginated,
-} from "@/features/tasks/server/action";
-import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
-import StripeCheckoutSucessClient from "@/features/tasks/components/stripeCheckoutSucessClient";
+} from "@/features/tasks/server/data";
 
 export default async function ServerWrapper({
   searchParams,

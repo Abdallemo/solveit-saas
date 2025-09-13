@@ -1,14 +1,12 @@
 import db from "@/drizzle/db";
 import { TaskTable } from "@/drizzle/schemas";
-import {  isAuthorized } from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import WorkspaceOnboarding from "@/features/tasks/components/WorkspaceOnboardLoading";
 import {
-
   getWorkspaceByTaskId,
-} from "@/features/tasks/server/action";
+} from "@/features/tasks/server/data";
 import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
-import React from "react";
 
 export default async function page({
   params,

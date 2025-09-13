@@ -4,7 +4,7 @@ import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
 import {
   getDraftTaskWithDefualtVal,
-} from "@/features/tasks/server/action";
+} from "@/features/tasks/server/data";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 export default async function Page() {
   const currentUser = await getServerUserSession();
