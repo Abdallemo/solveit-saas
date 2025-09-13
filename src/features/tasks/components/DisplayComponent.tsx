@@ -471,7 +471,7 @@ export default function DisplayListComponent({
                   <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="p-0 w-[200px]">
+              <PopoverContent className="p-0 w-[250px] max-w-[300px]">
                 <Command>
                   <CommandInput placeholder="Search status..." />
                   <CommandEmpty>No status found.</CommandEmpty>
@@ -482,18 +482,20 @@ export default function DisplayListComponent({
                             <CommandItem
                               key={category}
                               onSelect={() => handleSelect(category)}
-                              className="cursor-pointer">
-                              <Check
+                              className="cursor-pointer flex flex-col gap-0 items-start  justify-start">
+                              <div className="flex flex-row-reverse w-full justify-between ">
+                                <Check
                                 className={cn(
-                                  "mr-2 h-4 w-4",
+                                  "h-4 w-4",
                                   selectedValue === category
                                     ? "opacity-100"
                                     : "opacity-0"
                                 )}
                               />
-                              <Badge className={getColorClass(category)}>
+                              <Badge className={cn(getColorClass(category),"w-full max-w-5/6")}>
                                 {category}
                               </Badge>
+                              </div>
                             </CommandItem>
                           ))
                         : STATUS_OPTIONS.map((status) => (
