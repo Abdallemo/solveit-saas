@@ -1,11 +1,19 @@
-import DashboardCheckingComponent from "@/components/dashboard/DashboardCheckingComponent";
-import { Suspense } from "react";
-import DashboardSkeleton from "./loading";
+import { getServerSession } from "@/features/auth/server/actions";
+import { redirect } from "next/navigation";
+import { UserRole } from "../../../types/next-auth";
+export default async function Page() {
+  const session = await getServerSession();
+  const useRole = session?.user.role;
 
-export default function page() {
-  return (
-    <Suspense fallback={<DashboardSkeleton/>}>
-      <DashboardCheckingComponent />;
-    </Suspense>
-  );
+  const roleRedirectMap: Record<UserRole, string> = {
+    POSTER: "/dashboard/poster",
+    SOLVER: "/dashboard/solver",
+    MODERATOR: "/dashboard/moderator",
+    ADMIN: "/dashboard/admin",
+  };
+
+  if (useRole && roleRedirectMap[useRole]) {
+    redirect(roleRedirectMap[useRole]);
+  }
+  return null;
 }
