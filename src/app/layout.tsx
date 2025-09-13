@@ -1,20 +1,11 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import { GeistMono } from "geist/font/mono";
-import { GeistSans, } from "geist/font/sans";
-import { SessionProvider, useSession } from "next-auth/react";
-import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
-// const geistSans = Geist({
-//   variable: "--font-geist-sans",
-//   subsets: ["latin"],
-// });
-
-// const geistMono = Geist_Mono({
-//   variable: "--font-geist-mono",
-//   subsets: ["latin"],
-// });
+import { GeistMono } from "geist/font/mono";
+import { GeistSans } from "geist/font/sans";
+import type { Metadata } from "next";
+import { SessionProvider } from "next-auth/react";
+import { CookiesProvider } from "next-client-cookies/server";
+import "./globals.css";
 
 export const metadata: Metadata = {
   title: "SolveIt",
@@ -26,20 +17,18 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  
-
   return (
-    <SessionProvider >
-      <html lang="en" suppressHydrationWarning >
+    <SessionProvider>
+      <html lang="en" suppressHydrationWarning>
         <body
           className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
+            defaultTheme="dark"
             enableSystem
             disableTransitionOnChange>
-            {children}
-            <Toaster position="top-center" richColors/>
+            <CookiesProvider>{children}</CookiesProvider>
+            <Toaster position="top-center" richColors />
           </ThemeProvider>
         </body>
       </html>
