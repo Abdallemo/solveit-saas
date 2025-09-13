@@ -17,6 +17,8 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
+import { upcomingTasks } from "@/features/tasks/server/data";
+import useRealtimeDeadlines from "@/hooks/useRealtimeDeadlines";
 import {
   ArrowRight,
   CalendarDays,
@@ -39,10 +41,13 @@ type SolverStats = {
 
 export default function SolverDashboardLanding({
   stats,
+  deadlines,
 }: {
   stats: SolverStats[];
+  deadlines: upcomingTasks[];
 }) {
   const path = usePathname();
+  const deadlineState = useRealtimeDeadlines(deadlines);
 
   const tasksConfig = {
     allTasks: { label: "All Tasks", color: "#3b82f6" },
@@ -57,12 +62,6 @@ export default function SolverDashboardLanding({
   const mentorshipConfig = {
     mentorSessions: { label: "Mentorship", color: "#8b5cf6" },
   } satisfies ChartConfig;
-
-  const upcomingTasks = [
-    { id: 1, title: "Website Redesign Review", due: "2 days" },
-    { id: 2, title: "API Integration Testing", due: "4 days" },
-    { id: 3, title: "Mentorship Session Prep", due: "5 days" },
-  ];
 
   const quickActions = [
     { name: "Browse Tasks", href: `${path}/tasks` },
@@ -243,13 +242,13 @@ export default function SolverDashboardLanding({
           <CalendarDays className="w-6 h-6" /> Upcoming Deadlines
         </h2>
         <div className="grid md:grid-cols-3 gap-6">
-          {upcomingTasks.map((task) => (
+          {deadlineState.map((task) => (
             <Card key={task.id}>
               <CardHeader className="flex justify-between items-center">
                 <CardTitle>
                   <p className="font-medium">{task.title}</p>
                 </CardTitle>
-                <CardDescription> Due in {task.due}</CardDescription>
+                <CardDescription> Due {task.due}</CardDescription>
               </CardHeader>
             </Card>
           ))}
