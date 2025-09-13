@@ -1,22 +1,22 @@
 "use server";
 
 import { getServerUserSession } from "@/features/auth/server/actions";
+import { plans } from "@/features/subscriptions/plans";
 import {
   getServerUserSubscriptionById,
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
 import { stripe } from "@/lib/stripe";
-import { plans } from "@/features/subscriptions/plans";
 import { redirect } from "next/navigation";
 
 import { TierType } from "@/drizzle/schemas";
 import { env } from "@/env/server";
-import { headers } from "next/headers";
 import * as db from "@/features/subscriptions/server/db";
-import Stripe from "stripe";
 import { logger } from "@/lib/logging/winston";
+import { headers } from "next/headers";
 import { cache } from "react";
+import Stripe from "stripe";
 export const {
   CancelUserSubscription,
   CreateUserSubsciption,
@@ -131,16 +131,15 @@ export async function upgradeSolverToPlus(userId: string) {
 }
 
 export async function createCancelSession() {
-  const { id } = (await getServerUserSession())!;
   const referer = await getServerReturnUrl();
-
-  if (!id) redirect("/login");
-
-  logger.info("creating cancel Session for User: " + id, { userId: id });
-  const user = await getUserById(id);
+  const currentUser = await getServerUserSession(); //next_auth
+  if (!currentUser?.id) redirect("/login");
+  
+  logger.info("creating cancel Session for User: " + currentUser.id, { userId: currentUser.id });
+  const user = await getUserById(currentUser.id);
   if (!user || !user.id) return;
 
-  const subscription = await getServerUserSubscriptionById(id);
+  const subscription = await getServerUserSubscriptionById(currentUser.id);
   if (!subscription || !subscription.stripeSubscriptionId) return;
 
   if (!user?.stripeCustomerId || !subscription.stripeSubscriptionId) return;
