@@ -191,7 +191,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
         if (updates.role) {
           await updatUserRoleByid(userId, updates.role as UserRoleType);
         }
-        if (updates.emailVerified) {
+        if (updates.emailVerified !== undefined) {
           await activeUser(userId, updates.emailVerified);
         }
       }
