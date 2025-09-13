@@ -1,4 +1,4 @@
-import { getAdminStats } from "@/features/tasks/server/action";
+import { getAdminStats } from "@/features/tasks/server/data";
 import AdminDashboard from "@/features/users/components/admin/AdminHomePageComponent";
 import { getSummaryStats } from "@/features/users/server/actions";
 import { getLogs } from "@/lib/logging/action";
