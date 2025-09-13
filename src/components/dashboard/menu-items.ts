@@ -1,42 +1,40 @@
 import {
-  Home,
+  BookCheck,
   Bug,
-  Send,
+  CalendarClockIcon,
+  Home,
   LifeBuoy,
-  LucideBarChart3,
-  LucidePieChart,
   LucideAlertTriangle,
-  LucideClipboardList,
-  LucideHistory,
-  LucideUsers,
-  LucideMonitor,
+  LucideBadgeDollarSign,
+  LucideBarChart3,
   LucideBrain,
+  LucideCalendar, // Replaced placeholder
+  LucideChartLine,
+  LucideClipboardCheck,
+  LucideClipboardList,
+  LucideClipboardPlus,
+  LucideDollarSign, // Replaced placeholder
+  LucideFileQuestion, // Replaced placeholder
+  LucideHandshake,
+  LucideHistory,
+  LucideIcon,
+  LucideLayoutDashboard,
+  LucideListChecks, // Replaced placeholder
+  LucideMessageSquare,
+  LucideMonitor, // Replaced placeholder
+  LucidePackage,
+  LucidePieChart,
   LucideSearch,
   LucideSettings,
-  LucideStar,
   LucideShieldCheck,
-  LucideDollarSign,
-  LucideBadgeDollarSign,
-  LucideListChecks,
-  LucideLayoutDashboard,
-  LucideCalendar,
-  LucideClipboardCheck,
-  LucideClipboardPlus,
+  LucideStar, // Replaced placeholder
+  LucideTrendingUp,
   LucideUserPlus,
-  LucideMessageCircle, // Replaced placeholder
-  LucidePencil, // Replaced placeholder
-  LucideFileQuestion, // Replaced placeholder
-  LucideTrendingUp, // Replaced placeholder
-  LucideHandshake, // Replaced placeholder
-  LucidePackage, // Replaced placeholder
-  LucideMessageSquare, // Replaced placeholder
-  LucideHandCoins, // Replaced placeholder
-  LucideChartLine, // Replaced placeholder
-  LucideListTodo,
-  LucideIcon,
-  SquareDashedMousePointerIcon,
+  LucideUsers,
   PackageOpen,
-  Users, // Replaced placeholder
+  Send,
+  SquareDashedMousePointerIcon,
+  Users
 } from "lucide-react";
 export type MenuItem = {
   type: "link" | "category";
@@ -53,10 +51,24 @@ export const MenuItemsModerator: MenuItem[] = [
     icon: LucideLayoutDashboard,
   },
   {
-    type: "link",
-    title: "Category Management",
-    url: "/dashboard/moderator/categories",
-    icon: LucideClipboardList,
+    type: "category",
+    title: "Task Management",
+    url: "",
+    icon: BookCheck,
+    child: [
+      {
+        type: "link",
+        title: "Category Management",
+        url: "/dashboard/moderator/categories",
+        icon: LucideClipboardList,
+      },
+      {
+        type: "link",
+        title: "Deadline Management",
+        url: "/dashboard/moderator/deadline",
+        icon: CalendarClockIcon,
+      },
+    ],
   },
   {
     type: "category",
@@ -184,25 +196,25 @@ export const MenuItemsAdmin: MenuItem[] = [
     ],
   },
   {
-    type:"link",
+    type: "link",
     title: "Subscription Management",
     url: "/dashboard/admin/subscriptions",
     icon: LucideBadgeDollarSign,
   },
   {
-    type:"category",
+    type: "category",
     title: "Payment Management",
     url: "/dashboard/admin/payments",
     icon: LucideDollarSign,
     child: [
       {
-        type:"link",
+        type: "link",
         title: "All Payments",
         url: "/dashboard/admin/payments",
         icon: LucideListChecks,
       },
       {
-        type:"link",
+        type: "link",
         title: "Pending/Hold",
         url: "/dashboard/admin/payments/hold",
         icon: LucideListChecks,
@@ -210,20 +222,20 @@ export const MenuItemsAdmin: MenuItem[] = [
     ],
   },
   {
-    type:"link",
+    type: "link",
     title: "System Reports",
     url: "/dashboard/admin/reports",
     icon: LucidePieChart,
   },
   {
-    type:"link",
+    type: "link",
     title: "Site Settings",
     url: "/dashboard/admin/settings",
     icon: LucideSettings,
   },
 ];
 
-export const MenuItemsPoster:MenuItem[] = [
+export const MenuItemsPoster: MenuItem[] = [
   {
     type: "link",
     title: "Dashboard",
@@ -296,7 +308,7 @@ export const MenuItemsPoster:MenuItem[] = [
   },
 ];
 
-export const MenuItemsSolver:MenuItem[] = [
+export const MenuItemsSolver: MenuItem[] = [
   {
     type: "link",
     title: "Dashboard",
