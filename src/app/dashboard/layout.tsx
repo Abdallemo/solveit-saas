@@ -20,7 +20,6 @@ import {
 import { stripe } from "@/lib/stripe";
 import { SessionProvider } from "next-auth/react";
 import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
 import DashboardSkeleton, { AppSidebarSkeleton } from "./loading";
 const dbFlags = {
   monacoEditor: false,
@@ -78,10 +77,7 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
       price,
     };
   }
-  if (!user.emailVerified) {
-    return redirect("/account-deactivated");
-  }
-
+ 
   return (
     <SessionProvider
       session={session}
