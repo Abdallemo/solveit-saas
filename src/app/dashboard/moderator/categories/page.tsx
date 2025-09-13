@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton"
 import CreateCategoryDialog, { CategoryCard } from "@/features/tasks/components/mod/CatagoryComps"
-import { getAllTaskCatagories } from "@/features/tasks/server/action"
+import { getAllTaskCatagories } from "@/features/tasks/server/data"
 import { InboxIcon } from "lucide-react"
 import { Suspense } from "react"
 
