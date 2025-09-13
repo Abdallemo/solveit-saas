@@ -105,23 +105,23 @@ async function main() {
     .returning();
   console.log(`✅ Created ${payments.length} payments`);
 
-  const tasks = await db
-
-    .insert(TaskTable)
-    .values(
-      payments.map((payment, idx) => ({
+  const tasks = payments.map(async (payment, idx) => {
+    return await db
+      .insert(TaskTable)
+      .values({
+        visibility: "public",
         title: faker.lorem.words({ min: 3, max: 8 }),
         description: faker.lorem.sentence(),
         content: programmingTaskContents[idx % programmingTaskContents.length],
         price: payment.amount,
         posterId: user.id,
-        visibility: "public",
         categoryId,
         paymentId: payment.id,
         deadline: "12h",
-      }))
-    )
-    .returning();
+      })
+      .returning();
+  });
+
   console.log(`✅ Created ${tasks.length} tasks`);
 
   console.log("✨ Database seeding completed successfully!");
