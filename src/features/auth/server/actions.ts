@@ -9,8 +9,8 @@ import {
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
-import { getUserByIdCached } from "@/features/users/server/db";
 import { auth, signIn, signOut } from "@/lib/auth";
+import { withCache } from "@/lib/cache";
 import { sendVerificationEmail } from "@/lib/nodemailer";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
@@ -215,18 +215,24 @@ export async function isAuthorized(
   if (!user || !user.id || !user?.role || !user.id) {
     return redirect("/api/auth/signout?callbackUrl=/login");
   }
-  const userDb = options?.useCache
-    ? await getUserByIdCached(user.id)
-    : await getUserById(user.id);
+  const userDb = await withCache({
+    callback: () => getUserById(user.id!),
+    tag: "user-data-cache",
+    dep: [user.id],
+    enabled: options?.useCache,
+  })();
 
   if (!userDb) {
     return redirect(
       "/api/auth/signout?callbackUrl=/login?error=account_deleted"
     );
   }
+  if (!userDb.emailVerified) {
+    return redirect(`/${userDb.id}/account-deactivated`);
+  }
 
   if (!whichRole.includes(user.role)) {
-    console.log("redrecting user")
+    console.log("redrecting user");
     redirect(`/dashboard/${user.role.toLocaleLowerCase()}`);
   }
 
