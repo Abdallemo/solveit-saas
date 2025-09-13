@@ -1,9 +1,14 @@
 "use client";
 
-import React, { useEffect, useRef } from "react";
-import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   NavigationMenu,
   NavigationMenuContent,
@@ -14,10 +19,14 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { ModeToggle } from "../toggle";
-import { Loader2, Menu } from "lucide-react";
-import { useState } from "react";
+import { cn } from "@/lib/utils";
+import { Loader2, LogOut, Menu } from "lucide-react";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import React, { useEffect, useRef, useState } from "react";
+import { ModeToggle } from "../toggle";
+import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 export default function Navbar() {
   const { user } = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -120,9 +129,45 @@ export default function Navbar() {
               <Link href={"/login"}>SignIn</Link>
             </Button>
           ) : (
-            <Button size="sm" asChild>
-              <Link href={"/dashboard"}>dashboard</Link>
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger>
+                <Avatar>
+                  <AvatarFallback>
+                    {user.name?.charAt(0).toUpperCase()}
+                  </AvatarFallback>
+                  <AvatarImage src={user.image!} />
+                </Avatar>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel className="p-0 font-normal">
+                  <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
+                    <Avatar>
+                      <AvatarImage src={user.image!} alt={"test"} />
+                      <AvatarFallback className="rounded-lg">
+                        {user.name?.split("")[0]}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="grid flex-1 text-left text-sm leading-tight">
+                      <span className="truncate font-semibold">
+                        {user.name}
+                      </span>
+                      <span className="truncate text-xs">{user.email}</span>
+                    </div>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Link href={"/dashboard"}>Dashboard</Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  onClick={() => signOut({ redirectTo: "/" })}>
+                  <LogOut />
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
           <ModeToggle />
         </div>
