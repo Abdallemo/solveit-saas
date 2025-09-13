@@ -1,6 +1,5 @@
 import SolutionPageComps from '@/features/tasks/components/solutionPageComps'
-import { getSolutionById } from '@/features/tasks/server/action'
-import React from 'react'
+import { getSolutionById } from '@/features/tasks/server/data'
 
 export default async function SolutionPage({params}:{params:Promise<{solutionId:string}>}) {
   const {solutionId} = await params

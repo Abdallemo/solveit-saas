@@ -1,13 +1,6 @@
 "use client";
 
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+import AuthGate from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,24 +10,31 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  File,
-  FileText,
-  ImageIcon,
-  FileVideo,
-  FileAudio,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { taskTableType } from "@/drizzle/schemas";
+import { SolutionById } from "@/features/tasks/server/task-types";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { formatDistanceToNow } from "date-fns";
+import {
   Archive,
-  MoreHorizontal,
+  Copy,
   Download,
   Eye,
+  File,
+  FileAudio,
+  FileText,
+  FileVideo,
+  ImageIcon,
+  MoreHorizontal,
   Trash2,
-  Copy,
 } from "lucide-react";
-import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import AuthGate from "@/components/AuthGate";
-import { TaskTable, taskTableType } from "@/drizzle/schemas";
-import { SolutionById } from "@/features/tasks/server/action";
 
 interface FileData {
   id: string;

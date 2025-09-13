@@ -1,19 +1,36 @@
 "use client";
 
 import {
+  Check,
+  ChevronsUpDown,
   MoreHorizontal,
-  Plus,
   Search,
   UserCheck,
   UserX,
-  Check,
-  ChevronsUpDown,
-  ArrowUpDown,
 } from "lucide-react";
 import { useState } from "react";
 
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,27 +41,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
 import {
   Select,
   SelectContent,
@@ -53,24 +53,23 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { UserRoleType } from "@/drizzle/schemas";
+import {
+  DeleteUserFromDb,
+  activeUser,
   allUsersType,
   updatUserRoleByid,
-  DeleteUserFromDb,
-} from "../../server/actions";
-import { UserRoleType } from "@/drizzle/schemas";
+} from "@/features/users/server/actions";
+import { cn } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogCancel,
-  AlertDialogAction,
-} from "@/components/ui/alert-dialog";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const roles: { value: UserRoleType; label: string }[] = [
   { value: "ADMIN", label: "Admin" },
@@ -84,6 +83,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
   const [selectedRole, setSelectedRole] = useState("");
   const [roleOpen, setRoleOpen] = useState(false);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc" | null>(null);
+  const router = useRouter();
   const [hasChanges, setHasChanges] = useState(false);
   const [userData, setUserData] = useState(users);
   const [modifiedUsers, setModifiedUsers] = useState<
@@ -91,6 +91,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
   >({});
   const [deletedUserIds, setDeletedUserIds] = useState<string[]>([]);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
+  const [activateUser, setActivateUser] = useState<string | null>(null);
   const filteredUsers = userData
     .filter(
       (user) =>
@@ -160,6 +161,28 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
     setDeletedUserIds((prev) => [...prev, userId]);
     setHasChanges(true);
   };
+  const toggleUserActivation = (
+    userId: string,
+    mode: "activate" | "deactivate"
+  ) => {
+    const now = mode === "activate" ? new Date() : null;
+
+    setUserData((prev) =>
+      prev.map((user) =>
+        user.id === userId ? { ...user, emailVerified: now } : user
+      )
+    );
+
+    setModifiedUsers((prev) => ({
+      ...prev,
+      [userId]: {
+        ...(prev[userId] || {}),
+        emailVerified: now,
+      },
+    }));
+
+    setHasChanges(true);
+  };
 
   const handleSaveChanges = async () => {
     try {
@@ -167,6 +190,9 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
         const updates = modifiedUsers[userId];
         if (updates.role) {
           await updatUserRoleByid(userId, updates.role as UserRoleType);
+        }
+        if (updates.emailVerified) {
+          await activeUser(userId, updates.emailVerified);
         }
       }
 
@@ -182,6 +208,12 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
       console.error(error);
       toast.error("Failed to save changes.");
     }
+  };
+  const undoChanges = () => {
+    setUserData(users);
+    setModifiedUsers({});
+    setDeletedUserIds([]);
+    setHasChanges(false);
   };
 
   return (
@@ -268,7 +300,10 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
           </Popover>
         </div>
         {hasChanges && (
-          <div className="flex justify-end mt-4">
+          <div className="flex justify-end mt-4 gap-2">
+            <Button variant={"secondary"} onClick={undoChanges}>
+              Undo
+            </Button>
             <Button onClick={handleSaveChanges}>Save Changes</Button>
           </div>
         )}
@@ -341,14 +376,25 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>View profile</DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setHasChanges(true)}>
-                        <UserCheck className="mr-2 h-4 w-4" />
-                        Activate user
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => setHasChanges(true)}>
-                        <UserX className="mr-2 h-4 w-4" />
-                        Deactivate user
-                      </DropdownMenuItem>
+                      {!user.emailVerified && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            toggleUserActivation(user.id, "activate")
+                          }>
+                          <UserCheck className="mr-2 h-4 w-4" />
+                          Activate user
+                        </DropdownMenuItem>
+                      )}
+                      {user.emailVerified && (
+                        <DropdownMenuItem
+                          onClick={() =>
+                            toggleUserActivation(user.id, "deactivate")
+                          }>
+                          <UserX className="mr-2 h-4 w-4" />
+                          Deactivate user
+                        </DropdownMenuItem>
+                      )}
+
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600"

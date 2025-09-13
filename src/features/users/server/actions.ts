@@ -11,7 +11,7 @@ import {
 } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { stripe } from "@/lib/stripe";
-import { count, eq, sql, sum } from "drizzle-orm";
+import { and, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
 
 //* User Types
@@ -37,7 +37,9 @@ export async function DeleteUserFromDb(id: string) {
       await tx
         .delete(UserSubscriptionTable)
         .where(eq(UserSubscriptionTable.userId, id));
-      await stripe.accounts.del(deletedAcount[0].accountId!);
+      if (deletedAcount.length > 0 && deletedAcount[0].accountId) {
+        await stripe.accounts.del(deletedAcount[0].accountId!);
+      }
     });
   }
 }
@@ -236,6 +238,24 @@ export async function updatUserRoleByid(userId: string, role: UserRoleType) {
       role,
     })
     .where(eq(UserTable.id, userId));
+}
+export async function activeUser(userId: string, emailVerified: Date | null) {
+  const serverDate = new Date();
+  if (emailVerified) {
+    await db
+      .update(UserTable)
+      .set({
+        emailVerified: serverDate,
+      })
+      .where(and(eq(UserTable.id, userId), isNull(UserTable.emailVerified)));
+  } else {
+    await db
+      .update(UserTable)
+      .set({
+        emailVerified: null,
+      })
+      .where(and(eq(UserTable.id, userId), isNotNull(UserTable.emailVerified)));
+  }
 }
 export async function getUserById(id: string) {
   try {

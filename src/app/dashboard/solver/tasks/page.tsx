@@ -1,5 +1,5 @@
-import { getServerUserSession } from "@/features/auth/server/actions"
-import { getAllCategoryMap, getAllTasksByRolePaginated,  } from "@/features/tasks/server/action"
+import { getServerUserSession } from "@/features/auth/server/actions";
+import { getAllCategoryMap, getAllTasksByRolePaginated, } from "@/features/tasks/server/data";
 
 import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 

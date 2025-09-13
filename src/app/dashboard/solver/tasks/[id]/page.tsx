@@ -3,7 +3,7 @@ import { getServerUserSession } from "@/features/auth/server/actions";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
 import TaskPreview from "@/features/tasks/components/richTextEdito/TaskPreview";
-import { getTaskFilesById, getTasksbyId } from "@/features/tasks/server/action";
+import { getTaskFilesById, getTasksbyId } from "@/features/tasks/server/data";
 import { Loader2 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";

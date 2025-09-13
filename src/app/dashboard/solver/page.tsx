@@ -1,5 +1,5 @@
 import { isAuthorized } from "@/features/auth/server/actions";
-import { getSolverStats } from "@/features/tasks/server/action";
+import { getSolverStats } from "@/features/tasks/server/data";
 import SolverDashboard from "@/features/users/components/solver/SolverDashboard";
 
 export default async function page() {

@@ -1,6 +1,7 @@
-import { getServerUserSession } from "@/features/auth/server/actions"
-import { getAllCategoryMap, getAssignedTasksbyIdPaginated, getPosterTasksbyIdPaginated, handleTaskDeadline } from "@/features/tasks/server/action"
+import { getServerUserSession } from "@/features/auth/server/actions";
 import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
+import { handleTaskDeadline } from "@/features/tasks/server/action";
+import { getAllCategoryMap, getAssignedTasksbyIdPaginated } from "@/features/tasks/server/data";
 
 
 export default async function ServerWrapper({

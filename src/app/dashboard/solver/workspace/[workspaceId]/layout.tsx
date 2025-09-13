@@ -1,9 +1,8 @@
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import {
-  getServerUserSession,
-  isAuthorized,
+  isAuthorized
 } from "@/features/auth/server/actions";
-import { getWorkspaceById } from "@/features/tasks/server/action";
+import { getWorkspaceById } from "@/features/tasks/server/data";
 import { redirect } from "next/navigation";
 
 import { ReactNode } from "react";

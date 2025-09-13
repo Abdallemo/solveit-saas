@@ -1,9 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { CheckIcon, ChevronsUpDownIcon, Loader2 } from "lucide-react";
+import { useState } from "react";
 
-import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -18,10 +17,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { getAllTaskCatagories } from "../server/action";
-import { NewuseTask } from "@/contexts/TaskContext";
-import { useQuery } from "@tanstack/react-query";
-import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Select,
   SelectContent,
@@ -30,6 +25,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { NewuseTask } from "@/contexts/TaskContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { cn } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
+import { getAllTaskCatagories } from "../server/data";
 
 interface CategoryCompsProps {
   value: string;

@@ -1,5 +1,6 @@
 "use server";
 import db from "@/drizzle/db";
+import { UserDetails } from "@/drizzle/schemas";
 import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 import {
   CreateUser,
@@ -112,6 +113,7 @@ export async function EmailRegisterAction(
       name,
     });
     await CreateUserSubsciption({ tier: "POSTER", userId: userId });
+    await db.insert(UserDetails).values({ userId, onboardingCompleted: false });
 
     const verificationToken = await generateVerificationToken(email);
 
@@ -201,21 +203,34 @@ export async function verifyVerificationToken(
   }
 }
 
-export async function isAuthorized(whichRole: UserRole[] | undefined) {
-  const user = await getServerUserSession();
-  if (!whichRole) return { authorized: false, user: null };
-  if (!user || !user?.role || !user.id)
+export async function isAuthorized(
+  whichRole: UserRole[],
+  options: { useCache: boolean } = { useCache: true }
+) {
+  const session = await getServerSession();
+  if (!session) {
     return redirect("/api/auth/signout?callbackUrl=/login");
-  const userDb = await getUserByIdCached(user.id);
-  if (!userDb)
+  }
+  const { user } = session;
+  if (!user || !user.id || !user?.role || !user.id) {
+    return redirect("/api/auth/signout?callbackUrl=/login");
+  }
+  const userDb = options?.useCache
+    ? await getUserByIdCached(user.id)
+    : await getUserById(user.id);
+
+  if (!userDb) {
     return redirect(
       "/api/auth/signout?callbackUrl=/login?error=account_deleted"
     );
+  }
 
   if (!whichRole.includes(user.role)) {
-    redirect("/dashboard/");
+    console.log("redrecting user")
+    redirect(`/dashboard/${user.role.toLocaleLowerCase()}`);
   }
-  return { authorized: true, user: userDb };
+
+  return { user: userDb, session: session };
 }
 
 export async function DeleteUserAccount() {

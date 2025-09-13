@@ -23,7 +23,9 @@ export const formatDate = (dateString: string) => {
     timeZone: "UTC",
   });
 };
-
+export const wait = (ms: number = 3000): Promise<void> => {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+};
 export const formatDates = (dateString: Date) => {
   return dateString.toLocaleDateString(undefined, {
     timeZone: "UTC",
