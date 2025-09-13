@@ -1,4 +1,4 @@
-import { getPosterStats } from "@/features/tasks/server/action";
+import { getPosterStats } from "@/features/tasks/server/data";
 import PosterDashboard from "@/features/users/components/poster/PosterDashboard";
 
 export default async function page() {
