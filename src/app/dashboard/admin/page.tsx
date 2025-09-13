@@ -3,9 +3,9 @@ import AdminDashboard from "@/features/users/components/admin/AdminHomePageCompo
 import { getSummaryStats } from "@/features/users/server/actions";
 import { getLogs } from "@/lib/logging/action";
 export type StastType = Awaited<ReturnType<typeof getSummaryStats>>;
-export default async function page() {
 
+export default async function page() {
   const serverLogs = await getLogs();
-  const data  = await getAdminStats()
+  const data = await getAdminStats();
   return <AdminDashboard serverLogs={serverLogs} statsData={data} />;
 }
