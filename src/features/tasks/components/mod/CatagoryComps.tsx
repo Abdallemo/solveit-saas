@@ -1,9 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,8 +11,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Form,
   FormControl,
@@ -23,12 +19,17 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Plus } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { formatDateAndTime } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { createCatagory } from "../../server/action";
+import { FolderIcon, Plus, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { FolderIcon, Trash2 } from "lucide-react"
+import { z } from "zod";
+import { createCatagory, deleteCatagory } from "../../server/action";
+import { CatagoryType } from "../../server/task-types";
 
 const categorySchema = z.object({
   name: z
@@ -132,11 +133,18 @@ export default function CreateCategoryDialog({
     </Dialog>
   );
 }
-export function CategoryCard({ category }: { category: any }) {
+export function CategoryCard({ category }: { category: CatagoryType }) {
+  const { mutateAsync: deleteCatagoryMutation, isPending: isDeleting } =
+    useMutation({
+      mutationFn: deleteCatagory,
+      onSuccess: () => {
+        toast.success("Successfully deleted", { id: "delete-catagory" });
+      },
+      onError: (e) => toast.error(e.message, { id: "delete-catagory" }),
+    });
   const handleDelete = async () => {
-    console.log("Delete category:", category.id)
-
-  }
+    await deleteCatagoryMutation(category.id);
+  };
 
   return (
     <Card className="group hover:shadow-md transition-shadow duration-200">
@@ -146,24 +154,28 @@ export function CategoryCard({ category }: { category: any }) {
             <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
               <FolderIcon className="w-5 h-5 text-primary" />
             </div>
-            <CardTitle className="text-lg font-semibold truncate">{category.name}</CardTitle>
+            <CardTitle className="text-lg font-semibold truncate">
+              {category.name}
+            </CardTitle>
           </div>
           <Button
             variant="ghost"
             size="sm"
+            disabled={isDeleting}
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10"
-          >
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10">
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Tasks: {category.taskCount || 0}</span>
-          <span>Created: {new Date(category.createdAt).toLocaleDateString()}</span>
+          <span>Tasks: {0}</span>
+          <span>
+            Created: {formatDateAndTime(new Date(category.createdAt!))}
+          </span>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
