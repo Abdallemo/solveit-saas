@@ -11,17 +11,16 @@ import {
   SolutionTable,
   TaskCategoryTable,
   TaskCommentTable,
+  TaskDeadlineTable,
   TaskDraftTable,
   TaskFileTable,
   TaskTable,
   WorkspaceFilesTable,
-  WorkspaceTable
+  WorkspaceTable,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { validateContentWithAi } from "@/features/Ai/server/action";
-import {
-  getServerUserSession
-} from "@/features/auth/server/actions";
+import { getServerUserSession } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { sendNotification } from "@/features/notifications/server/action";
@@ -31,7 +30,7 @@ import type {
   assignTaskReturnType,
   SolutionById,
   TaskReturnType,
-  Units
+  Units,
 } from "@/features/tasks/server/task-types";
 import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import {
@@ -39,20 +38,21 @@ import {
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
+import { withRevalidateTag } from "@/lib/cache";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { isError, truncateText } from "@/lib/utils";
 import { addDays, addHours, addMonths, addWeeks, addYears } from "date-fns";
-import {
-  and,
-  eq,
-  inArray,
-  isNull
-} from "drizzle-orm";
+import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getBlockedSolver, getTaskCatagoryId, getWorkspaceById, getWorkspaceByTaskId } from "./data";
+import {
+  getBlockedSolver,
+  getTaskCatagoryId,
+  getWorkspaceById,
+  getWorkspaceByTaskId,
+} from "./data";
 import { workspaceFileType } from "./task-types";
 
 //the Magic Parts 🪄
@@ -67,15 +67,15 @@ function parseDeadlineV2(value: string, baseTime: Date): Date | null {
   const num = parseInt(numStr, 10);
 
   switch (unit as Units) {
-    case 'h':
+    case "h":
       return addHours(baseTime, num);
-    case 'd':
+    case "d":
       return addDays(baseTime, num);
-    case 'w':
+    case "w":
       return addWeeks(baseTime, num);
-    case 'm':
+    case "m":
       return addMonths(baseTime, num);
-    case 'y':
+    case "y":
       return addYears(baseTime, num);
     default:
       return null;
@@ -102,7 +102,7 @@ export async function calculateTaskProgress(solverId: string, taskId: string) {
   const workspace = await getWorkspaceByTaskId(taskId, solverId);
   if (!workspace) return -1;
 
-  const deadline = parseDeadline(
+  const deadline = parseDeadlineV2(
     workspace.task.deadline!,
     workspace.createdAt!
   );
@@ -438,8 +438,35 @@ export async function createCatagory(name: string) {
   await db.insert(TaskCategoryTable).values({
     name,
   });
-  revalidatePath("dashboard/moderator/categories");
+  withRevalidateTag("category-data-cache");
 }
+export async function deleteCatagory(id: string) {
+  try {
+    await db.delete(TaskCategoryTable).where(eq(TaskCategoryTable.id, id));
+    withRevalidateTag("category-data-cache");
+  } catch (error) {
+    throw new Error("unable to delete category");
+  }
+}
+export async function createDeadline(deadline: string) {
+  const match = deadline.match(/^(\d+)([hdwmy])$/);
+  if (!match) {
+    throw new Error("invalid deadline format");
+  }
+  await db.insert(TaskDeadlineTable).values({
+    deadline,
+  });
+  withRevalidateTag("deadline-data-cache");
+}
+export async function deleteDeadline(id: string) {
+  try {
+    await db.delete(TaskCategoryTable).where(eq(TaskDeadlineTable.id, id));
+    withRevalidateTag("deadline-data-cache");
+  } catch (error) {
+    throw new Error("unable to delete deadline");
+  }
+}
+
 export async function autoSaveDraftWorkspace(
   content: string,
   solverId: string,
