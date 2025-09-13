@@ -14,9 +14,11 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import type {
   dataOptions,
   FlatDispute,
+  Units,
 } from "@/features/tasks/server/task-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
+import { formatTimeRemaining } from "@/lib/utils";
 import {
   and,
   asc,
@@ -31,6 +33,7 @@ import {
   sum,
 } from "drizzle-orm";
 import { unionAll } from "drizzle-orm/pg-core";
+import { calculateTaskProgressV2 } from "./action";
 
 export async function getBlockedSolver(solverId: string, taskId: string) {
   const result = db.query.BlockedTasksTable.findFirst({
@@ -477,6 +480,69 @@ export async function getSolverStats(range: string = "30 days") {
     inProgressTasks: Number(res.inProgressTasks) || 0,
   }));
 }
+
+const tMap: Record<Units, string> = {
+  d: "day",
+  h: "hours",
+  m: "months",
+  w: "weeks",
+  y: "years",
+};
+
+export type upcomingTasks = {
+  id: string;
+  title: string;
+  due: string;
+  totalTime: number;
+  timePassed: number;
+  unit: Units;
+};
+export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
+  const { user } = await isAuthorized(["SOLVER"]);
+
+  const tasks = await db.query.TaskTable.findMany({
+    columns: { id: true, title: true, deadline: true },
+    where: (tb, fn) => fn.eq(tb.solverId, user.id),
+  });
+
+  const result = await Promise.all(
+    tasks.map(async (task) => {
+      const { timePassed, totalTime } = await calculateTaskProgressV2(
+        user.id,
+        task.id
+      );
+      if (!task.deadline || timePassed === null || totalTime === null)
+        return null;
+
+      const match = task.deadline.toLowerCase().match(/^(\d+)([hdwmy])$/);
+      if (!match) return null;
+
+      const [, , unit] = match;
+      const timeRemaining = totalTime - timePassed;
+
+      if (timeRemaining <= 0)
+        return { id: task.id, due: "Passed", title: task.title };
+
+      const now = new Date();
+      const futureTime = new Date(now.getTime() + timeRemaining);
+
+      const due = formatTimeRemaining(futureTime, now, unit as Units);
+
+      return {
+        id: task.id,
+        title: task.title,
+        due,
+        totalTime,
+        timePassed,
+        unit:unit as Units,
+
+      };
+    })
+  );
+
+  return result.filter((t): t is upcomingTasks => t !== null);
+}
+
 export async function getAdminStats(range: string = "30 days") {
   const { user } = await isAuthorized(["ADMIN"]);
   if (!user?.id) return [];
