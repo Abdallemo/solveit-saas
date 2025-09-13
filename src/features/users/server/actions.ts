@@ -240,6 +240,7 @@ export async function updatUserRoleByid(userId: string, role: UserRoleType) {
     .where(eq(UserTable.id, userId));
 }
 export async function activeUser(userId: string, emailVerified: Date | null) {
+  console.log("usr to togle actiavtion with date :", emailVerified);
   const serverDate = new Date();
   if (emailVerified) {
     await db
