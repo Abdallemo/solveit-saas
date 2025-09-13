@@ -1,6 +1,15 @@
 import { AvailabilitySlot } from "@/features/mentore/server/types";
+import { Units } from "@/features/tasks/server/task-types";
 import { clsx, type ClassValue } from "clsx";
-import { format } from "date-fns";
+import {
+  differenceInDays,
+  differenceInHours,
+  differenceInMinutes,
+  differenceInMonths,
+  differenceInWeeks,
+  differenceInYears,
+  format,
+} from "date-fns";
 import {
   FileArchive,
   FileAudio,
@@ -257,4 +266,35 @@ export function isDoc(ext: supportedExtentions): ext is DocType {
 
 export function isCode(ext: supportedExtentions): ext is CodeType {
   return codeExtensions.includes(ext as CodeType);
+}
+
+
+export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
+  switch (unit) {
+    case "h": {
+      const hours = differenceInHours(end, now);
+      const minutes = differenceInMinutes(end, now) % 60;
+      return `${hours}h ${minutes}m`;
+    }
+    case "d": {
+      const days = differenceInDays(end, now);
+      const hours = differenceInHours(end, now) % 24;
+      return `${days}d ${hours}h`;
+    }
+    case "w": {
+      const weeks = differenceInWeeks(end, now);
+      const days = differenceInDays(end, now) % 7;
+      return `${weeks}w ${days}d`;
+    }
+    case "m": {
+      const months = differenceInMonths(end, now);
+      const days = differenceInDays(end, now) % 30; // approximate
+      return `${months}m ${days}d`;
+    }
+    case "y": {
+      const years = differenceInYears(end, now);
+      const months = differenceInMonths(end, now) % 12;
+      return `${years}y ${months}m`;
+    }
+  }
 }
