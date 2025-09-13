@@ -116,6 +116,27 @@ export async function calculateTaskProgress(solverId: string, taskId: string) {
 
   return Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
 }
+export async function calculateTaskProgressV2(
+  solverId: string,
+  taskId: string
+) {
+  const workspace = await getWorkspaceByTaskId(taskId, solverId);
+  if (!workspace)return { timePassed: null, percentage: null }
+
+  const deadline = parseDeadlineV2(
+    workspace.task.deadline!,
+    workspace.createdAt!
+  );
+  if (!deadline) return { timePassed: null, percentage: null,totalTime:null }
+
+  const startTime = workspace.createdAt!.getTime();
+  const currentTime = Date.now();
+
+  const timePassed = currentTime - startTime;
+  const totalTime = deadline.getTime() - startTime;
+  const percentage = Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
+  return { timePassed: timePassed, percentage: percentage ,totalTime};
+}
 export async function createTaskAction(
   userId: string,
   title: string,
