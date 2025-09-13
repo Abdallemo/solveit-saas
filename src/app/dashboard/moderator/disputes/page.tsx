@@ -1,6 +1,5 @@
 import { Columns, RefundTable } from '@/features/tasks/components/refund/refundComps'
-import { getAllDisputes } from '@/features/tasks/server/action'
-import React from 'react'
+import { getAllDisputes } from '@/features/tasks/server/data'
 
 export default async function Page() {
   const allDisputes = await getAllDisputes()
