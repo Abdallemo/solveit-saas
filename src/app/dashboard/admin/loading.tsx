@@ -1,8 +1,5 @@
-import Loading from '@/app/loading'
-import React from 'react'
+import DashboardSkeleton from "../loading";
 
-export default function loading() {
-  return (
-    <Loading/>
-  )
+export default function Loading() {
+  return <DashboardSkeleton />;
 }
