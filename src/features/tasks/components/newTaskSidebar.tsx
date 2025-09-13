@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
   SelectTrigger,
   SelectValue,
@@ -27,9 +28,11 @@ import { NewuseTask } from "@/contexts/TaskContext";
 import FileUploadUi from "@/features/media/components/FileUploadUi";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useQuery } from "@tanstack/react-query";
 import { FileText, Loader2, Wand2 } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import TextareaAutosize from "react-textarea-autosize";
+import { getAllTaskDeadlines } from "../server/data";
 import { CategoryComps } from "./CategorySelectWrapper";
 
 export default function NewTaskSidebar({
@@ -103,13 +106,14 @@ export default function NewTaskSidebar({
 }
 
 function SideBarForm({ isPending }: { isPending: boolean }) {
-  // const { setDeadline } = useTask(); // migrating from
-
   const {
     draft: { title, description },
     updateDraft,
   } = NewuseTask(); //m Mirating to
-
+  const { data: fetchedDeadlines, isPending: isLoading } = useQuery({
+    queryKey: ["deadline"],
+    queryFn: async () => await getAllTaskDeadlines(),
+  });
   const form = useFormContext<TaskSchema>();
   return (
     <div className="px-5 py-3 mb-3 space-y-4 overflow-x-auto">
@@ -183,20 +187,28 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
             <FormLabel>Deadline</FormLabel>
             <Select
               value={field.value}
+              disabled={isLoading}
               onValueChange={(val) => {
                 field.onChange(val);
                 updateDraft({ deadline: val });
               }}>
               <FormControl>
                 <SelectTrigger className=" w-full">
-                  <SelectValue placeholder="Select time task takes to be completed" />
+                  <SelectValue placeholder="Select task deadline" />
                 </SelectTrigger>
               </FormControl>
               <SelectContent>
-                <SelectItem value="12h">12h</SelectItem>
-                <SelectItem value="24h">24h</SelectItem>
-                <SelectItem value="48h">48h</SelectItem>
-                <SelectItem value="3days">3 days</SelectItem>
+                <SelectGroup>
+                  {isLoading && <Loader2 className="animate-spin" />}
+                  {fetchedDeadlines?.map((de) => (
+                    <SelectItem
+                      key={de.id}
+                      value={de.deadline}
+                      className="text-white">
+                      {de.deadline}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
               </SelectContent>
             </Select>
             <FormMessage />
