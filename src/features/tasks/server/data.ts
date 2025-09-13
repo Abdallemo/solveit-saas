@@ -11,7 +11,11 @@ import {
   UserTable,
 } from "@/drizzle/schemas";
 import { isAuthorized } from "@/features/auth/server/actions";
-import type { FlatDispute } from "@/features/tasks/server/task-types";
+import type {
+  dataOptions,
+  FlatDispute,
+} from "@/features/tasks/server/task-types";
+import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
 import {
   and,
@@ -35,12 +39,39 @@ export async function getBlockedSolver(solverId: string, taskId: string) {
   });
   return [result][0];
 }
-export async function getAllTaskCatagories() {
-  const catagoryName = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true, createdAt: true },
-  });
-  return catagoryName;
+export async function getAllTaskCatagories(
+  options: dataOptions = { useCache: true }
+) {
+  return await withCache({
+    callback: async () => {
+      console.log("hit cat");
+      const all = await db.query.TaskCategoryTable.findMany({
+        columns: { id: true, name: true, createdAt: true },
+      });
+      console.log(all);
+      return all;
+    },
+    tag: "category-data-cache",
+    enabled: options.useCache,
+  })();
 }
+export async function getAllTaskDeadlines(
+  options: dataOptions = { useCache: true }
+) {
+  return await withCache({
+    callback: async () => {
+      console.log("hit cat");
+      const all = await db.query.TaskDeadlineTable.findMany({
+        columns: { id: true, deadline: true, createdAt: true },
+      });
+      console.log(all);
+      return all;
+    },
+    tag: "deadline-data-cache",
+    enabled: options.useCache,
+  })();
+}
+
 export async function getTaskCatagoryId(name: string) {
   const catagoryId = await db.query.TaskCategoryTable.findFirst({
     where: (table, fn) => fn.eq(table.name, name),
@@ -49,9 +80,7 @@ export async function getTaskCatagoryId(name: string) {
   return catagoryId;
 }
 export async function getAllCategoryMap(): Promise<Record<string, string>> {
-  const categories = await db.query.TaskCategoryTable.findMany({
-    columns: { id: true, name: true },
-  });
+  const categories = await getAllTaskCatagories();
 
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
@@ -525,8 +554,9 @@ export async function getAdminStats(range: string = "30 days") {
     subscriptions: Number(res.subscriptions) || 0,
   }));
 }
-export async function getAllDisputes(): Promise<FlatDispute[]> {
-  const allDisputes = await db.query.RefundTable.findMany({
+async function AllDisputes() {
+  console.log("AllDisputes called");
+  return await db.query.RefundTable.findMany({
     with: {
       taskRefund: {
         with: {
@@ -538,6 +568,16 @@ export async function getAllDisputes(): Promise<FlatDispute[]> {
       },
     },
   });
+}
+export async function getAllDisputes(
+  options: dataOptions = { useCache: true }
+): Promise<FlatDispute[]> {
+  const allDisputes = await withCache({
+    callback: () => AllDisputes(),
+    tag: "dispute-data-cache",
+    enabled: options.useCache,
+  })();
+  console.log(allDisputes);
   return allDisputes.map((dispute) => ({
     id: dispute.id ?? null,
     refundReason: dispute.refundReason ?? null,
