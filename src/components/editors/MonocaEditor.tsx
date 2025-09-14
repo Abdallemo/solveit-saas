@@ -2,23 +2,23 @@
 
 import type React from "react";
 
-import { useState, useRef, useEffect } from "react";
-import { Editor } from "@monaco-editor/react";
-import {
-  Plus,
-  FolderOpen,
-  Save,
-  X,
-  Check,
-  Code2,
-  FileText,
-  ImageIcon,
-  Settings,
-  Database,
-  Globe,
-} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Editor } from "@monaco-editor/react";
+import {
+  Check,
+  Code2,
+  Database,
+  FileText,
+  FolderOpen,
+  Globe,
+  ImageIcon,
+  Plus,
+  Save,
+  Settings,
+  X,
+} from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
 interface MonacoEditorProps {
   /**files contains a record of <string,string> fileName and its content */
@@ -32,6 +32,7 @@ interface MonacoEditorProps {
   height?: string;
   theme?: "vs-dark" | "light";
   className?: string;
+  sidebar?: boolean;
 }
 
 function FileIcon({
@@ -165,6 +166,7 @@ export function MonacoEditor({
   height = "600px",
   theme = "vs-dark",
   className = "",
+  sidebar = false,
 }: MonacoEditorProps) {
   const [activeFile, setActiveFile] = useState(
     currentFile || Object.keys(files)[0] || ""
@@ -242,73 +244,75 @@ export function MonacoEditor({
   return (
     <div
       className={`flex h-full border rounded-lg overflow-hidden bg-background ${className}`}>
-      <div className="w-64 bg-muted/30 border-r flex flex-col">
-        <div className="p-3 border-b bg-background/50 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FolderOpen className="w-4 h-4 text-muted-foreground" />
-            <span className="text-sm font-semibold">Files</span>
-            <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-              {fileList.length}
-            </span>
-          </div>
-          {onFileAdd && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 w-7 p-0 hover:bg-primary/10"
-              onClick={() => setShowAddInput(!showAddInput)}
-              title="Add new file">
-              <Plus className="w-3.5 h-3.5" />
-            </Button>
-          )}
-        </div>
-
-        {showAddInput && onFileAdd && (
-          <AddFileInput
-            onAdd={handleFileAdd}
-            onCancel={() => setShowAddInput(false)}
-            existingFiles={fileList}
-          />
-        )}
-
-        <div className="flex-1 overflow-auto">
-          {fileList.length === 0 ? (
-            <div className="p-4 text-center text-muted-foreground">
-              <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
-              <p className="text-sm">No files yet</p>
-              {onFileAdd && <p className="text-xs">Click + to add a file</p>}
+      {sidebar && (
+        <div className="w-64 bg-muted/30 border-r flex flex-col">
+          <div className="p-3 border-b bg-background/50 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <FolderOpen className="w-4 h-4 text-muted-foreground" />
+              <span className="text-sm font-semibold">Files</span>
+              <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                {fileList.length}
+              </span>
             </div>
-          ) : (
-            fileList.map((filename) => (
-              <div
-                key={filename}
-                className={`group flex items-center justify-between px-3 py-2 hover:bg-accent/50 cursor-pointer text-sm transition-colors ${
-                  filename === activeFile
-                    ? "bg-accent border-r-2 border-primary"
-                    : ""
-                }`}
-                onClick={() => handleFileSelect(filename)}>
-                <div className="flex items-center gap-2 min-w-0 flex-1">
-                  <FileIcon filename={filename} />
-                  <span className="truncate font-medium">{filename}</span>
-                </div>
-                {onFileDelete && fileList.length > 1 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive transition-all"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleFileDelete(filename);
-                    }}>
-                    <X className="w-3 h-3" />
-                  </Button>
-                )}
-              </div>
-            ))
+            {onFileAdd && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 w-7 p-0 hover:bg-primary/10"
+                onClick={() => setShowAddInput(!showAddInput)}
+                title="Add new file">
+                <Plus className="w-3.5 h-3.5" />
+              </Button>
+            )}
+          </div>
+
+          {showAddInput && onFileAdd && (
+            <AddFileInput
+              onAdd={handleFileAdd}
+              onCancel={() => setShowAddInput(false)}
+              existingFiles={fileList}
+            />
           )}
+
+          <div className="flex-1 overflow-auto">
+            {fileList.length === 0 ? (
+              <div className="p-4 text-center text-muted-foreground">
+                <FolderOpen className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">No files yet</p>
+                {onFileAdd && <p className="text-xs">Click + to add a file</p>}
+              </div>
+            ) : (
+              fileList.map((filename) => (
+                <div
+                  key={filename}
+                  className={`group flex items-center justify-between px-3 py-2 hover:bg-accent/50 cursor-pointer text-sm transition-colors ${
+                    filename === activeFile
+                      ? "bg-accent border-r-2 border-primary"
+                      : ""
+                  }`}
+                  onClick={() => handleFileSelect(filename)}>
+                  <div className="flex items-center gap-2 min-w-0 flex-1">
+                    <FileIcon filename={filename} />
+                    <span className="truncate font-medium">{filename}</span>
+                  </div>
+                  {onFileDelete && fileList.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive transition-all"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleFileDelete(filename);
+                      }}>
+                      <X className="w-3 h-3" />
+                    </Button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex-1 flex flex-col">
         {activeFile && (
