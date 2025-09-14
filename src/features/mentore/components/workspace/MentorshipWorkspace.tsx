@@ -1,61 +1,42 @@
 "use client";
-import type React from "react";
-import DocViewer from "react-doc-viewer";
-import { useState, useEffect, useRef, SVGProps } from "react";
-import type {
-  MentorChatSession,
-  MentorSession,
-} from "@/features/mentore/server/types";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
+import { MonacoEditor } from "@/components/editors/MonocaEditor";
+import { CodeEditorDialog } from "@/components/editors/MonocaWraper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Video,
-  Send,
-  Paperclip,
-  FileText,
-  User,
-  Clock,
-  CheckCheck,
-  Loader2,
-  User2,
-} from "lucide-react";
-import {
-  fileExtention,
-  formatDateAndTime,
-  getIconForFileExtension,
-  isCode,
-  isDoc,
-  isImage,
-  isVideo,
-  removeFileExtension,
-  supportedExtentions,
-  truncateText,
-} from "@/lib/utils";
-import { usePathname, useRouter } from "next/navigation";
-import { useFileUpload } from "@/hooks/useFile";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { useMutation } from "@tanstack/react-query";
-import { toast } from "sonner";
-import { sendMentorMessages } from "../../server/action";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { env } from "@/env/client";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
-import useWebSocket from "@/hooks/useWebSocket";
-import { MentorChatFileStatusType } from "@/drizzle/schemas";
 import {
   FileChatCardComps,
   FileIconComponent,
 } from "@/features/media/components/FileHelpers";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
+import type {
+  MentorChatSession,
+  MentorSession,
+} from "@/features/mentore/server/types";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useFileUpload } from "@/hooks/useFile";
+import useWebSocket from "@/hooks/useWebSocket";
+import { formatDateAndTime, supportedExtentions } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  CheckCheck,
+  Clock,
+  FileText,
+  Paperclip,
+  Send,
+  User,
+  User2,
+  Video,
+} from "lucide-react";
 import Image from "next/image";
-import { MonacoEditor } from "@/components/editors/MonocaEditor";
+import { usePathname, useRouter } from "next/navigation";
+import type React from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { sendMentorMessages } from "../../server/action";
 
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace({
@@ -65,6 +46,8 @@ export default function MentorshipWorkspace({
 }) {
   const [chats, setChats] = useState(session?.chats);
   const [messageInput, setMessageInput] = useState("");
+  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const messageRef = useRef<HTMLDivElement>(null);
@@ -290,6 +273,7 @@ export default function MentorshipWorkspace({
                             action={() => {
                               setFilePreview(file);
                               setOpen((prev) => !prev);
+                              setIsCodeEditorOpen((prev) => !prev);
                             }}
                           />
                         ))}
@@ -298,7 +282,7 @@ export default function MentorshipWorkspace({
                   );
                 })}
                 <div ref={messageRef} />
-                <Dialog open={open} onOpenChange={setOpen}>
+                {/* <Dialog open={open} onOpenChange={setOpen}>
                   <DialogContent className="sm:max-w-[calc(100vw-300px)] lg:max-w-[calc(100vw-500px)] xl:max-w-[calc(100vw-600px)] h-[calc(100vh-100px)] flex flex-col justify-center items-center p-4">
                     <DialogHeader className="w-full h-full">
                       <DialogTitle></DialogTitle>
@@ -345,7 +329,29 @@ export default function MentorshipWorkspace({
                       )}
                     </DialogHeader>
                   </DialogContent>
-                </Dialog>
+                </Dialog> */}
+                <CodeEditorDialog
+                  isOpen={isCodeEditorOpen}
+                  onClose={() => setIsCodeEditorOpen(false)}
+                  isFullscreen={isFullscreen}
+                  setIsFullscreen={setIsFullscreen}
+                  activeFile={{
+                    name: filePreview?.fileName!,
+                    type: filePreview?.fileType!,
+                  }}
+                  mode="editor">
+                  <MonacoEditor
+                    files={files}
+                    onChange={handleFilesChange}
+                    onSave={handleSave}
+                    onFileAdd={handleFileAdd}
+                    onFileDelete={handleFileDelete}
+                    height="800px"
+                    theme="vs-dark"
+                    className="shadow-lg"
+                  />
+                </CodeEditorDialog>
+
                 {uploadingFiles.map((file) => (
                   <div key={file.name} className="flex gap-3 flex-row-reverse">
                     <Avatar className="h-9 w-9 shadow-sm">
