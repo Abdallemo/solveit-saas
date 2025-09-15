@@ -35,12 +35,12 @@ export default async function ServerWrapper({
   const hasNext = pages < totalPages;
   return (
     <>
-      { id && <StripeCheckoutSucessClient id={id} /> }
+      {id && <StripeCheckoutSucessClient id={id} />}
       <DisplayListComponent
+        categoryMap={categoryMap}
         title="Your Tasks"
         itretable={tasks}
         totalCount={totalCount}
-        categoryMap={categoryMap}
         pages={pages}
         totalPages={totalPages}
         hasPrevious={hasPrevious}
