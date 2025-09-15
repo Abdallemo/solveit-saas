@@ -564,7 +564,20 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   taskComments: many(TaskCommentTable, {
     relationName: "taskComments",
   }),
+  category: one(TaskCategoryTable, {
+    fields: [TaskTable.categoryId],
+    references: [TaskCategoryTable.id],
+    relationName: "category",
+  }),
 }));
+export const TaskCategoryTableRelations = relations(
+  TaskCategoryTable,
+  ({ many }) => ({
+    category: many(TaskTable, {
+      relationName: "category",
+    }),
+  })
+);
 export const TaskCommentTableRelations = relations(
   TaskCommentTable,
   ({ one }) => ({
