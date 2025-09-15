@@ -5,9 +5,8 @@ import {
   Banknote,
   Bell,
   ChevronsUpDown,
-  CreditCard,
   LogOut,
-  Sparkles,
+  Sparkles
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,14 +25,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { signOut } from "next-auth/react";
-import { AppUser } from "../../../../types/next-auth";
-import Link from "next/link";
 import {
   createStripeCheckoutSession,
   upgradeSolverToPlus,
 } from "@/features/subscriptions/server/action";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
+import { signOut } from "next-auth/react";
+import Link from "next/link";
+import { AppUser } from "../../../../types/next-auth";
 
 export function NavUser({ image, name, email, role, id }: AppUser) {
   const { subTier } = useStripeSubscription();
@@ -51,7 +50,7 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground">
+              className="">
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={image!} alt={"test"} />
                 <AvatarFallback className="rounded-lg">
