@@ -165,6 +165,7 @@ export async function getPosterTasksbyIdPaginated(
         poster: true,
         solver: true,
         taskSolution: true,
+        category:true
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -204,6 +205,7 @@ export async function getAssignedTasksbyIdPaginated(
         poster: true,
         solver: true,
         blockedSolvers: true,
+        category:true
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -257,7 +259,7 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
-      with: { poster: true, solver: true, taskSolution: true },
+      with: { poster: true, solver: true, taskSolution: true,category:true },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -331,6 +333,7 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
           solver: true,
           poster: true,
           workspace: true,
+          category:true,
           taskComments: {
             with: {
               owner: true,
