@@ -24,7 +24,7 @@ export default function RootLayout({
           className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="system"
             enableSystem
             disableTransitionOnChange>
             <CookiesProvider>{children}</CookiesProvider>
