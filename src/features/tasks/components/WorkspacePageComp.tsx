@@ -1,11 +1,13 @@
 "use client";
 import Loading from "@/app/dashboard/solver/loading";
 import AuthGate from "@/components/AuthGate";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
+import { getColorClass } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Loader } from "lucide-react";
@@ -111,7 +113,14 @@ export default function WorkspacePageComp() {
     <div className="flex h-full bg-background">
       <div className="flex flex-col h-full w-full">
         <header className="border-b p-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Solution Workspace</h1>
+          <div className="flex gap-2">
+            <h1 className="text-2xl font-semibold">Solution Workspace</h1>
+            <Badge
+              className={getColorClass(currentWorkspace?.task.category.name!)}>
+              {currentWorkspace?.task.category.name}
+            </Badge>
+          </div>
+
           <Button
             form="solution-form"
             disabled={
