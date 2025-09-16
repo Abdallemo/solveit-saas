@@ -2,29 +2,40 @@
 
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useQuery } from "@tanstack/react-query";
-import { calculateTaskProgress } from "../server/action";
+import { calculateTaskProgressV2 } from "../server/action";
 
 export function DeadlineProgress() {
   const { currentWorkspace } = useWorkspace();
-  const { data: progress, isLoading, refetch } = useQuery({
-    queryKey: ['progress', currentWorkspace?.id],
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["progress", currentWorkspace?.id],
     queryFn: async () => {
       if (!currentWorkspace?.solverId || !currentWorkspace?.id) {
         return 0;
       }
-      return await calculateTaskProgress(
+      return await calculateTaskProgressV2(
         currentWorkspace.solverId,
         currentWorkspace.taskId
       );
     },
-    refetchInterval: 10 * 1000, 
+    refetchInterval: 10 * 1000,
     enabled: !!currentWorkspace?.solverId && !!currentWorkspace?.id,
   });
 
-
-  if (isLoading || progress === undefined) {
-    return 0;
+  if (isLoading || !data) {
+    return { progress: -1, deadline: "N/A", isLoading };
   }
 
-  return progress;
+  return {
+    progress: data.percentage ?? -1,
+    deadline: data.deadline
+      ? new Date(data.deadline).toLocaleString("en-US", {
+          year: "numeric",
+          month: "numeric",
+          day: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+        })
+      : "N/A",
+    isLoading,
+  };
 }
