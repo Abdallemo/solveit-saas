@@ -4,15 +4,15 @@ import AuthGate from "@/components/AuthGate";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
+import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { getColorClass } from "@/lib/utils";
+import { cn, getColorClass } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { Loader } from "lucide-react";
+import { Clock, Loader } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -25,11 +25,14 @@ import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
   const { content, currentWorkspace, setCurrentWorkspace } = useWorkspace();
-
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const progress = DeadlineProgress();
-  const router = useRouter();
+  const {
+    progress,
+    deadline,
+    isLoading: isDeadlineLoading,
+  } = DeadlineProgress();
+
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
     currentWorkspace?.task.status == "COMPLETED";
@@ -113,36 +116,51 @@ export default function WorkspacePageComp() {
     <div className="flex h-full bg-background">
       <div className="flex flex-col h-full w-full">
         <header className="border-b p-4 flex items-center justify-between">
-          <div className="flex gap-2">
+          <div className="flex gap-6 items-center">
             <h1 className="text-2xl font-semibold">Solution Workspace</h1>
             <Badge
-              className={getColorClass(currentWorkspace?.task.category.name!)}>
+              className={cn(
+                getColorClass(currentWorkspace?.task.category.name!),
+                "h-6"
+              )}>
               {currentWorkspace?.task.category.name}
             </Badge>
           </div>
 
-          <Button
-            form="solution-form"
-            disabled={
-              isDisabled ||
-              isPending ||
-              progress >= 100 ||
-              alreadySubmitedSolution
-            }
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            {isPending ? ( // If uploading, show loader and text
-              <>
-                <Loader className="animate-spin w-4 h-4" />
-                Uploading files...
-              </>
-            ) : progress >= 100 ? (
-              "Submission Closed"
-            ) : alreadySubmitedSolution ? (
-              " Already Submited"
+          <div className="flex gap-3 items-center">
+            {isDeadlineLoading ? (
+              <Skeleton className="w-65 h-5" />
             ) : (
-              "Publish Solution"
+              <span className="flex items-center gap-2">
+                <span className="font-semibold">Ends on</span>
+                <Clock className="size-4" />
+                {deadline}
+              </span>
             )}
-          </Button>
+
+            <Button
+              form="solution-form"
+              disabled={
+                isDisabled ||
+                isPending ||
+                progress >= 100 ||
+                alreadySubmitedSolution
+              }
+              className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+              {isPending ? (
+                <>
+                  <Loader className="animate-spin w-4 h-4" />
+                  Uploading files...
+                </>
+              ) : progress >= 100 ? (
+                "Submission Closed"
+              ) : alreadySubmitedSolution ? (
+                " Already Submited"
+              ) : (
+                "Publish Solution"
+              )}
+            </Button>
+          </div>
         </header>
         <FormProvider {...form}>
           <form
@@ -154,18 +172,22 @@ export default function WorkspacePageComp() {
                 <div className="mt-4  w-full">
                   <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
                     <Link
-                      className="underline"
+                      className="underline text-lg"
                       target="_blank"
                       href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}>
                       {currentWorkspace?.task.title}
                     </Link>
-                    <span>
-                      {currentWorkspace?.task.status === "SUBMITTED" ||
-                      currentWorkspace?.task.status === "COMPLETED"
-                        ? 100
-                        : progress.toFixed()}
-                      % Complete
-                    </span>
+                    {isDeadlineLoading ? (
+                      <Skeleton className="w-30 h-5" />
+                    ) : (
+                      <span>
+                        {currentWorkspace?.task.status === "SUBMITTED" ||
+                        currentWorkspace?.task.status === "COMPLETED"
+                          ? 100
+                          : progress.toFixed()}
+                        % Complete
+                      </span>
+                    )}
                   </div>
                   <div className="flex flex-col w-full items-end">
                     <Progress value={progress} className="h-2 w-full" />
