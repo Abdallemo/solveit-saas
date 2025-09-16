@@ -90,7 +90,10 @@ export const UserTable = pgTable("user", {
 
   emailVerified: timestamp("emailVerified", { mode: "date" }),
   image: text("image"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 export const UserDetails = pgTable("user_details", {
   userId: uuid("user_id")
@@ -103,7 +106,10 @@ export const UserDetails = pgTable("user_details", {
   dateOfBirth: date("date_of_birth"),
   address: json("address").$type<Address>(),
   business: json("business").$type<Business>(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const AccountTable = pgTable(
@@ -138,7 +144,10 @@ export const VerificationTokenTable = pgTable(
     id: uuid().defaultRandom().notNull(),
     email: text("email"),
     token: text("token").unique(),
-    expires: timestamp("expires", { mode: "date" }).notNull(),
+    expires: timestamp("expires", {
+      mode: "date",
+      withTimezone: true,
+    }).notNull(),
   },
   (verificationToken) => [
     {
@@ -157,7 +166,10 @@ export const UserSubscriptionTable = pgTable("subscription", {
   stripeSubscriptionItemId: text("stripe_subscription_item_id"),
   stripeSubscriptionId: text("stripe_subscription_id"),
   tier: TierEnum("tier").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const SolverProfileTable = pgTable("solver_profile", {
@@ -170,8 +182,14 @@ export const SolverProfileTable = pgTable("solver_profile", {
     .default("0o0")
     .notNull(),
   taskSolved: integer("task_solved").default(0),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 export const PaymentTable = pgTable("payments", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -183,8 +201,11 @@ export const PaymentTable = pgTable("payments", {
   stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
   stripeChargeId: text("stripe_charge_id"),
   purpose: text("purpose"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  releaseDate: timestamp("release_date", { mode: "date" }),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+  releaseDate: timestamp("release_date", { mode: "date", withTimezone: true }),
 });
 
 export const FeedbackTable = pgTable(
@@ -206,7 +227,10 @@ export const FeedbackTable = pgTable(
     }),
     rating: integer("rating").default(0).notNull(),
     comment: text("comment"),
-    createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
   },
   (table) => ({
     feedbackSourceCheck: check(
@@ -237,10 +261,16 @@ export const TaskTable = pgTable("tasks", {
     onDelete: "cascade",
   }),
   deadline: text("deadline").default("12h"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
   status: TaskStatusEnum("task_status").default("OPEN"),
-  assignedAt: timestamp("assigned_at", { mode: "date" }),
+  assignedAt: timestamp("assigned_at", { mode: "date", withTimezone: true }),
 });
 export const BlockedTasksTable = pgTable("blocked_tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -251,7 +281,10 @@ export const BlockedTasksTable = pgTable("blocked_tasks", {
     .notNull()
     .references(() => TaskTable.id, { onDelete: "cascade" }),
   reason: text("reason"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 export const TaskDraftTable = pgTable("task_drafts", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
@@ -264,7 +297,10 @@ export const TaskDraftTable = pgTable("task_drafts", {
   content: text("content").default("").notNull(),
   category: text("category").default("").notNull(),
   deadline: text("deadline").default("12h").notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
   uploadedFiles: json("uploadedFiles").default("[]").notNull(),
   visibility: TaskVisibility("visibility").default("public").notNull(),
   price: integer("price").default(10).notNull(),
@@ -280,7 +316,10 @@ export const TaskFileTable = pgTable("task_files", {
   fileSize: integer("file_size").notNull(),
   storageLocation: text("file_location").notNull(),
   filePath: text("file_path").notNull(),
-  uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
+  uploadedAt: timestamp("uploaded_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 /* 
 
@@ -293,7 +332,10 @@ export const TaskCategoryTable = pgTable("task_categories", {
 export const TaskDeadlineTable = pgTable("task_deadline", {
   id: uuid("id").primaryKey().defaultRandom(),
   deadline: text("deadline").unique().notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const RefundTable = pgTable("refunds", {
@@ -307,9 +349,12 @@ export const RefundTable = pgTable("refunds", {
   refundReason: text("refund_reason"),
   refundStatus: RefundStatusEnum().default("PENDING"),
   moderatorId: uuid("moderatorId").references(() => UserTable.id),
-  refundedAt: timestamp("refunded_at", { mode: "date" }),
+  refundedAt: timestamp("refunded_at", { mode: "date", withTimezone: true }),
   stripeRefundId: text("stripe_refund_id"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const TaskCommentTable = pgTable("task_comments", {
@@ -321,7 +366,10 @@ export const TaskCommentTable = pgTable("task_comments", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   content: text("content").notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const WorkspaceTable = pgTable("solution_workspaces", {
@@ -353,8 +401,14 @@ export const WorkspaceFilesTable = pgTable("solution_workspace_files", {
   storageLocation: text("file_location").notNull(),
   filePath: text("file_path").notNull(),
   isDraft: boolean("is_draft").default(true),
-  uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  uploadedAt: timestamp("uploaded_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const SolutionTable = pgTable("solutions", {
@@ -368,8 +422,14 @@ export const SolutionTable = pgTable("solutions", {
   content: text("content"),
   fileUrl: text("file_url"),
   isFinal: boolean("is_final").default(false),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
-  updatedAt: timestamp("updated_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 export const SolutionFilesTable = pgTable("solution_files", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -396,7 +456,9 @@ export const MentorshipProfileTable = pgTable("mentorship_profiles", {
     .$type<AvailabilitySlot[]>()
     .default([]),
   isPublished: boolean("is_published").default(false).notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+    .notNull()
+    .defaultNow(),
 });
 export const MentorshipSessionTable = pgTable("mentor_session", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -405,7 +467,10 @@ export const MentorshipSessionTable = pgTable("mentor_session", {
     .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
   sessionDate: date("session_date").notNull(),
   timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const MentorshipBookingTable = pgTable("mentorship_bookings", {
@@ -422,7 +487,10 @@ export const MentorshipBookingTable = pgTable("mentorship_bookings", {
     onDelete: "cascade",
   }),
   notes: text("notes"),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const MentorshipChatTable = pgTable("mentorship_chats", {
@@ -434,8 +502,11 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
   sentBy: uuid("sent_by")
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
-  readAt: timestamp("read_at", { mode: "date" }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
@@ -451,7 +522,10 @@ export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
   fileSize: integer("file_size").notNull(),
   storageLocation: text("file_location").notNull(),
   filePath: text("file_path").notNull(),
-  uploadedAt: timestamp("uploaded_at", { mode: "date" }).defaultNow(),
+  uploadedAt: timestamp("uploaded_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const RulesTable = pgTable("ai_rules", {
@@ -462,7 +536,9 @@ export const RulesTable = pgTable("ai_rules", {
   adminId: uuid("admin_id")
     .notNull()
     .references(() => UserTable.id, { onDelete: "no action" }),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow().notNull(),
+  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -472,12 +548,18 @@ export const notifications = pgTable("notifications", {
   content: text("content").notNull(),
   method: NotificationMethodsEnum("method").notNull(),
   read: boolean("read").notNull().default(false),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const logTable = pgTable("logs", {
   id: uuid("id").primaryKey().defaultRandom(),
-  timestamp: timestamp("timestamp").notNull(),
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
   level: varchar("level", { length: 10 }).notNull(),
   message: text("message").notNull(),
   error: text("error").default(""),
