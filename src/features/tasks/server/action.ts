@@ -121,7 +121,7 @@ export async function calculateTaskProgressV2(
   taskId: string
 ) {
   const workspace = await getWorkspaceByTaskId(taskId, solverId);
-  if (!workspace)return { timePassed: null, percentage: null }
+  if (!workspace)return { timePassed: null, percentage: null ,totalTime:null}
 
   const deadline = parseDeadlineV2(
     workspace.task.deadline!,
@@ -135,7 +135,7 @@ export async function calculateTaskProgressV2(
   const timePassed = currentTime - startTime;
   const totalTime = deadline.getTime() - startTime;
   const percentage = Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
-  return { timePassed: timePassed, percentage: percentage ,totalTime};
+  return { timePassed: timePassed, percentage: percentage ,totalTime,deadline};
 }
 export async function createTaskAction(
   userId: string,
