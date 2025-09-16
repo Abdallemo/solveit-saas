@@ -1,6 +1,6 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function TaskSkeleton() {
+export default function WorksapceSkeleton() {
   return (
     <div className="flex h-full bg-background">
       <div className="flex-1 flex flex-col overflow-hidden">
