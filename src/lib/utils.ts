@@ -2,6 +2,11 @@ import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Units } from "@/features/tasks/server/task-types";
 import { clsx, type ClassValue } from "clsx";
 import {
+  addDays,
+  addHours,
+  addMonths,
+  addWeeks,
+  addYears,
   differenceInDays,
   differenceInHours,
   differenceInMinutes,
@@ -46,9 +51,34 @@ export const formatDateAndTime = (date: Date) => {
     minute: "2-digit",
     hour12: false,
     timeZone: "UTC",
+    
   });
 };
+export function parseDeadlineV2(value: string, baseTime: Date): Date | null {
+  const lowerValue = value.toLowerCase();
+  const match = lowerValue.match(/^(\d+)([hdwmy])$/);
+  if (!match) {
+    return null;
+  }
 
+  const [, numStr, unit] = match;
+  const num = parseInt(numStr, 10);
+
+  switch (unit as Units) {
+    case "h":
+      return addHours(baseTime, num);
+    case "d":
+      return addDays(baseTime, num);
+    case "w":
+      return addWeeks(baseTime, num);
+    case "m":
+      return addMonths(baseTime, num);
+    case "y":
+      return addYears(baseTime, num);
+    default:
+      return null;
+  }
+}
 export function isError(err: unknown): err is Error {
   return typeof err === "object" && err !== null && "message" in err;
 }
@@ -62,7 +92,7 @@ const badgeColors = [
   "bg-blue-100 text-blue-800",
   "bg-yellow-100 text-yellow-800",
   "bg-pink-100 text-pink-800",
-  // "bg-purple-100 text-purple-800", 
+  // "bg-purple-100 text-purple-800",
 ];
 const objColors = [
   "text-neutral-900 font-semibold",
@@ -267,7 +297,6 @@ export function isDoc(ext: supportedExtentions): ext is DocType {
 export function isCode(ext: supportedExtentions): ext is CodeType {
   return codeExtensions.includes(ext as CodeType);
 }
-
 
 export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
   switch (unit) {
