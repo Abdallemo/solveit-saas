@@ -299,7 +299,7 @@ async function main() {
     .insert(PaymentTable)
     .values(
       Array.from({ length: 10 }).map(() => ({
-        userId: "63d10f71-1920-47a2-b1f8-adf2a54c64ae",
+        userId: "48cc105e-a534-4126-98e6-0cfa65d01fc5",
         amount: faker.number.int({ min: 10, max: 200 }),
         status: faker.helpers.arrayElement([
           "HOLD",
@@ -326,7 +326,7 @@ async function main() {
           description: programmingTaskContents[idx].description,
           content: programmingTaskContents[idx].content,
           price: payment.amount,
-          posterId: "63d10f71-1920-47a2-b1f8-adf2a54c64ae",
+          posterId: "48cc105e-a534-4126-98e6-0cfa65d01fc5",
           categoryId,
           paymentId: payment.id,
           deadline: "12h",
