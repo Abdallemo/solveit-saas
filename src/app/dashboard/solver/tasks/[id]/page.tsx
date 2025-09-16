@@ -20,9 +20,7 @@ export default async function Page({
 }) {
   const { id } = await params;
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id )
-    return <AuthGate/>
-
+  if (!currentUser || !currentUser.id) return <AuthGate />;
   if (!isValidUuid(id)) {
     console.error(`Invalid ID format: ${id}. Redirecting.`);
     redirect("/dashboard/");
@@ -30,23 +28,25 @@ export default async function Page({
 
   const task = await getTasksbyId(id);
   if (!task) redirect("/dashboard/");
-  
+
   const files = await getTaskFilesById(id);
 
   if (!task?.content || !task.id) redirect("/dashboard/");
- 
+
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end gap-3">
-        {currentUser.role === "SOLVER" && task.solverId !== currentUser.id && !task.solver && (
-          <AssignTaskButton taskId={id} userId={currentUser.id} />
-        )}
+        {currentUser.role === "SOLVER" &&
+          task.solverId !== currentUser.id &&
+          !task.solver && (
+            <AssignTaskButton taskId={id} userId={currentUser.id} />
+          )}
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
           <TaskPreview content={task?.content} />
         </Suspense>
       </div>
       <div className="w-full flex flex-col items-center">
-        <FilesTable files={files} scope={task} scopeType="task"/>
+        <FilesTable files={files} scope={task} scopeType="task" />
       </div>
     </main>
   );
