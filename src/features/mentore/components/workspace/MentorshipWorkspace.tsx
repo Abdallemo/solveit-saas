@@ -19,7 +19,7 @@ import type {
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import useWebSocket from "@/hooks/useWebSocket";
-import { formatDateAndTime, supportedExtentions } from "@/lib/utils";
+import { supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCheck,
@@ -228,7 +228,7 @@ export default function MentorshipWorkspace({
                           </p>
                           <div className="flex items-center gap-1">
                             <p className="text-xs text-muted-foreground">
-                              {formatDateAndTime(chat.createdAt!)}
+                              {(chat.createdAt!).toLocaleTimeString(undefined)}
                             </p>
                             {isCurrentUser && (
                               <CheckCheck
