@@ -8,33 +8,33 @@ import {
   LucideBadgeDollarSign,
   LucideBarChart3,
   LucideBrain,
-  LucideCalendar, // Replaced placeholder
+  LucideCalendar,
   LucideChartLine,
   LucideClipboardCheck,
   LucideClipboardList,
   LucideClipboardPlus,
-  LucideDollarSign, // Replaced placeholder
-  LucideFileQuestion, // Replaced placeholder
+  LucideDollarSign,
+  LucideFileQuestion,
   LucideHandshake,
   LucideHistory,
   LucideIcon,
   LucideLayoutDashboard,
-  LucideListChecks, // Replaced placeholder
+  LucideListChecks,
   LucideMessageSquare,
-  LucideMonitor, // Replaced placeholder
+  LucideMonitor,
   LucidePackage,
   LucidePieChart,
   LucideSearch,
   LucideSettings,
   LucideShieldCheck,
-  LucideStar, // Replaced placeholder
+  LucideStar,
   LucideTrendingUp,
   LucideUserPlus,
   LucideUsers,
   PackageOpen,
   Send,
   SquareDashedMousePointerIcon,
-  Users
+  Users,
 } from "lucide-react";
 export type MenuItem = {
   type: "link" | "category";
