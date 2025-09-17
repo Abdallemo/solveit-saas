@@ -332,7 +332,9 @@ export function ServerLogs({ serverLogs }: { serverLogs: LogsTyep }) {
               </Badge>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">
-                  {log.timestamp.toLocaleDateString()}
+                  {log.createdAt.toLocaleDateString(undefined, {
+                    timeZone: "UTC",
+                  })}
                 </p>
                 <p className="text-sm mt-1 break-words">{log.message}</p>
               </div>
