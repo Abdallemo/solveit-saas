@@ -1,22 +1,22 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { Upload, X, File, Loader2 } from "lucide-react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { toast } from "sonner";
-import { cn } from "@/lib/utils";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import AuthGate from "@/components/AuthGate";
 import Loading from "@/app/loading";
-import { useAuthGate } from "@/hooks/useAuthGate";
-import { useDeleteFile, useFileUpload } from "@/hooks/useFile";
-import { UploadedFileMeta } from "../server/media-types";
+import AuthGate from "@/components/AuthGate";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { env } from "@/env/client";
-import { truncate } from "lodash";
+import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useDeleteFile, useFileUpload } from "@/hooks/useFile";
+import { cn } from "@/lib/utils";
+import { File, Loader2, Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { UploadedFileMeta } from "../server/media-types";
+import { FileChatCardComps } from "./FileHelpers";
 
 interface FileUploadProps {
   maxFiles?: number;
@@ -41,12 +41,14 @@ export default function FileUploadSolver({
   } = useDeleteFile();
   if (isLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
-
+  const fileDisabled =
+    currentWorkspace?.task.status === "SUBMITTED" ||
+    currentWorkspace?.task.status === "COMPLETED";
   const uploadedById = useCurrentSolver.user?.id!;
   const fileLimitReached = uploadedFiles.length >= maxFiles;
 
   const handleFiles = async (newFiles: FileList | null) => {
-    if (!newFiles) return;
+    if (!newFiles || fileDisabled) return;
 
     const fileArray = Array.from(newFiles).slice(
       0,
@@ -113,7 +115,7 @@ export default function FileUploadSolver({
           handleFiles(e.dataTransfer.files);
         }}>
         <Input
-          disabled={fileLimitReached}
+          disabled={fileLimitReached || fileDisabled}
           ref={inputRef}
           type="file"
           multiple
@@ -137,7 +139,7 @@ export default function FileUploadSolver({
           </div>
           <Button
             type="button"
-            disabled={fileLimitReached}
+            disabled={fileLimitReached || fileDisabled}
             variant="outline"
             size="sm"
             className="mt-2"
@@ -169,47 +171,24 @@ export default function FileUploadSolver({
                 )}
               </div>
             ))}
-
             {uploadedFiles.map((file) => (
-              <div
-                key={file.filePath}
-                className="flex items-center gap-1 p-1 bg-muted rounded-md">
-                <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <a
-                    href={file.storageLocation}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium truncate underline text-primary">
-                    {truncate(file.fileName, { length: 30 })}
-                  </a>
-                  {isUploading && (
-                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
-                  )}
-                  <p className="text-xs text-muted-foreground">
-                    {(file.fileSize / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      toast.loading("deleting", { id: "file-delete" });
-                      await deleteFile({
-                        fileId: file.id,
-                        filePath: file.storageLocation,
-                      });
-                      setUploadedFiles((prev) =>
-                        prev.filter((f) => f.filePath !== file.filePath)
-                      );
-                    } catch (error) {}
-                  }}
-                  className="h-6 w-6 p-0 cursor-pointer">
-                  <X className="h-3 w-3" />
-                </Button>
-              </div>
+              <FileChatCardComps
+                action={() => window.open(file.storageLocation, "_blank")}
+                key={file.id}
+                file={file}
+                deleteAction={async () => {
+                  try {
+                    toast.loading("deleting", { id: "file-delete" });
+                    await deleteFile({
+                      fileId: file.id,
+                      filePath: file.storageLocation,
+                    });
+                    setUploadedFiles((prev) =>
+                      prev.filter((f) => f.filePath !== file.filePath)
+                    );
+                  } catch (error) {}
+                }}
+              />
             ))}
           </div>
         </ScrollArea>
