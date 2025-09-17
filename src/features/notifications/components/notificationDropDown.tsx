@@ -2,21 +2,21 @@
 
 import type React from "react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuTrigger,
   DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Bell, Mail, AlertCircle, X, Wifi, WifiOff } from "lucide-react";
-import Link from "next/link";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { useEffect, useState } from "react";
 import { env } from "@/env/client";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
+import { AlertCircle, Bell, Mail, X } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import {
