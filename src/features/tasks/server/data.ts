@@ -5,6 +5,7 @@ import {
   MentorshipSessionTable,
   PaymentTable,
   TaskDraftTable,
+  TaskStatusType,
   TaskTable,
   UserRoleType,
   UserSubscriptionTable,
@@ -47,11 +48,9 @@ export async function getAllTaskCatagories(
 ) {
   return await withCache({
     callback: async () => {
-      console.log("hit cat");
       const all = await db.query.TaskCategoryTable.findMany({
         columns: { id: true, name: true, createdAt: true },
       });
-      console.log(all);
       return all;
     },
     tag: "category-data-cache",
@@ -148,11 +147,24 @@ export async function getAllTasks() {
 }
 export async function getPosterTasksbyIdPaginated(
   userId: string,
-  { search, limit, offset }: { search?: string; limit: number; offset: number }
+  {
+    search,
+    limit,
+    offset,
+    categoryId,
+    status,
+  }: {
+    search?: string;
+    categoryId?: string;
+    limit: number;
+    offset: number;
+    status: TaskStatusType;
+  }
 ) {
   const where = and(
     eq(TaskTable.posterId, userId),
-    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined,
+    status ? eq(TaskTable.status, status) : undefined
   );
 
   const [tasks, totalCountResult] = await Promise.all([
@@ -165,7 +177,7 @@ export async function getPosterTasksbyIdPaginated(
         poster: true,
         solver: true,
         taskSolution: true,
-        category:true
+        category: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -205,7 +217,7 @@ export async function getAssignedTasksbyIdPaginated(
         poster: true,
         solver: true,
         blockedSolvers: true,
-        category:true
+        category: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -222,8 +234,10 @@ export async function getAllTasksByRolePaginated(
     search,
     limit,
     offset,
+    categoryId,
   }: {
     search?: string;
+    categoryId?: string;
     limit: number;
     offset: number;
   }
@@ -240,16 +254,31 @@ export async function getAllTasksByRolePaginated(
       not(eq(TaskTable.posterId, userId)),
 
       not(eq(TaskTable.visibility, "private")),
-      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+      search
+        ? or(
+            ilike(TaskTable.title, `%${search}%`),
+            ilike(TaskTable.description, `%${search}%`),
+            ilike(TaskTable.deadline, `%${search}%`)
+          )
+        : undefined,
+      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined
     );
   } else if (role === "SOLVER") {
+    
     where = and(
       blockedTaskIds.length > 0
         ? not(inArray(TaskTable.id, blockedTaskIds))
         : undefined,
       not(eq(TaskTable.posterId, userId)),
       and(eq(TaskTable.status, "OPEN")),
-      search ? ilike(TaskTable.title, `%${search}%`) : undefined
+      search
+        ? or(
+            ilike(TaskTable.title, `%${search}%`),
+            ilike(TaskTable.description, `%${search}%`),
+            ilike(TaskTable.deadline, `%${search}%`)
+          )
+        : undefined,
+      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined
     );
   }
 
@@ -259,7 +288,7 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
-      with: { poster: true, solver: true, taskSolution: true,category:true },
+      with: { poster: true, solver: true, taskSolution: true, category: true },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -333,7 +362,7 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
           solver: true,
           poster: true,
           workspace: true,
-          category:true,
+          category: true,
           taskComments: {
             with: {
               owner: true,
@@ -537,8 +566,7 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
         due,
         totalTime,
         timePassed,
-        unit:unit as Units,
-
+        unit: unit as Units,
       };
     })
   );
