@@ -13,7 +13,7 @@ import {
   ChevronRight,
   Clock,
   Search,
-  Users
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -30,7 +30,7 @@ export function SessionsList({
   const [collapsedBookings, setCollapsedBookings] = useState<Set<string>>(
     new Set()
   );
-  const path = usePathname()
+  const path = usePathname();
 
   const toggleBookingCollapse = (bookingId: string) => {
     const newCollapsed = new Set(collapsedBookings);
@@ -68,7 +68,6 @@ export function SessionsList({
       );
     });
   }, [bookings, globalFilter]);
-
 
   return (
     <div className="h-full w-full">
@@ -129,8 +128,7 @@ export function SessionsList({
                           Booking #{booking.id.slice(-8)}
                         </span>
                       </div>
-                      <Badge
-                        className={`${getColorClass(booking.status)} `}>
+                      <Badge className={`${getColorClass(booking.status)} `}>
                         {booking.status}
                       </Badge>
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
@@ -203,11 +201,12 @@ export function SessionsList({
                             </div>
 
                             <div className="ml-4">
-                              <Button
-                                asChild
-                                size="sm">
-                                <Link className="transition-colors duration-200" href={`${path}/${session.id}`} >
-                                Join Session →</Link>
+                              <Button asChild size="sm">
+                                <Link
+                                  className="transition-colors duration-200"
+                                  href={`${path}/${session.id}`}>
+                                  Join Session →
+                                </Link>
                               </Button>
                             </div>
                           </div>
@@ -220,23 +219,20 @@ export function SessionsList({
             );
           })}
         </div>
-
-        {filteredBookings.length === 0 && (
-          <div className="text-center py-12">
-            <div className="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-              <Search className="h-6 w-6 text-gray-400" />
-            </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
-              No sessions found
-            </h3>
-            <p className="text-gray-600">
-              {globalFilter
-                ? "Try adjusting your search terms."
-                : "No bookings available at the moment."}
-            </p>
-          </div>
-        )}
       </div>
+      {filteredBookings.length === 0 && (
+        <div className="text-center py-12 ">
+          <div className="mx-auto w-16 h-16  rounded-full flex items-center justify-center mb-4 bg-foreground">
+            <Search className="h-6 w-6 stroke-background" />
+          </div>
+          <h3 className="text-lg font-medium  mb-2">No sessions found</h3>
+          <p className="">
+            {globalFilter
+              ? "Try adjusting your search terms."
+              : "No bookings available at the moment."}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
