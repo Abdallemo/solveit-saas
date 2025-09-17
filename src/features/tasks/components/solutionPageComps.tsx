@@ -14,26 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { env } from "@/env/client";
 import { FilesTable } from "@/features/media/components/FilesTable";
-import { taskRefundSchema, taskRefundSchemaType } from "@/features/tasks/server/task-types";
+import {
+  taskRefundSchema,
+  taskRefundSchemaType,
+} from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
 import { formatDateAndTime, formatDates } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TooltipContent } from "@radix-ui/react-tooltip";
 import { useMutation } from "@tanstack/react-query";
-import {
-  CheckCircle,
-  Loader2,
-  Send,
-  ThumbsDown,
-  ThumbsUp,
-  XCircle,
-} from "lucide-react";
+import { CheckCircle, Loader2, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
@@ -43,9 +38,7 @@ import {
   createTaskComment,
   requestRefund,
 } from "../server/action";
-import {
-  SolutionById
-} from "../server/task-types";
+import { SolutionById } from "../server/task-types";
 import { SolutionPreview } from "./richTextEdito/TaskPreview";
 import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
 import GetStatusBadge from "./taskStatusBadge";
@@ -267,6 +260,12 @@ export default function SolutionPageComps({
       latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [comments]);
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSendComment();
+    }
+  };
 
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
@@ -283,9 +282,9 @@ export default function SolutionPageComps({
   }
 
   return (
-    <div className="flex min-h-screen bg-background/10">
+    <div className="flex w-full h-full bg-background/10">
       <div className="flex-1 p-8 gap-3 flex flex-col">
-        <Card className="mb-6 mt-6">
+        <Card className="mb-6 mt-6 h-100">
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-xl text-foreground font-bold">Solution</h2>
@@ -307,22 +306,6 @@ export default function SolutionPageComps({
             <SolutionPreview content={solution.content!} />
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center space-x-4">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 bg-transparent">
-                  <ThumbsUp className="h-4 w-4" />
-                  <span>Helpful ({"12"})</span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex items-center space-x-2 bg-transparent">
-                  <ThumbsDown className="h-4 w-4" />
-                  <span>Not helpful ({"1"})</span>
-                </Button>
-              </div>
               {solution.taskSolution.posterId === user?.id &&
                 solution.taskSolution.status !== "COMPLETED" &&
                 !solution.taskSolution.taskRefund && (
@@ -341,10 +324,10 @@ export default function SolutionPageComps({
           <CardHeader>
             <h3 className="text-lg font-medium text-foreground">comments</h3>
           </CardHeader>
-          <CardContent>
+          <CardContent className="">
             {comments.length > 0 && (
               <ScrollArea className="h-60 p-4">
-                <div className="space-y-4 mb-6">
+                <div className="space-y-4">
                   {comments.map((comment, index) => {
                     const isLast = index === comments.length - 1;
                     return (
@@ -359,7 +342,6 @@ export default function SolutionPageComps({
                 </div>
               </ScrollArea>
             )}
-            <Separator className="mb-4" />
             <div>
               <div className="mb-2">
                 <span className="text-sm font-medium text-foreground/70">
@@ -372,6 +354,7 @@ export default function SolutionPageComps({
                   value={comment}
                   onChange={(e) => setComment(e.target.value)}
                   className="flex-1 min-h-[80px] resize-none"
+                  onKeyDown={handleKeyPress}
                 />
                 <Button
                   className="self-end"
