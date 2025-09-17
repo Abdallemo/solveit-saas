@@ -1,16 +1,16 @@
 "use client";
 
-import React, { Fragment } from "react";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { ChevronRight } from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { Fragment } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
   BreadcrumbLink,
   BreadcrumbList,
 } from "./ui/breadcrumb";
-import { usePathname } from "next/navigation";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 
 function formatBreadcrumbText(text: string) {
   if (/^[0-9a-fA-F-]{10,}$/.test(text)) {
@@ -36,8 +36,7 @@ export default function BridCarmComponent() {
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-foreground hover:text-foreground/50 font-medium"
-              asChild
-            >
+              asChild>
               <Link href={`/dashboard/${role}`}>Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -54,9 +53,9 @@ export default function BridCarmComponent() {
         {paths.map((pathSegment, index) => {
           currentPath += `/${pathSegment}`;
           const isLast = index === paths.length - 1;
-          const isDisabled = pathSegment === "solutions";
+          const isDisabled =
+            pathSegment === "solutions" || pathSegment === "workspace";
 
-          // ✅ Skip rendering the role, but still keep it in currentPath
           if (pathSegment === role) {
             return null;
           }
@@ -71,8 +70,7 @@ export default function BridCarmComponent() {
                         isLast
                           ? "font-semibold text-foreground/90"
                           : "text-foreground/40 cursor-default"
-                      }`}
-                    >
+                      }`}>
                       {pathSegment === "dashboard"
                         ? "Dashboard"
                         : formatBreadcrumbText(pathSegment)}
@@ -84,8 +82,7 @@ export default function BridCarmComponent() {
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
                           : currentPath
-                      }
-                    >
+                      }>
                       {pathSegment === "dashboard"
                         ? "Dashboard"
                         : formatBreadcrumbText(pathSegment)}
