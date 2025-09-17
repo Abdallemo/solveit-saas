@@ -90,7 +90,7 @@ export function SolutionPreview({ content }: { content: string }) {
     immediatelyRender: false,
     editorProps: {
       attributes: {
-        class: "w-full h-full p-6 focus:outline-none prose prose-sm max-w-none",
+        class: "w-full p-6 focus:outline-none prose prose-sm max-w-none h-70",
       },
     },
   })
