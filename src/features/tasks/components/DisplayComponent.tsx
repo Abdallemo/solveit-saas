@@ -177,7 +177,7 @@ export default function DisplayListComponent({
                   task.id
                 }`}>
                 <SquareArrowUpRight className="w-4 h-4 mr-1" />
-                Details
+                Task Overview
               </Link>
             </Button>
             <Button variant="success" size="sm" asChild>
@@ -185,28 +185,39 @@ export default function DisplayListComponent({
                 href={`/dashboard/solver/workspace/start/${task.id}`}
                 className="w-full flex-1">
                 {task.status === "IN_PROGRESS"
-                  ? "Continue"
+                  ? "Continue Workspace"
                   : task.blockedSolvers.some(
                       (blocked) => blocked.userId === currentUser?.id
                     ) ||
                     task.status === "COMPLETED" ||
                     task.status === "SUBMITTED"
-                  ? "View"
-                  : "Begin"}
+                  ? "View Workspace"
+                  : "Start Workspace"}
               </Link>
             </Button>
           </>
         ) : task.status === "SUBMITTED" || task.status === "COMPLETED" ? (
-          <Button variant="outline" size="sm" asChild>
-            <Link
-              className="w-full flex-1"
-              href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
-                task.id
-              }/solutions/${task.taskSolution.id}`}>
-              <SquareArrowUpRight className="w-4 h-4 mr-1" />
-              Solution
-            </Link>
-          </Button>
+          <>
+            <Button size="sm" asChild>
+              <Link
+                className="w-full flex-1"
+                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
+                  task.id
+                }`}>
+                View Task
+              </Link>
+            </Button>
+            <Button variant="outline" size="sm" asChild>
+              <Link
+                className="w-full flex-1"
+                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
+                  task.id
+                }/solutions/${task.taskSolution.id}`}>
+                <SquareArrowUpRight className="w-4 h-4 mr-1" />
+                View Solution
+              </Link>
+            </Button>
+          </>
         ) : (
           <Button size="sm" asChild>
             <Link
@@ -214,7 +225,7 @@ export default function DisplayListComponent({
               href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                 task.id
               }`}>
-              View
+              View Task
             </Link>
           </Button>
         )}
@@ -267,7 +278,9 @@ export default function DisplayListComponent({
                 <p className="font-medium">RM{task.price?.toFixed(2)}</p>
                 {task.solverId && task.solver && (
                   <p className="text-xs text-green-600">
-                    Being solved by{" "}
+                    {task.status === "COMPLETED" || task.status === "SUBMITTED"
+                      ? "solved by"
+                      : "Being solved by"}
                     {currentUser?.name === task.solver.name
                       ? "You"
                       : task.solver.name}
@@ -324,7 +337,7 @@ export default function DisplayListComponent({
                 <TableCell className="text-sm">
                   RM{task.price?.toFixed(2)}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right w-30">
                   {actionButtoneCheck(task)}
                 </TableCell>
               </TableRow>
