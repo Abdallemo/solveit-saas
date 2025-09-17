@@ -132,7 +132,11 @@ export default function WorkspacePageComp() {
               <Skeleton className="w-65 h-5" />
             ) : (
               <span className="flex items-center gap-2">
-                <span className="font-semibold">Ends on</span>
+                <span className="font-semibold">
+                  {progress >= 100 || alreadySubmitedSolution
+                    ? "Ended on"
+                    : "Ends on"}
+                </span>
                 <Clock className="size-4" />
                 {deadline}
               </span>
