@@ -4,6 +4,7 @@ import {
   MentorshipBookingTable,
   MentorshipSessionTable,
   PaymentTable,
+  RefundTable,
   TaskDraftTable,
   TaskStatusType,
   TaskTable,
@@ -264,7 +265,6 @@ export async function getAllTasksByRolePaginated(
       categoryId ? eq(TaskTable.categoryId, categoryId) : undefined
     );
   } else if (role === "SOLVER") {
-    
     where = and(
       blockedTaskIds.length > 0
         ? not(inArray(TaskTable.id, blockedTaskIds))
@@ -728,4 +728,19 @@ export async function getSolutionById(solutionId: string) {
   }
   //todo ill think of other latter
   return solution;
+}
+export async function getUserDisputes() {
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+
+  const userTasksWithRefund = await db
+    .select({
+      tasks: TaskTable, 
+      refunds: RefundTable,
+    })
+    .from(TaskTable)
+    .innerJoin(RefundTable, eq(RefundTable.taskId, TaskTable.id))
+    .where(or(eq(TaskTable.posterId, user.id), eq(TaskTable.solverId, user.id)))
+    .orderBy(asc(RefundTable.createdAt));
+
+  return userTasksWithRefund;
 }
