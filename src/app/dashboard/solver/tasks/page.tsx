@@ -9,17 +9,18 @@ import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 export default async function ServerWrapper({
   searchParams,
 }: {
-  searchParams: Promise<{ search: string; page: string }>;
+  searchParams: Promise<{ category: string; search: string; page: string }>;
 }) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
-  const { search, page } = await searchParams;
+  const { search, page ,category} = await searchParams;
   const pages = Number.parseInt(page ?? "1");
   const limit = 8;
   const offset = (pages - 1) * limit;
-
+  const categoryId =
+    Object.keys(categoryMap).find((key) => categoryMap[key] === category) ?? "";
   const { tasks, totalCount } = await getAllTasksByRolePaginated(
     currentUser.id,
     currentUser.role!,
@@ -27,6 +28,7 @@ export default async function ServerWrapper({
       search: search ?? "",
       limit,
       offset,
+      categoryId,
     }
   );
 
