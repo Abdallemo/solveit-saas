@@ -190,7 +190,10 @@ export default function WorkspacePageComp() {
                     )}
                   </div>
                   <div className="flex flex-col w-full items-end">
-                    <Progress value={progress} className="h-2 w-full" />
+                    <Progress
+                      value={alreadySubmitedSolution ? 100 : progress}
+                      className="h-2 w-full"
+                    />
                   </div>
                 </div>
               </div>
