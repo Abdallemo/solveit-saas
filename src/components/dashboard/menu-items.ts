@@ -268,6 +268,12 @@ export const MenuItemsPoster: MenuItem[] = [
       },
       {
         type: "link",
+        title: "Disputes / Support",
+        url: "/dashboard/poster/disputes",
+        icon: LucideFileQuestion,
+      },
+      {
+        type: "link",
         title: "Task Analytics",
         url: "/dashboard/poster/task-analytics",
         icon: LucideBarChart3,
