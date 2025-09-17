@@ -1,3 +1,4 @@
+import { Button } from "@/components/ui/button";
 import {
   fileExtention,
   getIconForFileExtension,
@@ -5,14 +6,9 @@ import {
   supportedExtentions,
   truncateText,
 } from "@/lib/utils";
+import { Download, Loader2, X } from "lucide-react";
 import { SVGProps } from "react";
 import { UploadedFileMeta } from "../server/media-types";
-import { Download, Loader2 } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 
 export function FileIconComponent({
   extension,
@@ -29,6 +25,7 @@ export function FileIconComponent({
 
 export function FileChatCardComps({
   file,
+  deleteAction,
   action,
   downloadAction,
   opt,
@@ -37,6 +34,7 @@ export function FileChatCardComps({
   file: UploadedFileMeta;
   action?: () => void;
   downloadAction?: () => void;
+  deleteAction?: () => void;
   opt?: any;
   loading?: boolean;
 }) {
@@ -64,10 +62,14 @@ export function FileChatCardComps({
           {(file.fileSize / 1024).toFixed(1)} KB
         </p>
       </div>
-      <Download
-        className="h-4 w-4 text-slate-400 group-hover:text-blue-500 transition-colors"
-        onClick={downloadAction}
-      />
+      <div className="flex ">
+        <Button variant={"ghost"} size={"sm"} className="p-0" onClick={downloadAction}>
+          <Download />
+        </Button>
+        <Button variant={"ghost"} size={"sm"} className="p-0" onClick={deleteAction}>
+          <X />
+        </Button>
+      </div>
     </div>
     // {/* </TooltipTrigger> */}
     // {/* {opt && <TooltipContent align="end">{opt}</TooltipContent>} */}
