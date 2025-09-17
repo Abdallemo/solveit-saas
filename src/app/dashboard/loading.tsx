@@ -35,9 +35,7 @@ export default function DashboardSkeleton() {
       <div className="flex h-screen w-full">
         <AppSidebarSkeleton />
 
-        <main className="flex flex-col flex-1 ">
-          <DashboardLoading />
-        </main>
+        <DashboardLoading />
       </div>
     </SidebarProvider>
   );
