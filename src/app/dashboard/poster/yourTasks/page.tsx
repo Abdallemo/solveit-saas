@@ -1,3 +1,4 @@
+import { TaskStatusType } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 import StripeCheckoutSucessClient from "@/features/tasks/components/stripeCheckoutSucessClient";
@@ -9,14 +10,19 @@ import {
 export default async function ServerWrapper({
   searchParams,
 }: {
-  searchParams: Promise<{ q: string; page: string; id: string }>;
+  searchParams: Promise<{
+    search: string;
+    page: string;
+    id: string;
+
+    status: string;
+  }>;
 }) {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.role || !currentUser.id) return;
 
   const categoryMap = await getAllCategoryMap();
-  const { q, page, id } = await searchParams;
-  const search = q ?? "";
+  const { search, page, id, status } = await searchParams;
   const pages = Number.parseInt(page ?? "1");
   const limit = 8;
   const offset = (pages - 1) * limit;
@@ -24,9 +30,11 @@ export default async function ServerWrapper({
   const { tasks, totalCount } = await getPosterTasksbyIdPaginated(
     currentUser.id,
     {
-      search,
+      search: search ?? "",
       limit,
       offset,
+   
+      status: status as TaskStatusType ?? "",
     }
   );
 
