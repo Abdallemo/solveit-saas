@@ -13,6 +13,7 @@ import {
   getPosterTasksbyIdPaginated,
   getSolutionById,
   getTasksbyId,
+  getUserDisputes,
   getUserTasksbyId,
   getWorkspaceById
 } from "./data";
@@ -30,6 +31,7 @@ export type taskDraftType = Exclude<
   null
 >;
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
+export type UserDisputeswithTasks = Awaited<ReturnType<typeof getUserDisputes>>;
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type SolverAssignedTaskType = Awaited<
   ReturnType<typeof getAssignedTasksbyIdPaginated>
