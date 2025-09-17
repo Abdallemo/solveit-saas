@@ -1,6 +1,6 @@
 import db from "@/drizzle/db";
 import { logTable } from "@/drizzle/schemas";
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
   const body = await req.json();
@@ -11,7 +11,7 @@ export async function POST(req: NextRequest) {
   const error: string = body.error;
 
   await db.insert(logTable).values({
-    timestamp: new Date(timestamp),
+    createdAt: new Date(timestamp),
     level: level,
     message: message,
     error: error ? JSON.stringify(body.error) : null,
