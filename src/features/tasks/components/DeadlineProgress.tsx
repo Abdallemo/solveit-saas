@@ -28,7 +28,7 @@ export function DeadlineProgress() {
   return {
     progress: data.percentage ?? -1,
     deadline: data.deadline
-      ? new Date(data.deadline).toLocaleString("en-US", {
+      ? new Date(data.deadline).toLocaleString(undefined, {
           year: "numeric",
           month: "numeric",
           day: "numeric",
