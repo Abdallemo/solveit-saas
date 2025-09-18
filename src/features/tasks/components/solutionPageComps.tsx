@@ -284,7 +284,7 @@ export default function SolutionPageComps({
   return (
     <div className="flex w-full h-full bg-background/10">
       <div className="flex-1 p-8 gap-3 flex flex-col">
-        <Card className="mb-6 mt-6 h-100">
+        <Card className="mb-6 mt-6 h-[500px]">
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-xl text-foreground font-bold">Solution</h2>
@@ -296,7 +296,7 @@ export default function SolutionPageComps({
                 </span>
               </div>
             </div>
-            <div className="flex items-center space-x-4 text-sm text-gray-500">
+            <div className="flex items-center space-x-4 text-sm">
               <span>Submitted {formatDateAndTime(solution.createdAt!)}</span>
               <span>•</span>
               <span>Updated {formatDates(solution.updatedAt!)}</span>
