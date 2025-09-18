@@ -207,7 +207,6 @@ export async function taskPaymentInsetion(
   userId: string,
   stripePaymentIntentId: string,
   purpose?: PaymentPorposeType,
-  releaseDate?: Date,
   stripeChargeId?: string
 ) {
   logger.info("Saving into Payment table");
@@ -217,7 +216,6 @@ export async function taskPaymentInsetion(
       amount,
       userId,
       purpose,
-      releaseDate,
       status,
       stripeChargeId,
       stripePaymentIntentId,
