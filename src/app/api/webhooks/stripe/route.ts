@@ -173,7 +173,11 @@ async function handleCheckout(event: Stripe.Event) {
     const userId = event?.data.object?.metadata?.userId;
     const type = event?.data.object?.metadata?.type as PaymentPorposeEnumType;
     const paymentIntentId = session.payment_intent as string;
-    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    const [paymentIntent, chargesList] = await Promise.all([
+      stripe.paymentIntents.retrieve(paymentIntentId),
+      stripe.charges.list({ payment_intent: paymentIntentId, limit: 1 }),
+    ]);
     const customerId =
       typeof paymentIntent.customer === "string"
         ? paymentIntent.customer
@@ -184,13 +188,15 @@ async function handleCheckout(event: Stripe.Event) {
         ? paymentIntent.payment_method
         : paymentIntent.payment_method?.id;
 
+    const chargeId = chargesList.data[0]?.id;
+
     if (!userId || !customerId) {
       logger.warn("couldnt found userId or DraftId " + userId);
       return;
     }
     logger.info(`paymentMethodId for user ${userId} is : ${paymentMethodId}`);
 
-    await stripe.paymentMethods.update(paymentMethodId!, {
+    void stripe.paymentMethods.update(paymentMethodId!, {
       allow_redisplay: "always",
     });
     const paymentExist = await getPaymentByPaymentIntentId(paymentIntentId);
@@ -207,7 +213,8 @@ async function handleCheckout(event: Stripe.Event) {
       amount,
       userId,
       paymentIntentId,
-      type
+      type,
+      chargeId
     );
     if (!paymentId) {
       logger.warn("unable to insert paymentIntent for the payment table ");
