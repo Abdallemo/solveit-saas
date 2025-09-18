@@ -1,6 +1,5 @@
 "use client";
 
-import { Wallet, Info, ArrowUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -8,13 +7,25 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { ArrowUpRight, Info, Wallet } from "lucide-react";
+import { Tooltip, TooltipContent } from "../ui/tooltip";
 
-export default function WalletDropdownMenu({pending,availabel}:{pending:number,availabel:number}) {
+export default function WalletDropdownMenu({
+  pending,
+  availabel,
+}: {
+  pending: number;
+  availabel: number;
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="icon" className="size-8 relative bg-transparent">
-          <Wallet className="size-5"/>
+        <Button
+          variant="outline"
+          size="icon"
+          className="size-8 relative bg-transparent">
+          <Wallet className="size-5" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64 p-3" align="end">
@@ -47,10 +58,25 @@ export default function WalletDropdownMenu({pending,availabel}:{pending:number,a
               <div className="text-lg font-semibold text-green-600">
                 RM{availabel}
               </div>
-              <Button size="sm" className="w-full h-7 text-xs">
-                <ArrowUpRight className="h-3 w-3 mr-1" />
-                Withdraw
-              </Button>
+              <Tooltip>
+                {availabel <= 20 && (
+                  <TooltipContent align="end" alignOffset={20} className="bg-primary">
+                    you can only withdraw more then RM20
+                  </TooltipContent>
+                )}
+
+                <TooltipTrigger className="w-full">
+                  <div className="w-full">
+                    <Button
+                      size="sm"
+                      className="w-full h-7 text-xs"
+                      disabled={availabel <= 20}>
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                      Withdraw
+                    </Button>
+                  </div>
+                </TooltipTrigger>
+              </Tooltip>
             </div>
           </Card>
         </div>
