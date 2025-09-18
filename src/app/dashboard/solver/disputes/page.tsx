@@ -3,7 +3,6 @@ import { getUserDisputes } from "@/features/tasks/server/data";
 
 export default async function page() {
   const data = await getUserDisputes();
-  console.log(data)
   return (
     <main className="w-full h-full">
       <DisputesPage disputes={data} />
