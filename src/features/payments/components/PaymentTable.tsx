@@ -1,17 +1,5 @@
 "use client";
 
-import {
-  ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  getSortedRowModel,
-  SortingState,
-  ColumnFiltersState,
-  getFilteredRowModel,
-  VisibilityState,
-} from "@tanstack/react-table";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
@@ -21,8 +9,31 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  SortingState,
+  useReactTable,
+  VisibilityState,
+} from "@tanstack/react-table";
 
-import { PaymentStatusType } from "@/drizzle/schemas";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,22 +44,11 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
-import { MoreHorizontal, ArrowUpDown, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+import { PaymentStatusType } from "@/drizzle/schemas";
+import { ArrowUpDown, ChevronDown, MoreHorizontal } from "lucide-react";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import { paymentType } from "../server/action";
-import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogTitle,
-  DialogHeader,
-  DialogFooter,
-  DialogClose,
-} from "@/components/ui/dialog";
 
 export function GetPaymentStatusBadge(status: PaymentStatusType) {
   switch (status) {
@@ -166,16 +166,18 @@ function NewPaymentColumns(
         );
       },
       cell: ({ row }) => {
-      const payment = row.original
-        if (!payment.releaseDate) return "Not yet released"
-        return new Intl.DateTimeFormat("en-US", {
-          year: "numeric",
-          month: "numeric",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(row.getValue("releaseDate"));
+        const payment = row.original;
+        if (!payment.releaseDate) return "Not yet released";
+        return new Date(row.getValue("releaseDate")).toLocaleTimeString(
+          undefined,
+          {
+            day: "2-digit",
+            hour: "2-digit",
+            month: "2-digit",
+            minute: "2-digit",
+            year: "numeric",
+          }
+        );
       },
     },
     {
@@ -192,14 +194,16 @@ function NewPaymentColumns(
         );
       },
       cell: ({ row }) => {
-        return new Intl.DateTimeFormat("en-US", {
-          year: "numeric",
-          month: "numeric",
-          day: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          hour12: true,
-        }).format(row.getValue("createdAt"));
+        return new Date(row.getValue("createdAt")).toLocaleTimeString(
+          undefined,
+          {
+            year: "numeric",
+            month: "numeric",
+            day: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+          }
+        );
       },
     },
     {
@@ -230,7 +234,9 @@ function NewPaymentColumns(
                     e.preventDefault();
                   }}
                   onClick={() => handleOpenDialog(payment)}>
-                  <span className="text-yellow-400 font-semibold">Release Payment</span>
+                  <span className="text-yellow-400 font-semibold">
+                    Release Payment
+                  </span>
                 </DropdownMenuItem>
               )}
               <DropdownMenuItem>View payment details</DropdownMenuItem>
@@ -394,12 +400,15 @@ export function PaymentTable({ data }: PaymentTableProps) {
 
       {selectedPayment && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent >
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle className="text-2xl">Are you absolutely sure?</DialogTitle>
+              <DialogTitle className="text-2xl">
+                Are you absolutely sure?
+              </DialogTitle>
               <DialogDescription>
                 This action cannot be undone. This will permanently release this
-                fund to the payer <span className="font-bold">with in 48h</span>.
+                fund to the payer <span className="font-bold">with in 48h</span>
+                .
               </DialogDescription>
 
               <div className="flex flex-col space-y-4">
