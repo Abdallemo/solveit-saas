@@ -1,7 +1,7 @@
 "use server";
 
 import db from "@/drizzle/db";
-import { UserDetails } from "@/drizzle/schemas";
+import { PaymentTable, RefundTable, UserDetails } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
   getServerUserSession,
@@ -145,6 +145,7 @@ export async function CreateUserStripeConnectAccount(
     type: "standard",
     email: user.email!,
     business_type: "individual",
+
     capabilities: {
       card_payments: { requested: true },
       transfers: { requested: true },
@@ -160,6 +161,12 @@ export async function CreateUserStripeConnectAccount(
       },
       address: values.address,
       phone: "+15555550123",
+      id_number: "000000000",
+      verification: {
+        document: {
+          front: "file_identity_document_success",
+        },
+      },
     },
     business_profile: {
       mcc:
@@ -217,5 +224,42 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
       stack: (error as Error).stack,
     });
     throw new Error("something went wrong");
+  }
+}
+export async function refundPoster(taskPaymentId: string) {
+  console.warn("passed task payemnt :", taskPaymentId);
+  try {
+    const res = await db.query.PaymentTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, taskPaymentId),
+      columns: { stripeChargeId: true, amount: true, id: true },
+    });
+    console.log("found ", res);
+    if (res?.stripeChargeId) {
+      const st = await stripe.refunds.create({
+        charge: res.stripeChargeId,
+      });
+      if (st.status == "succeeded") {
+        const rf = await db
+          .update(RefundTable)
+          .set({
+            refundedAt: new Date(),
+            refundStatus: "REFUNDED",
+          })
+          .where(eq(RefundTable.paymentId, taskPaymentId))
+          .returning();
+        console.warn("after rf update ", rf);
+        const py = await db
+          .update(PaymentTable)
+          .set({ status: "REFUNDED" })
+          .where(eq(PaymentTable.id, taskPaymentId))
+          .returning();
+        console.warn("after py update ", py);
+      }
+    } else {
+      throw new Error("no match found for this payment");
+    }
+  } catch (error) {
+    console.log(error);
+    throw new Error("unable to release this fund try again");
   }
 }
