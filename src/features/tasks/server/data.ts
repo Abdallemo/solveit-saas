@@ -255,6 +255,8 @@ export async function getAllTasksByRolePaginated(
       not(eq(TaskTable.posterId, userId)),
 
       not(eq(TaskTable.visibility, "private")),
+      eq(TaskTable.status, "OPEN"),
+      eq(TaskTable.status, "COMPLETED"),
       search
         ? or(
             ilike(TaskTable.title, `%${search}%`),
@@ -652,7 +654,6 @@ export async function getAdminStats(range: string = "30 days") {
   }));
 }
 async function AllDisputes() {
-  console.log("AllDisputes called");
   return await db.query.RefundTable.findMany({
     with: {
       taskRefund: {
@@ -674,7 +675,6 @@ export async function getAllDisputes(
     tag: "dispute-data-cache",
     enabled: options.useCache,
   })();
-  console.log(allDisputes);
   return allDisputes.map((dispute) => ({
     id: dispute.id ?? null,
     refundReason: dispute.refundReason ?? null,
@@ -734,7 +734,7 @@ export async function getUserDisputes() {
 
   const userTasksWithRefund = await db
     .select({
-      tasks: TaskTable, 
+      tasks: TaskTable,
       refunds: RefundTable,
     })
     .from(TaskTable)
