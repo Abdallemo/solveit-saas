@@ -63,11 +63,9 @@ export async function getAllTaskDeadlines(
 ) {
   return await withCache({
     callback: async () => {
-      console.log("hit cat");
       const all = await db.query.TaskDeadlineTable.findMany({
         columns: { id: true, deadline: true, createdAt: true },
       });
-      console.log(all);
       return all;
     },
     tag: "deadline-data-cache",
