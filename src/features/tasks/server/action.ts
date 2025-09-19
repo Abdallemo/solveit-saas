@@ -641,7 +641,7 @@ export async function publishSolution(values: {
       method: ["email", "system"],
       body: {
         subject: "Task Submited",
-        content: `you Task titiled <h4>${workspace.task.title}</h4> 
+        content: `you Task titiled ${workspace.task.title} 
           has bean submited please review it with in 7days `,
       },
     });
@@ -674,11 +674,11 @@ export async function handleTaskDeadline(task: TaskReturnType) {
   )
     return;
   if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
-    const deadlinePercentage = await calculateTaskProgress(
+    const {percentage,} = await calculateTaskProgressV2(
       task.solverId,
       task.workspace.taskId
     );
-    if (deadlinePercentage < 100) return;
+    if (percentage! < 100) return;
 
     try {
       const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
@@ -806,6 +806,8 @@ export async function requestRefund(values: {
       },
       receiverId: solverId!,
     });
+    withRevalidateTag("dispute-data-cache");
+
   } catch (err) {
     throw new Error("unable to create a refund request Please try again");
   }
