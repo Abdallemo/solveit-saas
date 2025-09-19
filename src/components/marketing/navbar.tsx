@@ -71,19 +71,19 @@ export default function Navbar() {
         <NavigationMenu className="flex-1 hidden md:flex">
           <NavigationMenuList>
             <NavigationMenuItem>
-              <Link href="#features" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Features
-                </NavigationMenuLink>
-              </Link>
+              <NavigationMenuLink
+                className={navigationMenuTriggerStyle()}
+                href="#features">
+                Features
+              </NavigationMenuLink>
             </NavigationMenuItem>
 
             <NavigationMenuItem>
-              <Link href="#pricing" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  Pricing
-                </NavigationMenuLink>
-              </Link>
+              <NavigationMenuLink
+                className={navigationMenuTriggerStyle()}
+                href="#pricing">
+                Pricing
+              </NavigationMenuLink>
             </NavigationMenuItem>
             <NavigationMenuItem>
               <NavigationMenuTrigger>Resources</NavigationMenuTrigger>
@@ -102,11 +102,11 @@ export default function Navbar() {
               </NavigationMenuContent>
             </NavigationMenuItem>
             <NavigationMenuItem>
-              <Link href="/about" legacyBehavior passHref>
-                <NavigationMenuLink className={navigationMenuTriggerStyle()}>
-                  About Us
-                </NavigationMenuLink>
-              </Link>
+              <NavigationMenuLink
+                className={navigationMenuTriggerStyle()}
+                asChild>
+                <Link href="/about">About Us</Link>
+              </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
         </NavigationMenu>
@@ -161,8 +161,7 @@ export default function Navbar() {
                   <Link href={"/dashboard"}>Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem
-                  onClick={() => signOut({ redirectTo: "/" })}>
+                <DropdownMenuItem onClick={() => signOut({ redirectTo: "/" })}>
                   <LogOut />
                   Log out
                 </DropdownMenuItem>
