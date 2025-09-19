@@ -10,20 +10,75 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { X } from "lucide-react";
+import { completeRefund, reopenTask } from "@/features/payments/server/action";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMutation } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
-import { UserDisputeswithTasks } from "../../server/task-types";
+import { UserDisputeswithTask } from "../../server/task-types";
 
 interface DisputesPageProps {
-  disputes: UserDisputeswithTasks;
+  disputes: UserDisputeswithTask[];
 }
 
 export function DisputesPage({ disputes }: DisputesPageProps) {
-  const [activeChat, setActiveChat] = useState<string | null>(null);
+  const [confirmInput, setConfirmInput] = useState("");
+  const [confirmTaskOpenInput, setConfirmTaskOpenInput] = useState("");
+  const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
+  const [isReopenDialogOpen, setIsReopenDialogOpen] = useState(false);
+  const router = useRouter();
+  const { user } = useCurrentUser();
+  const [selectedDispute, setSelectedDispute] =
+    useState<UserDisputeswithTask | null>(null);
+  const { mutateAsync: completeRefundMutation, isPending: isRefunding } =
+    useMutation({
+      mutationFn: completeRefund,
+      onSuccess: () => {
+        toast.success("successfully refunded to your payment method", {
+          id: "refund-complete",
+        });
+        setIsRefundDialogOpen((prev) => !prev);
+        router.refresh();
+      },
+      onError: (e) => toast.error(e.message, { id: "refund-complete" }),
+    });
 
+  const { mutateAsync: reopenTaskMutation, isPending: isReopening } =
+    useMutation({
+      mutationFn: reopenTask,
+      onSuccess: () => {
+        toast.success("successfully re-open your task", {
+          id: "opening-complete",
+        });
+        router.refresh();
+        setIsReopenDialogOpen((prev) => !prev);
+      },
+      onError: (e) => toast.error(e.message, { id: "opening-complete" }),
+    });
+  async function handleCompleteRefund(refundId: string) {
+    toast.loading("refunding....", { id: "refund-complete" });
+    await completeRefundMutation(refundId);
+    setConfirmTaskOpenInput("");
+    setConfirmInput("");
+  }
+  async function handleReopenTask(refundId: string) {
+    toast.loading("re-opening Task....", { id: "opening-complete" });
+    await reopenTaskMutation(refundId);
+    setConfirmTaskOpenInput("");
+    setConfirmInput("");
+  }
   return (
     <div className="container mx-auto py-8">
       <h1 className="text-2xl font-bold mb-6">Your Disputes</h1>
@@ -74,92 +129,193 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
                 )}
               </CardContent>
 
-              <CardFooter className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setActiveChat(d.tasks.id)}>
-                  Open Chat
-                </Button>
-                <Button onClick={() => toast.success(d.tasks.id)}>
-                  View Details
-                </Button>
+              <CardFooter className="flex justify-end gap-2">
+                {user &&
+                  user.role === "POSTER" &&
+                  d.refunds.refundStatus === "PENDING_POSTER_ACTION" && (
+                    <>
+                      <Button
+                        onClick={() => {
+                          toast.success(d.refunds.id);
+                          setSelectedDispute(d);
+                          setIsRefundDialogOpen((prev) => !prev);
+                        }}
+                        variant={"secondary"}>
+                        Get Refund
+                      </Button>
+                      <Button onClick={() => setSelectedDispute(d)}>
+                        Reopen Task
+                      </Button>
+                    </>
+                  )}
               </CardFooter>
             </Card>
           ))}
         </div>
       )}
-
-      {activeChat && (
-        <DisputeChat taskId={activeChat} onClose={() => setActiveChat(null)} />
+      {selectedDispute && (
+        <>
+          <CompleteRefundDialog
+            confirmInput={confirmInput}
+            setConfirmInput={setConfirmInput}
+            isRefundDialogOpen={isRefundDialogOpen}
+            setIsRefundDialogOpen={(open) => {
+              if (!open) setSelectedDispute(null);
+            }}
+            handleCompleteRefund={async () =>
+              handleCompleteRefund(selectedDispute.refunds.id)
+            }
+            isRefunding={isRefunding}
+            refund={selectedDispute}
+          />
+          <ReopenTaskDialog
+            confirmInput={confirmTaskOpenInput}
+            setConfirmInput={setConfirmTaskOpenInput}
+            isReopenDialogOpen={isReopenDialogOpen}
+            setIsReopenDialogOpen={setIsReopenDialogOpen}
+            handleReopenTask={async () =>
+              handleReopenTask(selectedDispute.refunds.id)
+            }
+            isReopening={isReopening}
+          />{" "}
+        </>
       )}
+      {/* <*/}
     </div>
   );
 }
 
-interface ChatMessage {
-  id: string;
-  sender: "me" | "other";
-  text: string;
-}
-
-interface DisputeChatProps {
-  taskId: string;
-  onClose: () => void;
-}
-
-function DisputeChat({ taskId, onClose }: DisputeChatProps) {
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [input, setInput] = useState("");
-
-  const sendMessage = () => {
-    if (!input.trim()) return;
-    setMessages((prev) => [
-      ...prev,
-      { id: Date.now().toString(), sender: "me", text: input },
-    ]);
-    setInput("");
-  };
-
+function CompleteRefundDialog({
+  isRefunding,
+  isRefundDialogOpen,
+  setIsRefundDialogOpen,
+  refund,
+  confirmInput,
+  setConfirmInput,
+  handleCompleteRefund,
+}: {
+  refund: UserDisputeswithTask;
+  confirmInput: string;
+  isRefunding: boolean;
+  isRefundDialogOpen: boolean;
+  setIsRefundDialogOpen: (open: boolean) => void;
+  setConfirmInput: (open: string) => void;
+  handleCompleteRefund: () => Promise<void>;
+}) {
   return (
-    <div className="fixed bottom-4 right-4 w-96 z-50">
-      <Card className="flex flex-col h-96">
-        <CardHeader className="flex flex-row items-center justify-between py-2">
-          <CardTitle className="text-base">Dispute Chat</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
+    <Dialog open={isRefundDialogOpen} onOpenChange={setIsRefundDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">Confirm Refund?</DialogTitle>
+          <DialogDescription>
+            By confirming this action, you choose to receive a full refund for
+            the task. The amount will be returned to your original payment
+            method.
+          </DialogDescription>
 
-        <CardContent className="flex flex-col flex-1 p-0">
-          <ScrollArea className="flex-1 p-4 max-h-55 ">
-            <div className="space-y-2 h-55">
-              {messages.map((m) => (
-                <div
-                  key={m.id}
-                  className={`text-sm px-3 py-2 rounded-lg max-w-[75%] ${
-                    m.sender === "me"
-                      ? "ml-auto bg-primary text-primary-foreground"
-                      : "mr-auto bg-muted"
-                  }`}>
-                  {m.text}
-                </div>
-              ))}
+          <div className="flex flex-col space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                By typing
+                <span className="font-semibold text-foreground">
+                  {" "}
+                  "I confirm"{" "}
+                </span>
+                below, you authorize the refund of
+                <span className="font-bold text-foreground">
+                  {" "}
+                  RM{refund.tasks.price}
+                </span>
+                .{""}This action will mark the task as closed.
+              </p>
             </div>
-          </ScrollArea>
-
-          <div className="p-2 flex gap-2 border-t">
             <Input
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              placeholder="Type a message..."
-              onKeyDown={(e) => {
-                if (e.key === "Enter") sendMessage();
-              }}
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              className="mt-2"
             />
-            <Button onClick={sendMessage}>Send</Button>
           </div>
-        </CardContent>
-      </Card>
-    </div>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isRefunding}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            variant={"success"}
+            disabled={confirmInput !== "I confirm" || isRefunding}
+            onClick={async () => await handleCompleteRefund()}>
+            {isRefunding && <Loader2 className="animate-spin" />} Get Refund
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ReopenTaskDialog({
+  isReopening,
+  isReopenDialogOpen,
+  setIsReopenDialogOpen,
+  confirmInput,
+  setConfirmInput,
+  handleReopenTask,
+}: {
+  confirmInput: string;
+  isReopening: boolean;
+  isReopenDialogOpen: boolean;
+  setIsReopenDialogOpen: (open: boolean) => void;
+  setConfirmInput: (open: string) => void;
+  handleReopenTask: () => Promise<void>;
+}) {
+  return (
+    <Dialog open={isReopenDialogOpen} onOpenChange={setIsReopenDialogOpen}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="text-2xl">Confirm Re-open Task?</DialogTitle>
+          <DialogDescription>
+            By confirming this action, you will forfeit your refund for the
+            task. The task will be re-opened for other solvers to apply.
+          </DialogDescription>
+
+          <div className="flex flex-col space-y-4">
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">
+                By typing
+                <span className="font-semibold text-foreground">
+                  {" "}
+                  "I confirm"{" "}
+                </span>
+                below, you confirm that you want to re-open the task for other
+                solvers. This action will mark the dispute as resolved.
+              </p>
+            </div>
+            <Input
+              value={confirmInput}
+              onChange={(e) => setConfirmInput(e.target.value)}
+              className="mt-2"
+            />
+          </div>
+        </DialogHeader>
+        <DialogFooter>
+          <DialogClose asChild>
+            <Button variant="outline" disabled={isReopening}>
+              Cancel
+            </Button>
+          </DialogClose>
+          <Button
+            type="submit"
+            variant={"success"}
+            disabled={confirmInput !== "I confirm" || isReopening}
+            onClick={async () => {
+              await handleReopenTask();
+            }}>
+            {isReopening && <Loader2 className="animate-spin" />} Re-open Task
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
