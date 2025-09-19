@@ -19,7 +19,7 @@ import type {
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import useWebSocket from "@/hooks/useWebSocket";
-import { supportedExtentions } from "@/lib/utils";
+import { isBeforeSession, supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCheck,
@@ -123,6 +123,12 @@ export default function MentorshipWorkspace({
   }
   const { sessionDate, timeSlot } = session;
   const allFiles = chats?.flatMap((chat) => chat.chatFiles) || [];
+  const isPreSession = isBeforeSession({
+    sessionDate,
+    session: timeSlot,
+    now: new Date(),
+  });
+
   const handleSendMessage = async () => {
     if (!messageInput.trim() && selectedFiles.length === 0) return;
     const text = messageInput;
@@ -178,6 +184,15 @@ export default function MentorshipWorkspace({
               </div>
             </div>
           </div>
+          {/*  */}
+
+          {isPreSession && (
+            <Badge variant={"success"} className="h-6">
+              this is a pre-session chat. Use this space to confirm details and
+              share resources.
+            </Badge>
+          )}
+
           <Button
             size="sm"
             className="gap-2"
@@ -228,7 +243,7 @@ export default function MentorshipWorkspace({
                           </p>
                           <div className="flex items-center gap-1">
                             <p className="text-xs text-muted-foreground">
-                              {(chat.createdAt!).toLocaleTimeString(undefined)}
+                              {chat.createdAt!.toLocaleTimeString(undefined)}
                             </p>
                             {isCurrentUser && (
                               <CheckCheck
