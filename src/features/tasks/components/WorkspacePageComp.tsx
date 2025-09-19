@@ -32,7 +32,6 @@ export default function WorkspacePageComp() {
     deadline,
     isLoading: isDeadlineLoading,
   } = DeadlineProgress();
-
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
     currentWorkspace?.task.status == "COMPLETED";
