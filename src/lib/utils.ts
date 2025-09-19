@@ -45,13 +45,24 @@ export const formatDates = (dateString: Date) => {
     timeZone: "UTC",
   });
 };
+export const formatDatesNUTC = (dateString: Date) => {
+  return dateString.toLocaleDateString(undefined);
+};
 export const formatDateAndTime = (date: Date) => {
   return date.toLocaleDateString("en-US", {
     hour: "numeric",
     minute: "2-digit",
     hour12: false,
     timeZone: "UTC",
-    
+  });
+};
+export const formatDateAndTimeNUTC = (date: Date) => {
+  return date.toLocaleDateString("en-US", {
+    hour: "numeric",
+    minute: "2-digit",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
   });
 };
 export function parseDeadlineV2(value: string, baseTime: Date): Date | null {
