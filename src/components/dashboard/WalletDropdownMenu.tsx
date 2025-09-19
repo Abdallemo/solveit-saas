@@ -7,6 +7,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { cn } from "@/lib/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { ArrowUpRight, Info, Wallet } from "lucide-react";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
@@ -18,14 +19,18 @@ export default function WalletDropdownMenu({
   pending: number;
   availabel: number;
 }) {
+  console.log("availabel ", availabel);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button
-          variant="outline"
-          size="icon"
-          className="size-8 relative bg-transparent">
-          <Wallet className="size-5" />
+          variant="ghost"
+          className={cn(
+            "relative h-9 w-9 rounded-full transition-colors",
+            "hover:bg-accent hover:text-accent-foreground",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+          )}>
+          <Wallet className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-64 p-3" align="end">
@@ -60,7 +65,10 @@ export default function WalletDropdownMenu({
               </div>
               <Tooltip>
                 {availabel <= 20 && (
-                  <TooltipContent align="end" alignOffset={20} className="bg-primary">
+                  <TooltipContent
+                    align="end"
+                    alignOffset={20}
+                    className="bg-primary">
                     you can only withdraw more then RM20
                   </TooltipContent>
                 )}
