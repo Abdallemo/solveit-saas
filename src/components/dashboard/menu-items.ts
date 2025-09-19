@@ -84,12 +84,6 @@ export const MenuItemsModerator: MenuItem[] = [
       },
       {
         type: "link",
-        title: "Pending Review",
-        url: "/dashboard/moderator/disputes/pending",
-        icon: LucideAlertTriangle,
-      },
-      {
-        type: "link",
         title: "Resolved Cases",
         url: "/dashboard/moderator/disputes/resolved",
         icon: LucideClipboardCheck,
