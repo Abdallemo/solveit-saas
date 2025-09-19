@@ -10,12 +10,13 @@ import {
   getAssignedTasksbyIdPaginated,
   getDraftTask,
   getDraftTaskWithDefualtVal,
+  getModeratorDisputes,
   getPosterTasksbyIdPaginated,
   getSolutionById,
   getTasksbyId,
   getUserDisputes,
   getUserTasksbyId,
-  getWorkspaceById
+  getWorkspaceById,
 } from "./data";
 export type taskRefundSchemaType = z.infer<typeof taskRefundSchema>;
 export type TaskFormValues = z.infer<typeof TaskFormSchema>;
@@ -31,8 +32,9 @@ export type taskDraftType = Exclude<
   null
 >;
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
-export type UserDisputeswithTasks = Awaited<ReturnType<typeof getUserDisputes>>;
+export type UserDisputeswithTask = Awaited<ReturnType<typeof getUserDisputes>>[number];
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
+export type ModDisputeType = Awaited<ReturnType<typeof getModeratorDisputes>>;
 export type SolverAssignedTaskType = Awaited<
   ReturnType<typeof getAssignedTasksbyIdPaginated>
 >["tasks"][number];
@@ -62,20 +64,20 @@ export type FlatDispute = {
   id: string;
   refundReason: string | null;
   refundedAt: Date | null;
+  createdAt: Date | null;
   paymentId: string;
   taskId: string;
   refundStatus: RefundStatusEnumType | null;
   assignedAt: Date | null;
   taskPaymentId: string | null;
+  moderatorName: string | null;
+  moderatorEmail: string | null;
   taskTitle: string;
   taskPrice: number | null;
-
   posterName: string | null;
   posterEmail: string | null;
-
   solverName: string | null;
   solverEmail: string | null;
-
   solutionContent: string | null;
 };
 export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
