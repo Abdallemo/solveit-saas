@@ -24,7 +24,7 @@ import {
 } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
-import { formatDateAndTime, formatDates } from "@/lib/utils";
+import { formatDateAndTimeNUTC } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TooltipContent } from "@radix-ui/react-tooltip";
 import { useMutation } from "@tanstack/react-query";
@@ -284,10 +284,10 @@ export default function SolutionPageComps({
   return (
     <div className="flex w-full h-full bg-background/10">
       <div className="flex-1 p-8 gap-3 flex flex-col">
-        <Card className="mb-6 mt-6 h-[500px]">
+        <Card className="mb-6 h-[500px]">
           <CardHeader>
             <div className="flex items-center justify-between">
-              <h2 className="text-xl text-foreground font-bold">Solution</h2>
+            <h2 className="text-2xl font-bold">Solution</h2>
               <div className="flex items-center space-x-2">
                 {GetStatusBadge(solution.taskSolution.status!)}
 
@@ -297,9 +297,11 @@ export default function SolutionPageComps({
               </div>
             </div>
             <div className="flex items-center space-x-4 text-sm">
-              <span>Submitted {formatDateAndTime(solution.createdAt!)}</span>
+              <span>
+                Submitted {formatDateAndTimeNUTC(solution.createdAt!)}
+              </span>
               <span>•</span>
-              <span>Updated {formatDates(solution.updatedAt!)}</span>
+              <span>Updated {formatDateAndTimeNUTC(solution.updatedAt!)}</span>
             </div>
           </CardHeader>
           <CardContent>
