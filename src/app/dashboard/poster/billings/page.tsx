@@ -10,7 +10,6 @@ export default async function Page() {
   if (!user || !user.id) return;
   const userDb = await getUserById(user.id);
   if (!userDb) return;
-  console.log(userDb.stripeAccountLinked);
   if (!userDb.stripeAccountLinked)
     return <BillingGate action={handlerStripeConnect} />;
   return <div>Linked</div>;
