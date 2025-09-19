@@ -1,33 +1,31 @@
 "use client";
-import { Suspense, useEffect, useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
-import { useForm, FormProvider, FieldErrors } from "react-hook-form";
-import TaskPostingEditor from "./richTextEdito/Tiptap";
-import NewTaskSidebar from "./newTaskSidebar";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { TaskSchema, taskSchema } from "../server/task-types";
-import {
-  autoSaveDraftTask,
-  createTaksPaymentCheckoutSession,
-} from "../server/action";
-import { toast } from "sonner";
-import { CircleAlert, Loader } from "lucide-react";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
-import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading";
 import AuthGate from "@/components/AuthGate";
-import { useFileUpload } from "@/hooks/useFile";
-import { env } from "@/env/client";
-import useStripeSessionValidate from "../lib/useStripeSessionValidate";
+import { Button } from "@/components/ui/button";
 import { NewuseTask } from "@/contexts/TaskContext";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { env } from "@/env/client";
 import {
   autoSuggestWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
-import { Alert } from "@/components/ui/alert";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import { useAutoSave } from "@/hooks/useAutoDraftSave";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { useFileUpload } from "@/hooks/useFile";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { CircleAlert, Loader } from "lucide-react";
+import { Suspense, useEffect, useState } from "react";
+import { FieldErrors, FormProvider, useForm } from "react-hook-form";
+import { toast } from "sonner";
+import {
+  autoSaveDraftTask,
+  createTaksPaymentCheckoutSession,
+} from "../server/action";
+import { TaskSchema, taskSchema } from "../server/task-types";
+import NewTaskSidebar from "./newTaskSidebar";
+import TaskPostingEditor from "./richTextEdito/Tiptap";
 
 export default function TaskCreationPage({
   defaultValues,
@@ -63,7 +61,7 @@ export default function TaskCreationPage({
     mutationFn: validateContentWithAi,
     onSuccess: (d) => {
       setRuleVailation(d.violatesRules);
-      toast.success("valid content" , {
+      toast.success("valid content", {
         id: "openai",
       });
     },
@@ -74,18 +72,18 @@ export default function TaskCreationPage({
   const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
     {
       mutationFn: autoSuggestWithAi,
-      onSuccess: (d) => {
-
-      },
+      onSuccess: (d) => {},
       onError: (er) => {
         toast.error(er.message);
       },
     }
   );
   async function handleSugestions() {
-    toast.loading("checking...",{id:"autosuggestion"})
+    toast.loading("Ai Suggesting...", { id: "autosuggestion" });
     const res = await autoSuggest({
       content: draft.content,
+    }).finally(() => {
+      toast.dismiss("autosuggestion");
     });
     updateDraft({
       category: res.category,
@@ -93,7 +91,7 @@ export default function TaskCreationPage({
       price: res.price,
       title: res.title,
     });
-    toast.dismiss("autosuggestion")
+    toast.dismiss("autosuggestion");
   }
 
   useEffect(() => {
@@ -139,8 +137,12 @@ export default function TaskCreationPage({
       if (ruleRes.violatesRules) {
         toast.warning(
           <div className="flex flex-col gap-2">
-            <span className="font-semibold">Your task violates our posting rules. Try again.</span>
-            <span>If you believe this is a mistake, reach out to our support team.</span>
+            <span className="font-semibold">
+              Your task violates our posting rules. Try again.
+            </span>
+            <span>
+              If you believe this is a mistake, reach out to our support team.
+            </span>
           </div>,
 
           { id: "openai" }
