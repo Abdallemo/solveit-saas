@@ -29,6 +29,7 @@ export const NotificationMethodsEnum = pgEnum("method", ["SYSTEM", "EMAIL"]);
 export const TierEnum = pgEnum("tier", ["POSTER", "SOLVER", "SOLVER++"]);
 export const PaymentStatus = pgEnum("payment_status", [
   "HOLD",
+  "RELEASED",
   "SUCCEEDED",
   "FAILED",
   "CANCELED",
@@ -49,6 +50,7 @@ export const RefundStatusEnum = pgEnum("refund_status", [
   "REFUNDED",
   "REJECTED",
   "FAILED",
+  "PENDING_POSTER_ACTION",
 ]);
 export const PaymentPorposeEnum = pgEnum("payment_porpose", [
   "Task Payment",
@@ -355,6 +357,10 @@ export const RefundTable = pgTable("refunds", {
     mode: "date",
     withTimezone: true,
   }).defaultNow(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
 });
 
 export const TaskCommentTable = pgTable("task_comments", {
@@ -646,6 +652,9 @@ export const taskRelations = relations(TaskTable, ({ one, many }) => ({
   taskComments: many(TaskCommentTable, {
     relationName: "taskComments",
   }),
+  taskFiles: many(TaskFileTable, {
+    relationName: "taskFiles",
+  }),
   category: one(TaskCategoryTable, {
     fields: [TaskTable.categoryId],
     references: [TaskCategoryTable.id],
@@ -721,6 +730,13 @@ export const workspaceFilesRelation = relations(
     }),
   })
 );
+export const TaskFileTableRelation = relations(TaskFileTable, ({ one }) => ({
+  taskFiles: one(TaskTable, {
+    fields: [TaskFileTable.taskId],
+    references: [TaskTable.id],
+    relationName: "taskFiles",
+  }),
+}));
 
 export const SolutionTableRelation = relations(
   SolutionTable,
