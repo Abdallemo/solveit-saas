@@ -48,7 +48,7 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const { pending, availabel } = await getWalletInfo(user.id);
+  const { pending, available } = await getWalletInfo(user.id);
   const allNotifications = await getAllNotification(user.id);
   const subscription = await getServerUserSubscriptionById(user.id);
   let stripeData: StripeSubscriptionContextType = {
@@ -113,10 +113,10 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
                         <BridCarmComponent />
                       </div>
 
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 justify-center items-center">
                         {user.role === "SOLVER" && (
                           <WalletDropdownMenu
-                            availabel={availabel}
+                            availabel={available}
                             pending={pending}
                           />
                         )}
