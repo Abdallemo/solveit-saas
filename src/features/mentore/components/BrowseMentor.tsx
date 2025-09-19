@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -10,15 +9,7 @@ import {
   CardFooter,
   CardHeader,
 } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Pagination,
   PaginationContent,
@@ -28,9 +19,21 @@ import {
   PaginationNext,
   PaginationPrevious,
 } from "@/components/ui/pagination";
-import { Clock, Search, Star, Users, DollarSign } from "lucide-react";
-import { format, isSameDay } from "date-fns";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MentorListigWithAvailbelDates } from "@/features/mentore/server/types";
+import { useQuery } from "@tanstack/react-query";
+import { format, isSameDay } from "date-fns";
+import { Clock, DollarSign, Search, Star, Users } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useMemo, useState } from "react";
+import { getMentorAllSessionCount } from "../server/action";
 import { BookingModal } from "./booking-modal";
 
 interface MentorCardProps {
@@ -47,6 +50,7 @@ export function MentorsBrowser({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
+
   const [sortBy, setSortBy] = useState<"name" | "price-low" | "price-high">(
     "name"
   );
@@ -261,7 +265,10 @@ export function MentorsBrowser({
 
 const MentorCard = ({ mentor, isBooking }: MentorCardProps) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-
+  const { data, isLoading } = useQuery({
+    queryKey: [""],
+    queryFn: async () => await getMentorAllSessionCount(mentor.userId),
+  });
   const todayAvailability = mentor.availableDates.find((session) =>
     isSameDay(session.date, new Date())
   );
@@ -343,7 +350,12 @@ const MentorCard = ({ mentor, isBooking }: MentorCardProps) => {
               </div>
               <div className="flex items-center gap-1">
                 <Users className="h-3 w-3" />
-                <span>127 sessions</span>
+
+                {isLoading ? (
+                  <Skeleton className="pl-2 h-3 w-6" />
+                ) : (
+                  <span>{data?.count}</span>
+                )}
               </div>
             </div>
           </div>
