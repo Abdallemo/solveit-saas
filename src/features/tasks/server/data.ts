@@ -19,6 +19,7 @@ import type {
   Units,
 } from "@/features/tasks/server/task-types";
 import { withCache } from "@/lib/cache";
+import { DisputeNotFoundError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { formatTimeRemaining } from "@/lib/utils";
 import {
@@ -26,10 +27,12 @@ import {
   asc,
   count,
   countDistinct,
+  desc,
   eq,
   ilike,
   inArray,
   not,
+  notExists,
   or,
   sql,
   sum,
@@ -86,30 +89,46 @@ export async function getAllCategoryMap(): Promise<Record<string, string>> {
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
 export async function getWalletInfo(solverId: string) {
-  let pending = 0;
-  let availabel = 0;
   if (!solverId) {
     throw new Error("error! user id is empty");
   }
-  const solverInfo = await db.query.WorkspaceTable.findMany({
-    with: { solver: true, task: true },
-    where: (table, fn) => fn.eq(table.solverId, solverId),
-  });
-  for (const record of solverInfo) {
-    switch (record.task.status) {
+  const tasks = await db
+    .select()
+    .from(TaskTable)
+    .where(
+      and(
+        eq(TaskTable.solverId, solverId),
+        notExists(
+          db
+            .select()
+            .from(RefundTable)
+            .where(
+              and(
+                eq(RefundTable.taskId, TaskTable.id),
+                eq(RefundTable.refundStatus, "REFUNDED")
+              )
+            )
+        )
+      )
+    );
+
+  let pending = 0;
+  let available = 0;
+  for (const task of tasks) {
+    switch (task.status) {
       case "ASSIGNED":
       case "IN_PROGRESS":
       case "SUBMITTED":
-        pending += record.task.price!;
+        pending += task.price ?? 0;
         break;
       case "COMPLETED":
-        availabel += record.task.price!;
+        available += task.price ?? 0;
         break;
     }
   }
-  return { pending, availabel };
-}
 
+  return { pending, available };
+}
 export async function getUserTasksbyId(userId: string) {
   const userTasks = await db.query.TaskTable.findMany({
     where: (table, fn) => fn.eq(table.posterId, userId),
@@ -662,6 +681,7 @@ async function AllDisputes() {
           solver: true,
         },
       },
+      refundModerator: true,
     },
   });
 }
@@ -677,6 +697,7 @@ export async function getAllDisputes(
     id: dispute.id ?? null,
     refundReason: dispute.refundReason ?? null,
     refundedAt: dispute.refundedAt ?? null,
+    createdAt: dispute.createdAt ?? null,
     paymentId: dispute.paymentId ?? null,
     taskId: dispute.taskId ?? null,
     refundStatus: dispute.refundStatus,
@@ -684,13 +705,12 @@ export async function getAllDisputes(
     taskPaymentId: dispute.taskRefund.paymentId ?? null,
     taskTitle: dispute.taskRefund.title ?? null,
     taskPrice: dispute.taskRefund.price ?? null,
-
+    moderatorName: dispute.refundModerator?.name ?? null,
+    moderatorEmail: dispute.refundModerator?.email ?? null,
     posterName: dispute.taskRefund.poster.name ?? null,
     posterEmail: dispute.taskRefund.poster.email ?? null,
-
     solverName: dispute.taskRefund.solver?.name ?? null,
     solverEmail: dispute.taskRefund.solver?.email ?? null,
-
     solutionContent: dispute.taskRefund.taskSolution.content,
   }));
 }
@@ -738,7 +758,46 @@ export async function getUserDisputes() {
     .from(TaskTable)
     .innerJoin(RefundTable, eq(RefundTable.taskId, TaskTable.id))
     .where(or(eq(TaskTable.posterId, user.id), eq(TaskTable.solverId, user.id)))
-    .orderBy(asc(RefundTable.createdAt));
+    .orderBy(desc(RefundTable.createdAt));
 
   return userTasksWithRefund;
+}
+export async function getModeratorDisputes(disputeId: string) {
+  const { user } = await isAuthorized(["MODERATOR"]);
+  try {
+    const dispute = await db.query.RefundTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, disputeId),
+      with: {
+        taskRefund: {
+          columns: {
+            id: false,
+            createdAt: false,
+          },
+          with: {
+            taskComments: true,
+            poster: true,
+            solver: true,
+            taskSolution: {
+              with: {
+                solutionFiles: {
+                  with: {
+                    solutionFile: true,
+                  },
+                },
+              },
+            },
+            taskFiles: true,
+          },
+        },
+        refundModerator: true,
+      },
+    });
+    if (!dispute) {
+      throw new DisputeNotFoundError();
+    }
+
+    return dispute;
+  } catch (error) {
+    throw new DisputeNotFoundError();
+  }
 }
