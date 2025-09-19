@@ -14,6 +14,11 @@ import {
   differenceInWeeks,
   differenceInYears,
   format,
+  isAfter,
+  isBefore,
+  isSameDay,
+  parse,
+  parseISO,
 } from "date-fns";
 import {
   FileArchive,
@@ -337,4 +342,48 @@ export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
       return `${years}y ${months}m`;
     }
   }
+}
+
+type SessionActiveType = {
+  now: Date;
+  sessionDate: string;
+  session: AvailabilitySlot;
+};
+
+export function isSessionActive({
+  session,
+  sessionDate,
+  now,
+}: SessionActiveType) {
+  const sessionDay = parseISO(sessionDate);
+  const startTime = parse(session.start, "HH:mm", sessionDay);
+  const endTime = parse(session.end, "HH:mm", sessionDay);
+
+  return (
+    isSameDay(now, sessionDay) &&
+    (isAfter(now, startTime) || now.getTime() === startTime.getTime()) &&
+    isBefore(now, endTime)
+  );
+}
+
+export function isBeforeSession({
+  session,
+  sessionDate,
+  now,
+}: SessionActiveType) {
+  const sessionDay = parseISO(sessionDate);
+  const startTime = parse(session.start, "HH:mm", sessionDay);
+
+  return isBefore(now, startTime);
+}
+
+export function isAfterSession({
+  session,
+  sessionDate,
+  now,
+}: SessionActiveType) {
+  const sessionDay = parseISO(sessionDate);
+  const endTime = parse(session.end, "HH:mm", sessionDay);
+
+  return isAfter(now, endTime);
 }
