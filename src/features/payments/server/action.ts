@@ -1,25 +1,40 @@
 "use server";
 
 import db from "@/drizzle/db";
-import { PaymentTable, RefundTable, UserDetails } from "@/drizzle/schemas";
+import {
+  BlockedTasksTable,
+  PaymentTable,
+  RefundTable,
+  TaskTable,
+  UserDetails,
+} from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
+import { sendNotification } from "@/features/notifications/server/action";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
+import { getModeratorDisputes } from "@/features/tasks/server/data";
 import {
   getUserById,
   UpdateUserField,
   UserDbType,
 } from "@/features/users/server/actions";
 import { OnboardingFormData } from "@/features/users/server/user-types";
-import { UnauthorizedError } from "@/lib/Errors";
+import { withRevalidateTag } from "@/lib/cache";
+import {
+  DisputeAssignmentError,
+  DisputeNotFoundError,
+  DisputeRefundedError,
+  DisputeUnauthorizedError,
+  UnauthorizedError,
+} from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { toYMD } from "@/lib/utils";
 import { subYears } from "date-fns";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 export type cardsType = Awaited<
@@ -226,40 +241,277 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
     throw new Error("something went wrong");
   }
 }
-export async function refundPoster(taskPaymentId: string) {
-  console.warn("passed task payemnt :", taskPaymentId);
+export async function refundFunds(paymentId: string) {
   try {
-    const res = await db.query.PaymentTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.id, taskPaymentId),
+    const payment = await db.query.PaymentTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, paymentId),
       columns: { stripeChargeId: true, amount: true, id: true },
     });
-    console.log("found ", res);
-    if (res?.stripeChargeId) {
-      const st = await stripe.refunds.create({
-        charge: res.stripeChargeId,
-      });
-      if (st.status == "succeeded") {
-        const rf = await db
+    if (!payment?.stripeChargeId) {
+      throw new Error("Payment or Stripe charge not found.");
+    }
+
+    const st = await stripe.refunds.create({
+      charge: payment.stripeChargeId,
+    });
+
+    if (st.status === "succeeded") {
+      await db.transaction(async (dx) => {
+        await dx
           .update(RefundTable)
           .set({
             refundedAt: new Date(),
             refundStatus: "REFUNDED",
           })
-          .where(eq(RefundTable.paymentId, taskPaymentId))
-          .returning();
-        console.warn("after rf update ", rf);
-        const py = await db
+          .where(eq(RefundTable.paymentId, paymentId));
+
+        await dx
           .update(PaymentTable)
           .set({ status: "REFUNDED" })
-          .where(eq(PaymentTable.id, taskPaymentId))
-          .returning();
-        console.warn("after py update ", py);
-      }
+          .where(eq(PaymentTable.id, paymentId));
+      });
     } else {
-      throw new Error("no match found for this payment");
+      throw new Error("Stripe refund failed with status: " + st.status);
     }
   } catch (error) {
-    console.log(error);
-    throw new Error("unable to release this fund try again");
+    console.error(error);
+    logger.error("Failed to execute Stripe refund.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error("Unable to process the refund.");
   }
+}
+export async function completeRefund(refundId: string) {
+  console.warn("passed refundId ", refundId);
+  try {
+    const { user } = await isAuthorized(["POSTER"]);
+    const refund = await db.query.RefundTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, refundId),
+      with: { taskRefund: true },
+    });
+
+    if (!refund || refund.refundStatus !== "PENDING_POSTER_ACTION") {
+      throw new Error("Invalid request to complete refund.");
+    }
+    await refundFunds(refund.paymentId);
+
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: `Your refund for the dispute with ID ${refund.id} has been successfully processed. 
+      The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      receiverId: refund.taskRefund.posterId,
+    });
+  } catch (error) {
+    logger.error("Failed to complete refund.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error(
+      "Unable to complete the refund. Please try again or contact support."
+    );
+  }
+}
+export async function reopenTask(refundId: string) {
+  try {
+    const { user } = await isAuthorized(["POSTER"]);
+    const refund = await db.query.RefundTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, refundId),
+      with: { taskRefund: { with: { poster: true, solver: true } } },
+    });
+
+    if (
+      !refund ||
+      refund.refundStatus !== "PENDING_POSTER_ACTION" ||
+      refund.taskRefund.poster.id !== user.id
+    ) {
+      throw new Error("Invalid request to re-open task.");
+    }
+
+    await db.transaction(async (dx) => {
+      await dx
+        .update(RefundTable)
+        .set({
+          refundStatus: "REJECTED",
+          updatedAt: new Date(),
+        })
+        .where(eq(RefundTable.id, refund.id));
+
+      await dx
+        .update(TaskTable)
+        .set({
+          assignedAt: null,
+          solverId: null,
+          status: "OPEN",
+          updatedAt: new Date(),
+        })
+        .where(eq(TaskTable.id, refund.taskRefund.id));
+    });
+
+    withRevalidateTag("dispute-data-cache");
+
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
+      receiverId: refund.taskRefund.posterId,
+    });
+  } catch (error) {
+    logger.error("Failed to re-open task.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error(
+      "Unable to re-open the task. Please try again or contact support."
+    );
+  }
+}
+export async function approveRefund(refundId: string) {
+  try {
+    const { user } = await isAuthorized(["MODERATOR"]);
+    const refund = await db.query.RefundTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, refundId),
+      with: { taskRefund: true },
+      // columns:{moderatorId:true,refundStatus:true}
+    });
+
+    if (!refund) {
+      throw new DisputeNotFoundError();
+    }
+    const isResponsible = refund.moderatorId === user.id;
+    if (!isResponsible) throw new DisputeUnauthorizedError();
+    if (refund.refundStatus === "REFUNDED") throw new DisputeRefundedError();
+    await db.transaction(async (dx) => {
+      await dx
+        .update(RefundTable)
+        .set({
+          refundStatus: "PENDING_POSTER_ACTION",
+          updatedAt: new Date(),
+        })
+        .where(eq(RefundTable.paymentId, refund.paymentId));
+
+      await dx
+        .update(PaymentTable)
+        .set({ status: "HOLD" })
+        .where(eq(PaymentTable.id, refund.paymentId));
+    });
+    withRevalidateTag("dispute-data-cache");
+
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      receiverId: refund.taskRefund.posterId,
+    });
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
+          The held payment has been refunded to them and will not be disbursed to you.`,
+      receiverId: refund.taskRefund.solverId!,
+    });
+  } catch (error) {
+    logger.error("Failed to approve refund and set pending state.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error(
+      "Unable to approve the refund. Please try again or contact support."
+    );
+  }
+}
+export async function rejectRefund(refundId: string) {
+  try {
+    const { user } = await isAuthorized(["MODERATOR"]);
+    const refund = await db.query.RefundTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, refundId),
+      with: {
+        taskRefund: {
+          with: { solver: true },
+        },
+      },
+      // columns:{moderatorId:true,refundStatus:true}
+    });
+
+    if (!refund) {
+      throw new DisputeNotFoundError();
+    }
+    const isResponsible = refund.moderatorId === user.id;
+    if (!isResponsible) throw new DisputeUnauthorizedError();
+    if (
+      refund.refundStatus === "REFUNDED" ||
+      refund.refundStatus === "PENDING_POSTER_ACTION"
+    ) {
+      throw new DisputeRefundedError();
+    }
+    if (!refund.taskRefund.solver?.stripeAccountId) {
+      throw new UnauthorizedError();
+    }
+    if (!refund.taskRefund.solver?.stripeAccountLinked) {
+      throw new Error("please visit your billing and connect your account");
+    }
+    const transfer = await stripe.transfers.create({
+      amount: refund.taskRefund.price! * 100,
+      currency: "myr",
+      destination: refund.taskRefund.solver.stripeAccountId,
+    });
+
+    await db.transaction(async (dx) => {
+      await dx
+        .update(RefundTable)
+        .set({
+          refundStatus: "REJECTED",
+          updatedAt: new Date(),
+        })
+        .where(eq(RefundTable.paymentId, refund.paymentId));
+      //todo
+      await dx
+        .update(PaymentTable)
+        .set({ status: "RELEASED", releaseDate: new Date() })
+        .where(eq(PaymentTable.id, refund.paymentId));
+      await dx
+        .delete(BlockedTasksTable)
+        .where(
+          and(
+            eq(BlockedTasksTable.taskId, refund.taskId),
+            eq(BlockedTasksTable.userId, refund.taskRefund.solverId!)
+          )
+        );
+      await dx
+        .update(TaskTable)
+        .set({ updatedAt: new Date(), status: "COMPLETED" })
+        .where(eq(TaskTable.solverId, refund.taskRefund.solverId!));
+    });
+    sendNotification({
+      sender: "solveit@org.com",
+      method: ["system"],
+      body: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
+        The payment for your completed work has been released to your account. Thank you for your contribution!`,
+      receiverId: refund.taskRefund.solverId!,
+    });
+  } catch (error) {
+    logger.error("Failed to reject refund.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error(
+      "Unable to reject the refund. Please try again or contact support."
+    );
+  }
+}
+export async function assignDisputeToModerator(disputeId: string) {
+  const { user } = await isAuthorized(["MODERATOR"]);
+  const dispute = await getModeratorDisputes(disputeId);
+  if (!dispute) return;
+  if (dispute.moderatorId) {
+    throw new DisputeAssignmentError();
+  }
+  await db
+    .update(RefundTable)
+    .set({ moderatorId: user.id, refundStatus: "PROCESSING" })
+    .where(eq(RefundTable.id, disputeId));
+  withRevalidateTag("dispute-data-cache");
+
+  return `/dashboard/moderator/disputes/${dispute.id}`;
 }
