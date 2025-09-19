@@ -1,4 +1,5 @@
 "use client";
+import { cn } from "@/lib/utils";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
 import Image from "@tiptap/extension-image";
@@ -99,6 +100,54 @@ export function SolutionPreview({ content }: { content: string }) {
     <div className="border rounded-md flex flex-col w-full">
       <div className="flex-1 overflow-hidden">
         <EditorContent editor={editor} className="h-full overflow-y-auto" />
+      </div>
+    </div>
+  )
+}
+export function AllPreview({ content ,className}: { content: string,className?:string }) {
+  const lowlight = createLowlight(common)
+
+  const editor = useEditor({
+    shouldRerenderOnTransaction: false,
+    editable: false,
+    extensions: [
+      StarterKit.configure({
+        bulletList: {
+          HTMLAttributes: {
+            class: "list-disc ml-3",
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: "list-decimal ml-3",
+          },
+        },
+      }),
+      TextAlign.configure({
+        types: ["heading", "paragraph"],
+      }),
+      Highlight,
+      CodeBlockLowlight.configure({
+        lowlight,
+        HTMLAttributes: {
+          class: "tiptap-codeblock",
+        },
+      }),
+      Image,
+    ],
+    content: content,
+    immediatelyRender: false,
+    editorProps: {
+      attributes: {
+        class: "w-full p-6 focus:outline-none prose prose-sm max-w-none",
+      },
+    },
+  })
+
+  return (
+    <div className="flex flex-col w-full">
+      <div className="flex-1 overflow-hidden">
+        <EditorContent editor={editor} className={cn("h- overflow-y-auto",className)} />
       </div>
     </div>
   )
