@@ -1,15 +1,5 @@
 "use client";
 
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -18,7 +8,6 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuLabel,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
@@ -31,7 +20,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { RefundStatusEnumType } from "@/drizzle/schemas";
-import { refundPoster } from "@/features/payments/server/action";
+import { assignDisputeToModerator } from "@/features/payments/server/action";
 import { useMutation } from "@tanstack/react-query";
 import {
   ColumnDef,
@@ -51,14 +40,22 @@ import {
   Loader2,
   MoreHorizontal,
 } from "lucide-react";
-import { useMemo, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { Dispatch, SetStateAction, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { allDisputesType } from "../../server/task-types";
 import { GetRefundStatusBadge } from "../taskStatusBadge";
 function NewRefundColumns({
-  handleOpenDialog,
+  handleDispute,
+  isPending,
+  openRowId,
+  setOpenRowId,
 }: {
-  handleOpenDialog: (dispute: allDisputesType) => void;
+  handleDispute: (dispute: allDisputesType) => Promise<void>;
+  isPending: boolean;
+  openRowId: string | null;
+  setOpenRowId: Dispatch<SetStateAction<string | null>>;
 }): ColumnDef<allDisputesType>[] {
   return [
     {
@@ -103,13 +100,17 @@ function NewRefundColumns({
         return GetRefundStatusBadge(status as RefundStatusEnumType);
       },
     },
-    {
-      accessorKey: "solverName",
-      header: "Solver",
-    },
+    // {
+    //   accessorKey: "solverName",
+    //   header: "Solver",
+    // },
     {
       accessorKey: "solverEmail",
       header: "Solver Email",
+    },
+    {
+      accessorKey: "moderatorName",
+      header: "Moderator",
     },
     {
       accessorKey: "refundedAt",
@@ -138,6 +139,32 @@ function NewRefundColumns({
       },
     },
     {
+      accessorKey: "createdAt",
+      header: ({ column }) => {
+        return (
+          <Button
+            variant={"ghost"}
+            onClick={() =>
+              column.toggleSorting(column.getIsSorted() === "asc")
+            }>
+            Created At <ArrowUpDown className="ml-2 h-4 w-4" />
+          </Button>
+        );
+      },
+      cell: ({ row }) => {
+        return new Date(row.getValue("refundedAt")).toLocaleTimeString(
+          undefined,
+          {
+            day: "2-digit",
+            hour: "2-digit",
+            month: "2-digit",
+            minute: "2-digit",
+            year: "numeric",
+          }
+        );
+      },
+    },
+    {
       accessorKey: "taskPrice",
       header: "Task Price",
     },
@@ -145,36 +172,49 @@ function NewRefundColumns({
       id: "Actions",
       cell: ({ row }) => {
         const dispute = row.original;
-
+        const isOpen = openRowId === dispute.id;
         return (
-          <DropdownMenu>
+          <DropdownMenu
+            open={isOpen}
+            onOpenChange={(open) => setOpenRowId(open ? dispute.id : null)}>
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
+
             <DropdownMenuContent align="end">
               <DropdownMenuLabel>Actions</DropdownMenuLabel>
+
               <DropdownMenuItem
                 onClick={() => {
                   navigator.clipboard.writeText(dispute.id);
-                  toast.info("copie to clipboard");
+                  toast.info("Copied to clipboard");
+                  setOpenRowId(null);
                 }}>
                 Copy Dispute ID
               </DropdownMenuItem>
+
               {dispute.refundStatus === "PENDING" && (
                 <DropdownMenuItem
-                  onSelect={(e) => {
+                  onSelect={async (e) => {
                     e.preventDefault();
-                  }}
-                  onClick={() => handleOpenDialog(dispute)}>
-                  Accept Refund
+                    await handleDispute(dispute).finally(() => {
+                      setOpenRowId(null);
+                    });
+                  }}>
+                  Resolve Dispute
+                  {isPending && (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  )}
                 </DropdownMenuItem>
               )}
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>View Solver</DropdownMenuItem>
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
+              <DropdownMenuItem asChild>
+                <Link href={`/dashboard/moderator/disputes/${dispute.id}`}>
+                  View Dispute Details
+                </Link>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -182,7 +222,6 @@ function NewRefundColumns({
     },
   ];
 }
-
 interface RefundTableProps {
   data: allDisputesType[];
 }
@@ -191,24 +230,28 @@ export function RefundTable({ data }: RefundTableProps) {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [open, setOpen] = useState(false);
-  const [selectedRefund, setSelectedRefund] = useState<allDisputesType | null>(
-    null
-  );
-  const [confirmInput, setConfirmInput] = useState("");
-  const { mutateAsync: issueRefund, isPending: isRefunding } = useMutation({
-    mutationFn: refundPoster,
+  const [openRowId, setOpenRowId] = useState<string | null>(null);
+  const router = useRouter();
+  const { mutateAsync: assignDisputeMutation, isPending } = useMutation({
+    mutationFn: assignDisputeToModerator,
     onError: (e) => toast.error(e.message),
-    onSuccess:()=>toast.success("Successfully refuned")
+    onSuccess: (href) => {
+      if (href) {
+        router.push(href);
+      }
+    },
   });
   const columns = useMemo(() => {
-    const handleOpenDialog = (dispute: allDisputesType) => {
-      setSelectedRefund(dispute);
-      setOpen(true);
-      setConfirmInput("");
-    };
-    return NewRefundColumns({ handleOpenDialog });
-  }, []);
+    async function handleDispute(dispute: allDisputesType) {
+      await assignDisputeMutation(dispute.id);
+    }
+    return NewRefundColumns({
+      handleDispute,
+      isPending,
+      openRowId,
+      setOpenRowId,
+    });
+  }, [assignDisputeMutation, isPending, openRowId, setOpenRowId]);
   const table = useReactTable({
     data,
     columns,
@@ -330,34 +373,6 @@ export function RefundTable({ data }: RefundTableProps) {
           Next
         </Button>
       </div>
-      {selectedRefund && (
-        <AlertDialog open={open} onOpenChange={setOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Accept This Refund?</AlertDialogTitle>
-              <AlertDialogDescription className="text-foreground">
-                By accepting this refund, you confirm that you are in favor of
-                the poster. This action will mark the task as refunded and issue
-                a refund or task re-open to the poster.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isRefunding} className={``}>
-                Cancel
-              </AlertDialogCancel>
-              <AlertDialogAction
-                disabled={isRefunding}
-                onClick={async () =>
-                  await issueRefund(selectedRefund.taskPaymentId!)
-                }
-                className={`${"cursor-not-allowed"} bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 cursor-pointer`}>
-                {isRefunding && <Loader2 className="animate-spin" />}
-                Yes, Accept Solution
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
     </div>
   );
 }
