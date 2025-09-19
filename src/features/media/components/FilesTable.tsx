@@ -20,6 +20,7 @@ import {
 import { taskTableType } from "@/drizzle/schemas";
 import { SolutionById } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { supportedExtentions } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
   Archive,
@@ -35,6 +36,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
+import { FileIconComponent } from "./FileHelpers";
 
 interface FileData {
   id: string;
@@ -45,7 +47,6 @@ interface FileData {
   filePath: string;
   uploadedAt: Date | null;
 }
-
 
 function getFileIcon(fileType: string) {
   const type = fileType.toLowerCase();
@@ -98,14 +99,14 @@ async function handleFileAction(action: string, file: FileData) {
 }
 
 type FilesTablePropss =
-  | { files: FileData[]; scopeType: "task"; scope: taskTableType }
-  | { files: FileData[]; scopeType: "solution"; scope: SolutionById };
+  | { files: FileData[]; scopeType: "task"; scope?: taskTableType }
+  | { files: FileData[]; scopeType: "solution"; scope?: SolutionById };
+// | { files: FileData[]; scopeType: "free"; scope?: SolutionById };
 
-export function FilesTable({ files, scope,scopeType }: FilesTablePropss) {
+export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
   const currentUser = useCurrentUser();
   if (!currentUser) return <AuthGate />;
 
-  
   if (files.length === 0) {
     return (
       <div className="text-center py-8 text-muted-foreground bg-sidebar rounded-md border w-full">
@@ -131,7 +132,14 @@ export function FilesTable({ files, scope,scopeType }: FilesTablePropss) {
         <TableBody>
           {files.map((file) => (
             <TableRow key={file.id}>
-              <TableCell>{getFileIcon(file.fileType)}</TableCell>
+              <TableCell>
+                <FileIconComponent
+                  extension={
+                    file.fileName?.split(".").at(-1) as supportedExtentions
+                  }
+                  className="h-4 w-4 text-primary flex-shrink-0"
+                />
+              </TableCell>
               <TableCell>
                 <div className="font-medium">{file.fileName}</div>
               </TableCell>
@@ -174,17 +182,19 @@ export function FilesTable({ files, scope,scopeType }: FilesTablePropss) {
                       <Copy className="mr-2 h-4 w-4" />
                       Copy Link
                     </DropdownMenuItem>
-                    {scopeType === "task" && currentUser.user?.id === scope.posterId && (
-                      <>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          onClick={() => handleFileAction("delete", file)}
-                          className="text-red-600">
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Delete
-                        </DropdownMenuItem>
-                      </>
-                    )}
+                    {scope &&
+                      scopeType === "task" &&
+                      currentUser.user?.id === scope.posterId && (
+                        <>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            onClick={() => handleFileAction("delete", file)}
+                            className="text-red-600">
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Delete
+                          </DropdownMenuItem>
+                        </>
+                      )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </TableCell>
