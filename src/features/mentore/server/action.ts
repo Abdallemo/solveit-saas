@@ -33,7 +33,7 @@ import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { calculateSlotDuration, daysInWeek } from "@/lib/utils";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
-import { and, eq, or } from "drizzle-orm";
+import { and, count, eq, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
 export async function validateMentorAccess() {
@@ -156,6 +156,18 @@ function toYMD(date: Date): string {
 
 const getSessionKey = (dateYMD: string, slot: AvailabilitySlot) =>
   `${dateYMD}-${slot.day}-${slot.start}-${slot.end}`;
+
+export async function getMentorAllSessionCount(solverId: string) {
+  const allsessions = await db
+    .select({ count: count(MentorshipSessionTable.id) })
+    .from(MentorshipSessionTable)
+    .leftJoin(
+      MentorshipBookingTable,
+      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
+    )
+    .where(eq(MentorshipBookingTable.solverId, solverId));
+    return allsessions[0]
+}
 export async function getMentorListigWithAvailbelDates() {
   const allMentors = await db.query.MentorshipProfileTable.findMany();
 
