@@ -23,7 +23,7 @@ import { validateContentWithAi } from "@/features/Ai/server/action";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import { sendNotification } from "@/features/notifications/server/action";
+import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import type {
@@ -121,13 +121,14 @@ export async function calculateTaskProgressV2(
   taskId: string
 ) {
   const workspace = await getWorkspaceByTaskId(taskId, solverId);
-  if (!workspace)return { timePassed: null, percentage: null ,totalTime:null}
+  if (!workspace)
+    return { timePassed: null, percentage: null, totalTime: null };
 
   const deadline = parseDeadlineV2(
     workspace.task.deadline!,
     workspace.createdAt!
   );
-  if (!deadline) return { timePassed: null, percentage: null,totalTime:null }
+  if (!deadline) return { timePassed: null, percentage: null, totalTime: null };
 
   const startTime = workspace.createdAt!.getTime();
   const currentTime = Date.now();
@@ -135,7 +136,12 @@ export async function calculateTaskProgressV2(
   const timePassed = currentTime - startTime;
   const totalTime = deadline.getTime() - startTime;
   const percentage = Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
-  return { timePassed: timePassed, percentage: percentage ,totalTime,deadline};
+  return {
+    timePassed: timePassed,
+    percentage: percentage,
+    totalTime,
+    deadline,
+  };
 }
 export async function createTaskAction(
   userId: string,
@@ -411,17 +417,23 @@ export async function assignTaskToSolverById(values: {
     if (!result) {
       throw new Error("unable to assign task");
     }
-    const newWorkspace = await createWorkspace(result);
-    sendNotification({
-      sender: "solveit@org.com",
-      receiverId: result?.poster.id!,
-      receiverEmail: result?.poster.email!,
-      method: ["system", "email"],
-      body: {
+    await createWorkspace(result);
+    const deadline = parseDeadlineV2(
+      result.deadline!,
+      new Date()
+    )?.toLocaleString(undefined);
+    Notifier()
+      .email({
+        receiverEmail: result?.poster.email!,
         subject: "task Picked",
-        content: `you Task titiled ${result?.title} is picked by ${result?.solver?.name}\n you will reciev your solution on `,
-      },
-    });
+        content: `you Task titled <h4>"${result?.title}"</h4> is picked by ${result?.solver?.name}\n you will reciev your solution on ${deadline}`,
+      })
+      .system({
+        receiverId: result?.poster.id!,
+        subject: "Task Picked",
+        content: `you Task titled "${result?.title}" is picked by ${result?.solver?.name}\n you will reciev your solution on ${deadline}`,
+      })
+      .send();
     revalidatePath(`/yourTasks/${taskId}`);
     return {
       success: "Task successfully assigned to you!",
@@ -634,17 +646,22 @@ export async function publishSolution(values: {
         .where(eq(TaskTable.id, workspace?.taskId));
     });
     const updatedWorkspace = await getWorkspaceById(workspaceId, solverId);
-    sendNotification({
-      sender: "solveit@org.com",
-      receiverId: workspace.task.poster.id!,
-      receiverEmail: workspace.task.poster.email!,
-      method: ["email", "system"],
-      body: {
+    
+    Notifier()
+      .email({
         subject: "Task Submited",
         content: `you Task titiled ${workspace.task.title} 
           has bean submited please review it with in 7days `,
-      },
-    });
+        receiverEmail: workspace.task.poster.email!,
+      })
+      .system({
+        subject: "Task Submited",
+        content: `you Task titiled ${workspace.task.title} 
+          has bean submited please review it with in 7days `,
+        receiverId: workspace.task.poster.id!,
+      })
+      .send();
+      
     return {
       success: true,
       message: "Successfully published solution!" as const,
@@ -674,7 +691,7 @@ export async function handleTaskDeadline(task: TaskReturnType) {
   )
     return;
   if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
-    const {percentage,} = await calculateTaskProgressV2(
+    const { percentage } = await calculateTaskProgressV2(
       task.solverId,
       task.workspace.taskId
     );
@@ -683,10 +700,18 @@ export async function handleTaskDeadline(task: TaskReturnType) {
     try {
       const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
       if (alreadyBlocked) return;
-      sendNotification({
-        method: ["email", "system"],
-        body: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
-      });
+      Notifier()
+        .system({
+          receiverId: task.solverId!,
+          content: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
+          subject: `Blocked From A Task`,
+        })
+        .email({
+          receiverEmail: task.solver?.email!,
+          content: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
+          subject: `Blocked From A Task`,
+        })
+        .send();
       await db
         .update(TaskTable)
         .set({ status: "OPEN", assignedAt: null, solverId: null })
@@ -711,7 +736,7 @@ export async function handleTaskDeadline(task: TaskReturnType) {
 export async function acceptSolution(solution: SolutionById) {
   const {
     taskId,
-    taskSolution: { posterId, solverId, title, paymentId },
+    taskSolution: { posterId, solverId, title, paymentId, solver },
   } = solution;
   try {
     if (!posterId || !taskId) {
@@ -739,12 +764,18 @@ export async function acceptSolution(solution: SolutionById) {
         .where(eq(PaymentTable.id, paymentId));
     }
 
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system", "email"],
-      body: `Your Solution for Task "${title}" has been Accepted`,
-      receiverId: solverId!,
-    });
+    Notifier()
+      .email({
+        content: `<h3>Your Solution for Task "${title}" has been Accepted</h3>`,
+        subject: "Solution Accepted",
+        receiverEmail: solver?.email!,
+      })
+      .system({
+        content: `Your Solution for Task "${title}" has been Accepted`,
+        subject: "Solution Accepted",
+        receiverId: solverId!,
+      })
+      .send();
     logger.info(`solution :${solution.id} Accepted`);
   } catch (error) {
     logger.error(`unable to Accept solution ${solution.id}`, {
@@ -761,7 +792,7 @@ export async function requestRefund(values: {
   const {
     solution: {
       taskId,
-      taskSolution: { posterId, solverId, title },
+      taskSolution: { posterId, solverId, title, solver },
     },
     reason,
   } = values;
@@ -796,18 +827,22 @@ export async function requestRefund(values: {
       refundedAt: new Date(),
       refundReason: reason,
     });
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: {
+
+    Notifier()
+      .system({
         subject: `Your solution for the task "${title}" has been rejected by the poster.`,
         content:
           "The refund request is currently under moderator review. you currently are in block list for this task. Please check the comments for more details.",
-      },
-      receiverId: solverId!,
-    });
+        receiverId: solverId!,
+      })
+      .email({
+        subject: `Your solution for the task "${title}" has been rejected by the poster.`,
+        content:
+          "The refund request is currently under moderator review. you currently are in block list for this task. Please check the comments for more details.",
+        receiverEmail: solver?.email!,
+      })
+      .send();
     withRevalidateTag("dispute-data-cache");
-
   } catch (err) {
     throw new Error("unable to create a refund request Please try again");
   }
