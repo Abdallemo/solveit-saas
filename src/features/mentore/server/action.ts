@@ -21,6 +21,7 @@ import {
   bookingSchema,
   MentorListigWithAvailbelDates,
 } from "@/features/mentore/server/types";
+import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import {
   getServerUserSubscriptionById,
@@ -166,7 +167,7 @@ export async function getMentorAllSessionCount(solverId: string) {
       eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
     )
     .where(eq(MentorshipBookingTable.solverId, solverId));
-    return allsessions[0]
+  return allsessions[0];
 }
 export async function getMentorListigWithAvailbelDates() {
   const allMentors = await db.query.MentorshipProfileTable.findMany();
@@ -350,15 +351,42 @@ export async function updateMentorBooking(
   paymentId: string
 ) {
   try {
-    const result = await db
+    await db
       .update(MentorshipBookingTable)
       .set({
         status: "PAID",
         paymentId,
       })
-      .where(eq(MentorshipBookingTable.id, bookingId))
-      .returning();
-    return result;
+      .where(eq(MentorshipBookingTable.id, bookingId));
+
+    const res = await db.query.MentorshipBookingTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.id, bookingId),
+      with: {
+        solver: {
+          columns: { displayName: true },
+          with: { mentorSystemDetail: { columns: { email: true } } },
+        },
+      },
+    });
+    if (!res) {
+      throw new Error("failed to update Mentor Temperory Booking");
+    }
+    if (res.status === "PAID") {
+      logger.info("Succesfully updated Temperory Mentor Booking");
+    }
+    Notifier()
+      .system({
+        receiverId: res.solverId,
+
+        subject: "Mentorship Booking",
+        content: "A Student booked a session! please check the session page",
+      })
+      .email({
+        receiverEmail: res.solver.mentorSystemDetail.email!,
+        subject: "Mentorship Booking",
+        content: `<h3>A Student booked a session! please check the session page Or <a href="${env.NEXTAUTH_URL}/dashboard/solver/mentor" target="_blank">click here</a></h3>`,
+      })
+      .send();
   } catch (error) {
     logger.error(
       "failed to update Mentor Temperory Booking\n" + (error as Error).message
