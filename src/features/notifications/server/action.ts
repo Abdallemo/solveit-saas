@@ -7,14 +7,16 @@ import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
-type ContentType = string | { content: string; subject: string };
-const DEFAULT_SUBJECT = "SolveIt Notification";
+type emailBodyType = { content: string; subject: string };
+type systemBodyType = { content: string; subject: string };
 type NotificationProp = {
   sender?: string;
-  receiverId?: string;
-  receiverEmail?: string;
-  body: ContentType;
+  receiverId: string;
+  receiverEmail: string;
+  body: systemBodyType;
 };
+const DEFAULT_SUBJECT = "SolveIt Notification";
+
 export async function getAllNotification(receiverId: string, limit = 3) {
   return await db.query.notifications.findMany({
     where: (table, fn) => fn.eq(table.receiverId, receiverId),
@@ -22,11 +24,16 @@ export async function getAllNotification(receiverId: string, limit = 3) {
     orderBy: (n, { desc }) => [desc(n.createdAt)],
   });
 }
-async function saveSystemNotification({
+type systemNotType = {
+  sender?: string;
+  receiverId: string;
+  body: systemBodyType;
+};
+export async function saveSystemNotification({
   body,
   receiverId,
   sender,
-}: NotificationProp) {
+}: systemNotType) {
   logger.info("in App notification");
   const content = typeof body === "string" ? body : body.content;
   const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
@@ -44,16 +51,21 @@ async function saveSystemNotification({
   logger.info("found results", result);
   await fetch(`${env.GO_API_URL}/send-notification`, {
     method: "POST",
-    headers: GoHeaders ,
+    headers: GoHeaders,
     body: JSON.stringify(result[0]),
   });
   return;
 }
+type emaiProps = {
+  sender?: string;
+  body: emailBodyType;
+  receiverEmail: string;
+};
 export async function sendNotificationByEmail({
   body,
   receiverEmail,
   sender,
-}: NotificationProp) {
+}: emaiProps) {
   const transporter = await createTransporter();
 
   const content = typeof body === "string" ? body : body.content;
@@ -135,7 +147,7 @@ export async function sendNotificationByEmail({
     throw new Error("Failed to send notification email.");
   }
 }
-
+//old
 export async function sendNotification({
   sender = "solveit@org.com",
   receiverId,
@@ -205,3 +217,8 @@ export async function markAllAsRead({ receiverId }: { receiverId: string }) {
     .where(eq(notifications.receiverId, receiverId));
   revalidatePath("/dashboard");
 }
+//new
+type NotificationBase = {
+  send(): Promise<any>;
+};
+
