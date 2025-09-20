@@ -13,7 +13,7 @@ import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
-import { sendNotification } from "@/features/notifications/server/action";
+import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { getModeratorDisputes } from "@/features/tasks/server/data";
 import {
@@ -288,7 +288,7 @@ export async function completeRefund(refundId: string) {
     const { user } = await isAuthorized(["POSTER"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: { taskRefund: true },
+      with: { taskRefund: { with: { poster: true } } },
     });
 
     if (!refund || refund.refundStatus !== "PENDING_POSTER_ACTION") {
@@ -296,13 +296,20 @@ export async function completeRefund(refundId: string) {
     }
     await refundFunds(refund.paymentId);
 
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: `Your refund for the dispute with ID ${refund.id} has been successfully processed. 
+    Notifier()
+      .system({
+        receiverId: refund.taskRefund.posterId,
+        subject: "Refund Processed",
+        content: `Your refund for the dispute with ID ${refund.id} has been successfully processed. 
       The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
-      receiverId: refund.taskRefund.posterId,
-    });
+      })
+      .email({
+        receiverEmail: refund.taskRefund.poster.email!,
+        subject: "Refund Processed",
+        content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>. 
+      The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      })
+      .send();
   } catch (error) {
     logger.error("Failed to complete refund.", {
       message: (error as Error).message,
@@ -351,12 +358,18 @@ export async function reopenTask(refundId: string) {
 
     withRevalidateTag("dispute-data-cache");
 
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
-      receiverId: refund.taskRefund.posterId,
-    });
+    Notifier()
+      .system({
+        receiverId: refund.taskRefund.posterId!,
+        content: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
+        subject: "Task Re-opened",
+      })
+      .email({
+        receiverEmail: refund.taskRefund.poster.email!,
+        content: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
+        subject: "Task Re-opened",
+      })
+      .send();
   } catch (error) {
     logger.error("Failed to re-open task.", {
       message: (error as Error).message,
@@ -372,7 +385,7 @@ export async function approveRefund(refundId: string) {
     const { user } = await isAuthorized(["MODERATOR"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: { taskRefund: true },
+      with: { taskRefund: { with: { poster: true, solver: true } } },
       // columns:{moderatorId:true,refundStatus:true}
     });
 
@@ -398,19 +411,34 @@ export async function approveRefund(refundId: string) {
     });
     withRevalidateTag("dispute-data-cache");
 
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
-      receiverId: refund.taskRefund.posterId,
-    });
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
+    Notifier()
+      .system({
+        subject: "Refund Accepted",
+        receiverId: refund.taskRefund.posterId,
+        content: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      })
+      .email({
+        subject: "Refund Accepted",
+        receiverEmail: refund.taskRefund.poster.email!,
+        content: `<h3>Your refund for the dispute with ID ${refund.id} has been Accepted.</h3>
+        Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      })
+      .send();
+
+    Notifier()
+      .system({
+        subject: "Dispute Resolved",
+        receiverId: refund.taskRefund.solverId!,
+        content: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
           The held payment has been refunded to them and will not be disbursed to you.`,
-      receiverId: refund.taskRefund.solverId!,
-    });
+      })
+      .email({
+        subject: "Dispute Resolved",
+        receiverEmail: refund.taskRefund.solver?.email!,
+        content: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
+          The held payment has been refunded to them and will not be disbursed to you.`,
+      })
+      .send();
   } catch (error) {
     logger.error("Failed to approve refund and set pending state.", {
       message: (error as Error).message,
@@ -483,13 +511,21 @@ export async function rejectRefund(refundId: string) {
         .set({ updatedAt: new Date(), status: "COMPLETED" })
         .where(eq(TaskTable.solverId, refund.taskRefund.solverId!));
     });
-    sendNotification({
-      sender: "solveit@org.com",
-      method: ["system"],
-      body: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
+
+    Notifier()
+      .system({
+        subject: "Dispute Resolved",
+        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
         The payment for your completed work has been released to your account. Thank you for your contribution!`,
-      receiverId: refund.taskRefund.solverId!,
-    });
+        receiverId: refund.taskRefund.solverId!,
+      })
+      .email({
+        subject: "Dispute Resolved",
+        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
+        The payment for your completed work has been released to your account. Thank you for your contribution!`,
+        receiverEmail: refund.taskRefund.solver.email!,
+      })
+      .send();
   } catch (error) {
     logger.error("Failed to reject refund.", {
       message: (error as Error).message,
