@@ -22,7 +22,6 @@ import {
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { updateMentorBooking } from "@/features/mentore/server/action";
-import { sendNotification } from "@/features/notifications/server/action";
 import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
 import { logger } from "@/lib/logging/winston";
 import { eq } from "drizzle-orm";
@@ -311,18 +310,7 @@ async function handleMentorBooking(
     );
     return;
   }
-  const updatedBooking = await updateMentorBooking(bookingId, paymentId);
-  if (updatedBooking.length <= 0) {
-    logger.error("update Mentor Temperory Booking ");
-  }
-  if (updatedBooking[0].id === bookingId) {
-    logger.info("Succesfully updated Temperory Mentor Booking");
-  }
-  sendNotification({
-    body: "A Student booked a session! please check the session page",
-    method: ["email", "system"],
-    receiverId: updatedBooking[0].solverId,
-  });
+  await updateMentorBooking(bookingId, paymentId);
 }
 async function hadleStripeConnect(account: Stripe.Account) {
   const d = await db
