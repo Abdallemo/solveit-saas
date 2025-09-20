@@ -603,6 +603,9 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   chatOwner: many(MentorshipChatTable, {
     relationName: "chatOwner",
   }),
+  mentorSystemDetail: many(MentorshipProfileTable, {
+    relationName: "mentorSystemDetail",
+  }),
 }));
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({
@@ -791,9 +794,14 @@ export const PaymentTableRelation = relations(
 );
 export const MentorshipProfileRelations = relations(
   MentorshipProfileTable,
-  ({ many }) => ({
+  ({ many, one }) => ({
     solver: many(MentorshipBookingTable, {
       relationName: "solver",
+    }),
+    mentorSystemDetail: one(UserTable, {
+      fields: [MentorshipProfileTable.userId],
+      references: [UserTable.id],
+      relationName: "mentorSystemDetail",
     }),
   })
 );
