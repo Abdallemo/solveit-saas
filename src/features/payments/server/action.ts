@@ -308,8 +308,7 @@ export async function completeRefund(refundId: string) {
         subject: "Refund Processed",
         content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>. 
       The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
-      })
-      .send();
+      });
   } catch (error) {
     logger.error("Failed to complete refund.", {
       message: (error as Error).message,
@@ -368,8 +367,7 @@ export async function reopenTask(refundId: string) {
         receiverEmail: refund.taskRefund.poster.email!,
         content: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
         subject: "Task Re-opened",
-      })
-      .send();
+      });
   } catch (error) {
     logger.error("Failed to re-open task.", {
       message: (error as Error).message,
@@ -422,8 +420,7 @@ export async function approveRefund(refundId: string) {
         receiverEmail: refund.taskRefund.poster.email!,
         content: `<h3>Your refund for the dispute with ID ${refund.id} has been Accepted.</h3>
         Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
-      })
-      .send();
+      });
 
     Notifier()
       .system({
@@ -437,8 +434,7 @@ export async function approveRefund(refundId: string) {
         receiverEmail: refund.taskRefund.solver?.email!,
         content: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
           The held payment has been refunded to them and will not be disbursed to you.`,
-      })
-      .send();
+      });
   } catch (error) {
     logger.error("Failed to approve refund and set pending state.", {
       message: (error as Error).message,
@@ -524,8 +520,7 @@ export async function rejectRefund(refundId: string) {
         content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
         The payment for your completed work has been released to your account. Thank you for your contribution!`,
         receiverEmail: refund.taskRefund.solver.email!,
-      })
-      .send();
+      });
   } catch (error) {
     logger.error("Failed to reject refund.", {
       message: (error as Error).message,
