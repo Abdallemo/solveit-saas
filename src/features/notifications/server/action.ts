@@ -29,20 +29,18 @@ type systemNotType = {
   receiverId: string;
   body: systemBodyType;
 };
-export async function saveSystemNotification({
+export async function processSystemNotification({
   body,
   receiverId,
   sender,
 }: systemNotType) {
   logger.info("in App notification");
-  const content = typeof body === "string" ? body : body.content;
-  const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
   const result = await db
     .insert(notifications)
     .values({
       method: "SYSTEM",
-      content,
-      subject,
+      content:body.content,
+      subject:body.subject,
       receiverId: receiverId!,
       senderId: sender!,
       read: false,
@@ -161,7 +159,7 @@ export async function sendNotification({
         typeof body === "string" ? "System Notification" : body.subject
       }`
     );
-    await saveSystemNotification({ sender, receiverId, body });
+    await processSystemNotification({ sender, receiverId, body });
   }
   if (method.includes("email")) {
     await sendNotificationByEmail({ sender, receiverEmail, body });
