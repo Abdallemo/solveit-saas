@@ -377,7 +377,6 @@ export async function updateMentorBooking(
     Notifier()
       .system({
         receiverId: res.solverId,
-
         subject: "Mentorship Booking",
         content: "A Student booked a session! please check the session page",
       })
@@ -385,8 +384,7 @@ export async function updateMentorBooking(
         receiverEmail: res.solver.mentorSystemDetail.email!,
         subject: "Mentorship Booking",
         content: `<h3>A Student booked a session! please check the session page Or <a href="${env.NEXTAUTH_URL}/dashboard/solver/mentor" target="_blank">click here</a></h3>`,
-      })
-      .send();
+      });
   } catch (error) {
     logger.error(
       "failed to update Mentor Temperory Booking\n" + (error as Error).message
