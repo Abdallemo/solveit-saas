@@ -1,4 +1,4 @@
-import { saveSystemNotification, sendNotificationByEmail } from "./action";
+import { processSystemNotification, sendNotificationByEmail } from "./action";
 
 export type emailBodyType = { content: string; subject: string };
 export type systemBodyType = { content: string; subject: string };
@@ -21,7 +21,7 @@ export function Notifier(options?: { sender: string }): NotificationBuilder {
 
   const methods: NotificationBuilder = {
     system: ({ content, subject, receiverId }) => {
-      void saveSystemNotification({
+      void processSystemNotification({
         sender,
         receiverId,
         body: { content, subject },
