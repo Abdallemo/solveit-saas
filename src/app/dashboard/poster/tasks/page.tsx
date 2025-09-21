@@ -32,7 +32,7 @@ export default async function ServerWrapper({
       categoryId,
     }
   );
-
+  console.log(tasks)
   const totalPages = Math.ceil(totalCount / limit);
   const hasPrevious = pages > 1;
   const hasNext = pages < totalPages;
