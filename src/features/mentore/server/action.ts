@@ -28,6 +28,7 @@ import {
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
+import { publicUserColumns } from "@/features/users/server/user-types";
 import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
@@ -174,11 +175,7 @@ export async function getMentorListigWithAvailbelDates() {
 
   const allBookedSessions = await db.query.MentorshipSessionTable.findMany({
     with: {
-      bookedSessions: {
-        with: {
-          solver: { columns: { id: true } },
-        },
-      },
+      bookedSessions: true
     },
   });
   const bookedKeys = new Set(
@@ -407,7 +404,7 @@ export async function getMentorBookingSessions() {
   );
   const result = await db.query.MentorshipBookingTable.findMany({
     where,
-    with: { bookedSessions: true, solver: true, poster: true },
+    with: { bookedSessions: true, solver: true, poster: {columns: publicUserColumns} },
     orderBy: (tb, fn) => fn.desc(tb.createdAt),
   });
   const totol =
@@ -428,7 +425,12 @@ export async function getMentorSession(sessionId: string) {
       where: (tb, fn) => fn.eq(tb.id, sessionId),
       with: {
         chats: {
-          with: { chatFiles: true, chatOwner: true },
+          with: {
+            chatFiles: true,
+            chatOwner: {
+              columns: publicUserColumns,
+            },
+          },
         },
       },
     });
@@ -452,14 +454,6 @@ export async function sendMentorMessages(values: {
   if (!seesionId || !sentBy) return;
 
   try {
-    // allways send these data
-    //Todo
-    // await fetch(`${env.GO_API_URL}/send-messages`, {
-    //   method: "POST",
-    //   headers: GoHeaders,
-    //   body: JSON.stringify(values),
-    // });
-
     const newChat = await db.transaction(async (dx) => {
       const chat = await dx
         .insert(MentorshipChatTable)
@@ -467,6 +461,7 @@ export async function sendMentorMessages(values: {
           seesionId,
           sentBy: sentBy,
           message,
+          pending: false,
         })
         .returning();
       await fetch(`${env.GO_API_URL}/send-messages`, {
@@ -497,10 +492,7 @@ export async function sendMentorMessages(values: {
       with: {
         chatFiles: true,
         chatOwner: {
-          columns: {
-            password: false,
-            stripeCustomerId: false,
-          },
+          columns: publicUserColumns,
         },
       },
     });
