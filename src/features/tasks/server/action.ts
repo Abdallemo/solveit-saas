@@ -38,6 +38,7 @@ import {
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
+import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
@@ -509,7 +510,6 @@ export async function autoSaveDraftWorkspace(
   try {
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
-      with: { solver: true, task: true, workspaceFiles: true },
     });
 
     if (oldTask) {
@@ -702,12 +702,12 @@ export async function handleTaskDeadline(task: TaskReturnType) {
       Notifier()
         .system({
           receiverId: task.solverId!,
-          content: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
+          content: `You are blocked from task: "${task.title}" you no longer able to submit it but you can still access your previouse work `,
           subject: `Blocked From A Task`,
         })
         .email({
           receiverEmail: task.solver?.email!,
-          content: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
+          content: `You are blocked from task: "${task.title}" you no longer able to submit it but you can still access your previouse work `,
           subject: `Blocked From A Task`,
         });
 
@@ -803,8 +803,7 @@ export async function requestRefund(values: {
     const task = await db.query.TaskTable.findFirst({
       where: (table, fn) => fn.eq(table.id, taskId),
       with: {
-        poster: true,
-        solver: true,
+        solver: { columns: publicUserColumns },
         workspace: true,
         taskRefund: true,
       },
@@ -846,6 +845,7 @@ export async function requestRefund(values: {
     throw new Error("unable to create a refund request Please try again");
   }
 }
+
 export async function createTaskComment(values: {
   taskId: string;
   userId: string;
@@ -868,10 +868,7 @@ export async function createTaskComment(values: {
       where: (tb, fn) => fn.eq(tb.id, id[0].id),
       with: {
         owner: {
-          columns: {
-            password: false,
-            stripeCustomerId: false,
-          },
+          columns: publicUserColumns,
         },
       },
     });
