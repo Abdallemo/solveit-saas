@@ -278,6 +278,8 @@ export default function SolutionPageComps({
       comment,
       taskId: solution?.taskId,
       userId: user?.id!,
+      posterId:solution.taskSolution.posterId,
+      solverId:solution.taskSolution.solverId,
     });
   }
 
@@ -287,7 +289,7 @@ export default function SolutionPageComps({
         <Card className="mb-6 h-[500px]">
           <CardHeader>
             <div className="flex items-center justify-between">
-            <h2 className="text-2xl font-bold">Solution</h2>
+              <h2 className="text-2xl font-bold">Solution</h2>
               <div className="flex items-center space-x-2">
                 {GetStatusBadge(solution.taskSolution.status!)}
 
@@ -322,52 +324,55 @@ export default function SolutionPageComps({
         {solution.solutionFiles.length > 0 && (
           <FilesTable files={files} scope={solution} scopeType="solution" />
         )}
-        <Card>
-          <CardHeader>
-            <h3 className="text-lg font-medium text-foreground">comments</h3>
-          </CardHeader>
-          <CardContent className="">
-            {comments.length > 0 && (
-              <ScrollArea className="h-60 p-4">
-                <div className="space-y-4">
-                  {comments.map((comment, index) => {
-                    const isLast = index === comments.length - 1;
-                    return (
-                      <CommentCard
-                        key={comment.id}
-                        comment={comment}
-                        currentUserId={user?.id!}
-                        ref={isLast ? latestCommentRef : null}
-                      />
-                    );
-                  })}
+        {solution.taskSolution.posterId === user?.id && (
+          <Card className="lg:max-w-7xl">
+            <CardHeader>
+              <h3 className="text-lg font-medium text-foreground">comments</h3>
+            </CardHeader>
+            <CardContent className="">
+              {comments.length > 0 && (
+                <ScrollArea className="h-60 p-4 ">
+                  <div className="space-y-4 ">
+                    {comments.map((comment, index) => {
+                      const isLast = index === comments.length - 1;
+                      return (
+                        <CommentCard
+                          key={comment.id}
+                          comment={comment}
+                          currentUserId={user?.id!}
+                          ref={isLast ? latestCommentRef : null}
+                         
+                        />
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+              <div>
+                <div className="mb-2">
+                  <span className="text-sm font-medium text-foreground/70">
+                    leave a comment
+                  </span>
                 </div>
-              </ScrollArea>
-            )}
-            <div>
-              <div className="mb-2">
-                <span className="text-sm font-medium text-foreground/70">
-                  leave a comment
-                </span>
+                <div className="flex space-x-3">
+                  <Textarea
+                    placeholder="Add your comment..."
+                    value={comment}
+                    onChange={(e) => setComment(e.target.value)}
+                    className="flex-1 min-h-[80px] resize-none"
+                    onKeyDown={handleKeyPress}
+                  />
+                  <Button
+                    className="self-end"
+                    onClick={handleSendComment}
+                    disabled={!comment.trim() || isPending}>
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
-              <div className="flex space-x-3">
-                <Textarea
-                  placeholder="Add your comment..."
-                  value={comment}
-                  onChange={(e) => setComment(e.target.value)}
-                  className="flex-1 min-h-[80px] resize-none"
-                  onKeyDown={handleKeyPress}
-                />
-                <Button
-                  className="self-end"
-                  onClick={handleSendComment}
-                  disabled={!comment.trim() || isPending}>
-                  <Send className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </div>
   );
