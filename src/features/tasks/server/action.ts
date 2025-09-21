@@ -40,6 +40,7 @@ import {
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
+import { UnauthorizedError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
@@ -850,12 +851,19 @@ export async function createTaskComment(values: {
   taskId: string;
   userId: string;
   comment: string;
+  posterId?: string;
+  solverId?: string | null;
 }) {
   try {
-    const { comment, taskId, userId } = values;
-    if (!taskId || !userId || !comment) {
+    const { comment, taskId, userId, posterId, solverId } = values;
+    if (!taskId || !userId || !comment || !posterId || !solverId) {
       throw new Error("all field are required ");
     }
+    if (!(posterId !== userId || solverId !== userId)) {
+      console.warn(`posterId !== userId || solverId !== userId`,posterId == userId )
+      throw new UnauthorizedError();
+    }
+
     const id = await db
       .insert(TaskCommentTable)
       .values({
