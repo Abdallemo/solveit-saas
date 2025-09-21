@@ -375,7 +375,7 @@ export default function OnboardingForm() {
   };
 
   return (
-    <div className="max-w-4xl w-3xl  mx-auto">
+    <div className="max-w-3xl mx-auto ">
       <div className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-4">
