@@ -1,49 +1,46 @@
 "use client";
 import type React from "react";
 
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
-import {
-  FileText,
-  Send,
-  MessageCircle,
-  Code2,
-  Lock,
-  RotateCcw,
-  User2,
-} from "lucide-react";
 import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle,
-  SheetTrigger,
+  SheetTitle
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
-import { Ref, useEffect, useRef, useState } from "react";
-import { useIsMobile } from "@/hooks/use-mobile";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import TextareaAutosize from "react-textarea-autosize";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import FileUploadSolver from "@/features/media/components/FileUploadSolver";
-import { useRouter, usePathname } from "next/navigation";
-import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useMutation } from "@tanstack/react-query";
-import { createTaskComment } from "../../server/action";
-import { toast } from "sonner";
+import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn, getColorClass } from "@/lib/utils";
-import { Badge } from "@/components/ui/badge";
-import useWebSocket from "@/hooks/useWebSocket";
 import { env } from "@/env/client";
+import FileUploadSolver from "@/features/media/components/FileUploadSolver";
 import { publicUserType } from "@/features/users/server/user-types";
+import { useIsMobile } from "@/hooks/use-mobile";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import useWebSocket from "@/hooks/useWebSocket";
+import { getColorClass } from "@/lib/utils";
+import { useMutation } from "@tanstack/react-query";
+import {
+  Code2,
+  FileText,
+  Lock,
+  MessageCircle,
+  Send,
+  User2
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Ref, useEffect, useRef, useState } from "react";
+import TextareaAutosize from "react-textarea-autosize";
+import { createTaskComment } from "../../server/action";
 
 export default function WorkspaceSidebar({
   open,
@@ -155,6 +152,8 @@ function SideBarForm() {
       comment,
       taskId: currentWorkspace?.taskId!,
       userId: user?.id!,
+      posterId:currentWorkspace?.task.posterId,
+      solverId:currentWorkspace?.solverId
     });
   }
 
@@ -247,7 +246,7 @@ function SideBarForm() {
                     <p className="text-xs mt-1">Start the conversation above</p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-85 w-full px-2">
+                  <ScrollArea className="h-50 w-full px-2">
                     {comments.map((commentItem, index) => {
                       const isLast = index === comments.length - 1;
                       return (
@@ -339,7 +338,7 @@ export function CommentCard (
           </AvatarFallback>
         </Avatar>
 
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 space-y-1">
           <div className="flex items-center justify-between gap-3 mb-2">
             <div className="flex items-center gap-2">
               <span className={`font-medium ${isOwner ? "text-primary" : "text-foreground"}`}>{displayName}</span>
@@ -352,7 +351,7 @@ export function CommentCard (
             <span className="text-sm text-muted-foreground">{formatDate(createdAt)}</span>
           </div>
 
-          <p className="text-sm text-foreground break-words">{comment.content}</p>
+          <p className="text-sm text-muted-foreground break-words w-52  lg:w-96">{comment.content}</p>
         </div>
       </div>
     )
