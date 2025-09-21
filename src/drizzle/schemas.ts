@@ -509,6 +509,7 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
   readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
+  pending: boolean("pending"),
   createdAt: timestamp("created_at", {
     mode: "date",
     withTimezone: true,
