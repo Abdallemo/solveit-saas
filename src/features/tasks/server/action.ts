@@ -432,8 +432,8 @@ export async function assignTaskToSolverById(values: {
         receiverId: result?.poster.id!,
         subject: "Task Picked",
         content: `you Task titled "${result?.title}" is picked by ${result?.solver?.name}\n you will reciev your solution on ${deadline}`,
-      })
-      .send();
+      });
+
     revalidatePath(`/yourTasks/${taskId}`);
     return {
       success: "Task successfully assigned to you!",
@@ -646,7 +646,7 @@ export async function publishSolution(values: {
         .where(eq(TaskTable.id, workspace?.taskId));
     });
     const updatedWorkspace = await getWorkspaceById(workspaceId, solverId);
-    
+
     Notifier()
       .email({
         subject: "Task Submited",
@@ -659,9 +659,8 @@ export async function publishSolution(values: {
         content: `you Task titiled ${workspace.task.title} 
           has bean submited please review it with in 7days `,
         receiverId: workspace.task.poster.id!,
-      })
-      .send();
-      
+      });
+
     return {
       success: true,
       message: "Successfully published solution!" as const,
@@ -710,8 +709,8 @@ export async function handleTaskDeadline(task: TaskReturnType) {
           receiverEmail: task.solver?.email!,
           content: `You are blocked from task: "${task.title} you no longer able to submit it but you can still access your previouse work "`,
           subject: `Blocked From A Task`,
-        })
-        .send();
+        });
+
       await db
         .update(TaskTable)
         .set({ status: "OPEN", assignedAt: null, solverId: null })
@@ -774,8 +773,8 @@ export async function acceptSolution(solution: SolutionById) {
         content: `Your Solution for Task "${title}" has been Accepted`,
         subject: "Solution Accepted",
         receiverId: solverId!,
-      })
-      .send();
+      });
+
     logger.info(`solution :${solution.id} Accepted`);
   } catch (error) {
     logger.error(`unable to Accept solution ${solution.id}`, {
@@ -840,8 +839,8 @@ export async function requestRefund(values: {
         content:
           "The refund request is currently under moderator review. you currently are in block list for this task. Please check the comments for more details.",
         receiverEmail: solver?.email!,
-      })
-      .send();
+      });
+
     withRevalidateTag("dispute-data-cache");
   } catch (err) {
     throw new Error("unable to create a refund request Please try again");
