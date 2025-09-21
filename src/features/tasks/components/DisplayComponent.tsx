@@ -34,14 +34,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import { TaskStatusType } from "@/drizzle/schemas";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useQueryParam from "@/hooks/useQueryParms";
@@ -51,10 +43,8 @@ import {
   Check,
   ChevronsUpDown,
   Clock,
-  Grid3X3,
   Search,
   SquareArrowUpRight,
-  Table as TableIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,6 +53,7 @@ import {
   PosterTasksFiltred,
   SolverAssignedTaskType,
 } from "../server/task-types";
+
 import GetStatusBadge from "./taskStatusBadge";
 
 type DisplayComponentProps = {
@@ -101,8 +92,6 @@ export default function DisplayListComponent({
   title,
   filterType,
 }: DisplayComponentProps) {
-  const [viewMode, setViewMode] = useQueryParam<viewType>("viewMode", "cards");
-  const [viewModeState, setViewModeState] = useState<viewType>(viewMode);
   const [search, setSearch] = useQueryParam("search", "");
   const [open, setOpen] = useState(false);
   const { user: currentUser } = useCurrentUser();
@@ -120,35 +109,6 @@ export default function DisplayListComponent({
       : "category";
 
   const [selectedValue, setSelectedValue] = useQueryParam(searchKey, "");
-  function handleSelect(newVal: viewType) {
-    setViewModeState(newVal);
-    setViewMode(newVal);
-  }
-
-  function ViewToggle() {
-    return (
-      <div className="flex items-center gap-1 bg-muted rounded-md p-1">
-        <Button
-          variant={viewModeState === "cards" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => {
-            handleSelect("cards");
-          }}>
-          <Grid3X3 className="w-4 h-4 mr-1" />
-          Cards
-        </Button>
-        <Button
-          variant={viewModeState === "table" ? "default" : "ghost"}
-          size="sm"
-          onClick={() => {
-            handleSelect("table");
-          }}>
-          <TableIcon className="w-4 h-4 mr-1" />
-          Table
-        </Button>
-      </div>
-    );
-  }
 
   function statusUiCheck(task: SolverAssignedTaskType | PosterTasksFiltred) {
     return "blockedSolvers" in task &&
@@ -235,7 +195,7 @@ export default function DisplayListComponent({
 
   function CardsView() {
     return (
-      <div className="h-[632px] max-h-[632px]">
+      <div className="h-[670px] max-h-[670px]">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {itretables.map((task) => (
             <Card
@@ -295,175 +255,111 @@ export default function DisplayListComponent({
     );
   }
 
-  function TableView() {
-    return (
-      <div className="flex flex-col gap-4 w-full ">
-        <Table className="border rounded-lg ">
-          <TableHeader>
-            <TableRow>
-              <TableHead>Task</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead>Author</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Due</TableHead>
-              <TableHead>Price</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {itretables.map((task) => (
-              <TableRow key={task.id}>
-                <TableCell className="font-medium">{task.title}</TableCell>
-                <TableCell>
-                  <Badge className={getColorClass(task.category.name)}>
-                    {task.category.name || "Unknown"}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar className="w-6 h-6">
-                      <AvatarFallback className="text-xs">
-                        {task.poster.name!.slice(0, 2)}
-                      </AvatarFallback>
-                      <AvatarImage src={task.poster.image ?? ""} />
-                    </Avatar>
-                    <span className="text-sm">{task.poster.name}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{statusUiCheck(task)}</TableCell>
-                <TableCell className="text-sm text-muted-foreground">
-                  {task.deadline || "No deadline"}
-                </TableCell>
-                <TableCell className="text-sm">
-                  RM{task.price?.toFixed(2)}
-                </TableCell>
-                <TableCell className="text-right w-30">
-                  {actionButtoneCheck(task)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-        <div className="w-full flex justify-end">
+  return (
+    <div className="flex flex-col px-6 py-8 gap-4  overflow-x-hidden w-full h-full">
+      <div className="flex items-center justify-between">
+        <h1 className="text-3xl font-bold">{title}</h1>
+        <Badge variant="outline">Total: {totalCount}</Badge>
+      </div>
+
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 gap-2">
+          <Input
+            type="text"
+            placeholder="Search tasks..."
+            defaultValue={search}
+            onChange={(e) => debouncedSetSearch(e.target.value)}
+            className="flex-1"
+          />
+          <Button type="submit" className="shrink-0">
+            <Search className="w-4 h-4 mr-2" />
+            Search
+          </Button>
+        </div>
+
+        <div className="sm:flex gap-2 items-center sm:w-fit">
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="outline"
+                className="w-full sm:w-[200px] justify-between">
+                {selectedValue ? selectedValue : `Filter by ${filterType}`}
+                <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="p-0 w-[250px]">
+              <Command>
+                <CommandInput placeholder={`Search ${filterType}...`} />
+                <CommandEmpty>No results found.</CommandEmpty>
+                <CommandList>
+                  <CommandGroup>
+                    {filterType === "category"
+                      ? Object.values(categoryMap).map((category) => (
+                          <CommandItem
+                            key={category}
+                            onSelect={() =>
+                              setSelectedValue(
+                                selectedValue === category ? "" : category
+                              )
+                            }
+                            className="cursor-pointer">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedValue === category
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            <Badge className={cn(getColorClass(category))}>
+                              {category}
+                            </Badge>
+                          </CommandItem>
+                        ))
+                      : STATUS_OPTIONS.map((status) => (
+                          <CommandItem
+                            key={status}
+                            onSelect={() =>
+                              setSelectedValue(
+                                selectedValue === status ? "" : status
+                              )
+                            }
+                            className="cursor-pointer">
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedValue === status
+                                  ? "opacity-100"
+                                  : "opacity-0"
+                              )}
+                            />
+                            {GetStatusBadge(status)}
+                          </CommandItem>
+                        ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
+        </div>
+      </div>
+
+      {itretables.length > 0 ? (
+        <CardsView />
+      ) : (
+        <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-muted/30">
+          No tasks found for this page or search query.
+        </div>
+      )}
+      {itretables.length > 8 && (
+        <div className="flex justify-center">
           <PaginationControls
             hasNext={hasNext}
             hasPrevious={hasPrevious}
             page={pages}
-            type="table"
-            className="justify-end"
           />
         </div>
-      </div>
-    );
-  }
-
-  function renderView() {
-    return viewModeState === "table" ? <TableView /> : <CardsView />;
-  }
-
-  return (
-    <div>
-      <div className="mx-auto px-6 py-8 space-y-8">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold">{title}</h1>
-          <Badge variant="outline">Total: {totalCount}</Badge>
-        </div>
-
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex flex-1 gap-2">
-            <Input
-              type="text"
-              placeholder="Search tasks..."
-              defaultValue={search}
-              onChange={(e) => debouncedSetSearch(e.target.value)}
-              className="flex-1"
-            />
-            <Button type="submit" className="shrink-0">
-              <Search className="w-4 h-4 mr-2" />
-              Search
-            </Button>
-          </div>
-
-          <div className="flex gap-2 items-center">
-            <Popover open={open} onOpenChange={setOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className="w-full sm:w-[200px] justify-between">
-                  {selectedValue ? selectedValue : `Filter by ${filterType}`}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="p-0 w-[250px]">
-                <Command>
-                  <CommandInput placeholder={`Search ${filterType}...`} />
-                  <CommandEmpty>No results found.</CommandEmpty>
-                  <CommandList>
-                    <CommandGroup>
-                      {filterType === "category"
-                        ? Object.values(categoryMap).map((category) => (
-                            <CommandItem
-                              key={category}
-                              onSelect={() => setSelectedValue(category)}
-                              className="cursor-pointer">
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedValue === category
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              <Badge className={cn(getColorClass(category))}>
-                                {category}
-                              </Badge>
-                            </CommandItem>
-                          ))
-                        : STATUS_OPTIONS.map((status) => (
-                            <CommandItem
-                              key={status}
-                              onSelect={() => setSelectedValue(status)}
-                              className="cursor-pointer">
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedValue === status
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {GetStatusBadge(status)}
-                            </CommandItem>
-                          ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-            <ViewToggle />
-          </div>
-        </div>
-
-        <div className="min-h-[500px]">
-          {itretables.length > 0 ? (
-            renderView()
-          ) : (
-            <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-muted/30">
-              No tasks found for this page or search query.
-            </div>
-          )}
-        </div>
-
-        {viewMode === "cards" && (
-          <div className="flex justify-center">
-            <PaginationControls
-              hasNext={hasNext}
-              hasPrevious={hasPrevious}
-              page={pages}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }
