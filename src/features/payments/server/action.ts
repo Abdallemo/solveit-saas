@@ -21,7 +21,10 @@ import {
   UpdateUserField,
   UserDbType,
 } from "@/features/users/server/actions";
-import { OnboardingFormData } from "@/features/users/server/user-types";
+import {
+  OnboardingFormData,
+  publicUserColumns,
+} from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import {
   DisputeAssignmentError,
@@ -109,14 +112,7 @@ export async function getAllPayments() {
   const results = await db.query.PaymentTable.findMany({
     with: {
       payer: {
-        columns: {
-          emailVerified: true,
-          email: true,
-          image: true,
-          name: true,
-          stripeCustomerId: true,
-          role: true,
-        },
+        columns: publicUserColumns,
       },
     },
   });
@@ -192,7 +188,7 @@ export async function CreateUserStripeConnectAccount(
         "SolveIt is a student job board where students post and solve academic tasks.",
       url:
         process.env.NODE_ENV === "development"
-          ? "https://solveit.up.railway.app"
+          ? env.PRODUCTION_URL
           : env.NEXTAUTH_URL,
     },
   });
@@ -219,6 +215,7 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
         "You must be at least 13 years of age to use the platform and receive funds"
       );
     }
+    await CreateUserStripeConnectAccount({ ...values, dob }, user); //==> synchronous job
     await db
       .update(UserDetails)
       .set({
@@ -231,7 +228,6 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
         onboardingCompleted: true,
       })
       .where(eq(UserDetails.userId, user.id));
-    await CreateUserStripeConnectAccount({ ...values, dob }, user); //==> synchronous job
     revalidateTag(`user-${user.id}`);
   } catch (error) {
     logger.error("unable to save user details", {
@@ -288,7 +284,9 @@ export async function completeRefund(refundId: string) {
     const { user } = await isAuthorized(["POSTER"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: { taskRefund: { with: { poster: true } } },
+      with: {
+        taskRefund: { with: { poster: { columns: publicUserColumns } } },
+      },
     });
 
     if (!refund || refund.refundStatus !== "PENDING_POSTER_ACTION") {
@@ -324,7 +322,14 @@ export async function reopenTask(refundId: string) {
     const { user } = await isAuthorized(["POSTER"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: { taskRefund: { with: { poster: true, solver: true } } },
+      with: {
+        taskRefund: {
+          with: {
+            poster: { columns: publicUserColumns },
+            solver: { columns: publicUserColumns },
+          },
+        },
+      },
     });
 
     if (
@@ -383,7 +388,14 @@ export async function approveRefund(refundId: string) {
     const { user } = await isAuthorized(["MODERATOR"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: { taskRefund: { with: { poster: true, solver: true } } },
+      with: {
+        taskRefund: {
+          with: {
+            poster: { columns: publicUserColumns },
+            solver: { columns: publicUserColumns },
+          },
+        },
+      },
       // columns:{moderatorId:true,refundStatus:true}
     });
 
@@ -452,7 +464,15 @@ export async function rejectRefund(refundId: string) {
       where: (tb, fn) => fn.eq(tb.id, refundId),
       with: {
         taskRefund: {
-          with: { solver: true },
+          with: {
+            solver: {
+              columns: {
+                ...publicUserColumns,
+                stripeAccountLinked: true,
+                stripeAccountId: true,
+              },
+            },
+          },
         },
       },
       // columns:{moderatorId:true,refundStatus:true}
