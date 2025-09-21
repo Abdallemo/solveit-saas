@@ -34,7 +34,7 @@ import {
 import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import type React from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useOptimistic, useRef, useState } from "react";
 import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 
@@ -45,6 +45,7 @@ export default function MentorshipWorkspace({
   mentorWorkspace: MentorSession;
 }) {
   const [chats, setChats] = useState(session?.chats);
+  const [pendingMessages, setPendingMessages] = useState<MentorChatSession[]>([]);
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,6 +59,10 @@ export default function MentorshipWorkspace({
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
+  //trying this
+  const [optimisticChat,addOptimisticChat]= useOptimistic(session?.chats,(state,newChat:MentorChatSession)=>{
+    return [...state!,newChat]
+  })
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
   };
