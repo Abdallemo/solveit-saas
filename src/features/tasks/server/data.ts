@@ -18,6 +18,7 @@ import type {
   FlatDispute,
   Units,
 } from "@/features/tasks/server/task-types";
+import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { DisputeNotFoundError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
@@ -140,8 +141,8 @@ export async function getTasksbyId(id: string) {
   const Task = await db.query.TaskTable.findFirst({
     where: (table, fn) => fn.eq(table.id, id),
     with: {
-      poster: true,
-      solver: true,
+      poster: { columns: publicUserColumns },
+      solver: { columns: publicUserColumns },
       workspace: true,
     },
   });
@@ -156,8 +157,8 @@ export async function getAllTasks() {
         fn.not(fn.eq(table.status, "ASSIGNED"))
       ),
     with: {
-      poster: true,
-      solver: true,
+      poster: { columns: publicUserColumns },
+      solver: { columns: publicUserColumns },
       workspace: true,
     },
   });
@@ -192,8 +193,8 @@ export async function getPosterTasksbyIdPaginated(
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
       with: {
-        poster: true,
-        solver: true,
+        poster: { columns: publicUserColumns },
+        solver: { columns: publicUserColumns },
         taskSolution: true,
         category: true,
       },
@@ -232,8 +233,8 @@ export async function getAssignedTasksbyIdPaginated(
       orderBy: (table, fn) => fn.desc(table.createdAt),
       with: {
         workspace: true,
-        poster: true,
-        solver: true,
+        poster: { columns: publicUserColumns },
+        solver: { columns: publicUserColumns },
         blockedSolvers: true,
         category: true,
       },
@@ -271,9 +272,8 @@ export async function getAllTasksByRolePaginated(
     where = and(
       not(eq(TaskTable.posterId, userId)),
 
-      not(eq(TaskTable.visibility, "private")),
-      eq(TaskTable.status, "OPEN"),
-      eq(TaskTable.status, "COMPLETED"),
+      eq(TaskTable.visibility, "public"),
+      or(eq(TaskTable.status, "OPEN"), eq(TaskTable.status, "COMPLETED")),
       search
         ? or(
             ilike(TaskTable.title, `%${search}%`),
@@ -307,7 +307,12 @@ export async function getAllTasksByRolePaginated(
       limit,
       offset,
       orderBy: (table, fn) => fn.desc(table.createdAt),
-      with: { poster: true, solver: true, taskSolution: true, category: true },
+      with: {
+        poster: { columns: publicUserColumns },
+        solver: { columns: publicUserColumns },
+        taskSolution: true,
+        category: true,
+      },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
   ]);
@@ -364,7 +369,7 @@ export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
     where: (table, fn) =>
       fn.and(fn.eq(table.taskId, taskId), fn.eq(table.solverId, solverId)),
     with: {
-      solver: true,
+      solver: { columns: publicUserColumns },
       task: true,
     },
   });
@@ -378,13 +383,13 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
       solver: true,
       task: {
         with: {
-          solver: true,
-          poster: true,
+          solver: { columns: publicUserColumns },
+          poster: { columns: publicUserColumns },
           workspace: true,
           category: true,
           taskComments: {
             with: {
-              owner: true,
+              owner: { columns: publicUserColumns },
             },
           },
         },
@@ -677,8 +682,8 @@ async function AllDisputes() {
         with: {
           taskRefund: true,
           taskSolution: true,
-          poster: true,
-          solver: true,
+          poster: { columns: publicUserColumns },
+          solver: { columns: publicUserColumns },
         },
       },
       refundModerator: true,
@@ -724,12 +729,14 @@ export async function getSolutionById(solutionId: string) {
     with: {
       taskSolution: {
         with: {
-          solver: true,
+          solver: { columns: publicUserColumns },
           taskSolution: true,
           taskRefund: true,
           taskComments: {
             with: {
-              owner: true,
+              owner: {
+                columns: publicUserColumns,
+              },
             },
           },
         },
@@ -775,8 +782,8 @@ export async function getModeratorDisputes(disputeId: string) {
           },
           with: {
             taskComments: true,
-            poster: true,
-            solver: true,
+            poster: { columns: publicUserColumns },
+            solver: { columns: publicUserColumns },
             taskSolution: {
               with: {
                 solutionFiles: {
