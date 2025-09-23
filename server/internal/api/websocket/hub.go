@@ -52,7 +52,7 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 	h.mu.Unlock()
 
 	go h.cleanUp(conn, channelID)
-	fmt.Println("New connection for channel:", channelID)
+	log.Println("New connection for channel:", channelID)
 
 }
 func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string) {
