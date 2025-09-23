@@ -1,48 +1,53 @@
 import authConfig from "@/lib/auth.config";
-import NextAuth from "next-auth";
 import {
-  publicRoutes,
-  authRoutes,
   apiAuthPrefix,
-  DEFAULT_LOGIN_REDIRECT,
+  apiLogsPrefix,
+  apiMediaPrefix,
   apiStripePrefix,
   apiStripePrefixPayment,
-  apiMediaPrefix,
-  apiLogsPrefix,
+  authRoutes,
+  DEFAULT_LOGIN_REDIRECT,
+  publicRoutes,
 } from "@/routes";
+import NextAuth from "next-auth";
+import { NextResponse } from "next/server";
 
 const { auth } = NextAuth(authConfig);
 export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
+  const res = NextResponse.next();
+  res.headers.set("x-full-url", nextUrl.href);
 
   const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
   const isApiStripePrefix = nextUrl.pathname.startsWith(apiStripePrefix);
-  const isApiStripePrefixPayment = nextUrl.pathname.startsWith(apiStripePrefixPayment);
+  const isApiStripePrefixPayment = nextUrl.pathname.startsWith(
+    apiStripePrefixPayment
+  );
   const isApiMediaPrefix = nextUrl.pathname.startsWith(apiMediaPrefix);
   const isApiLogsPrefix = nextUrl.pathname.startsWith(apiLogsPrefix);
   const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
   const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
 
-
-  if (isApiAuthRoute) return;
-  if (isApiStripePrefix) return;
+  if (isApiAuthRoute) return res;
+  if (isApiStripePrefix) return res;
   if (isApiStripePrefixPayment) return;
-  if (isApiMediaPrefix) return;
-  if (isApiLogsPrefix) return;
+  res;
+  if (isApiMediaPrefix) return res;
+  if (isApiLogsPrefix) return res;
 
   if (isAuthRoutes) {
     if (isLoggedIn)
       return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
 
-    return;
+    return res;
   }
 
   if (!isLoggedIn && !isPublicRoutes) {
     return Response.redirect(new URL("/login", nextUrl));
   }
 
-  return;
+  return res;
 });
 
 export const config = {
