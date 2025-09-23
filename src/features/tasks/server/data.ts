@@ -208,7 +208,12 @@ export async function getPosterTasksbyIdPaginated(
 }
 export async function getAssignedTasksbyIdPaginated(
   userId: string,
-  { search, limit, offset }: { search?: string; limit: number; offset: number },
+  {
+    search,
+    limit,
+    offset,
+    status,
+  }: { search?: string; limit: number; offset: number; status: TaskStatusType },
   showBlocked: boolean
 ) {
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
@@ -222,7 +227,8 @@ export async function getAssignedTasksbyIdPaginated(
       eq(TaskTable.solverId, userId),
       showBlocked ? inArray(TaskTable.id, blockedTaskIds) : undefined
     ),
-    search ? ilike(TaskTable.title, `%${search}%`) : undefined
+    search ? ilike(TaskTable.title, `%${search}%`) : undefined,
+    status ? eq(TaskTable.status, status) : undefined
   );
 
   const [tasks, totalCountResult] = await Promise.all([
