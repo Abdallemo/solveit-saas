@@ -7,14 +7,12 @@ import AccountComponent from "@/features/users/components/poster/AccountComponen
 import { isUserAccountOauth } from "@/features/users/server/actions";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 export default async function PosterAccountPage() {
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.id) return <AuthGate />;
-  const refress =
-    (await getServerReturnUrl()) ??
-    `/dashboard/${currentUser.role?.toLocaleLowerCase()}/`;
+
+  let refress = await getServerReturnUrl();
 
   const isOauthUser = await isUserAccountOauth(currentUser.id);
   const cards = await getAllCustomerPaymentMethods(currentUser.id);
