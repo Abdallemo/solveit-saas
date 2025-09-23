@@ -1,11 +1,8 @@
 "use server";
 
-import { DeleteObjectCommand } from "@aws-sdk/client-s3";
-import { s3 } from "@/lib/cloudFlairR2";
-import { scope } from "./media-types";
 import { env } from "@/env/server";
-import { logger } from "@/lib/logging/winston";
 import { GoHeaders } from "@/lib/go-config";
+import { logger } from "@/lib/logging/winston";
 
 
 export async function deleteFileFromR2(filePath: string) {
