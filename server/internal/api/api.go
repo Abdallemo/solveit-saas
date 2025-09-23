@@ -44,7 +44,7 @@ func NewServer(addr string, s3Client *s3.Client,
 	}
 }
 
-func (s *Server) routes() *http.ServeMux {
+func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	s.registerPublicRoutes(mux)
@@ -55,7 +55,9 @@ func (s *Server) routes() *http.ServeMux {
 	authStack := middleware.CreateStack(middleware.IsAuthorized)
 	mux.Handle("/", authStack(securedMux))
 
-	return mux
+	globalStack := middleware.CreateStack(middleware.Logging)
+
+	return globalStack(mux)
 }
 
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
