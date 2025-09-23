@@ -25,12 +25,12 @@ func IsAuthorized(next http.Handler) http.Handler {
 			http.Error(w, "missing Authorization header", http.StatusBadRequest)
 			return
 		}
-		parts := strings.SplitN(authHeader, "Bearer ", 2)
-		if len(parts) != 2 {
+		if !strings.HasPrefix(authHeader, "Bearer ") {
 			http.Error(w, "invalid Authorization format", http.StatusBadRequest)
 			return
 		}
-		token := strings.TrimSpace(parts[1])
+
+		token := strings.TrimPrefix(authHeader, "Bearer ")
 		if token != os.Getenv("GO_API_AUTH") {
 			http.Error(w, "invalid Authorization Token", http.StatusUnauthorized)
 			return
