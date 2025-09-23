@@ -41,8 +41,11 @@ export type Subscription = {
 
 export async function getServerReturnUrl() {
   const headersList = await headers();
-  const referer =
-    headersList.get("referer") ?? `${env.NEXTAUTH_URL}/dashboard/`;
+  const fullUrl = headersList.get("x-full-url");
+  let referer = headersList.get("referer");
+  if (!referer || referer === fullUrl) {
+    return `${env.NEXTAUTH_URL}/dashboard/`;
+  }
   return referer;
 }
 
@@ -134,8 +137,10 @@ export async function createCancelSession() {
   const referer = await getServerReturnUrl();
   const currentUser = await getServerUserSession(); //next_auth
   if (!currentUser?.id) redirect("/login");
-  
-  logger.info("creating cancel Session for User: " + currentUser.id, { userId: currentUser.id });
+
+  logger.info("creating cancel Session for User: " + currentUser.id, {
+    userId: currentUser.id,
+  });
   const user = await getUserById(currentUser.id);
   if (!user || !user.id) return;
 
