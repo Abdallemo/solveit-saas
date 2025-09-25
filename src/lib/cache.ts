@@ -16,7 +16,7 @@ type CacheOptions<T, P> = {
 export function withCache<T, P>({
   callback,
   dep = [],
-  revalidateMs = 60,
+  revalidateMs = 120,
   tag,
   enabled = true,
 }: CacheOptions<T, P>) {
