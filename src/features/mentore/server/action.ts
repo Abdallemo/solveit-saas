@@ -175,7 +175,7 @@ export async function getMentorListigWithAvailbelDates() {
 
   const allBookedSessions = await db.query.MentorshipSessionTable.findMany({
     with: {
-      bookedSessions: true
+      bookedSessions: true,
     },
   });
   const bookedKeys = new Set(
@@ -404,7 +404,11 @@ export async function getMentorBookingSessions() {
   );
   const result = await db.query.MentorshipBookingTable.findMany({
     where,
-    with: { bookedSessions: true, solver: true, poster: {columns: publicUserColumns} },
+    with: {
+      bookedSessions: true,
+      solver: true,
+      poster: { columns: publicUserColumns },
+    },
     orderBy: (tb, fn) => fn.desc(tb.createdAt),
   });
   const totol =
@@ -505,4 +509,19 @@ export async function sendMentorMessages(values: {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
   }
+}
+type SignalMessage = {
+  from: string;
+  to: string;
+  type: "offer" | "answer" | "candidate" | "leave";
+  payload: any;
+  sessionId: string;
+};
+
+export async function sendSignalMessage(message: SignalMessage) {
+  await fetch(`${env.GO_API_URL}/send-signal`, {
+    method: "POST",
+    headers: GoHeaders,
+    body: JSON.stringify(message),
+  });
 }
