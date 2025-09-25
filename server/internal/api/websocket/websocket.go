@@ -26,10 +26,11 @@ type Comment struct {
 	Owner     user.PublicUser `json:"owner"`
 }
 type SignalMessage struct {
-	From    string `json:"from"`
-	To      string `json:"to"`
-	Type    string `json:"type"`
-	Payload string `json:"payload"`
+	From      string          `json:"from"`
+	To        string          `json:"to"`
+	Type      string          `json:"type"`
+	Payload   json.RawMessage `json:"payload"`
+	SessionId string          `json:"sessionId"`
 }
 
 type WsNotification struct {
@@ -143,15 +144,31 @@ func (s *WsComments) sendToTask(taskID string, comment Comment) {
 }
 
 // -------------------- WebRTC Signalling WS --------------------
-func (s *WsSignalling) HandleSendSignal(w http.ResponseWriter, r *http.Request) {
-	msg := SignalMessage{}
+func (s *WsSignalling) HandleSignaling(w http.ResponseWriter, r *http.Request) {
+	sessionID := r.URL.Query().Get("session_id")
+	if sessionID == "" {
+		http.Error(w, "Missing session_id", http.StatusBadRequest)
+		return
+	}
+
+	q := r.URL.Query()
+	q.Set("channel", "signaling:"+sessionID)
+	r.URL.RawQuery = q.Encode()
+
+	s.hub.handleWS(w, r)
+}
+func (s *WsSignalling) HandleSendSignalingMessage(w http.ResponseWriter, r *http.Request) {
+	var msg SignalMessage
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
 		return
 	}
 
-	s.hub.sendToChannel("signaling:"+msg.To, msg)
+	s.sendToSignalSession(msg.SessionId, msg)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Signal sent"))
+}
+func (s *WsSignalling) sendToSignalSession(signalId string, message SignalMessage) {
+	s.hub.sendToChannel("signaling:"+signalId, message)
 }
