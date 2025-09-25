@@ -1,5 +1,5 @@
 "use client";
-import { usePathname, useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogClose,
@@ -7,13 +7,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
-import { Maximize2Icon, Settings, XIcon } from "lucide-react";
+import { env } from "@/env/client";
+import { Maximize2Icon, XIcon } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
 
 export function VideoCallModal({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const path = usePathname()
-
+  const path = usePathname();
+  const fullScreen = () => {
+    console.log(path);
+    router.replace(`${env.NEXT_PUBLIC_URL}${path}`);
+  };
 
   return (
     <Dialog
@@ -31,9 +35,7 @@ export function VideoCallModal({ children }: { children: React.ReactNode }) {
 
         <div className="absolute top-1 right-2 ">
           <DialogClose asChild>
-            <Button
-              variant="ghostNhover"
-              size="icon">
+            <Button variant="ghostNhover" size="icon">
               <XIcon />
             </Button>
           </DialogClose>
@@ -42,8 +44,7 @@ export function VideoCallModal({ children }: { children: React.ReactNode }) {
           <Button
             variant="ghostNhover"
             size="icon"
-            onClick={()=>router.replace(path)}
-            >
+            onClick={() => fullScreen()}>
             <Maximize2Icon />
           </Button>
         </div>
