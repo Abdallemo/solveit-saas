@@ -19,7 +19,6 @@ export default function WalletDropdownMenu({
   pending: number;
   availabel: number;
 }) {
-  console.log("availabel ", availabel);
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
