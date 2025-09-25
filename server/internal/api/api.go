@@ -37,6 +37,7 @@ func NewServer(addr string, s3Client *s3.Client,
 		wsNotif:      websocket.NewWsNotification(hub),
 		wsComm:       websocket.NewWsComments(hub),
 		wsChat:       websocket.NewMentorChat(hub),
+		wsSig:        websocket.NewWsWsSignalling(hub),
 		s3Client:     s3Client,
 		openaiClient: openaiClient,
 		store:        store,
@@ -47,33 +48,38 @@ func NewServer(addr string, s3Client *s3.Client,
 func (s *Server) routes() http.Handler {
 	mux := http.NewServeMux()
 
-	s.registerPublicRoutes(mux)
+	apiMux := http.NewServeMux()
+
+	s.registerPublicRoutes(apiMux)
 
 	securedMux := http.NewServeMux()
 	s.registerSecuredRoutes(securedMux)
-
 	authStack := middleware.CreateStack(middleware.IsAuthorized)
-	mux.Handle("/", authStack(securedMux))
+
+	apiMux.Handle("/", authStack(securedMux))
+
+	mux.Handle("/api/v1/", http.StripPrefix("/api/v1", apiMux))
 
 	globalStack := middleware.CreateStack(middleware.Logging)
-
 	return globalStack(mux)
+
 }
 
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /api/v1/notification", s.wsNotif.HandleNotification)
-	mux.HandleFunc("GET /api/v1/comments", s.wsComm.HandleComments)
-	mux.HandleFunc("GET /api/v1/mentorship", s.wsChat.HandleMentorChats)
-	mux.HandleFunc("GET /api/v1/signaling", s.wsSig.HandleSendSignal)
+	mux.HandleFunc("GET /notification", s.wsNotif.HandleNotification)
+	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
+	mux.HandleFunc("GET /mentorship", s.wsChat.HandleMentorChats)
+	mux.HandleFunc("GET /signaling", s.wsSig.HandleSignaling)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /api/v1/send-notification", s.wsNotif.HandleSendNotification)
-	mux.HandleFunc("POST /api/v1/send-comment", s.wsComm.HandleSendComments)
-	mux.HandleFunc("POST /api/v1/send-mentorshipChats", s.wsChat.HandleSendMentorChats)
-	mux.HandleFunc("POST /api/v1/media", s.handleUploadMedia)
-	mux.HandleFunc("DELETE /api/v1/media", s.handleDeleteMedia)
-	mux.HandleFunc("POST /api/v1/openai", s.hanleOpenAi)
+	mux.HandleFunc("POST /send-notification", s.wsNotif.HandleSendNotification)
+	mux.HandleFunc("POST /send-comment", s.wsComm.HandleSendComments)
+	mux.HandleFunc("POST /send-mentorshipChats", s.wsChat.HandleSendMentorChats)
+	mux.HandleFunc("POST /send-signal", s.wsSig.HandleSendSignalingMessage)
+	mux.HandleFunc("POST /media", s.handleUploadMedia)
+	mux.HandleFunc("DELETE /media", s.handleDeleteMedia)
+	mux.HandleFunc("POST /openai", s.hanleOpenAi)
 }
 
 func (s *Server) Run() error {
