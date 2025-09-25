@@ -6,6 +6,7 @@ import {
   boolean,
   check,
   date,
+  index,
   integer,
   json,
   numeric,
@@ -78,25 +79,29 @@ export type RefundStatusEnumType = (typeof RefundStatusEnum.enumValues)[number];
 export type PaymentPorposeEnumType =
   (typeof PaymentPorposeEnum.enumValues)[number];
 
-export const UserTable = pgTable("user", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  name: text("name"),
-  email: text("email").unique(),
-  password: text("password"),
-  role: UserRole("role").default("POSTER"),
-  stripeCustomerId: text("stripe_customer_id"),
-  stripeAccountId: text("stripe_account_id"),
-  stripeAccountLinked: boolean("stripe_account_linked")
-    .notNull()
-    .default(false),
+export const UserTable = pgTable(
+  "user",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    name: text("name"),
+    email: text("email").unique(),
+    password: text("password"),
+    role: UserRole("role").default("POSTER"),
+    stripeCustomerId: text("stripe_customer_id"),
+    stripeAccountId: text("stripe_account_id"),
+    stripeAccountLinked: boolean("stripe_account_linked")
+      .notNull()
+      .default(false),
 
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
-  image: text("image"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+    emailVerified: timestamp("emailVerified", { mode: "date" }),
+    image: text("image"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (user) => [index("user_role_idx").on(user.role)]
+);
 export const UserDetails = pgTable("user_details", {
   userId: uuid("user_id")
     .primaryKey()
@@ -160,19 +165,23 @@ export const VerificationTokenTable = pgTable(
   ]
 );
 
-export const UserSubscriptionTable = pgTable("subscription", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  stripeSubscriptionItemId: text("stripe_subscription_item_id"),
-  stripeSubscriptionId: text("stripe_subscription_id"),
-  tier: TierEnum("tier").notNull(),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const UserSubscriptionTable = pgTable(
+  "subscription",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    stripeSubscriptionItemId: text("stripe_subscription_item_id"),
+    stripeSubscriptionId: text("stripe_subscription_id"),
+    tier: TierEnum("tier").notNull(),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (subscription) => [index("subscription_userId_idx").on(subscription.userId)]
+);
 
 export const SolverProfileTable = pgTable("solver_profile", {
   userId: uuid("user_id")
@@ -193,22 +202,32 @@ export const SolverProfileTable = pgTable("solver_profile", {
     withTimezone: true,
   }).defaultNow(),
 });
-export const PaymentTable = pgTable("payments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  amount: integer("amount").notNull(),
-  status: PaymentStatus("status").default("HOLD"),
-  stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
-  stripeChargeId: text("stripe_charge_id"),
-  purpose: text("purpose"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  releaseDate: timestamp("release_date", { mode: "date", withTimezone: true }),
-});
+export const PaymentTable = pgTable(
+  "payments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    amount: integer("amount").notNull(),
+    status: PaymentStatus("status").default("HOLD"),
+    stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
+    stripeChargeId: text("stripe_charge_id"),
+    purpose: text("purpose"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    releaseDate: timestamp("release_date", {
+      mode: "date",
+      withTimezone: true,
+    }),
+  },
+  (payments) => [
+    index("payments_userId_idx").on(payments.userId),
+    index("payments_status_idx").on(payments.status),
+  ]
+);
 
 export const FeedbackTable = pgTable(
   "feedback",
@@ -238,94 +257,116 @@ export const FeedbackTable = pgTable(
     feedbackSourceCheck: check(
       "feedback_source_check",
       sql`(feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR 
-        (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)`
+          (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)`
     ),
   })
 );
 
-export const TaskTable = pgTable("tasks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  title: text("title").notNull(),
-  description: text("description"),
-  content: text("content"),
-  price: integer("price"),
-  posterId: uuid("poster_id")
-    .references(() => UserTable.id, { onDelete: "cascade" })
-    .notNull(),
-  solverId: uuid("solver_id").references(() => UserTable.id, {
-    onDelete: "cascade",
-  }),
-  visibility: TaskVisibility("visibility").default("public"),
-  categoryId: uuid("category_id")
-    .references(() => TaskCategoryTable.id, { onDelete: "no action" })
-    .notNull(),
-  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
-    onDelete: "cascade",
-  }),
-  deadline: text("deadline").default("12h"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  updatedAt: timestamp("updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  status: TaskStatusEnum("task_status").default("OPEN"),
-  assignedAt: timestamp("assigned_at", { mode: "date", withTimezone: true }),
-});
-export const BlockedTasksTable = pgTable("blocked_tasks", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  reason: text("reason"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
-export const TaskDraftTable = pgTable("task_drafts", {
-  id: uuid("id").primaryKey().defaultRandom().notNull(),
-  userId: uuid("user_id")
-    .references(() => UserTable.id, { onDelete: "cascade" })
-    .notNull()
-    .unique(),
-  title: text("title").default("").notNull(),
-  description: text("description").default("").notNull(),
-  content: text("content").default("").notNull(),
-  category: text("category").default("").notNull(),
-  deadline: text("deadline").default("12h").notNull(),
-  updatedAt: timestamp("updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  uploadedFiles: json("uploadedFiles").default("[]").notNull(),
-  visibility: TaskVisibility("visibility").default("public").notNull(),
-  price: integer("price").default(10).notNull(),
-});
+export const TaskTable = pgTable(
+  "tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    title: text("title").notNull(),
+    description: text("description"),
+    content: text("content"),
+    price: integer("price"),
+    posterId: uuid("poster_id")
+      .references(() => UserTable.id, { onDelete: "cascade" })
+      .notNull(),
+    solverId: uuid("solver_id").references(() => UserTable.id, {
+      onDelete: "cascade",
+    }),
+    visibility: TaskVisibility("visibility").default("public"),
+    categoryId: uuid("category_id")
+      .references(() => TaskCategoryTable.id, { onDelete: "no action" })
+      .notNull(),
+    paymentId: uuid("payment_id").references(() => PaymentTable.id, {
+      onDelete: "cascade",
+    }),
+    deadline: text("deadline").default("12h"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    status: TaskStatusEnum("task_status").default("OPEN"),
+    assignedAt: timestamp("assigned_at", { mode: "date", withTimezone: true }),
+  },
+  (task) => [
+    index("task_poster_idx").on(task.posterId),
+    index("task_solver_idx").on(task.solverId),
+    index("task_status_idx").on(task.status),
+    index("task_created_idx").on(task.assignedAt),
+  ]
+);
+export const BlockedTasksTable = pgTable(
+  "blocked_tasks",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    reason: text("reason"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (blokedTask) => [
+    index("blocked_taskId_idx").on(blokedTask.taskId),
+    index("blocked_userId_idx").on(blokedTask.userId),
+  ]
+);
+export const TaskDraftTable = pgTable(
+  "task_drafts",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    userId: uuid("user_id")
+      .references(() => UserTable.id, { onDelete: "cascade" })
+      .notNull()
+      .unique(),
+    title: text("title").default("").notNull(),
+    description: text("description").default("").notNull(),
+    content: text("content").default("").notNull(),
+    category: text("category").default("").notNull(),
+    deadline: text("deadline").default("12h").notNull(),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    uploadedFiles: json("uploadedFiles").default("[]").notNull(),
+    visibility: TaskVisibility("visibility").default("public").notNull(),
+    price: integer("price").default(10).notNull(),
+  },
+  (taskDraft) => [index("task_drafts_userId_idx").on(taskDraft.userId)]
+);
 
-export const TaskFileTable = pgTable("task_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  fileName: text("file_name").notNull(),
-  fileType: text("file_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  storageLocation: text("file_location").notNull(),
-  filePath: text("file_path").notNull(),
-  uploadedAt: timestamp("uploaded_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
-/* 
+export const TaskFileTable = pgTable(
+  "task_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    storageLocation: text("file_location").notNull(),
+    filePath: text("file_path").notNull(),
+    uploadedAt: timestamp("uploaded_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (taskFiles) => [index("task_files_taskId_idx").on(taskFiles.taskId)]
+);
 
-*/
 export const TaskCategoryTable = pgTable("task_categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
@@ -340,164 +381,236 @@ export const TaskDeadlineTable = pgTable("task_deadline", {
   }).defaultNow(),
 });
 
-export const RefundTable = pgTable("refunds", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  paymentId: uuid("payment_id")
-    .notNull()
-    .references(() => PaymentTable.id),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  refundReason: text("refund_reason"),
-  refundStatus: RefundStatusEnum().default("PENDING"),
-  moderatorId: uuid("moderatorId").references(() => UserTable.id),
-  refundedAt: timestamp("refunded_at", { mode: "date", withTimezone: true }),
-  stripeRefundId: text("stripe_refund_id"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  updatedAt: timestamp("updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const RefundTable = pgTable(
+  "refunds",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    paymentId: uuid("payment_id")
+      .notNull()
+      .references(() => PaymentTable.id),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    refundReason: text("refund_reason"),
+    refundStatus: RefundStatusEnum().default("PENDING"),
+    moderatorId: uuid("moderatorId").references(() => UserTable.id),
+    refundedAt: timestamp("refunded_at", { mode: "date", withTimezone: true }),
+    stripeRefundId: text("stripe_refund_id"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (refunds) => [
+    index("refunds_moderatorId_idx").on(refunds.moderatorId),
+    index("refunds_paymentId_idx").on(refunds.paymentId),
+    index("refunds_taskId_idx").on(refunds.taskId),
+    index("refund_status_idx").on(refunds.refundStatus)
+  ]
+);
 
-export const TaskCommentTable = pgTable("task_comments", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  content: text("content").notNull(),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const TaskCommentTable = pgTable(
+  "task_comments",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    content: text("content").notNull(),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (taskComments) => [
+    index("task_comments_taskId_idx").on(taskComments.taskId),
+    index("task_comments_userId_idx").on(taskComments.userId),
+  ]
+);
 
-export const WorkspaceTable = pgTable("solution_workspaces", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  solverId: uuid("solver_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  content: text("content"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const WorkspaceTable = pgTable(
+  "solution_workspaces",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    solverId: uuid("solver_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    content: text("content"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (solutionWorkspaces) => [
+    index("solution_workspaces_taskId_idx").on(solutionWorkspaces.taskId),
+    index("solution_workspaces_solverId_idx").on(solutionWorkspaces.solverId),
+  ]
+);
 
-export const WorkspaceFilesTable = pgTable("solution_workspace_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .notNull()
-    .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
-  uploadedById: uuid("uploaded_by_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  fileName: text("file_name").notNull(),
-  fileType: text("file_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  storageLocation: text("file_location").notNull(),
-  filePath: text("file_path").notNull(),
-  isDraft: boolean("is_draft").default(true),
-  uploadedAt: timestamp("uploaded_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  updatedAt: timestamp("updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const WorkspaceFilesTable = pgTable(
+  "solution_workspace_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
+    uploadedById: uuid("uploaded_by_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    storageLocation: text("file_location").notNull(),
+    filePath: text("file_path").notNull(),
+    isDraft: boolean("is_draft").default(true),
+    uploadedAt: timestamp("uploaded_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (solutionWorkspaceFiles) => [
+    index("solution_workspace_files_workspaceId_idx").on(
+      solutionWorkspaceFiles.workspaceId
+    ),
+    index("solution_workspace_files_uploadedById_idx").on(
+      solutionWorkspaceFiles.uploadedById
+    ),
+  ]
+);
 
-export const SolutionTable = pgTable("solutions", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  workspaceId: uuid("workspace_id")
-    .notNull()
-    .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
-  taskId: uuid("task_id")
-    .notNull()
-    .references(() => TaskTable.id, { onDelete: "cascade" }),
-  content: text("content"),
-  fileUrl: text("file_url"),
-  isFinal: boolean("is_final").default(false),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-  updatedAt: timestamp("updated_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
-export const SolutionFilesTable = pgTable("solution_files", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  solutionId: uuid("solution_id")
-    .notNull()
-    .references(() => SolutionTable.id, { onDelete: "cascade" }),
-  workspaceFileId: uuid("workspace_file_id")
-    .notNull()
-    .references(() => WorkspaceFilesTable.id, { onDelete: "cascade" }),
-});
-export const MentorshipProfileTable = pgTable("mentorship_profiles", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" })
-    .unique(),
-  displayName: text("display_name").notNull().default(""),
-  avatar: text("avatar").notNull().default("/avatars/avatar-4.svg"),
-  title: text("title").notNull().default(""),
-  description: text("description").notNull().default(""),
-  ratePerHour: real("rate_per_hour").notNull().default(0),
-  availableTimes: json("available_times")
-    .notNull()
-    .$type<AvailabilitySlot[]>()
-    .default([]),
-  isPublished: boolean("is_published").default(false).notNull(),
-  createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-export const MentorshipSessionTable = pgTable("mentor_session", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  bookingId: uuid("booking_id")
-    .notNull()
-    .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
-  sessionDate: date("session_date").notNull(),
-  timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const SolutionTable = pgTable(
+  "solutions",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: uuid("workspace_id")
+      .notNull()
+      .references(() => WorkspaceTable.id, { onDelete: "cascade" }),
+    taskId: uuid("task_id")
+      .notNull()
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
+    content: text("content"),
+    fileUrl: text("file_url"),
+    isFinal: boolean("is_final").default(false),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+    updatedAt: timestamp("updated_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (solutions) => [
+    index("solutions_taskId_idx").on(solutions.taskId),
+    index("solutions_workspaceId_idx").on(solutions.workspaceId),
+  ]
+);
 
-export const MentorshipBookingTable = pgTable("mentorship_bookings", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  solverId: uuid("solver_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  posterId: uuid("student_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  price: integer("price"),
-  status: BookingSatatusEnum().default("PENDING").notNull(),
-  paymentId: uuid("payment_id").references(() => PaymentTable.id, {
-    onDelete: "cascade",
-  }),
-  notes: text("notes"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const SolutionFilesTable = pgTable(
+  "solution_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    solutionId: uuid("solution_id")
+      .notNull()
+      .references(() => SolutionTable.id, { onDelete: "cascade" }),
+    workspaceFileId: uuid("workspace_file_id")
+      .notNull()
+      .references(() => WorkspaceFilesTable.id, { onDelete: "cascade" }),
+  },
+  (solutionFiles) => [
+    index("solution_files_solutionId_idx").on(solutionFiles.solutionId),
+    index("solution_files_workspaceFileId_idx").on(
+      solutionFiles.workspaceFileId
+    ),
+  ]
+);
+export const MentorshipProfileTable = pgTable(
+  "mentorship_profiles",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" })
+      .unique(),
+    displayName: text("display_name").notNull().default(""),
+    avatar: text("avatar").notNull().default("/avatars/avatar-4.svg"),
+    title: text("title").notNull().default(""),
+    description: text("description").notNull().default(""),
+    ratePerHour: real("rate_per_hour").notNull().default(0),
+    availableTimes: json("available_times")
+      .notNull()
+      .$type<AvailabilitySlot[]>()
+      .default([]),
+    isPublished: boolean("is_published").default(false).notNull(),
+    createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
+      .notNull()
+      .defaultNow(),
+  },
+  (mentorshipProfiles) => [
+    index("mentorship_profiles_userId_idx").on(mentorshipProfiles.userId),
+  ]
+);
+export const MentorshipSessionTable = pgTable(
+  "mentor_session",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    bookingId: uuid("booking_id")
+      .notNull()
+      .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
+    sessionDate: date("session_date").notNull(),
+    timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (mentorSession) => [
+    index("mentor_session_bookingId_idx").on(mentorSession.bookingId),
+  ]
+);
+
+export const MentorshipBookingTable = pgTable(
+  "mentorship_bookings",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    solverId: uuid("solver_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    posterId: uuid("student_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    price: integer("price"),
+    status: BookingSatatusEnum().default("PENDING").notNull(),
+    paymentId: uuid("payment_id").references(() => PaymentTable.id, {
+      onDelete: "cascade",
+    }),
+    notes: text("notes"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (mentorshipBookings) => [
+    index("mentorship_bookings_solverId_idx").on(mentorshipBookings.solverId),
+    index("mentorship_bookings_posterId_idx").on(mentorshipBookings.posterId),
+    index("mentorship_bookings_paymentId_idx").on(mentorshipBookings.paymentId),
+    index("mentorship_bookings_status_idx").on(mentorshipBookings.status),
+  ]
+);
 
 export const MentorshipChatTable = pgTable("mentorship_chats", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -514,7 +627,9 @@ export const MentorshipChatTable = pgTable("mentorship_chats", {
     mode: "date",
     withTimezone: true,
   }).defaultNow(),
-});
+},(mentorshipChats)=>[
+  index("mentorship_chats_seesionId_idx").on(mentorshipChats.seesionId),
+]);
 
 export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
   id: uuid("id").primaryKey().defaultRandom().notNull(),
@@ -533,7 +648,9 @@ export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
     mode: "date",
     withTimezone: true,
   }).defaultNow(),
-});
+},(mentorshipChatFiles)=>[
+  index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId)
+]);
 
 export const RulesTable = pgTable("ai_rules", {
   id: uuid("id").primaryKey().defaultRandom(),
