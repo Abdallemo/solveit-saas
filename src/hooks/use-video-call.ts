@@ -2,7 +2,7 @@
 
 import { sendSignalMessage } from "@/features/mentore/server/action";
 import { useMutation } from "@tanstack/react-query";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import useWebSocket from "./useWebSocket";
 
 type SignalMessage = {
@@ -32,7 +32,8 @@ export function useMentorshipCall(userId: string, sessionId: string) {
     },
     onError: (e) => console.error(e.message),
   });
-  const endCall = async () => {
+
+  const endCall = useCallback(async () => {
     await sendSignal({
       from: userId,
       to: "broadcast",
@@ -40,7 +41,12 @@ export function useMentorshipCall(userId: string, sessionId: string) {
       payload: null,
       sessionId,
     });
-  };
+
+    pendingCandidates.current = [];
+    makingOfferRef.current = false;
+    ignoreOfferRef.current = false;
+  }, [sendSignal, sessionId, userId]);
+
   const handleSignalMessage = async (msg: SignalMessage) => {
     if (msg.from === userId || (msg.to !== userId && msg.to !== "broadcast"))
       return;
@@ -55,51 +61,65 @@ export function useMentorshipCall(userId: string, sessionId: string) {
         ignoreOfferRef.current = !isPolite && offerCollision;
         if (ignoreOfferRef.current) return;
 
-        if (offerCollision) {
-          await Promise.all([
-            pc.setLocalDescription({ type: "rollback" }),
-            pc.setRemoteDescription(new RTCSessionDescription(msg.payload)),
-          ]);
-        } else {
-          await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+        try {
+          if (offerCollision) {
+            await Promise.all([
+              pc.setLocalDescription({ type: "rollback" }),
+              pc.setRemoteDescription(new RTCSessionDescription(msg.payload)),
+            ]);
+          } else {
+            await pc.setRemoteDescription(
+              new RTCSessionDescription(msg.payload)
+            );
+          }
+
+          for (const c of pendingCandidates.current) {
+            await pc.addIceCandidate(new RTCIceCandidate(c));
+          }
+          pendingCandidates.current = [];
+
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          await sendSignal({
+            from: userId,
+            to: msg.from,
+            type: "answer",
+            payload: answer,
+            sessionId,
+          });
+        } catch (err) {
+          console.error("Offer handling error:", err);
         }
-        pendingCandidates.current.forEach((c) =>
-          pc.addIceCandidate(new RTCIceCandidate(c))
-        );
-        pendingCandidates.current = [];
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        await sendSignal({
-          from: userId,
-          to: msg.from,
-          type: "answer",
-          payload: answer,
-          sessionId,
-        });
         break;
       }
 
       case "answer":
-        await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
-        pendingCandidates.current.forEach((c) =>
-          pc.addIceCandidate(new RTCIceCandidate(c))
-        );
-        pendingCandidates.current = [];
+        try {
+          await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+          for (const c of pendingCandidates.current) {
+            await pc.addIceCandidate(new RTCIceCandidate(c));
+          }
+          pendingCandidates.current = [];
+        } catch (err) {
+          console.error("Answer handling error:", err);
+        }
         break;
 
       case "candidate":
-        if (pc.remoteDescription && pc.remoteDescription.type) {
-          await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
-        } else {
-          pendingCandidates.current.push(msg.payload);
+        try {
+          if (pc.remoteDescription && pc.remoteDescription.type) {
+            await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+          } else {
+            pendingCandidates.current.push(msg.payload);
+          }
+        } catch (err) {
+          console.error("Candidate handling error:", err);
         }
         break;
 
       case "leave":
-        if (remoteVideo.current) {
-          remoteVideo.current.srcObject = null;
-        }
-        pendingCandidates.current = [];
+        if (remoteVideo.current) remoteVideo.current.srcObject = null;
+
         break;
     }
   };
@@ -134,6 +154,8 @@ export function useMentorshipCall(userId: string, sessionId: string) {
           payload: offer,
           sessionId,
         });
+      } catch (err) {
+        console.error("Negotiation error:", err);
       } finally {
         makingOfferRef.current = false;
       }
@@ -141,45 +163,43 @@ export function useMentorshipCall(userId: string, sessionId: string) {
 
     pc.onicecandidate = async (event) => {
       if (event.candidate) {
-        await sendSignal({
-          from: userId,
-          to: "broadcast",
-          type: "candidate",
-          payload: event.candidate.toJSON(),
-          sessionId,
-        });
+        try {
+          await sendSignal({
+            from: userId,
+            to: "broadcast",
+            type: "candidate",
+            payload: event.candidate.toJSON(),
+            sessionId,
+          });
+        } catch (err) {
+          console.error("ICE candidate send error:", err);
+        }
       }
     };
 
     pc.ontrack = (event) => {
-      if (remoteVideo.current) {
-        remoteVideo.current.srcObject = event.streams[0];
-      }
+      if (remoteVideo.current) remoteVideo.current.srcObject = event.streams[0];
     };
 
     navigator.mediaDevices
       .getUserMedia({ video: true, audio: true })
       .then((stream) => {
         localStreamRef.current = stream;
-        if (localVideo.current) {
-          localVideo.current.srcObject = stream;
-        }
+        if (localVideo.current) localVideo.current.srcObject = stream;
         stream.getTracks().forEach((track) => pc.addTrack(track, stream));
-      });
+      })
+      .catch((err) => console.error("getUserMedia error:", err));
 
     return () => {
-      sendSignal({
-        from: userId,
-        to: "broadcast",
-        type: "leave",
-        payload: null,
-        sessionId,
-      });
+      endCall();
       pc.close();
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       localStreamRef.current = null;
+      pendingCandidates.current = [];
+      makingOfferRef.current = false;
+      ignoreOfferRef.current = false;
     };
-  }, [sendSignal, userId, sessionId]);
+  }, [sendSignal, userId, sessionId, endCall]);
 
   useEffect(() => {
     localStreamRef.current?.getVideoTracks().forEach((track) => {
