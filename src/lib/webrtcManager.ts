@@ -132,7 +132,6 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
       }
 
       case "leave": {
-      
         setTimeout(() => {
           if (remoteStream) {
             remoteStream = null;
@@ -219,14 +218,67 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
     notify();
   };
 
+  // const leaveCall = async () => {
+  //   await sendSignal({
+  //     from: userId,
+  //     to: "broadcast",
+  //     type: "leave",
+  //     payload: null,
+  //     sessionId,
+  //   });
+  // };
   const leaveCall = async () => {
-    await sendSignal({
-      from: userId,
-      to: "broadcast",
-      type: "leave",
-      payload: null,
-      sessionId,
-    });
+    try {
+      await sendSignal({
+        from: userId,
+        to: "broadcast",
+        type: "leave",
+        payload: null,
+        sessionId,
+      });
+    } catch (err) {
+      console.error("Error sending leave signal:", err);
+    }
+
+    if (localStream) {
+      localStream.getTracks().forEach((t) => t.stop());
+      localStream = null;
+    }
+
+  
+    remoteStream = null;
+
+    
+    if (pc) {
+      try {
+        pc.ontrack = null;
+        pc.onicecandidate = null;
+        pc.onnegotiationneeded = null;
+        pc.oniceconnectionstatechange = null;
+        pc.close();
+      } catch (err) {
+        console.error("Error closing peer connection:", err);
+      }
+      pc = null;
+    }
+    if (ws) {
+      try {
+        ws.onmessage = null;
+        ws.close();
+      } catch (err) {
+        console.error("Error closing WebSocket:", err);
+      }
+      ws = null;
+    }
+
+    cameraOn = false;
+    micOn = false;
+
+    notify();
+
+    const key = `${userId}_${sessionId}`;
+    delete managers[key];
+
   };
 
   init();
