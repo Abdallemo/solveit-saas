@@ -26,14 +26,14 @@ export function useMentorshipCall(userId: string, sessionId: string) {
   const ignoreOfferRef = useRef(false);
   const isPolite = true;
 
-  const { mutate: sendSignal } = useMutation({
+  const { mutateAsync: sendSignal } = useMutation({
     mutationFn: async (msg: SignalMessage) => {
       await sendSignalMessage(msg);
     },
     onError: (e) => console.error(e.message),
   });
-  const endCall = () => {
-    sendSignal({
+  const endCall = async () => {
+    await sendSignal({
       from: userId,
       to: "broadcast",
       type: "leave",
@@ -69,7 +69,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
         pendingCandidates.current = [];
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
-        sendSignal({
+        await sendSignal({
           from: userId,
           to: msg.from,
           type: "answer",
@@ -99,6 +99,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
         if (remoteVideo.current) {
           remoteVideo.current.srcObject = null;
         }
+        pendingCandidates.current = [];
         break;
     }
   };
@@ -126,7 +127,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
         makingOfferRef.current = true;
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        sendSignal({
+        await sendSignal({
           from: userId,
           to: "broadcast",
           type: "offer",
@@ -138,9 +139,9 @@ export function useMentorshipCall(userId: string, sessionId: string) {
       }
     };
 
-    pc.onicecandidate = (event) => {
+    pc.onicecandidate = async (event) => {
       if (event.candidate) {
-        sendSignal({
+        await sendSignal({
           from: userId,
           to: "broadcast",
           type: "candidate",
