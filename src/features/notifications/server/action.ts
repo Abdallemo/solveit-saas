@@ -9,12 +9,6 @@ import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 type emailBodyType = { content: string; subject: string };
 type systemBodyType = { content: string; subject: string };
-type NotificationProp = {
-  sender?: string;
-  receiverId: string;
-  receiverEmail: string;
-  body: systemBodyType;
-};
 const DEFAULT_SUBJECT = "SolveIt Notification";
 
 export async function getAllNotification(receiverId: string, limit = 3) {
@@ -64,7 +58,7 @@ export async function sendNotificationByEmail({
   receiverEmail,
   sender,
 }: emaiProps) {
-  logger.info("in App notification");
+  logger.info("Email notification");
   const transporter = await createTransporter();
 
   const content = typeof body === "string" ? body : body.content;
@@ -137,33 +131,13 @@ export async function sendNotificationByEmail({
 
   try {
     const result = await transporter.sendMail(mailOptions);
-    logger.info("Email sent to: " + receiverEmail, result.messageId);
+    logger.info("Email sent to: " + receiverEmail);
     return result;
   } catch (error) {
     logger.error("Failed to send notification email. to:" + receiverEmail, {
       error: error,
     });
-    throw new Error("Failed to send notification email.");
-  }
-}
-//old
-export async function sendNotification({
-  sender = "solveit@org.com",
-  receiverId,
-  receiverEmail,
-  body,
-  method = ["email", "system"],
-}: NotificationProp & { method?: ("email" | "system")[] }) {
-  if (method.includes("system")) {
-    logger.info(
-      `[SYSTEM NOTIFICATION] To: ${receiverId} | Subject: ${
-        typeof body === "string" ? "System Notification" : body.subject
-      }`
-    );
-    await processSystemNotification({ sender, receiverId, body });
-  }
-  if (method.includes("email")) {
-    await sendNotificationByEmail({ sender, receiverEmail, body });
+    
   }
 }
 
