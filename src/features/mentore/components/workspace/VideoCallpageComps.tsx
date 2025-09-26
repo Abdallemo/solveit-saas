@@ -22,12 +22,7 @@ export function VideoCallPageComps({
     endCall,
   } = useMentorshipCall(userId, sessionId as string);
   const router = useRouter();
-
-  // useEffect(() => {
-  //   return () => {
-  //     endCall();
-  //   };
-  // }, [endCall]);
+  // useCallCleanup(endCall);
   return (
     <div className="flex flex-col w-full h-full justify-between items-center rounded-lg border border-white/5 ">
       <div className="flex flex-col md:flex-row gap-2 w-full h-full p-2">
