@@ -9,7 +9,7 @@ export default async function page({
 }) {
   const { user } = await isAuthorized(["POSTER"]);
   const { sessionId } = await params;
-  console.log(sessionId);
+
   return (
     <VideoCallClientWraper>
       <VideoCallPageComps userId={user.id} sessionId={sessionId} />
