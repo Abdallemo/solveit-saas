@@ -32,6 +32,7 @@ import {
   Video,
 } from "lucide-react";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type React from "react";
 import { useEffect, useOptimistic, useRef, useState } from "react";
@@ -45,7 +46,9 @@ export default function MentorshipWorkspace({
   mentorWorkspace: MentorSession;
 }) {
   const [chats, setChats] = useState(session?.chats);
-  const [pendingMessages, setPendingMessages] = useState<MentorChatSession[]>([]);
+  const [pendingMessages, setPendingMessages] = useState<MentorChatSession[]>(
+    []
+  );
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -60,9 +63,12 @@ export default function MentorshipWorkspace({
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
   //trying this
-  const [optimisticChat,addOptimisticChat]= useOptimistic(session?.chats,(state,newChat:MentorChatSession)=>{
-    return [...state!,newChat]
-  })
+  const [optimisticChat, addOptimisticChat] = useOptimistic(
+    session?.chats,
+    (state, newChat: MentorChatSession) => {
+      return [...state!, newChat];
+    }
+  );
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
   };
@@ -198,12 +204,11 @@ export default function MentorshipWorkspace({
             </Badge>
           )}
 
-          <Button
-            size="sm"
-            className="gap-2"
-            onClick={() => router.push(`${path}/video-call`)}>
-            <Video className="h-4 w-4" />
-            Video Call
+          <Button size="sm" className="gap-2" asChild>
+            <Link href={`${path}/video-call`}>
+              <Video className="h-4 w-4" />
+              Video Call
+            </Link>
           </Button>
         </div>
         <ScrollArea className="flex-1 h-[500px] p-5">
