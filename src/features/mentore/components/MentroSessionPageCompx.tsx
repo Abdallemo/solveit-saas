@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { formatDate, formatDateAndTime, getColorClass } from "@/lib/utils";
+import { formatDate, formatDateAndTimeNUTC, getColorClass } from "@/lib/utils";
 import {
   Calendar,
   ChevronDown,
@@ -134,7 +134,7 @@ export function SessionsList({
                       <div className="flex items-center gap-1 text-sm text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         <span>
-                          Booked {formatDateAndTime(booking.createdAt!)}
+                          Booked {formatDateAndTimeNUTC(booking.createdAt!)}
                         </span>
                       </div>
                     </div>
