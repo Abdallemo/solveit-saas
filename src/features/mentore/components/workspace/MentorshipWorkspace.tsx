@@ -33,7 +33,7 @@ import {
 } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import type React from "react";
 import { useEffect, useOptimistic, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -47,7 +47,6 @@ export default function MentorshipWorkspace({
   mentorWorkspace: MentorSession;
 }) {
   const [chats, setChats] = useState(session?.chats);
-  
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -56,7 +55,7 @@ export default function MentorshipWorkspace({
   const messageRef = useRef<HTMLDivElement>(null);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
-  const router = useRouter();
+
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
@@ -531,7 +530,7 @@ export default function MentorshipWorkspace({
           )}
         </ScrollArea>
       </div>
-      
+     
     </main>
   );
 }
