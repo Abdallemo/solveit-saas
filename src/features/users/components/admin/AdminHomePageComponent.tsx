@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { LogsTyep } from "@/lib/logging/action";
+import { formatDateAndTimeNUTC } from "@/lib/utils";
 import {
   AlertCircle,
   AlertTriangle,
@@ -332,9 +333,7 @@ export function ServerLogs({ serverLogs }: { serverLogs: LogsTyep }) {
               </Badge>
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-muted-foreground">
-                  {log.createdAt.toLocaleDateString(undefined, {
-                    timeZone: "UTC",
-                  })}
+                  {formatDateAndTimeNUTC(log.createdAt)}
                 </p>
                 <p className="text-sm mt-1 break-words">{log.message}</p>
               </div>
