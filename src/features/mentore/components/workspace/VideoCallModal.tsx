@@ -15,7 +15,7 @@ export function VideoCallModal({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const path = usePathname();
   const fullScreen = () => {
-    console.log(path);
+    console.log(`${env.NEXT_PUBLIC_URL}${path}`);
     router.replace(`${env.NEXT_PUBLIC_URL}${path}`);
   };
 
