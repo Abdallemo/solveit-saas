@@ -1,4 +1,3 @@
-
 import { getWebRTCManager } from "@/lib/webrtcManager";
 import { useEffect, useRef, useState } from "react";
 
@@ -18,7 +17,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
       setCameraOn(state.cameraOn);
       setMicOn(state.micOn);
     });
-
+    
     return () => {
       unsubscribe();
     };
