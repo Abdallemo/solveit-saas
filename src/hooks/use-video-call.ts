@@ -3,7 +3,6 @@
 import { sendSignalMessage } from "@/features/mentore/server/action";
 import { useMutation } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
-import { toast } from "sonner";
 import useWebSocket from "./useWebSocket";
 
 type SignalMessage = {
@@ -22,7 +21,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const localStreamRef = useRef<MediaStream | null>(null);
-
+  const pendingCandidates = useRef<RTCIceCandidateInit[]>([]);
   const makingOfferRef = useRef(false);
   const ignoreOfferRef = useRef(false);
   const isPolite = true;
@@ -31,7 +30,7 @@ export function useMentorshipCall(userId: string, sessionId: string) {
     mutationFn: async (msg: SignalMessage) => {
       await sendSignalMessage(msg);
     },
-    onError: () => toast.error("Failed to send signal"),
+    onError: (e) => console.error(e.message),
   });
   const endCall = () => {
     sendSignal({
@@ -64,7 +63,10 @@ export function useMentorshipCall(userId: string, sessionId: string) {
         } else {
           await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
         }
-
+        pendingCandidates.current.forEach((c) =>
+          pc.addIceCandidate(new RTCIceCandidate(c))
+        );
+        pendingCandidates.current = [];
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
         sendSignal({
@@ -79,10 +81,18 @@ export function useMentorshipCall(userId: string, sessionId: string) {
 
       case "answer":
         await pc.setRemoteDescription(new RTCSessionDescription(msg.payload));
+        pendingCandidates.current.forEach((c) =>
+          pc.addIceCandidate(new RTCIceCandidate(c))
+        );
+        pendingCandidates.current = [];
         break;
 
       case "candidate":
-        await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+        if (pc.remoteDescription && pc.remoteDescription.type) {
+          await pc.addIceCandidate(new RTCIceCandidate(msg.payload));
+        } else {
+          pendingCandidates.current.push(msg.payload);
+        }
         break;
 
       case "leave":
@@ -182,5 +192,13 @@ export function useMentorshipCall(userId: string, sessionId: string) {
     });
   }, [micOn]);
 
-  return { localVideo, remoteVideo, setCameraOn, setMicOn, cameraOn, micOn,endCall };
+  return {
+    localVideo,
+    remoteVideo,
+    setCameraOn,
+    setMicOn,
+    cameraOn,
+    micOn,
+    endCall,
+  };
 }
