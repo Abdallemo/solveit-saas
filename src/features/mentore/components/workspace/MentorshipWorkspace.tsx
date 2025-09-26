@@ -16,6 +16,7 @@ import type {
   MentorChatSession,
   MentorSession,
 } from "@/features/mentore/server/types";
+import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import useWebSocket from "@/hooks/useWebSocket";
@@ -39,7 +40,6 @@ import { useEffect, useOptimistic, useRef, useState } from "react";
 import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 
-
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace({
   mentorWorkspace: session,
@@ -55,7 +55,7 @@ export default function MentorshipWorkspace({
   const messageRef = useRef<HTMLDivElement>(null);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
-
+  const isMobile = useIsMobile();
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
@@ -181,7 +181,7 @@ export default function MentorshipWorkspace({
   return (
     <main className="w-full h-full flex bg-background">
       <div className="flex-1 flex flex-col h-full">
-        <div className="border-b bg-card px-6 py-4 flex items-center justify-between">
+        <div className="border-b bg-card px-6 py-2 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="space-y-1">
               <p className="font-medium">{sessionDate}</p>
@@ -196,12 +196,13 @@ export default function MentorshipWorkspace({
           {/*  */}
 
           {isPreSession && (
-            <Badge variant={"success"} className="h-6">
-              this is a pre-session chat. Use this space to confirm details and
-              share resources.
-            </Badge>
+            <div className="flex justify-center w-full my-3">
+              
+              <div className="bg-sidebar px-3 py-1.5 rounded-full text-xs font-medium shadow-inner">
+                <p>This is a pre-session</p>
+              </div>
+            </div>
           )}
-
           <Button size="sm" className="gap-2" asChild>
             <Link href={`${path}/video-call`}>
               <Video className="h-4 w-4" />
@@ -485,52 +486,53 @@ export default function MentorshipWorkspace({
           </div>
         </div>
       </div>
-      <div className="w-80 border-l  flex flex-col h-full p-5 gap-2">
-        <div className="border-b bg-card px-4 py-4">
-          <div className="flex items-center gap-3">
-            <FileText className="h-4 w-4 text-primary" />
-            <h3 className="font-medium">Shared Files</h3>
-            <Badge variant="secondary" className="ml-auto">
-              {allFiles.length}
-            </Badge>
+      {!isMobile && (
+        <div className="w-80 border-l  flex flex-col h-full p-5 gap-2">
+          <div className="border-b bg-card px-4 py-4">
+            <div className="flex items-center gap-3">
+              <FileText className="h-4 w-4 text-primary" />
+              <h3 className="font-medium">Shared Files</h3>
+              <Badge variant="secondary" className="ml-auto">
+                {allFiles.length}
+              </Badge>
+            </div>
           </div>
+          <ScrollArea className="flex-1 h-0">
+            {allFiles.length > 0 ? (
+              <div className="flex flex-col w-fit h-100 gap-2 ">
+                {allFiles.map((file) => (
+                  <FileChatCardComps
+                    key={file.id}
+                    file={{
+                      fileName: file.fileName,
+                      filePath: file.filePath,
+                      fileSize: file.fileSize,
+                      fileType: file.fileType,
+                      storageLocation: file.storageLocation,
+                    }}
+                    action={() => {
+                      setFilePreview(file);
+                      setOpen((prev) => !prev);
+                    }}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="p-8 text-center space-y-4">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
+                  <FileText className="h-8 w-8 text-muted-foreground" />
+                </div>
+                <div className="space-y-1">
+                  <p className="font-medium">No files shared</p>
+                  <p className="text-sm text-muted-foreground">
+                    Files will appear here when shared
+                  </p>
+                </div>
+              </div>
+            )}
+          </ScrollArea>
         </div>
-        <ScrollArea className="flex-1 h-0">
-          {allFiles.length > 0 ? (
-            <div className="flex flex-col w-fit h-100 gap-2 ">
-              {allFiles.map((file) => (
-                <FileChatCardComps
-                  key={file.id}
-                  file={{
-                    fileName: file.fileName,
-                    filePath: file.filePath,
-                    fileSize: file.fileSize,
-                    fileType: file.fileType,
-                    storageLocation: file.storageLocation,
-                  }}
-                  action={() => {
-                    setFilePreview(file);
-                    setOpen((prev) => !prev);
-                  }}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="p-8 text-center space-y-4">
-              <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mx-auto">
-                <FileText className="h-8 w-8 text-muted-foreground" />
-              </div>
-              <div className="space-y-1">
-                <p className="font-medium">No files shared</p>
-                <p className="text-sm text-muted-foreground">
-                  Files will appear here when shared
-                </p>
-              </div>
-            </div>
-          )}
-        </ScrollArea>
-      </div>
-     
+      )}
     </main>
   );
 }
