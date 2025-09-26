@@ -32,3 +32,23 @@ export function useMentorshipCall(userId: string, sessionId: string) {
     endCall: manager.leaveCall,
   };
 }
+// export function useCallCleanup(endCall: () => void) {
+//   const pathname = usePathname();
+
+//   useEffect(() => {
+//     const handleBeforeUnload = () => {
+//       endCall();
+//     };
+//     window.addEventListener("beforeunload", handleBeforeUnload);
+
+//     return () => {
+//       window.removeEventListener("beforeunload", handleBeforeUnload);
+//     };
+//   }, [endCall]);
+
+//   useEffect(() => {
+//     if (pathname !== "/video-call") {
+//       endCall();
+//     }
+//   }, [pathname, endCall]);
+// }
