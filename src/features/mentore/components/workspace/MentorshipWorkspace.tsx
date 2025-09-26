@@ -39,6 +39,7 @@ import { useEffect, useOptimistic, useRef, useState } from "react";
 import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 
+
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace({
   mentorWorkspace: session,
@@ -46,9 +47,7 @@ export default function MentorshipWorkspace({
   mentorWorkspace: MentorSession;
 }) {
   const [chats, setChats] = useState(session?.chats);
-  const [pendingMessages, setPendingMessages] = useState<MentorChatSession[]>(
-    []
-  );
+  
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -532,6 +531,7 @@ export default function MentorshipWorkspace({
           )}
         </ScrollArea>
       </div>
+      
     </main>
   );
 }
