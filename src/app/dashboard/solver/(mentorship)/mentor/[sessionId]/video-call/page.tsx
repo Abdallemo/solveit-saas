@@ -1,4 +1,5 @@
 import { isAuthorized } from "@/features/auth/server/actions";
+import { VideoCallClientWraper } from "@/features/mentore/components/workspace/VideoCallClient";
 import { VideoCallPageComps } from "@/features/mentore/components/workspace/VideoCallpageComps";
 
 export default async function page({
@@ -9,8 +10,8 @@ export default async function page({
   const { user } = await isAuthorized(["SOLVER"]);
   const { sessionId } = await params;
   return (
-    <div>
-      <VideoCallPageComps userId={user.id} sessionId={sessionId}/>
-    </div>
+    <VideoCallClientWraper>
+      <VideoCallPageComps userId={user.id} sessionId={sessionId} />
+    </VideoCallClientWraper>
   );
 }
