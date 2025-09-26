@@ -64,6 +64,7 @@ export async function sendNotificationByEmail({
   receiverEmail,
   sender,
 }: emaiProps) {
+  logger.info("in App notification");
   const transporter = await createTransporter();
 
   const content = typeof body === "string" ? body : body.content;
