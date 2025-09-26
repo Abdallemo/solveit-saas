@@ -1,4 +1,5 @@
 import { isAuthorized } from "@/features/auth/server/actions";
+import { VideoCallClientWraper } from "@/features/mentore/components/workspace/VideoCallClient";
 import { VideoCallPageComps } from "@/features/mentore/components/workspace/VideoCallpageComps";
 
 export default async function page({
@@ -6,12 +7,12 @@ export default async function page({
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
-  const {user} = await isAuthorized(["POSTER"])
+  const { user } = await isAuthorized(["POSTER"]);
   const { sessionId } = await params;
-  console.log(sessionId)
+  console.log(sessionId);
   return (
-    <div >
+    <VideoCallClientWraper>
       <VideoCallPageComps userId={user.id} sessionId={sessionId} />
-    </div>
+    </VideoCallClientWraper>
   );
 }
