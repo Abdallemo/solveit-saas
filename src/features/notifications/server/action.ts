@@ -33,8 +33,8 @@ export async function processSystemNotification({
     .insert(notifications)
     .values({
       method: "SYSTEM",
-      content:body.content,
-      subject:body.subject,
+      content: body.content,
+      subject: body.subject,
       receiverId: receiverId!,
       senderId: sender!,
       read: false,
@@ -61,13 +61,10 @@ export async function sendNotificationByEmail({
   logger.info("Email notification");
   const transporter = await createTransporter();
 
-  const content = typeof body === "string" ? body : body.content;
-  const subject = typeof body === "string" ? DEFAULT_SUBJECT : body.subject;
-
   const mailOptions = {
     from: `SolveIt Team 👨‍💻 <solveit@org.com>`,
     to: receiverEmail,
-    subject,
+    subject: body.subject,
     html: `
               <body style="margin: 0; padding: 0; background-color: #f4f4f4; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
             <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -88,11 +85,11 @@ export async function sendNotificationByEmail({
                             <tr>
                                 <td style="padding: 40px;">
                                     <h1 style="color: #2d3748; font-size: 28px; font-weight: 700; margin: 0 0 24px 0; line-height: 1.3;">
-                                        ${subject}
+                                        ${body.subject}
                                     </h1>
                                     
                                     <div style="color: #4a5568; font-size: 16px; line-height: 1.6; margin-bottom: 32px;">
-                                        ${content}
+                                        ${body.content}
                                     </div>
                                     
                                     <div style="height: 1px; background: linear-gradient(to right, transparent, #e2e8f0, transparent); margin: 32px 0;"></div>
@@ -134,10 +131,14 @@ export async function sendNotificationByEmail({
     logger.info("Email sent to: " + receiverEmail);
     return result;
   } catch (error) {
-    logger.error("Failed to send notification email. to:" + receiverEmail, {
-      error: error,
-    });
-    
+    logger.error(
+      "Failed to send notification email. to:" +
+        receiverEmail +
+        `cause :${(error as Error).message}`,
+      {
+        error: error,
+      }
+    );
   }
 }
 
@@ -194,4 +195,3 @@ export async function markAllAsRead({ receiverId }: { receiverId: string }) {
 type NotificationBase = {
   send(): Promise<any>;
 };
-
