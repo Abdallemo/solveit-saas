@@ -7,9 +7,8 @@ export function useMentorshipCall(userId: string, sessionId: string) {
   const [cameraOn, setCameraOn] = useState(true);
   const [micOn, setMicOn] = useState(true);
 
+  const manager = getWebRTCManager(userId, sessionId);
   useEffect(() => {
-    const manager = getWebRTCManager(userId, sessionId);
-
     const unsubscribe = manager.subscribe((state) => {
       if (localVideo.current) localVideo.current.srcObject = state.localStream;
       if (remoteVideo.current)
@@ -17,13 +16,11 @@ export function useMentorshipCall(userId: string, sessionId: string) {
       setCameraOn(state.cameraOn);
       setMicOn(state.micOn);
     });
-    
+
     return () => {
       unsubscribe();
     };
-  }, [userId, sessionId]);
-
-  const manager = getWebRTCManager(userId, sessionId);
+  }, [manager]);
 
   return {
     localVideo,
