@@ -55,6 +55,8 @@ export default function DashboardSidebar({ user }: { user: Session["user"] }) {
   const isActive = (url: string, exact = false) => {
     const defaultSolverPath = "/dashboard/solver";
     const defaultPosterPath = "/dashboard/poster";
+    const defaultModPath = "/dashboard/moderator";
+    const defaultAdminPath = "/dashboard/admin";
 
     if (exact) return pathname === url;
 
@@ -64,7 +66,13 @@ export default function DashboardSidebar({ user }: { user: Session["user"] }) {
         url === defaultSolverPath) ||
       (user?.role === "POSTER" &&
         pathname === defaultPosterPath &&
-        url === defaultPosterPath)
+        url === defaultPosterPath) ||
+      (user?.role === "MODERATOR" &&
+        pathname === defaultModPath &&
+        url === defaultModPath) ||
+      (user?.role === "ADMIN" &&
+        pathname === defaultAdminPath &&
+        url === defaultAdminPath)
     ) {
       return true;
     }
@@ -139,7 +147,7 @@ function MenuRenderer({
   return (
     <>
       {items.map((item) => (
-        <SidebarMenuItem key={item.title} >
+        <SidebarMenuItem key={item.title}>
           {item.type === "category" ? (
             <SidebarMenuButton>
               <item.icon />
