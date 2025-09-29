@@ -1,24 +1,9 @@
 "use client"
 
-import { useState } from "react"
-import {
-  type ColumnDef,
-  flexRender,
-  getCoreRowModel,
-  useReactTable,
-  getPaginationRowModel,
-  getSortedRowModel,
-  type SortingState,
-  type ColumnFiltersState,
-  getFilteredRowModel,
-  type VisibilityState,
-} from "@tanstack/react-table"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -28,10 +13,24 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MoreHorizontal, ArrowUpDown, ChevronDown, Download } from "lucide-react"
+import { Input } from "@/components/ui/input"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import {
+  type ColumnDef,
+  type ColumnFiltersState,
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  getSortedRowModel,
+  type SortingState,
+  useReactTable,
+  type VisibilityState,
+} from "@tanstack/react-table"
+import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react"
+import { useState } from "react"
 import { toast } from "sonner"
 import { Subscription } from "../server/action"
-import { useQuery } from "@tanstack/react-query"
 
 
 const formatAmount = (amount: number, currency: string) => {
@@ -152,7 +151,7 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       const subscription = row.original
       return (
         <div>
-          <div className="font-medium">{formatAmount(subscription.amount, subscription.currency)}</div>
+          <div className="font-medium">{formatAmount(subscription.amount*100, subscription.currency)}</div>
           <div className="text-sm text-muted-foreground">per {subscription.interval}</div>
         </div>
       )
