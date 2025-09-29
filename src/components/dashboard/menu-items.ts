@@ -20,7 +20,6 @@ import {
   LucideIcon,
   LucideLayoutDashboard,
   LucideListChecks,
-  LucideMessageSquare,
   LucideMonitor,
   LucidePackage,
   LucidePieChart,
@@ -91,26 +90,6 @@ export const MenuItemsModerator: MenuItem[] = [
     ],
   },
   {
-    type: "category",
-    title: "Content Review",
-    url: "/dashboard/moderator/content",
-    icon: LucideMonitor,
-    child: [
-      {
-        type: "link",
-        title: "Task Comments",
-        url: "/dashboard/moderator/content/comments",
-        icon: LucideMessageSquare,
-      },
-      {
-        type: "link",
-        title: "Mentor Messages",
-        url: "/dashboard/moderator/content/mentor-messages",
-        icon: LucideUsers,
-      },
-    ],
-  },
-  {
     type: "link",
     title: "Moderation Logs",
     url: "/dashboard/moderator/logs",
@@ -155,12 +134,6 @@ export const MenuItemsAdmin: MenuItem[] = [
         url: "/dashboard/admin/users/moderators",
         icon: LucideShieldCheck,
       },
-      {
-        type: "link",
-        title: "Pending Verifications",
-        url: "/dashboard/admin/users/pending",
-        icon: LucideAlertTriangle,
-      },
     ],
   },
   {
@@ -172,20 +145,14 @@ export const MenuItemsAdmin: MenuItem[] = [
       {
         type: "link",
         title: "Rules",
-        url: "/dashboard/admin/ai/",
+        url: "/dashboard/admin/ai",
         icon: LucideHistory,
       },
       {
         type: "link",
         title: "Moderation Logs",
-        url: "/dashboard/admin/ai/logs",
+        url: "#", //"/dashboard/admin/ai/logs",
         icon: LucideHistory,
-      },
-      {
-        type: "link",
-        title: "AI Feedback",
-        url: "/dashboard/admin/ai/feedback",
-        icon: LucideStar,
       },
     ],
   },
@@ -205,12 +172,6 @@ export const MenuItemsAdmin: MenuItem[] = [
         type: "link",
         title: "All Payments",
         url: "/dashboard/admin/payments",
-        icon: LucideListChecks,
-      },
-      {
-        type: "link",
-        title: "Pending/Hold",
-        url: "/dashboard/admin/payments/hold",
         icon: LucideListChecks,
       },
     ],
