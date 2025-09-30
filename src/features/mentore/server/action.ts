@@ -29,12 +29,14 @@ import {
   UpdateUserField,
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
+import { withCache } from "@/lib/cache";
 import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { calculateSlotDuration, daysInWeek } from "@/lib/utils";
+import { calculateSlotDuration, daysInWeek, sessionUtilsV2 } from "@/lib/utils";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
+import { fromZonedTime } from "date-fns-tz";
 import { and, count, eq, or } from "drizzle-orm";
 import { redirect } from "next/navigation";
 
@@ -218,6 +220,80 @@ export async function getMentorListigWithAvailbelDates() {
 
   return mentorsWithFilteredAvailability;
 }
+export async function getMentorListigWithAvailbelDatesV2() {
+  const [allMentors, allBookedSessions] = await Promise.all([
+    db.query.MentorshipProfileTable.findMany(),
+    db.query.MentorshipSessionTable.findMany({
+      with: {
+        bookedSessions: true,
+      },
+    }),
+  ]);
+
+  const bookedKeys = new Set(
+    allBookedSessions.map((session) => {
+      const solverId = session.bookedSessions.solverId;
+      return `${solverId}-${getSessionKey(
+        session.sessionDate,
+        session.timeSlot
+      )}`;
+    })
+  );
+
+  const mentorsWithFilteredAvailability = allMentors.map((mentor) => {
+    const availableTimes = mentor.availableTimes;
+    const availableDates: {
+      date: Date;
+      slot: AvailabilitySlot;
+      sessionStart: string;
+      sessionEnd: string;
+      mentorTimezone: string;
+    }[] = [];
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const weekStart = startOfWeek(today, { weekStartsOn: 0 });
+
+    for (const slot of availableTimes) {
+      const dayIndex = daysInWeek.indexOf(slot.day.toLowerCase());
+      if (dayIndex === -1) continue;
+
+      for (let week = 0; week < 12; week++) {
+        const dateObj = addDays(weekStart, week * 7 + dayIndex);
+        if (!isFuture(dateObj)) continue;
+
+        const ymd = toYMD(dateObj);
+        const key = `${mentor.userId}-${getSessionKey(ymd, slot)}`;
+
+        if (!bookedKeys.has(key)) {
+          const mentorTz = mentor.timezone || "Asia/Kuala_Lumpur";
+
+          const sessionStart = fromZonedTime(
+            `${toYMD(dateObj)}T${slot.start}`,
+            mentorTz
+          ).toISOString();
+
+          const sessionEnd = fromZonedTime(
+            `${toYMD(dateObj)}T${slot.end}`,
+            mentorTz
+          ).toISOString();
+
+          availableDates.push({
+            date: dateObj,
+            slot,
+            sessionStart,
+            sessionEnd,
+            mentorTimezone: mentorTz,
+          });
+        }
+      }
+    }
+
+    return { ...mentor, availableDates };
+  });
+
+  return mentorsWithFilteredAvailability;
+}
 export async function cleanPendingBookign(booking_id: string) {
   try {
     await db
@@ -290,6 +366,8 @@ export async function createMentorBookingPaymentCheckout(values: {
             bookingId: bookingId,
             sessionDate: format(session.date, "yyyy-MM-dd"),
             timeSlot: session.slot,
+            sessionStart: new Date(session.sessionStart),
+            sessionEnd: new Date(session.sessionEnd),
           })
         )
       );
@@ -447,22 +525,50 @@ export async function getMentorSession(sessionId: string) {
     });
   }
 }
+async function getSessionById(sessionId: string) {
+  try {
+    const result = await db.query.MentorshipSessionTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, sessionId),
+    });
+    return result;
+  } catch (error) {
+    console.error(error);
+    return null;
+  }
+}
 export async function sendMentorMessages(values: {
-  seesionId: string;
+  sessionId: string;
   sentBy: string;
   message: string;
   uploadedFiles: UploadedFileMeta[];
 }) {
-  const { message, seesionId, sentBy, uploadedFiles } = values;
-  console.warn("passed uploadedFile :\n", uploadedFiles);
-  if (!seesionId || !sentBy) return;
+  const { message, sessionId, sentBy, uploadedFiles } = values;
+  if (!sessionId || !sentBy) return;
 
+  const session = await withCache({
+    callback: () => getSessionById(sessionId),
+    tag: "mentor-session-chat-data-cache",
+    dep: [sessionId],
+    revalidate: 3600 * 1,
+  })();
+  if (!session) throw new Error("Invalid Session");
+
+  if (
+    sessionUtilsV2.isAfterSession(
+      { sessionEnd: session.sessionEnd },
+      new Date()
+    )
+  ) {
+    throw new Error(
+      "The session has concluded. You can no longer send messages or files. The session is now in read-only mode for review."
+    );
+  }
   try {
     const newChat = await db.transaction(async (dx) => {
       const chat = await dx
         .insert(MentorshipChatTable)
         .values({
-          seesionId,
+          sessionId,
           sentBy: sentBy,
           message,
           pending: false,
