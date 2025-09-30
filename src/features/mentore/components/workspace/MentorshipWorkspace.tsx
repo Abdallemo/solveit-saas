@@ -20,7 +20,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import useWebSocket from "@/hooks/useWebSocket";
-import { isBeforeSession, supportedExtentions } from "@/lib/utils";
+import { sessionUtilsV2, supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCheck,
@@ -32,7 +32,6 @@ import {
   User2,
   Video,
 } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type React from "react";
@@ -109,8 +108,8 @@ export default function MentorshipWorkspace({
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: sendMentorMessages,
-    onError: () => {
-      toast.error("failed to send Message");
+    onError: (e) => {
+      toast.error(e.message);
     },
   });
   useEffect(() => {
@@ -130,16 +129,20 @@ export default function MentorshipWorkspace({
       </main>
     );
   }
-  const { sessionDate, timeSlot } = session;
+  const { sessionDate, timeSlot, sessionStart, sessionEnd } = session;
   const allFiles = chats?.flatMap((chat) => chat.chatFiles) || [];
-  const isPreSession = isBeforeSession({
-    sessionDate,
-    session: timeSlot,
-    now: new Date(),
-  });
+  const isPreSession = sessionUtilsV2.isBeforeSession(
+    { sessionStart: sessionStart! },
+    new Date()
+  );
+  const isPostSession = sessionUtilsV2.isAfterSession(
+    { sessionEnd },
+    new Date()
+  );
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() && selectedFiles.length === 0) return;
+    if ((!messageInput.trim() && selectedFiles.length === 0) || isPostSession)
+      return;
     const text = messageInput;
     const files = selectedFiles;
     setMessageInput("");
@@ -148,7 +151,7 @@ export default function MentorshipWorkspace({
       if (text.trim()) {
         sendMessage({
           message: text,
-          seesionId: session.id,
+          sessionId: session.id,
           sentBy: user?.id!,
           uploadedFiles: [],
         });
@@ -162,7 +165,7 @@ export default function MentorshipWorkspace({
         });
         sendMessage({
           message: "",
-          seesionId: session.id,
+          sessionId: session.id,
           sentBy: user?.id!,
           uploadedFiles: uploadedMeta,
         });
@@ -197,9 +200,15 @@ export default function MentorshipWorkspace({
 
           {isPreSession && (
             <div className="flex justify-center w-full my-3">
-              
               <div className="bg-sidebar px-3 py-1.5 rounded-full text-xs font-medium shadow-inner">
                 <p>This is a pre-session</p>
+              </div>
+            </div>
+          )}
+          {isPostSession && (
+            <div className="flex justify-center w-full my-3">
+              <div className="bg-sidebar px-3 py-1.5 rounded-full text-xs font-medium shadow-inner">
+                <p>This Session is Ended and its now ReadOnly</p>
               </div>
             </div>
           )}
@@ -279,13 +288,6 @@ export default function MentorshipWorkspace({
                         )}
                         {chat.chatFiles.map((file) => (
                           <FileChatCardComps
-                            opt={
-                              <Image
-                                src={file.storageLocation!}
-                                alt={file.fileName!}
-                                className="w-10 h-10"
-                              />
-                            }
                             key={file.id}
                             file={{
                               fileName: file.fileName,
@@ -299,6 +301,7 @@ export default function MentorshipWorkspace({
                               setOpen((prev) => !prev);
                               setIsCodeEditorOpen((prev) => !prev);
                             }}
+                            opt={{ deleteDisable: isPostSession }}
                           />
                         ))}
                       </div>
@@ -329,20 +332,7 @@ export default function MentorshipWorkspace({
                           controls
                         />
                       )}
-                      {isCode(fileExtention(filePreview?.fileName!)) && (
-                        <div className="w-full h-full">
-                          <MonacoEditor
-                            files={files}
-                            onChange={handleFilesChange}
-                            onSave={handleSave}
-                            onFileAdd={handleFileAdd}
-                            onFileDelete={handleFileDelete}
-                            height="800px"
-                            theme="vs-dark"
-                            className="shadow-lg"
-                          />
-                        </div>
-                      )}
+
                       {isDoc(fileExtention(filePreview?.fileName!)) && (
                         <iframe
                           src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
@@ -462,14 +452,19 @@ export default function MentorshipWorkspace({
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
             />
-            <div className="relative">
+            <div
+              className={`relative ${
+                isPostSession ? "cursor-not-allowed" : ""
+              }`}>
               <input
+                disabled={isPostSession}
                 type="file"
                 multiple
                 onChange={handleFileSelect}
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
               />
               <Button
+                disabled={isPostSession}
                 size="icon"
                 variant="outline"
                 className="h-10 w-10 bg-transparent">
@@ -480,7 +475,10 @@ export default function MentorshipWorkspace({
               size="icon"
               onClick={handleSendMessage}
               className="h-10 w-10"
-              disabled={!messageInput.trim() && selectedFiles.length === 0}>
+              disabled={
+                (!messageInput.trim() && selectedFiles.length === 0) ||
+                isPostSession
+              }>
               <Send className="h-4 w-4" />
             </Button>
           </div>
