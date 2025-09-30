@@ -1,11 +1,11 @@
-import { z } from "zod";
 import {
+  getMentorBookingSessions,
   getMentorListigProfile,
   getMentorListigWithAvailbelDates,
-  getMentorBookingSessions,
+  getMentorListigWithAvailbelDatesV2,
   getMentorSession,
 } from "@/features/mentore/server/action";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { z } from "zod";
 export type AvailabilitySlot = {
   day: string;
   start: string;
@@ -19,6 +19,9 @@ export type MentorListType = Exclude<
 export type MentorListigWithAvailbelDates = Awaited<
   ReturnType<typeof getMentorListigWithAvailbelDates>
 >[number];
+export type MentorListigWithAvailbelDatesV2 = Awaited<
+  ReturnType<typeof getMentorListigWithAvailbelDatesV2>
+>[number];
 export type MentorBookingSessions = Awaited<
   ReturnType<typeof getMentorBookingSessions>
 >;
@@ -26,7 +29,7 @@ export type MentorSession = Awaited<ReturnType<typeof getMentorSession>>;
 export type MentorChatSession = Exclude<
   Awaited<ReturnType<typeof getMentorSession>>,
   undefined
->['chats'][number];
+>["chats"][number];
 
 export const bookingSchema = z.object({
   sessions: z
@@ -38,6 +41,9 @@ export const bookingSchema = z.object({
           start: z.string(),
           end: z.string(),
         }),
+        sessionStart: z.string(),
+        sessionEnd: z.string(),
+        mentorTimezone: z.string(),
       })
     )
     .min(1, "Please select at least one session."),
