@@ -27,9 +27,10 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { MentorListigWithAvailbelDates } from "@/features/mentore/server/types";
+import { MentorListigWithAvailbelDatesV2 } from "@/features/mentore/server/types";
 import { useQuery } from "@tanstack/react-query";
 import { format, isSameDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
 import { Clock, DollarSign, Search, Star, Users } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -37,20 +38,19 @@ import { getMentorAllSessionCount } from "../server/action";
 import { BookingModal } from "./booking-modal";
 
 interface MentorCardProps {
-  mentor: MentorListigWithAvailbelDates;
+  mentor: MentorListigWithAvailbelDatesV2;
   onBookMentor?: (mentorId: string) => void;
   isBooking?: boolean;
 }
-
+const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 export function MentorsBrowser({
   mentors,
 }: {
-  mentors: MentorListigWithAvailbelDates[];
+  mentors: MentorListigWithAvailbelDatesV2[];
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
-
   const [sortBy, setSortBy] = useState<"name" | "price-low" | "price-high">(
     "name"
   );
@@ -105,7 +105,6 @@ export function MentorsBrowser({
   const handleBookMentor = async (mentorId: string) => {
     setBookingStates((prev) => ({ ...prev, [mentorId]: true }));
     try {
-      // Logic for booking can go here
     } finally {
       setBookingStates((prev) => ({ ...prev, [mentorId]: false }));
     }
@@ -269,18 +268,10 @@ const MentorCard = ({ mentor, isBooking }: MentorCardProps) => {
     queryKey: [""],
     queryFn: async () => await getMentorAllSessionCount(mentor.userId),
   });
-  const todayAvailability = mentor.availableDates.find((session) =>
-    isSameDay(session.date, new Date())
-  );
-
-  const formattedAvailableDates = mentor.availableDates
-    .map(
-      (session) =>
-        `${format(session.date, "EEEE")} ${session.slot.start}-${
-          session.slot.end
-        }`
-    )
-    .join(", ");
+  const todayAvailability = mentor.availableDates.find((session) => {
+    const localStart = toZonedTime(session.sessionStart, userTz);
+    return isSameDay(localStart, new Date());
+  });
 
   const initials = mentor.displayName
     .split(" ")
@@ -331,15 +322,39 @@ const MentorCard = ({ mentor, isBooking }: MentorCardProps) => {
                   <Badge
                     variant="default"
                     className="text-xs bg-green-100 text-green-800 hover:bg-green-100">
-                    Today {todayAvailability.slot.start}-
-                    {todayAvailability.slot.end}
+                    {(() => {
+                      const localStart = toZonedTime(
+                        todayAvailability.sessionStart,
+                        userTz
+                      );
+                      const localEnd = toZonedTime(
+                        todayAvailability.sessionEnd,
+                        userTz
+                      );
+                      return `Today ${format(localStart, "HH:mm")}-${format(
+                        localEnd,
+                        "HH:mm"
+                      )}`;
+                    })()}
                   </Badge>
                 </div>
               )}
               <div className="flex items-center gap-2 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
                 <span className="line-clamp-2">
-                  {formattedAvailableDates || "No availability"}
+                  {mentor.availableDates.map((session, index) => {
+                    const localStart = toZonedTime(
+                      session.sessionStart,
+                      userTz
+                    );
+                    const localEnd = toZonedTime(session.sessionEnd, userTz);
+
+                    return `
+                      ${format(localStart, "EEEE")} 
+                      ${format(localStart, "HH:mm")} -
+                      ${format(localEnd, "HH:mm")}
+                   `;
+                  })}
                 </span>
               </div>
             </div>
