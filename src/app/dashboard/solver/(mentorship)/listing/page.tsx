@@ -1,7 +1,5 @@
 import { MentorProfile } from "@/features/mentore/components/componentMentorListing";
-import {
-  getMentorListigProfile,
-} from "@/features/mentore/server/action";
+import { getMentorListigProfile } from "@/features/mentore/server/action";
 
 export default async function MentorPage() {
   const mentorData = await getMentorListigProfile();
