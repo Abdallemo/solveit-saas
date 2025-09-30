@@ -28,14 +28,14 @@ export function FileChatCardComps({
   deleteAction,
   action,
   downloadAction,
-  opt,
+  opt: { deleteDisable } = { deleteDisable: false },
   loading = false,
 }: {
   file: UploadedFileMeta;
   action?: () => void;
   downloadAction?: () => void;
   deleteAction?: () => void;
-  opt?: any;
+  opt?: { deleteDisable: boolean };
   loading?: boolean;
 }) {
   return (
@@ -63,10 +63,19 @@ export function FileChatCardComps({
         </p>
       </div>
       <div className="flex ">
-        <Button variant={"ghost"} size={"sm"} className="p-0" onClick={downloadAction}>
+        <Button
+          variant={"ghost"}
+          size={"sm"}
+          className="p-0"
+          onClick={downloadAction}>
           <Download />
         </Button>
-        <Button variant={"ghost"} size={"sm"} className="p-0" onClick={deleteAction}>
+        <Button
+          variant={"ghost"}
+          size={"sm"}
+          className="p-0"
+          disabled={deleteDisable}
+          onClick={deleteAction}>
           <X />
         </Button>
       </div>
