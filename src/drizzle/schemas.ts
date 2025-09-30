@@ -409,7 +409,7 @@ export const RefundTable = pgTable(
     index("refunds_moderatorId_idx").on(refunds.moderatorId),
     index("refunds_paymentId_idx").on(refunds.paymentId),
     index("refunds_taskId_idx").on(refunds.taskId),
-    index("refund_status_idx").on(refunds.refundStatus)
+    index("refund_status_idx").on(refunds.refundStatus),
   ]
 );
 
@@ -556,6 +556,7 @@ export const MentorshipProfileTable = pgTable(
       .$type<AvailabilitySlot[]>()
       .default([]),
     isPublished: boolean("is_published").default(false).notNull(),
+    timezone: text("timezone").notNull().default("Asia/Kuala_Lumpur"),
     createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
       .notNull()
       .defaultNow(),
@@ -573,6 +574,9 @@ export const MentorshipSessionTable = pgTable(
       .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
     sessionDate: date("session_date").notNull(),
     timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
+    sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),
+    sessionEnd: timestamp("session_end", { withTimezone: true }).notNull(),
+
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
@@ -612,45 +616,53 @@ export const MentorshipBookingTable = pgTable(
   ]
 );
 
-export const MentorshipChatTable = pgTable("mentorship_chats", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  seesionId: uuid("seesion_id")
-    .notNull()
-    .references(() => MentorshipSessionTable.id, { onDelete: "cascade" }),
-  message: text("message"),
-  sentBy: uuid("sent_by")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
-  pending: boolean("pending"),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-},(mentorshipChats)=>[
-  index("mentorship_chats_seesionId_idx").on(mentorshipChats.seesionId),
-]);
+export const MentorshipChatTable = pgTable(
+  "mentorship_chats",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    sessionId: uuid("seesion_id")
+      .notNull()
+      .references(() => MentorshipSessionTable.id, { onDelete: "cascade" }),
+    message: text("message"),
+    sentBy: uuid("sent_by")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
+    pending: boolean("pending"),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (mentorshipChats) => [
+    index("mentorship_chats_sessionId_idx").on(mentorshipChats.sessionId),
+  ]
+);
 
-export const MentorshipChatFilesTable = pgTable("mentorship_chat_files", {
-  id: uuid("id").primaryKey().defaultRandom().notNull(),
-  chatId: uuid("chat_id")
-    .notNull()
-    .references(() => MentorshipChatTable.id, { onDelete: "cascade" }),
-  uploadedById: uuid("uploaded_by_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  fileName: text("file_name").notNull(),
-  fileType: text("file_type").notNull(),
-  fileSize: integer("file_size").notNull(),
-  storageLocation: text("file_location").notNull(),
-  filePath: text("file_path").notNull(),
-  uploadedAt: timestamp("uploaded_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-},(mentorshipChatFiles)=>[
-  index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId)
-]);
+export const MentorshipChatFilesTable = pgTable(
+  "mentorship_chat_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom().notNull(),
+    chatId: uuid("chat_id")
+      .notNull()
+      .references(() => MentorshipChatTable.id, { onDelete: "cascade" }),
+    uploadedById: uuid("uploaded_by_id")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "cascade" }),
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    storageLocation: text("file_location").notNull(),
+    filePath: text("file_path").notNull(),
+    uploadedAt: timestamp("uploaded_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (mentorshipChatFiles) => [
+    index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId),
+  ]
+);
 
 export const RulesTable = pgTable("ai_rules", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -959,7 +971,7 @@ export const MentorshipChatTableRelations = relations(
   MentorshipChatTable,
   ({ one, many }) => ({
     session: one(MentorshipSessionTable, {
-      fields: [MentorshipChatTable.seesionId],
+      fields: [MentorshipChatTable.sessionId],
       references: [MentorshipSessionTable.id],
       relationName: "chat",
     }),
