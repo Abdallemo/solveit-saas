@@ -16,12 +16,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { createMentorBookingPaymentCheckout } from "@/features/mentore/server/action";
 import {
   AvailabilitySlot,
-  MentorListigWithAvailbelDates,
+  MentorListigWithAvailbelDatesV2,
 } from "@/features/mentore/server/types";
 import { calculateSlotDuration } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { format, isSameDay } from "date-fns";
+import { toZonedTime } from "date-fns-tz"; // ✅ timezone conversion
 import { CalendarIcon, Clock, DollarSign, Loader2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -29,7 +30,7 @@ import { toast } from "sonner";
 import { BookingFormData, bookingSchema } from "../server/types";
 
 interface BookingModalProps {
-  mentor: MentorListigWithAvailbelDates;
+  mentor: MentorListigWithAvailbelDatesV2;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -40,6 +41,7 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
     useMutation({
       mutationFn: createMentorBookingPaymentCheckout,
     });
+
   const form = useForm<BookingFormData>({
     resolver: zodResolver(bookingSchema),
     defaultValues: {
@@ -58,16 +60,16 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
   } = form;
 
   const sessions = watch("sessions");
+  const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
   const onFormSubmit = async (data: BookingFormData) => {
     if (!mentor) return;
     try {
-      // toast.success("selecetd this object data:"+JSON.stringify(data,null,2))
       await MentorBookingMutate({ data, mentor });
       reset();
       setSelectedDays([]);
       onClose();
-    } catch (error) {
+    } catch {
       toast.error("Booking failed. Please try again.");
     }
   };
@@ -84,21 +86,17 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
         (s) =>
           s.day === slot.day && s.start === slot.start && s.end === slot.end
       );
-      if (isSelected) {
-        return prev.filter(
-          (s) =>
-            s.day !== slot.day || s.start !== slot.start || s.end !== slot.end
-        );
-      } else {
-        return [...prev, slot];
-      }
+      return isSelected
+        ? prev.filter(
+            (s) =>
+              s.day !== slot.day || s.start !== slot.start || s.end !== slot.end
+          )
+        : [...prev, slot];
     });
-    // todo allow users to not loose the chosen date
-    // setValue("sessions", []);
   }, []);
 
   const handleDateSelect = useCallback(
-    (session: MentorListigWithAvailbelDates["availableDates"][0]) => {
+    (session: MentorListigWithAvailbelDatesV2["availableDates"][0]) => {
       const newSessions = [...sessions];
       const existingSessionIndex = newSessions.findIndex(
         (s) =>
@@ -110,7 +108,6 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
       } else {
         newSessions.push(session);
       }
-
       setValue("sessions", newSessions);
     },
     [sessions, setValue]
@@ -118,7 +115,6 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
 
   const availableDatesForSelectedDays = useMemo(() => {
     if (selectedDays.length === 0) return [];
-
     return mentor.availableDates.filter((availableDate) =>
       selectedDays.some(
         (selectedDay) =>
@@ -147,6 +143,14 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
     .toUpperCase();
   const sortedSessions = [...sessions].sort(
     (a, b) => a.date.getTime() - b.date.getTime()
+  );
+  const uniqueAvailableDates = Array.from(
+    new Map(
+      mentor.availableDates.map((d) => [
+        d.slot.day, // uniqueness key
+        d, // keep the first date object
+      ])
+    ).values()
   );
 
   return (
@@ -181,34 +185,42 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
               Available Time Slots
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {mentor.availableTimes.map((slot, index) => {
-                const isSelected = selectedDays.some(
-                  (s) =>
-                    s.day === slot.day &&
-                    s.start === slot.start &&
-                    s.end === slot.end
-                );
-                const slotKey = `${slot.day}-${slot.start}-${slot.end}`;
-                return (
-                  <div key={index} className="flex items-center space-x-2">
-                    <Checkbox
-                      id={slotKey}
-                      checked={isSelected}
-                      onCheckedChange={() => handleDayToggle(slot)}
-                    />
-                    <Label htmlFor={slotKey} className="flex-1 cursor-pointer">
-                      <div className="flex justify-between items-center">
-                        <span className="capitalize font-medium">
-                          {slot.day}
-                        </span>
-                        <span className="text-sm text-muted-foreground">
-                          {slot.start} - {slot.end}
-                        </span>
-                      </div>
-                    </Label>
-                  </div>
-                );
-              })}
+              {uniqueAvailableDates.map(
+                ({ slot, sessionStart, sessionEnd }, index) => {
+                  const localStart = toZonedTime(sessionStart, userTz);
+                  const localEnd = toZonedTime(sessionEnd, userTz);
+
+                  const isSelected = selectedDays.some(
+                    (s) =>
+                      s.day === slot.day &&
+                      s.start === slot.start &&
+                      s.end === slot.end
+                  );
+                  const slotKey = `${slot.day}-${slot.start}-${slot.end}`;
+                  return (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={slotKey}
+                        checked={isSelected}
+                        onCheckedChange={() => handleDayToggle(slot)}
+                      />
+                      <Label
+                        htmlFor={slotKey}
+                        className="flex-1 cursor-pointer">
+                        <div className="flex justify-between items-center gap-0.5">
+                          <span className="capitalize font-medium">
+                            {slot.day}
+                          </span>
+                          <span className="text-sm text-muted-foreground">
+                            {format(localStart, "HH:mm")} -{" "}
+                            {format(localEnd, "HH:mm")}
+                          </span>
+                        </div>
+                      </Label>
+                    </div>
+                  );
+                }
+              )}
             </div>
           </div>
 
@@ -228,6 +240,13 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
                           isSameDay(s.date, session.date) &&
                           s.slot.start === session.slot.start
                       );
+
+                      const localStart = toZonedTime(
+                        session.sessionStart,
+                        userTz
+                      );
+                      const localEnd = toZonedTime(session.sessionEnd, userTz);
+
                       return (
                         <Button
                           key={index}
@@ -237,10 +256,14 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
                           className="text-xs h-auto py-2 px-2"
                           onClick={() => handleDateSelect(session)}>
                           <div className="text-center">
-                            <div>{format(session.date, "MMM dd")}</div>
+                            <div>{format(localStart, "MMM dd")}</div>
                             <div className="text-xs opacity-75">
-                              {format(session.date, "EEE")}
+                              {format(localStart, "EEE")}
                             </div>
+                            {/* <div className="text-xs opacity-90 mt-1">
+                              {format(localStart, "HH:mm")} -{" "}
+                              {format(localEnd, "HH:mm")}
+                            </div> */}
                           </div>
                         </Button>
                       );
@@ -264,12 +287,18 @@ export function BookingModal({ mentor, isOpen, onClose }: BookingModalProps) {
             <div className="space-y-2">
               <Label>Selected Sessions ({sessions.length})</Label>
               <div className="flex flex-wrap gap-2">
-                {sortedSessions.map((session, index) => (
-                  <Badge key={index} variant="secondary">
-                    {format(session.date, "MMM dd, yyyy")} ({session.slot.start}{" "}
-                    - {session.slot.end})
-                  </Badge>
-                ))}
+                {sortedSessions.map((session, index) => {
+                  const localStart = toZonedTime(session.sessionStart, userTz);
+                  const localEnd = toZonedTime(session.sessionEnd, userTz);
+
+                  return (
+                    <Badge key={index} variant="secondary">
+                      {format(localStart, "MMM dd, yyyy")} (
+                      {format(localStart, "HH:mm")} -{" "}
+                      {format(localEnd, "HH:mm")})
+                    </Badge>
+                  );
+                })}
               </div>
             </div>
           )}
