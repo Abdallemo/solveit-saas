@@ -387,3 +387,38 @@ export function isAfterSession({
 
   return isAfter(now, endTime);
 }
+
+function normalizeDate(input: string | Date): Date {
+  return typeof input === "string" ? new Date(input) : input;
+}
+
+export const sessionUtilsV2 = {
+  isSessionActive: (
+    session: { sessionStart: string | Date; sessionEnd: string | Date },
+    now: Date
+  ): boolean => {
+    const start = normalizeDate(session.sessionStart);
+    const end = normalizeDate(session.sessionEnd);
+
+    return (
+      (now.getTime() === start.getTime() || isAfter(now, start)) &&
+      isBefore(now, end)
+    );
+  },
+
+  isBeforeSession: (
+    session: { sessionStart: string | Date },
+    now: Date
+  ): boolean => {
+    const start = normalizeDate(session.sessionStart);
+    return isBefore(now, start);
+  },
+
+  isAfterSession: (
+    session: { sessionEnd: string | Date },
+    now: Date
+  ): boolean => {
+    const end = normalizeDate(session.sessionEnd);
+    return isAfter(now, end);
+  },
+};
