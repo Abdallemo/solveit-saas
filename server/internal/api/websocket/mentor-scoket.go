@@ -21,7 +21,7 @@ type ChatFile struct {
 
 type Chat struct {
 	ID        string          `json:"id"`
-	SessionId string          `json:"seesionId"`
+	SessionId string          `json:"sessionId"`
 	SentBy    string          `json:"sentBy"`
 	Message   string          `json:"message"`
 	CreatedAt string          `json:"createdAt"`
