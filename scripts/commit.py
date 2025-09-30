@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = "added video call feature"
+commit_message = "enhaced mentor session with timezone awareness"
 
 repo = Repo(repo_path)
 
