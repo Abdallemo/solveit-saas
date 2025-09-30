@@ -3,20 +3,22 @@ import { unstable_cache as cache, revalidateTag } from "next/cache";
 type AvailableTags =
   | "user-data-cache"
   | "dispute-data-cache"
-  | "category-data-cache"|"deadline-data-cache";
+  | "category-data-cache"
+  | "deadline-data-cache"
+  | "mentor-session-chat-data-cache";
 
 type CacheOptions<T, P> = {
   tag: AvailableTags;
   dep?: string[];
   callback: (param?: P) => Promise<T>;
-  revalidateMs?: number;
+  revalidate?: number;
   enabled?: boolean;
 };
 
 export function withCache<T, P>({
   callback,
   dep = [],
-  revalidateMs = 120,
+  revalidate = 120,
   tag,
   enabled = true,
 }: CacheOptions<T, P>) {
@@ -25,11 +27,10 @@ export function withCache<T, P>({
   }
 
   return (param?: P) =>
-    cache(
-      async () => await callback(param),
-      dep.length > 0 ? dep : [tag],
-      { tags: [param ? `${tag}-${param}` : tag], revalidate: revalidateMs }
-    )();
+    cache(async () => await callback(param), dep.length > 0 ? dep : [tag], {
+      tags: [param ? `${tag}-${param}` : tag],
+      revalidate: revalidate,
+    })();
 }
 
 export function withRevalidateTag(tag: AvailableTags, params?: string) {
