@@ -20,7 +20,6 @@ import {
   LucideIcon,
   LucideLayoutDashboard,
   LucideListChecks,
-  LucideMonitor,
   LucidePackage,
   LucidePieChart,
   LucideSearch,
@@ -33,7 +32,7 @@ import {
   PackageOpen,
   Send,
   SquareDashedMousePointerIcon,
-  Users,
+  Users
 } from "lucide-react";
 export type MenuItem = {
   type: "link" | "category";
@@ -253,18 +252,18 @@ export const MenuItemsPoster: MenuItem[] = [
         url: "/dashboard/poster/sessions",
         icon: LucideCalendar,
       },
-      {
-        type: "link",
-        title: "Past Sessions",
-        url: "/dashboard/poster/history",
-        icon: LucideHistory,
-      },
-      {
-        type: "link",
-        title: "Workspace",
-        url: "/dashboard/poster/workspace",
-        icon: LucideMonitor,
-      },
+      // {
+      //   type: "link",
+      //   title: "Past Sessions",
+      //   url: "/dashboard/poster/history",
+      //   icon: LucideHistory,
+      // },
+      // {
+      //   type: "link",
+      //   title: "Workspace",
+      //   url: "/dashboard/poster/workspace",
+      //   icon: LucideMonitor,
+      // },
     ],
   },
 ];
