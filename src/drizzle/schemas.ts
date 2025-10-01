@@ -83,10 +83,10 @@ export const UserTable = pgTable(
   "user",
   {
     id: uuid("id").primaryKey().defaultRandom(),
-    name: text("name"),
-    email: text("email").unique(),
+    name: text("name").notNull(),
+    email: text("email").unique().notNull(),
     password: text("password"),
-    role: UserRole("role").default("POSTER"),
+    role: UserRole("role").default("POSTER").notNull(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
     stripeAccountLinked: boolean("stripe_account_linked")
@@ -98,7 +98,7 @@ export const UserTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
+    }).defaultNow().notNull(),
   },
   (user) => [index("user_role_idx").on(user.role)]
 );
@@ -175,6 +175,12 @@ export const UserSubscriptionTable = pgTable(
     stripeSubscriptionItemId: text("stripe_subscription_item_id"),
     stripeSubscriptionId: text("stripe_subscription_id"),
     tier: TierEnum("tier").notNull(),
+    cancelAt: timestamp("cancel_at", { mode: "date" }),
+    isCancelScheduled: boolean("is_cancel_scheduled").default(false).notNull(),
+    status: text("status").default("inactive").notNull(),
+    interval: text("interval").default("month").notNull(),
+    nextBilling: timestamp("next_billing", { mode: "date" }),
+    price: integer("price").default(0).notNull(),
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
@@ -274,7 +280,7 @@ export const TaskTable = pgTable(
       .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
     solverId: uuid("solver_id").references(() => UserTable.id, {
-      onDelete: "cascade",
+      onDelete: "no action",
     }),
     visibility: TaskVisibility("visibility").default("public"),
     categoryId: uuid("category_id")
