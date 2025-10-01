@@ -7,18 +7,25 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getWalletInfo } from "@/features/tasks/server/data";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
+import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Info, Wallet } from "lucide-react";
+import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
 
-export default function WalletDropdownMenu({
-  pending,
-  availabel,
-}: {
-  pending: number;
-  availabel: number;
-}) {
+export default function WalletDropdownMenu() {
+  const { user } = useCurrentUser();
+  const { data, isFetching } = useQuery({
+    queryKey: ["wallet", user?.id],
+    queryFn: () => getWalletInfo(user?.id!),
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchOnMount: "always",
+  });
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -45,7 +52,13 @@ export default function WalletDropdownMenu({
                 <span className="text-xs text-muted-foreground">Pending</span>
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               </div>
-              <div className="text-lg font-semibold">RM{pending}</div>
+              <div className="text-lg font-semibold">
+                {isFetching ? (
+                  <Skeleton className="h-2 w-2" />
+                ) : (
+                  <>RM{data?.pending}</>
+                )}
+              </div>
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="h-3 w-3 mt-0.5 flex-shrink-0" />
                 <span>Held until reviews done</span>
@@ -60,10 +73,14 @@ export default function WalletDropdownMenu({
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
               </div>
               <div className="text-lg font-semibold text-green-600">
-                RM{availabel}
+                {isFetching ? (
+                  <Skeleton className="h-2 w-2" />
+                ) : (
+                  <>RM{data?.available}</>
+                )}
               </div>
               <Tooltip>
-                {availabel <= 20 && (
+                {data?.available! <= 20 && (
                   <TooltipContent
                     align="end"
                     alignOffset={20}
@@ -77,7 +94,7 @@ export default function WalletDropdownMenu({
                     <Button
                       size="sm"
                       className="w-full h-7 text-xs"
-                      disabled={availabel <= 20}>
+                      disabled={data?.available! <= 20}>
                       <ArrowUpRight className="h-3 w-3 mr-1" />
                       Withdraw
                     </Button>
