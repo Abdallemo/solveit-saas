@@ -73,7 +73,7 @@ async function CategoryList() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {deadlines.map((deadline) => (
-          <DeadlineCard key={deadline.id} deadline={deadline} />
+          <DeadlineCard key={deadline.deadline} deadline={deadline} />
         ))}
       </div>
     </div>
