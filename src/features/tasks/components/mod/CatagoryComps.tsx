@@ -170,7 +170,7 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Tasks: {0}</span>
+          <span>Tasks: {category.taskCount}</span>
           <span>
             Created: {formatDateAndTime(new Date(category.createdAt!))}
           </span>
