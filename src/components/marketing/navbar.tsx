@@ -157,7 +157,7 @@ export default function Navbar() {
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem>
+                <DropdownMenuItem asChild>
                   <Link href={"/dashboard"}>Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
