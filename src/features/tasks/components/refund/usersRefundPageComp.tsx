@@ -40,6 +40,22 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
   const [isReopenDialogOpen, setIsReopenDialogOpen] = useState(false);
   const router = useRouter();
   const { user } = useCurrentUser();
+  const handleRefundDialogChange = (open: boolean) => {
+    setIsRefundDialogOpen(open);
+    if (!open) {
+      setSelectedDispute(null);
+      setConfirmInput("");
+    }
+  };
+
+  const handleReopenDialogChange = (open: boolean) => {
+    setIsReopenDialogOpen(open);
+    if (!open) {
+      setSelectedDispute(null);
+      setConfirmTaskOpenInput("");
+    }
+  };
+
   const [selectedDispute, setSelectedDispute] =
     useState<UserDisputeswithTask | null>(null);
   const { mutateAsync: completeRefundMutation, isPending: isRefunding } =
@@ -135,15 +151,20 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
                   d.refunds.refundStatus === "PENDING_POSTER_ACTION" && (
                     <>
                       <Button
+                        disabled={isRefunding}
                         onClick={() => {
-                          toast.success(d.refunds.id);
                           setSelectedDispute(d);
-                          setIsRefundDialogOpen((prev) => !prev);
+                          setIsRefundDialogOpen(true);
                         }}
                         variant={"secondary"}>
                         Get Refund
                       </Button>
-                      <Button onClick={() => setSelectedDispute(d)}>
+                      <Button
+                        disabled={isReopening}
+                        onClick={() => {
+                          setSelectedDispute(d);
+                          setIsReopenDialogOpen(true);
+                        }}>
                         Reopen Task
                       </Button>
                     </>
@@ -159,9 +180,7 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
             confirmInput={confirmInput}
             setConfirmInput={setConfirmInput}
             isRefundDialogOpen={isRefundDialogOpen}
-            setIsRefundDialogOpen={(open) => {
-              if (!open) setSelectedDispute(null);
-            }}
+            setIsRefundDialogOpen={handleRefundDialogChange}
             handleCompleteRefund={async () =>
               handleCompleteRefund(selectedDispute.refunds.id)
             }
@@ -172,7 +191,7 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
             confirmInput={confirmTaskOpenInput}
             setConfirmInput={setConfirmTaskOpenInput}
             isReopenDialogOpen={isReopenDialogOpen}
-            setIsReopenDialogOpen={setIsReopenDialogOpen}
+            setIsReopenDialogOpen={handleReopenDialogChange}
             handleReopenTask={async () =>
               handleReopenTask(selectedDispute.refunds.id)
             }
