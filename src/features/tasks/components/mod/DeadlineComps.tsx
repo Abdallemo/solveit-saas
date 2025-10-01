@@ -169,7 +169,7 @@ export function DeadlineCard({ deadline }: { deadline: DeadlineType }) {
       </CardHeader>
       <CardContent className="pt-0">
         <div className="flex items-center justify-between text-sm text-muted-foreground">
-          <span>Tasks: {0}</span>
+          <span>Tasks: {deadline.taskCount}</span>
           <span>
             Created: {formatDateAndTime(new Date(deadline.createdAt!))}
           </span>
