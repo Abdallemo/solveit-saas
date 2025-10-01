@@ -1,8 +1,10 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import CreateCategoryDialog, { CategoryCard } from "@/features/tasks/components/mod/CatagoryComps"
-import { getAllTaskCatagories } from "@/features/tasks/server/data"
-import { InboxIcon } from "lucide-react"
-import { Suspense } from "react"
+import { Skeleton } from "@/components/ui/skeleton";
+import CreateCategoryDialog, {
+  CategoryCard,
+} from "@/features/tasks/components/mod/CatagoryComps";
+import { getAllTaskCatagories } from "@/features/tasks/server/data";
+import { InboxIcon } from "lucide-react";
+import { Suspense } from "react";
 
 export default function CategoryPage() {
   return (
@@ -21,7 +23,7 @@ export default function CategoryPage() {
         </Suspense>
       </div>
     </div>
-  )
+  );
 }
 
 function CategorySkeleton() {
@@ -31,11 +33,11 @@ function CategorySkeleton() {
         <Skeleton key={i} className="h-32 w-full rounded-lg" />
       ))}
     </div>
-  )
+  );
 }
 
 async function CategoryList() {
-  const categories = await getAllTaskCatagories()
+  const categories = await getAllTaskCatagories();
 
   if (categories.length === 0) {
     return (
@@ -46,19 +48,21 @@ async function CategoryList() {
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">No categories created yet</h3>
           <p className="text-muted-foreground max-w-md">
-            Create your first category to start organizing your tasks by department or project type.
+            Create your first category to start organizing your tasks by
+            department or project type.
           </p>
         </div>
         <CreateCategoryDialog triggerText="Create your first category" />
       </div>
-    )
+    );
   }
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {categories.length} {categories.length === 1 ? "category" : "categories"} found
+          {categories.length}{" "}
+          {categories.length === 1 ? "category" : "categories"} found
         </p>
       </div>
 
@@ -68,5 +72,5 @@ async function CategoryList() {
         ))}
       </div>
     </div>
-  )
+  );
 }
