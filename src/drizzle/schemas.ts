@@ -278,12 +278,15 @@ export const TaskTable = pgTable(
     }),
     visibility: TaskVisibility("visibility").default("public"),
     categoryId: uuid("category_id")
-      .references(() => TaskCategoryTable.id, { onDelete: "no action" })
+      .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
       .notNull(),
     paymentId: uuid("payment_id").references(() => PaymentTable.id, {
       onDelete: "cascade",
     }),
-    deadline: text("deadline").default("12h"),
+    deadline: text("deadline")
+      .references(() => TaskDeadlineTable.deadline, { onDelete: "cascade" })
+      .notNull()
+      .default("12h"),
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
@@ -370,16 +373,22 @@ export const TaskFileTable = pgTable(
 export const TaskCategoryTable = pgTable("task_categories", {
   id: uuid("id").primaryKey().defaultRandom(),
   name: text("name").unique().notNull(),
-  createdAt: timestamp("created_at", { mode: "date" }).defaultNow(),
+  createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
 });
-export const TaskDeadlineTable = pgTable("task_deadline", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  deadline: text("deadline").unique().notNull(),
-  createdAt: timestamp("created_at", {
-    mode: "date",
-    withTimezone: true,
-  }).defaultNow(),
-});
+export const TaskDeadlineTable = pgTable(
+  "task_deadline",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    deadline: text("deadline").unique().notNull(),
+    createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .notNull()
+      .defaultNow(),
+  },
+  (taskDeadline) => [index("task_deadline_idx").on(taskDeadline.deadline)]
+);
 
 export const RefundTable = pgTable(
   "refunds",
