@@ -125,7 +125,7 @@ export const MenuItemsAdmin: MenuItem[] = [
       {
         type: "link",
         title: "Moderators",
-        url: "/dashboard/admin/users/moderators",
+        url: "/dashboard/admin/moderators",
         icon: LucideShieldCheck,
       },
     ],
