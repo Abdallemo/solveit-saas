@@ -6,16 +6,14 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { env } from "@/env/client";
 import {
   FileChatCardComps,
   FileIconComponent,
 } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import type {
-  MentorChatSession,
-  MentorSession,
-} from "@/features/mentore/server/types";
+import type { MentorChatSession } from "@/features/mentore/server/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
@@ -40,12 +38,10 @@ import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 
 type Files = { [key: string]: string };
-export default function MentorshipWorkspace({
-  mentorWorkspace: session,
-}: {
-  mentorWorkspace: MentorSession;
-}) {
+export default function MentorshipWorkspace() {
+  const { mentorshipSession: session } = useMentorshipSession();
   const [chats, setChats] = useState(session?.chats);
+
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
