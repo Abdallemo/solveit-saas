@@ -1,9 +1,15 @@
-"use client"
+"use client";
 
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Checkbox } from "@/components/ui/checkbox"
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -12,9 +18,16 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -26,75 +39,76 @@ import {
   type SortingState,
   useReactTable,
   type VisibilityState,
-} from "@tanstack/react-table"
-import { ArrowUpDown, ChevronDown, Download, MoreHorizontal } from "lucide-react"
-import { useState } from "react"
-import { toast } from "sonner"
-import { Subscription } from "../server/action"
+} from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  ChevronDown,
+  Download,
+  MoreHorizontal,
+} from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+import { Subscription } from "../server/db";
 
-
-const formatAmount = (amount: number, currency: string) => {
+const formatAmount = (amount: number) => {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
-    currency: currency.toUpperCase(),
-  }).format(amount / 100)
-}
+    currency: "MYR",
+  }).format(amount);
+};
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString("en-US", {
+const formatDate = (date: Date) => {
+  return new Date(date).toLocaleDateString("en-US", {
     year: "numeric",
     month: "short",
     day: "numeric",
-  })
-}
+  });
+};
 
-const getStatusBadge = (status: string, cancelAtPeriodEnd: boolean) => {
-  if (cancelAtPeriodEnd && status === "active") {
-    return (
-      <Badge variant="outline" className="text-orange-600 border-orange-600">
-        Canceling
-      </Badge>
-    )
-  }
-
+const getStatusBadge = (status: string) => {
   switch (status) {
     case "active":
       return (
         <Badge variant="default" className="bg-green-600 hover:bg-green-700">
           Active
         </Badge>
-      )
+      );
     case "trialing":
       return (
-        <Badge variant="secondary" className="bg-blue-600 hover:bg-blue-700 text-white">
+        <Badge
+          variant="secondary"
+          className="bg-blue-600 hover:bg-blue-700 text-white">
           Trial
         </Badge>
-      )
+      );
     case "past_due":
-      return <Badge variant="destructive">Past Due</Badge>
+      return <Badge variant="destructive">Past Due</Badge>;
     case "canceled":
       return (
         <Badge variant="outline" className="text-gray-600 border-gray-600">
           Canceled
         </Badge>
-      )
+      );
     case "incomplete":
       return (
         <Badge variant="outline" className="text-yellow-600 border-yellow-600">
           Incomplete
         </Badge>
-      )
+      );
     default:
-      return <Badge variant="outline">{status}</Badge>
+      return <Badge variant="outline">{status}</Badge>;
   }
-}
+};
 
 export const subscriptionColumns: ColumnDef<Subscription>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
@@ -113,102 +127,105 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
     accessorKey: "customerName",
     header: "Customer",
     cell: ({ row }) => {
-      const subscription = row.original
+      const subscription = row.original;
       return (
         <div className="space-y-1">
           <div className="font-medium">{subscription.customerName}</div>
-          <div className="text-sm text-muted-foreground">{subscription.customerEmail}</div>
+          <div className="text-sm text-muted-foreground">
+            {subscription.customerEmail}
+          </div>
         </div>
-      )
+      );
     },
   },
   {
     accessorKey: "planName",
     header: "Plan",
     cell: ({ row }) => {
-      return <div className="font-medium">{row.getValue("planName")}</div>
+      return <div className="font-medium">{row.getValue("planName")}</div>;
     },
   },
   {
     accessorKey: "status",
     header: "Status",
     cell: ({ row }) => {
-      const subscription = row.original
-      return getStatusBadge(subscription.status, subscription.cancelAtPeriodEnd)
+      const subscription = row.original;
+      return getStatusBadge(subscription.status);
     },
   },
   {
     accessorKey: "amount",
     header: ({ column }) => {
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
           Amount
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => {
-      const subscription = row.original
+      const subscription = row.original;
       return (
         <div>
-          <div className="font-medium">{formatAmount(subscription.amount*100, subscription.currency)}</div>
-          <div className="text-sm text-muted-foreground">per {subscription.interval}</div>
+          <div className="font-medium">{formatAmount(subscription.amount)}</div>
+          <div className="text-sm text-muted-foreground">
+            per {subscription.interval}
+          </div>
         </div>
-      )
+      );
     },
   },
   {
     accessorKey: "interval",
     header: "Billing Cycle",
     cell: ({ row }) => {
-      const interval = row.getValue("interval") as string
+      const interval = row.getValue("interval") as string;
       return (
         <Badge variant="outline" className="capitalize">
           {interval}ly
         </Badge>
-      )
+      );
     },
   },
   {
-    accessorKey: "currentPeriodStart",
+    accessorKey: "nextBilling",
     header: ({ column }) => {
       return (
-        <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-          Current Period
+        <Button
+          variant="ghost"
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          Next Billing
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
-      )
+      );
     },
     cell: ({ row }) => {
-      const subscription = row.original
+      const subscription = row.original;
       return (
         <div className="space-y-1">
-          <div className="text-sm">
-            {formatDate(subscription.currentPeriodStart)} - {formatDate(subscription.currentPeriodEnd)}
-          </div>
-          {subscription.trialEnd && (
-            <div className="text-xs text-muted-foreground">Trial ends: {formatDate(subscription.trialEnd)}</div>
-          )}
+          <div className="text-sm">{formatDate(subscription.nextBilling!)}</div>
         </div>
-      )
+      );
     },
   },
   {
     id: "actions",
     cell: ({ row }) => {
-      const subscription = row.original
+      const subscription = row.original;
 
       const handleCancelSubscription = async (subscriptionId: string) => {
         // TODO: Implement Stripe API call to cancel subscription
-        console.log("Canceling subscription:", subscriptionId)
-        toast.success("Subscription canceled")
-      }
+        console.log("Canceling subscription:", subscriptionId);
+        toast.success("Subscription canceled");
+      };
 
       const handleReactivateSubscription = async (subscriptionId: string) => {
         // TODO: Implement Stripe API call to reactivate subscription
-        console.log("Reactivating subscription:", subscriptionId)
-        toast.success("Subscription reactivated")
-      }
+        console.log("Reactivating subscription:", subscriptionId);
+        toast.success("Subscription reactivated");
+      };
 
       return (
         <DropdownMenu>
@@ -222,51 +239,49 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
             <DropdownMenuLabel>Actions</DropdownMenuLabel>
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(subscription.id)
-                toast.success("Subscription ID copied to clipboard")
-              }}
-            >
+                navigator.clipboard.writeText(subscription.id);
+                toast.success("Subscription ID copied to clipboard");
+              }}>
               Copy subscription ID
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
-                navigator.clipboard.writeText(subscription.customerId)
-                toast.success("Customer ID copied to clipboard")
-              }}
-            >
+                navigator.clipboard.writeText(subscription.customerId!);
+                toast.success("Customer ID copied to clipboard");
+              }}>
               Copy customer ID
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>View customer</DropdownMenuItem>
             <DropdownMenuItem>View invoices</DropdownMenuItem>
             <DropdownMenuSeparator />
-            {subscription.status === "active" && !subscription.cancelAtPeriodEnd && (
-              <DropdownMenuItem className="text-red-600" onClick={() => handleCancelSubscription(subscription.id)}>
+            {subscription.status === "active" && (
+              <DropdownMenuItem
+                className="text-red-600"
+                onClick={() => handleCancelSubscription(subscription.id)}>
                 Cancel subscription
-              </DropdownMenuItem>
-            )}
-            {subscription.cancelAtPeriodEnd && (
-              <DropdownMenuItem onClick={() => handleReactivateSubscription(subscription.id)}>
-                Reactivate subscription
               </DropdownMenuItem>
             )}
           </DropdownMenuContent>
         </DropdownMenu>
-      )
+      );
     },
   },
-]
+];
 
 interface SubscriptionTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[]
-  data: TData[]
+  columns: ColumnDef<TData, TValue>[];
+  data: TData[];
 }
 
-export function SubscriptionTable<TData, TValue>({ columns, data }: SubscriptionTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
+export function SubscriptionTable<TData, TValue>({
+  columns,
+  data,
+}: SubscriptionTableProps<TData, TValue>) {
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const table = useReactTable({
     data,
@@ -285,15 +300,19 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   return (
     <div>
       <div className="flex items-center py-1">
         <Input
           placeholder="Filter customers..."
-          value={(table.getColumn("customerName")?.getFilterValue() as string) ?? ""}
-          onChange={(event) => table.getColumn("customerName")?.setFilterValue(event.target.value)}
+          value={
+            (table.getColumn("customerName")?.getFilterValue() as string) ?? ""
+          }
+          onChange={(event) =>
+            table.getColumn("customerName")?.setFilterValue(event.target.value)
+          }
           className="max-w-sm"
         />
         <DropdownMenu>
@@ -313,11 +332,12 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
                     key={column.id}
                     className="capitalize"
                     checked={column.getIsVisible()}
-                    onCheckedChange={(value) => column.toggleVisibility(!!value)}
-                  >
+                    onCheckedChange={(value) =>
+                      column.toggleVisibility(!!value)
+                    }>
                     {column.id}
                   </DropdownMenuCheckboxItem>
-                )
+                );
               })}
           </DropdownMenuContent>
         </DropdownMenu>
@@ -329,7 +349,12 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
               <TableRow key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <TableHead key={header.id}>
-                    {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(
+                          header.column.columnDef.header,
+                          header.getContext()
+                        )}
                   </TableHead>
                 ))}
               </TableRow>
@@ -338,15 +363,24 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
           <TableBody>
             {table.getRowModel().rows?.length ? (
               table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                <TableRow
+                  key={row.id}
+                  data-state={row.getIsSelected() && "selected"}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    <TableCell key={cell.id}>
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext()
+                      )}
+                    </TableCell>
                   ))}
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={columns.length} className="h-24 text-center">
+                <TableCell
+                  colSpan={columns.length}
+                  className="h-24 text-center">
                   No results.
                 </TableCell>
               </TableRow>
@@ -356,28 +390,43 @@ export function SubscriptionTable<TData, TValue>({ columns, data }: Subscription
       </div>
       <div className="flex items-center justify-end space-x-2 py-4">
         <div className="flex-1 text-sm text-muted-foreground">
-          {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-          selected.
+          {table.getFilteredSelectedRowModel().rows.length} of{" "}
+          {table.getFilteredRowModel().rows.length} row(s) selected.
         </div>
-        <Button variant="outline" size="sm" onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.previousPage()}
+          disabled={!table.getCanPreviousPage()}>
           Previous
         </Button>
-        <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => table.nextPage()}
+          disabled={!table.getCanNextPage()}>
           Next
         </Button>
       </div>
     </div>
-  )
+  );
 }
 
-export function SubscriptionManagement({subscription}:{subscription:Subscription[]}) {
-
+export function SubscriptionManagement({
+  subscription,
+}: {
+  subscription: Subscription[];
+}) {
   return (
     <div className="container mx-auto py-6 px-4 flex flex-col gap-2">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Subscription Management</h1>
-          <p className="text-muted-foreground">Manage and monitor all customer subscription</p>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Subscription Management
+          </h1>
+          <p className="text-muted-foreground">
+            Manage and monitor all customer subscription
+          </p>
         </div>
         <Button variant="outline" className="gap-2 bg-transparent">
           <Download className="h-4 w-4" />
@@ -388,7 +437,9 @@ export function SubscriptionManagement({subscription}:{subscription:Subscription
       <div className="grid gap-4 md:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Subscription</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Total Subscription
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{subscription.length}</div>
@@ -398,11 +449,11 @@ export function SubscriptionManagement({subscription}:{subscription:Subscription
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Active</CardTitle>
           </CardHeader>
-          <CardContent>
+          {/* <CardContent>
             <div className="text-2xl font-bold text-green-600">
               {subscription.filter((s) => s.status === "active" && !s.cancelAtPeriodEnd).length}
             </div>
-          </CardContent>
+          </CardContent> */}
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -429,12 +480,17 @@ export function SubscriptionManagement({subscription}:{subscription:Subscription
       <Card>
         <CardHeader>
           <CardTitle>Subscription</CardTitle>
-          <CardDescription>A list of all customer subscription and their current status</CardDescription>
+          <CardDescription>
+            A list of all customer subscription and their current status
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <SubscriptionTable columns={subscriptionColumns} data={subscription} />
+          <SubscriptionTable
+            columns={subscriptionColumns}
+            data={subscription}
+          />
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
