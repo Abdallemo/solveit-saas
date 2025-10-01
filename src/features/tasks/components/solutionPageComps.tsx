@@ -278,8 +278,8 @@ export default function SolutionPageComps({
       comment,
       taskId: solution?.taskId,
       userId: user?.id!,
-      posterId:solution.taskSolution.posterId,
-      solverId:solution.taskSolution.solverId,
+      posterId: solution.taskSolution.posterId,
+      solverId: solution.taskSolution.solverId,
     });
   }
 
@@ -325,7 +325,7 @@ export default function SolutionPageComps({
           <FilesTable files={files} scope={solution} scopeType="solution" />
         )}
         {solution.taskSolution.posterId === user?.id && (
-          <Card className="lg:max-w-7xl">
+          <Card className="lg:max-w-8xl">
             <CardHeader>
               <h3 className="text-lg font-medium text-foreground">comments</h3>
             </CardHeader>
@@ -341,7 +341,6 @@ export default function SolutionPageComps({
                           comment={comment}
                           currentUserId={user?.id!}
                           ref={isLast ? latestCommentRef : null}
-                         
                         />
                       );
                     })}
@@ -354,11 +353,12 @@ export default function SolutionPageComps({
                     leave a comment
                   </span>
                 </div>
-                <div className="flex space-x-3">
+                <div className="flex space-x-3 lg:max-w-8xl">
                   <Textarea
                     placeholder="Add your comment..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
+                    
                     className="flex-1 min-h-[80px] resize-none"
                     onKeyDown={handleKeyPress}
                   />
