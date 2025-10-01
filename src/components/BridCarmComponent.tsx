@@ -53,8 +53,8 @@ export default function BridCarmComponent() {
         {paths.map((pathSegment, index) => {
           currentPath += `/${pathSegment}`;
           const isLast = index === paths.length - 1;
-          const isDisabled =
-            pathSegment === "solutions" || pathSegment === "workspace";
+          const isDisabled = pathSegment === "solutions";
+          const alias = { workspace: "workspace", solutions: "solutions" };
 
           if (pathSegment === role) {
             return null;
@@ -81,6 +81,8 @@ export default function BridCarmComponent() {
                       href={
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
+                          : pathSegment === "workspace"
+                          ? currentPath.replace("/workspace", "/assignedTasks")
                           : currentPath
                       }>
                       {pathSegment === "dashboard"
