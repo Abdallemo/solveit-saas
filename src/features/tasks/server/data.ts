@@ -5,6 +5,8 @@ import {
   MentorshipSessionTable,
   PaymentTable,
   RefundTable,
+  TaskCategoryTable,
+  TaskDeadlineTable,
   TaskDraftTable,
   TaskStatusType,
   TaskTable,
@@ -53,9 +55,16 @@ export async function getAllTaskCatagories(
 ) {
   return await withCache({
     callback: async () => {
-      const all = await db.query.TaskCategoryTable.findMany({
-        columns: { id: true, name: true, createdAt: true },
-      });
+      const all = await db
+        .select({
+          id: TaskCategoryTable.id,
+          name: TaskCategoryTable.name,
+          createdAt: TaskCategoryTable.createdAt,
+          taskCount: count(TaskTable.id),
+        })
+        .from(TaskCategoryTable)
+        .leftJoin(TaskTable, eq(TaskTable.categoryId, TaskCategoryTable.id))
+        .groupBy(TaskCategoryTable.id);
       return all;
     },
     tag: "category-data-cache",
@@ -67,9 +76,16 @@ export async function getAllTaskDeadlines(
 ) {
   return await withCache({
     callback: async () => {
-      const all = await db.query.TaskDeadlineTable.findMany({
-        columns: { id: true, deadline: true, createdAt: true },
-      });
+      const all = await db
+        .select({
+          id: TaskDeadlineTable.id,
+          deadline: TaskDeadlineTable.deadline,
+          createdAt: TaskDeadlineTable.createdAt,
+          taskCount: count(TaskTable.id),
+        })
+        .from(TaskDeadlineTable)
+        .leftJoin(TaskTable, eq(TaskTable.deadline, TaskDeadlineTable.deadline))
+        .groupBy(TaskDeadlineTable.id);
       return all;
     },
     tag: "deadline-data-cache",
