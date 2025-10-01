@@ -15,29 +15,16 @@ import { env } from "@/env/server";
 import * as db from "@/features/subscriptions/server/db";
 import { logger } from "@/lib/logging/winston";
 import { headers } from "next/headers";
-import { cache } from "react";
 import Stripe from "stripe";
 export const {
   CancelUserSubscription,
   CreateUserSubsciption,
   updateUserSubscription,
+  getAllSubscriptions,
+  
 } = db;
 
-export type Subscription = {
-  id: string;
-  customerId: string;
-  customerName: string;
-  customerEmail: string;
-  planName: string;
-  status: "active" | "canceled" | "past_due" | "trialing" | "incomplete";
-  amount: number;
-  currency: string;
-  interval: "month" | "year";
-  currentPeriodStart: string;
-  currentPeriodEnd: string;
-  cancelAtPeriodEnd: boolean;
-  trialEnd?: string;
-};
+
 
 export async function getServerReturnUrl() {
   const headersList = await headers();
@@ -190,47 +177,4 @@ export async function CreateUserSubSessionPortal() {
     return_url: referer,
   });
   return portalSession.url;
-}
-export const getAllSubscriptionsCached = cache(async () => {
-  return await getAllSubscriptions();
-});
-export async function getAllSubscriptions(): Promise<Subscription[]> {
-  const subscriptions = await stripe.subscriptions.list({
-    limit: 10,
-    expand: ["data.customer", "data.items.data.price"],
-  });
-
-  const results = await Promise.all(
-    subscriptions.data.map(async (sub) => {
-      const customer = sub.customer as Stripe.Customer;
-      const item = sub.items.data[0];
-      const price = item.price;
-
-      const product = await stripe.products.retrieve(
-        typeof price.product === "string" ? price.product : price.product.id
-      );
-
-      return {
-        id: sub.id,
-        customerId: customer.id,
-        customerName: customer.name || "",
-        customerEmail: customer.email || "",
-        planName: product.name || "",
-        status: sub.status as Subscription["status"],
-        amount: price.unit_amount ? price.unit_amount / 100 : 0,
-        currency: price.currency.toUpperCase(),
-        interval: price.recurring?.interval as "month" | "year",
-        currentPeriodStart: new Date(
-          sub.current_period_start * 1000
-        ).toISOString(),
-        currentPeriodEnd: new Date(sub.current_period_end * 1000).toISOString(),
-        cancelAtPeriodEnd: sub.cancel_at_period_end,
-        trialEnd: sub.trial_end
-          ? new Date(sub.trial_end * 1000).toISOString()
-          : undefined,
-      };
-    })
-  );
-
-  return results;
 }
