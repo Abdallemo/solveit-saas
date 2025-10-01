@@ -10,8 +10,17 @@ import {
   UserTable,
 } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
+import { withRevalidateTag } from "@/lib/cache";
 import { stripe } from "@/lib/stripe";
-import { and, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
+import {
+  and,
+  count,
+  eq,
+  isNotNull,
+  isNull,
+  sql,
+  sum
+} from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
 
 //* User Types
@@ -30,13 +39,22 @@ export async function CreateUser(values: registerInferedTypes) {
 export async function DeleteUserFromDb(id: string) {
   if (id) {
     const s = await db.transaction(async (tx) => {
+      await tx
+        .update(TaskTable)
+        .set({
+          solverId: null,
+          assignedAt: null,
+          status: "OPEN",
+          updatedAt: new Date(),
+        })
+        .where(eq(TaskTable.solverId, id));
+      await tx
+        .delete(UserSubscriptionTable)
+        .where(eq(UserSubscriptionTable.userId, id));
       const deletedAcount = await tx
         .delete(UserTable)
         .where(eq(UserTable.id, id))
         .returning({ accountId: UserTable.stripeAccountId });
-      await tx
-        .delete(UserSubscriptionTable)
-        .where(eq(UserSubscriptionTable.userId, id));
       if (deletedAcount.length > 0 && deletedAcount[0].accountId) {
         await stripe.accounts.del(deletedAcount[0].accountId!);
       }
@@ -55,6 +73,7 @@ export async function getUserByEmail(email: string) {
   }
 }
 export type allUsersType = Awaited<ReturnType<typeof getAllUsers>>;
+export type allModeratorsType = Awaited<ReturnType<typeof getAllModerators>>;
 export type UserDbType = Exclude<
   Awaited<ReturnType<typeof getUserById>>,
   undefined | null
@@ -63,6 +82,20 @@ export type UserDbType = Exclude<
 export async function getAllUsers() {
   const allUsers = await db.query.UserTable.findMany();
   return allUsers;
+}
+export async function getAllModerators() {
+  const moderators = await db.query.UserTable.findMany({
+    with: {
+      refundModerator: true,
+    },
+    where: (tb, fn) => fn.eq(tb.role, "MODERATOR"),
+  });
+  const moderatorsWithCases = moderators.map((moderator) => ({
+    ...moderator,
+    Cases: moderator.refundModerator.length,
+    disputes: moderator.refundModerator,
+  }));
+  return moderatorsWithCases;
 }
 function getTrend(current: number, prev: number) {
   if (prev === 0) return 0;
@@ -249,6 +282,7 @@ export async function activeUser(userId: string, emailVerified: Date | null) {
         emailVerified: serverDate,
       })
       .where(and(eq(UserTable.id, userId), isNull(UserTable.emailVerified)));
+    withRevalidateTag("user-data-cache", userId);
   } else {
     await db
       .update(UserTable)
@@ -256,6 +290,7 @@ export async function activeUser(userId: string, emailVerified: Date | null) {
         emailVerified: null,
       })
       .where(and(eq(UserTable.id, userId), isNotNull(UserTable.emailVerified)));
+    withRevalidateTag("user-data-cache", userId);
   }
 }
 export async function getUserById(id: string) {
@@ -325,11 +360,13 @@ export async function getServerUserRoleById({ id }: { id: string }) {}
 
 export async function getServerUserSubscriptionById(id: string | undefined) {
   if (id === undefined) return;
-  const subscription = await db.query.UserSubscriptionTable.findFirst({
-    where: (table, fn) => fn.eq(table.userId, id),
-  });
-  if (subscription == undefined) return null;
-  return subscription;
+  try {
+    return await db.query.UserSubscriptionTable.findFirst({
+      where: (table, fn) => fn.eq(table.userId, id),
+    });
+  } catch (error) {
+    throw new Error("unable to find subscription");
+  }
 }
 
 export async function getServerUserRoleByEmail({ email }: { email: string }) {}
