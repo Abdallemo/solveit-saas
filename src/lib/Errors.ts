@@ -69,3 +69,18 @@ export class DisputeNotFoundError extends Error {
     this.data = data;
   }
 }
+export class SessionNotFoundError extends Error {
+  public readonly data: { headline: string; message: string };
+
+  constructor(
+    data = {
+      headline: "Unable to fetch the session info",
+      message:
+        "The requested sessino could not be found. It may have been removed,  or the ID provided is invalid.",
+    }
+  ) {
+    super(data.message);
+    this.name = "SessionNotFoundError";
+    this.data = data;
+  }
+}
