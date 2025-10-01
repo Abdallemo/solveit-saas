@@ -493,7 +493,7 @@ export async function createDeadline(deadline: string) {
 }
 export async function deleteDeadline(id: string) {
   try {
-    await db.delete(TaskCategoryTable).where(eq(TaskDeadlineTable.id, id));
+    await db.delete(TaskDeadlineTable).where(eq(TaskDeadlineTable.id, id));
     withRevalidateTag("deadline-data-cache");
   } catch (error) {
     throw new Error("unable to delete deadline");
