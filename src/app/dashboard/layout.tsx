@@ -10,14 +10,12 @@ import { Motion3DBackground } from "@/features/auth/components/feature-panel";
 import { isAuthorized } from "@/features/auth/server/actions";
 import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
 import { getAllNotification } from "@/features/notifications/server/action";
-import { getWalletInfo } from "@/features/tasks/server/data";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import {
   StripeSubscriptionContextType,
   StripeSubscriptionProvider,
 } from "@/hooks/provider/stripe-subscription-provider";
-import { stripe } from "@/lib/stripe";
 import { SessionProvider } from "next-auth/react";
 import { cookies } from "next/headers";
 import DashboardSkeleton, { AppSidebarSkeleton } from "./loading";
@@ -48,43 +46,51 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value === "true";
-  const { pending, available } = await getWalletInfo(user.id);
-  const allNotifications = await getAllNotification(user.id);
-  const subscription = await getServerUserSubscriptionById(user.id);
-  let stripeData: StripeSubscriptionContextType = {
+
+  const allNotificationsPromise = getAllNotification(user.id);
+
+  let subscriptionPromise: Promise<StripeSubscriptionContextType | null> | null =
+    null;
+
+  if (user.role === "SOLVER") {
+    subscriptionPromise = (async () => {
+      const subscription = await getServerUserSubscriptionById(user.id);
+
+      if (subscription && subscription.stripeSubscriptionId) {
+        return {
+          cancelAt: subscription.cancelAt,
+          isCancelScheduled: subscription.isCancelScheduled,
+          status: subscription.status,
+          nextBilling: subscription.nextBilling,
+          subTier: subscription.tier,
+          price: subscription.price,
+        };
+      }
+      return null;
+    })();
+  }
+
+  const [allNotifications, stripeData] = await Promise.all([
+    allNotificationsPromise,
+    subscriptionPromise,
+  ]);
+
+  const finalStripeData: StripeSubscriptionContextType = stripeData ?? {
     cancelAt: null,
     isCancelScheduled: false,
     status: "inactive",
     nextBilling: null,
-    subTier: subscription?.tier!,
+    subTier: "POSTER",
     price: 0,
   };
-  if (subscription?.stripeSubscriptionId) {
-    const sub = await stripe.subscriptions.retrieve(
-      subscription.stripeSubscriptionId
-    );
-    const price = sub.items.data[0].price.unit_amount
-      ? sub.items.data[0].price.unit_amount / 100
-      : 0;
-    stripeData = {
-      cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
-      isCancelScheduled: sub.cancel_at_period_end,
-      status: sub.status,
-      nextBilling: sub.current_period_end
-        ? new Date(sub.current_period_end * 1000)
-        : null,
-      subTier: subscription.tier,
-      price,
-    };
-  }
- 
+
   return (
     <SessionProvider
       session={session}
       basePath="/api/auth"
       refetchInterval={30 * 60}
       refetchOnWindowFocus={true}>
-      <StripeSubscriptionProvider value={stripeData}>
+      <StripeSubscriptionProvider value={finalStripeData}>
         <SidebarProvider
           defaultOpen={defaultOpen}
           style={
@@ -114,12 +120,7 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
                       </div>
 
                       <div className="flex gap-2 justify-center items-center">
-                        {user.role === "SOLVER" && (
-                          <WalletDropdownMenu
-                            availabel={available}
-                            pending={pending}
-                          />
-                        )}
+                        {user.role === "SOLVER" && <WalletDropdownMenu />}
                         <NotificationDropDown
                           initailAllNotifications={allNotifications}
                         />
