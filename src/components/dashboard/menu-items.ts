@@ -32,7 +32,7 @@ import {
   PackageOpen,
   Send,
   SquareDashedMousePointerIcon,
-  Users
+  Users,
 } from "lucide-react";
 export type MenuItem = {
   type: "link" | "category";
@@ -94,12 +94,7 @@ export const MenuItemsModerator: MenuItem[] = [
     url: "/dashboard/moderator/logs",
     icon: LucideHistory,
   },
-  {
-    type: "link",
-    title: "Flagged Tasks",
-    url: "/dashboard/moderator/flags",
-    icon: LucideAlertTriangle,
-  },
+
   {
     type: "link",
     title: "User Reports",
