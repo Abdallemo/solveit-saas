@@ -15,7 +15,6 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { Tooltip, TooltipTrigger } from "@/components/ui/tooltip";
 import { env } from "@/env/client";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import {
@@ -26,7 +25,6 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
 import { formatDateAndTimeNUTC } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { TooltipContent } from "@radix-ui/react-tooltip";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Loader2, Send, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -172,38 +170,20 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
 
             <AlertDialogFooter className="mt-4">
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              {isValid ? (
-                <AlertDialogAction
-                  type="submit"
-                  className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer">
-                  {isPending ? (
-                    <>
-                      <Loader2 className="animate-spin" />
-                      sending Your Request Refund
-                    </>
-                  ) : (
-                    "Yes, Request Refund"
-                  )}
-                </AlertDialogAction>
-              ) : (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <AlertDialogAction asChild>
-                      <Button
-                        disabled={false}
-                        className="opacity-45 cursor-not-allowed"
-                        variant={"destructive"}>
-                        Yes, Request Refund
-                      </Button>
-                    </AlertDialogAction>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p className="text-xs ">
-                      At least 10 charecters is Required
-                    </p>
-                  </TooltipContent>
-                </Tooltip>
-              )}
+
+              <Button
+                type="submit"
+                disabled={!isValid || isPending}
+                className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer flex items-center space-x-2 px-4 py-2 rounded">
+                {isPending ? (
+                  <>
+                    <Loader2 className="animate-spin" />
+                    <span>Sending Your Refund Request</span>
+                  </>
+                ) : (
+                  "Yes, Request Refund"
+                )}
+              </Button>
             </AlertDialogFooter>
           </form>
         </AlertDialogContent>
@@ -358,7 +338,6 @@ export default function SolutionPageComps({
                     placeholder="Add your comment..."
                     value={comment}
                     onChange={(e) => setComment(e.target.value)}
-                    
                     className="flex-1 min-h-[80px] resize-none"
                     onKeyDown={handleKeyPress}
                   />
