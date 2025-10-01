@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = "enhaced mentor session with timezone awareness"
+commit_message = "enhaced mentor session"
 
 repo = Repo(repo_path)
 
