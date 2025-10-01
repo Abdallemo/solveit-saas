@@ -1,12 +1,9 @@
-export const revalidate = 300;
 import { SubscriptionManagement } from "@/features/subscriptions/components/SubscriptionManagement";
-import { getAllSubscriptions, getAllSubscriptionsCached } from "@/features/subscriptions/server/action";
+
+import { getAllSubscriptions } from "@/features/subscriptions/server/db";
 
 export default async function page() {
-  const subscriptions = await getAllSubscriptionsCached()
-  
-  return (
+  const subscriptions = await getAllSubscriptions();
 
-    <SubscriptionManagement subscription={subscriptions} />
-  )
+  return <SubscriptionManagement subscription={subscriptions} />;
 }
