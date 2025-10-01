@@ -111,6 +111,14 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
         userId: userId,
         stripeSubscriptionId: sub.id,
         stripeSubscriptionItemId: sub.items.data[0].id,
+        cancelAt: sub.cancel_at ? new Date(sub.cancel_at * 1000) : null,
+        isCancelScheduled: sub.cancel_at_period_end,
+        nextBilling: sub.current_period_end
+          ? new Date(sub.current_period_end * 1000)
+          : null,
+        price: (sub.items.data[0].price.unit_amount ?? 0) / 100,
+        status: sub.status,
+        interval:sub.items.data[0].plan.interval
       },
       "SOLVER",
       userId,
@@ -141,6 +149,18 @@ async function handleUpdate(subscription: Stripe.Subscription) {
     {
       tier: tierSelected,
       userId,
+      status: subscription.status,
+      stripeSubscriptionId: subscription.id,
+      stripeSubscriptionItemId: subscription.items.data[0].id,
+      cancelAt: subscription.cancel_at
+        ? new Date(subscription.cancel_at * 1000)
+        : null,
+      isCancelScheduled: subscription.cancel_at_period_end,
+      nextBilling: subscription.current_period_end
+        ? new Date(subscription.current_period_end * 1000)
+        : null,
+      price: (subscription.items.data[0].price.unit_amount ?? 0) / 100,
+      interval:subscription.items.data[0].plan.interval
     },
     "SOLVER",
     userId,
