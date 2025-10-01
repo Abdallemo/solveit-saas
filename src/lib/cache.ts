@@ -5,7 +5,8 @@ type AvailableTags =
   | "dispute-data-cache"
   | "category-data-cache"
   | "deadline-data-cache"
-  | "mentor-session-chat-data-cache";
+  | "mentor-session-chat-data-cache"
+  | "subscription-data-cache";
 
 type CacheOptions<T, P> = {
   tag: AvailableTags;
