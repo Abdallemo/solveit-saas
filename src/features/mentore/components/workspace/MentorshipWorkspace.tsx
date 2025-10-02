@@ -33,14 +33,13 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type React from "react";
-import { useEffect, useOptimistic, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace() {
-  const { mentorshipSession: session } = useMentorshipSession();
-  const [chats, setChats] = useState(session?.chats);
+  const { mentorshipSession: session, updateSession } = useMentorshipSession();
 
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
@@ -55,13 +54,7 @@ export default function MentorshipWorkspace() {
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
-  //trying this
-  const [optimisticChat, addOptimisticChat] = useOptimistic(
-    session?.chats,
-    (state, newChat: MentorChatSession) => {
-      return [...state!, newChat];
-    }
-  );
+
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
   };
@@ -87,14 +80,12 @@ export default function MentorshipWorkspace() {
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
     {
       onMessage: (msg) => {
-        setChats((prev) => [
-          ...prev!,
-          {
-            ...msg,
-            createdAt: new Date(msg.createdAt!),
-            readAt: null,
-          },
-        ]);
+        updateSession({
+          chats: [
+            ...(session?.chats || []),
+            { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
+          ],
+        });
         if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
           setUploadingFiles([]);
         }
@@ -112,7 +103,7 @@ export default function MentorshipWorkspace() {
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
-  }, [chats, session, uploadingFiles]);
+  }, [session, uploadingFiles]);
   if (!session) {
     return (
       <main className="w-full h-full flex items-center justify-center bg-background">
@@ -126,7 +117,7 @@ export default function MentorshipWorkspace() {
     );
   }
   const { sessionDate, timeSlot, sessionStart, sessionEnd } = session;
-  const allFiles = chats?.flatMap((chat) => chat.chatFiles) || [];
+  const allFiles = session.chats?.flatMap((chat) => chat.chatFiles) || [];
   const isPreSession = sessionUtilsV2.isBeforeSession(
     { sessionStart: sessionStart! },
     new Date()
@@ -217,15 +208,17 @@ export default function MentorshipWorkspace() {
         </div>
         <ScrollArea className="flex-1 h-[500px] p-5">
           <div className="p-6 space-y-6 max-h-[500px]">
-            {chats && chats.length > 0 ? (
+            {session.chats && session.chats.length > 0 ? (
               <>
-                {chats.map((chat, index) => {
+                {session.chats.map((chat, index) => {
                   const isCurrentUser = chat.chatOwner.id === user?.id;
 
                   return (
                     <div
                       key={chat.id}
-                      ref={index === chats.length - 1 ? messageRef : null}
+                      ref={
+                        index === session.chats.length - 1 ? messageRef : null
+                      }
                       className={`flex gap-3 ${
                         isCurrentUser ? "flex-row-reverse" : "flex-row"
                       }`}>
