@@ -1,4 +1,5 @@
 import { sendSignalMessage } from "@/features/mentore/server/action";
+import { getTurnCredentials } from "./cloudflare";
 
 type SignalMessage = {
   from: string;
@@ -44,26 +45,26 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
   let cameraOn = true;
   let micOn = true;
 
-  const notify = () => {
+  function notify() {
     const state: WebRTCState = { localStream, remoteStream, cameraOn, micOn };
     subscribers.forEach((cb) => cb(state));
-  };
+  }
 
-  const subscribe = (cb: Subscriber) => {
+  function subscribe(cb: Subscriber) {
     subscribers.add(cb);
     cb({ localStream, remoteStream, cameraOn, micOn });
     return () => subscribers.delete(cb);
-  };
+  }
 
-  const sendSignal = async (msg: SignalMessage) => {
+  async function sendSignal(msg: SignalMessage) {
     try {
       await sendSignalMessage(msg);
     } catch (err) {
       console.error("Signal send error:", err);
     }
-  };
+  }
 
-  const handleSignal = async (msg: SignalMessage) => {
+  async function handleSignal(msg: SignalMessage) {
     if (msg.from === userId || (msg.to !== userId && msg.to !== "broadcast"))
       return;
     if (!pc) return;
@@ -141,17 +142,25 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
         break;
       }
     }
-  };
+  }
 
-  const init = async () => {
+  async function init() {
     if (typeof window === "undefined") return;
-    pc = new RTCPeerConnection({
-      iceServers: [
-        { urls: "stun:stun.l.google.com:19302" },
-        { urls: "stun:stun1.l.google.com:19302" },
-        { urls: "stun:stun2.l.google.com:19302" },
-      ],
-    });
+    let iceServers: RTCIceServer[] = [
+      { urls: "stun:stun.l.google.com:19302" },
+      { urls: "stun:stun1.l.google.com:19302" },
+      { urls: "stun:stun2.l.google.com:19302" },
+    ];
+    try {
+      const creds = await getTurnCredentials();
+      if (creds?.turn.length > 0) {
+        iceServers = [...iceServers, ...creds.turn];
+      }
+    } catch {
+      console.warn("TURN fetch failed, continuing with STUN only");
+    }
+
+    pc = new RTCPeerConnection({ iceServers });
 
     pc.ontrack = (e) => {
       remoteStream = e.streams[0];
@@ -201,33 +210,44 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
       localStream = stream;
       stream.getTracks().forEach((track) => pc!.addTrack(track, stream));
       notify();
+
+      const transceiver = pc
+        .getTransceivers()
+        .find((t) => t.sender.track?.kind === "video");
+
+      if (transceiver) {
+        const codecs = RTCRtpSender.getCapabilities("video")?.codecs || [];
+        const h264 = codecs.filter((c) => c.mimeType === "video/H264");
+        const rest = codecs.filter((c) => c.mimeType !== "video/H264");
+
+        transceiver.setCodecPreferences([...h264, ...rest]);
+
+        const sender = transceiver.sender;
+        const params = sender.getParameters();
+        params.encodings ??= [{}];
+        params.encodings[0].maxBitrate = 5_000_000;
+        params.encodings[0].maxFramerate = 30;
+        params.encodings[0].priority = "high";
+        await sender.setParameters(params);
+      }
     } catch (err) {
       console.error("getUserMedia error:", err);
     }
-  };
+  }
 
-  const toggleCamera = (on: boolean) => {
+  function toggleCamera(on: boolean) {
     cameraOn = on;
     localStream?.getVideoTracks().forEach((t) => (t.enabled = on));
     notify();
-  };
+  }
 
-  const toggleMic = (on: boolean) => {
+  function toggleMic(on: boolean) {
     micOn = on;
     localStream?.getAudioTracks().forEach((t) => (t.enabled = on));
     notify();
-  };
+  }
 
-  // const leaveCall = async () => {
-  //   await sendSignal({
-  //     from: userId,
-  //     to: "broadcast",
-  //     type: "leave",
-  //     payload: null,
-  //     sessionId,
-  //   });
-  // };
-  const leaveCall = async () => {
+  async function leaveCall() {
     try {
       await sendSignal({
         from: userId,
@@ -245,10 +265,8 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
       localStream = null;
     }
 
-  
     remoteStream = null;
 
-    
     if (pc) {
       try {
         pc.ontrack = null;
@@ -278,8 +296,7 @@ function createWebRTCManager({ userId, sessionId }: ManagerOptions) {
 
     const key = `${userId}_${sessionId}`;
     delete managers[key];
-
-  };
+  }
 
   init();
 
