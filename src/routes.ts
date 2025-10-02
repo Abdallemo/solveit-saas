@@ -20,11 +20,16 @@ export const authRoutes = [
   "/login/error",
   "/login/verify",
 ];
-
-export const apiAuthPrefix = "/api/auth";
-export const apiStripePrefix = "/api/webhooks/stripe";
-export const apiStripePrefixPayment = "/api/webhooks/stripe/taskPayment";
-export const apiMediaPrefix = "/api/media";
-export const apiLogsPrefix = "/api/logs";
+/**
+ * an array of routes that is accessible to the public apis
+ * these dont require authenitcaton but authorization
+ */
+export const publicApiRoutes = [
+  "/api/auth",
+  "/api/webhooks/stripe",
+  "/api/webhooks/stripe/taskPayment",
+  "/api/logs",
+  // "/api/webrtc",
+];
 
 export const DEFAULT_LOGIN_REDIRECT = "/dashboard";
