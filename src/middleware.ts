@@ -1,12 +1,8 @@
 import authConfig from "@/lib/auth.config";
 import {
-  apiAuthPrefix,
-  apiLogsPrefix,
-  apiMediaPrefix,
-  apiStripePrefix,
-  apiStripePrefixPayment,
   authRoutes,
   DEFAULT_LOGIN_REDIRECT,
+  publicApiRoutes,
   publicRoutes,
 } from "@/routes";
 import NextAuth from "next-auth";
@@ -17,34 +13,38 @@ export default auth((req) => {
   const { nextUrl } = req;
   const isLoggedIn = !!req.auth;
   const res = NextResponse.next();
+  const path = nextUrl.pathname;
   res.headers.set("x-full-url", nextUrl.href);
 
-  const isApiAuthRoute = nextUrl.pathname.startsWith(apiAuthPrefix);
-  const isApiStripePrefix = nextUrl.pathname.startsWith(apiStripePrefix);
-  const isApiStripePrefixPayment = nextUrl.pathname.startsWith(
-    apiStripePrefixPayment
+  const isPublicRoutes = publicRoutes.includes(path);
+ 
+  const isPublicApiRoutes = publicApiRoutes.some((route) =>
+    path.startsWith(route)
   );
-  const isApiMediaPrefix = nextUrl.pathname.startsWith(apiMediaPrefix);
-  const isApiLogsPrefix = nextUrl.pathname.startsWith(apiLogsPrefix);
-  const isPublicRoutes = publicRoutes.includes(nextUrl.pathname);
-  const isAuthRoutes = authRoutes.includes(nextUrl.pathname);
+  const isAuthRoutes = authRoutes.includes(path);
 
-  if (isApiAuthRoute) return res;
-  if (isApiStripePrefix) return res;
-  if (isApiStripePrefixPayment) return;
-  res;
-  if (isApiMediaPrefix) return res;
-  if (isApiLogsPrefix) return res;
+  if (nextUrl.pathname.startsWith("/api")) {
+    if (isPublicApiRoutes) return res;
+
+    if (!isLoggedIn) {
+      return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    return res;
+  }
 
   if (isAuthRoutes) {
     if (isLoggedIn)
-      return Response.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
+      return NextResponse.redirect(new URL(DEFAULT_LOGIN_REDIRECT, nextUrl));
 
     return res;
   }
 
   if (!isLoggedIn && !isPublicRoutes) {
-    return Response.redirect(new URL("/login", nextUrl));
+    return NextResponse.redirect(new URL("/login", nextUrl));
   }
 
   return res;
