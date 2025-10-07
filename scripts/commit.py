@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = "Overal admin side changes"
+commit_message = "changes"
 
 repo = Repo(repo_path)
 
