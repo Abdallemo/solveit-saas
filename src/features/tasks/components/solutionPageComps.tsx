@@ -17,7 +17,16 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
 import { env } from "@/env/client";
 import { FilesTable } from "@/features/media/components/FilesTable";
+import { SolutionPreview } from "@/features/tasks/components/richTextEdito/TaskPreview";
+import { CommentCard, commentType } from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
+import GetStatusBadge from "@/features/tasks/components/taskStatusBadge";
 import {
+  acceptSolution,
+  createTaskComment,
+  requestRefund,
+} from "@/features/tasks/server/action";
+import {
+  SolutionById,
   taskRefundSchema,
   taskRefundSchemaType,
 } from "@/features/tasks/server/task-types";
@@ -31,15 +40,6 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  acceptSolution,
-  createTaskComment,
-  requestRefund,
-} from "../server/action";
-import { SolutionById } from "../server/task-types";
-import { SolutionPreview } from "./richTextEdito/TaskPreview";
-import { CommentCard, commentType } from "./richTextEdito/WorkspaceSidebar";
-import GetStatusBadge from "./taskStatusBadge";
 
 function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
