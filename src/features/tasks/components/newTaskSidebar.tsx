@@ -26,14 +26,14 @@ import {
 } from "@/components/ui/sheet";
 import { NewuseTask } from "@/contexts/TaskContext";
 import FileUploadUi from "@/features/media/components/FileUploadUi";
+import { CategoryComps } from "@/features/tasks/components/CategorySelectWrapper";
+import { getAllTaskDeadlines } from "@/features/tasks/server/data";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Loader2, Wand2 } from "lucide-react";
 import { useFormContext } from "react-hook-form";
 import TextareaAutosize from "react-textarea-autosize";
-import { getAllTaskDeadlines } from "../server/data";
-import { CategoryComps } from "./CategorySelectWrapper";
 
 export default function NewTaskSidebar({
   isDisabled,
