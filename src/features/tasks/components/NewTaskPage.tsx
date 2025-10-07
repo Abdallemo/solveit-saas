@@ -9,6 +9,13 @@ import {
   validateContentWithAi,
 } from "@/features/Ai/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
+import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
+import TaskPostingEditor from "@/features/tasks/components/richTextEdito/Tiptap";
+import {
+  autoSaveDraftTask,
+  createTaksPaymentCheckoutSession,
+} from "@/features/tasks/server/action";
+import { TaskSchema, taskSchema } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
@@ -19,13 +26,6 @@ import { CircleAlert, Loader } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import {
-  autoSaveDraftTask,
-  createTaksPaymentCheckoutSession,
-} from "../server/action";
-import { TaskSchema, taskSchema } from "../server/task-types";
-import NewTaskSidebar from "./newTaskSidebar";
-import TaskPostingEditor from "./richTextEdito/Tiptap";
 
 export default function TaskCreationPage({
   defaultValues,
