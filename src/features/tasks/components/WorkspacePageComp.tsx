@@ -6,6 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import { DeadlineProgress } from "@/features/tasks/components/DeadlineProgress";
+import WorkspaceSidebar from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
+import WorkspaceEditor from "@/features/tasks/components/richTextEdito/workspace/Tiptap";
+import {
+  autoSaveDraftWorkspace,
+  publishSolution,
+} from "@/features/tasks/server/action";
+import {
+  WorkpaceSchem,
+  WorkpaceSchemType,
+} from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { cn, getColorClass } from "@/lib/utils";
@@ -16,11 +27,6 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import { autoSaveDraftWorkspace, publishSolution } from "../server/action";
-import { WorkpaceSchem, WorkpaceSchemType } from "../server/task-types";
-import { DeadlineProgress } from "./DeadlineProgress";
-import WorkspaceSidebar from "./richTextEdito/WorkspaceSidebar";
-import WorkspaceEditor from "./richTextEdito/workspace/Tiptap";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
