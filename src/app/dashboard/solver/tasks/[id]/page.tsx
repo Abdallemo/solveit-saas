@@ -1,4 +1,4 @@
-import AuthGate from "@/components/AuthGate";
+import Gates from "@/components/GateComponents";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
@@ -20,7 +20,7 @@ export default async function Page({
 }) {
   const { id } = await params;
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
+  if (!currentUser || !currentUser.id) return <Gates.Auth />;
   if (!isValidUuid(id)) {
     console.error(`Invalid ID format: ${id}. Redirecting.`);
     redirect("/dashboard/");
