@@ -1,7 +1,5 @@
-import { BillingGate } from "@/components/AuthGate";
-import {
-  getServerUserSession
-} from "@/features/auth/server/actions";
+import Gates from "@/components/GateComponents";
+import { getServerUserSession } from "@/features/auth/server/actions";
 import { handlerStripeConnect } from "@/features/payments/server/action";
 import { getUserById } from "@/features/users/server/actions";
 
@@ -11,6 +9,6 @@ export default async function Page() {
   const userDb = await getUserById(user.id);
   if (!userDb) return;
   if (!userDb.stripeAccountLinked)
-    return <BillingGate action={handlerStripeConnect} />;
+    return <Gates.Billing action={handlerStripeConnect} />;
   return <div>Linked</div>;
 }
