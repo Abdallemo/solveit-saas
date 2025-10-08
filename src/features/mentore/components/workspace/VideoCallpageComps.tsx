@@ -50,15 +50,17 @@ export function VideoCallPageComps({
     switchCamera,
     switchMic,
     setToggleScreenShare,
+    localStream,
+    remoteStream,
+    remoteScreenStream,
   } = useMentorshipCall(userId, sessionId as string);
 
   const router = useRouter();
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
-  console.log("Local camera share:", localVideo.current?.srcObject);
-  console.log("Local screen share:", localScreenShare.current?.srcObject);
+
   const activeStreams = [
-    { ref: localVideo, label: "You", type: "camera" },
-    { ref: remoteVideo, label: "Peer", type: "camera" },
+    { ref: localStream, label: "You", type: "camera" },
+    { ref: remoteStream, label: "Peer", type: "camera" },
     localScreenShare && {
       ref: localScreenShare,
       label: "Your Screen",
@@ -158,36 +160,44 @@ export function VideoCallPageComps({
           "grid auto-rows-[minmax(250px,1fr)] gap-3 w-full h-full p-4 max-w-7xl mx-auto transition-all duration-300",
           getGridClass()
         )}>
-        {localVideo && (
-          <div
-            className={cn(
-              "relative rounded-2xl overflow-hidden bg-black shadow-lg border border-border transition-all duration-300 hover:scale-[1.01]",
-              expandedVideo === "local" ? "col-span-full row-span-2" : "",
-              expandedVideo && expandedVideo !== "local" ? "hidden" : ""
-            )}>
-            <video
-              ref={localVideo}
-              autoPlay
-              playsInline
-              muted
-              className="w-full h-full object-cover"
-            />
-            <div className="absolute bottom-3 left-3 text-xs bg-black/70 text-white px-3 py-1.5 rounded-lg backdrop-blur-sm font-medium">
-              You {!cameraOn && "(Camera Off)"}
+        <div
+          className={cn(
+            "relative rounded-2xl overflow-hidden bg-black shadow-lg border border-border transition-all duration-300 hover:scale-[1.01]",
+            expandedVideo === "local" ? "col-span-full row-span-2" : "",
+            expandedVideo && expandedVideo !== "local" ? "hidden" : ""
+          )}>
+          {localStream ? (
+            <>
+              <video
+                ref={localVideo}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-3 left-3 text-xs bg-black/70 text-white px-3 py-1.5 rounded-lg backdrop-blur-sm font-medium">
+                You {!cameraOn && <VideoOff size={20} />}{" "}
+                {!micOn && <MicOff size={20} />}
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute top-3 right-3 h-8 w-8 bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm rounded-lg"
+                onClick={() => toggleExpand("local")}>
+                {expandedVideo === "local" ? (
+                  <Minimize2 size={16} />
+                ) : (
+                  <Maximize2 size={16} />
+                )}
+              </Button>
+            </>
+          ) : (
+            <div className="flex flex-col h-full w-full items-center justify-center text-muted-foreground">
+              <User size={48} />
+              <p className="mt-2">Connecting...</p>
             </div>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-3 right-3 h-8 w-8 bg-black/50 hover:bg-black/70 text-white backdrop-blur-sm rounded-lg"
-              onClick={() => toggleExpand("local")}>
-              {expandedVideo === "local" ? (
-                <Minimize2 size={16} />
-              ) : (
-                <Maximize2 size={16} />
-              )}
-            </Button>
-          </div>
-        )}
+          )}
+        </div>
 
         <div
           className={cn(
@@ -195,7 +205,7 @@ export function VideoCallPageComps({
             expandedVideo === "remote" ? "col-span-full row-span-2" : "",
             expandedVideo && expandedVideo !== "remote" ? "hidden" : ""
           )}>
-          {remoteVideo ? (
+          {remoteStream ? (
             <>
               <video
                 ref={remoteVideo}
@@ -258,7 +268,7 @@ export function VideoCallPageComps({
           </div>
         )}
 
-        {remoteScreenShare.current?.srcObject && (
+        {remoteScreenStream && (
           <div
             className={cn(
               "relative rounded-2xl overflow-hidden bg-black shadow-lg border border-accent transition-all duration-300 hover:scale-[1.01]",
