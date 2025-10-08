@@ -1,0 +1,82 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Next.js Dev Server",
+      "type": "shell",
+      "command": "p dev",
+      "presentation": {
+        "reveal": "always", 
+        "panel": "dedicated",
+        "group": "dev-services"
+      },
+      "icon": {
+        "id": "zap",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Stripe Webhook Listener",
+      "type": "shell",
+      "command": "p stripe",
+      "presentation": {
+        "reveal": "silent", 
+        "panel": "dedicated",
+        "group": "dev-services"
+      },
+      "icon": {
+        "id": "credit-card",
+        "color": "terminal.ansiBlue"
+      }
+    },
+    {
+      "label": "Drizzle DB Studio",
+      "type": "shell",
+      "command": "p db:std",
+      "presentation": {
+        "reveal": "silent", 
+        "panel": "dedicated",
+        "group": "dev-services"
+      },
+      "icon": {
+        "id": "database",
+        "color": "terminal.ansiGreen"
+      }
+    },
+    {
+      "label": "Go Backend Microservice",
+      "type": "shell",
+      "command": "cd server && make run",
+      "presentation": {
+        "reveal": "always", 
+        "panel": "dedicated",
+        "group": "dev-services"
+      },
+      "icon": {
+        "id": "gear",
+        "color": "terminal.ansiCyan"
+      }
+    },
+    {
+      "label": "Start All Dev Services",
+      "dependsOn": [
+        "Next.js Dev Server",
+        "Stripe Webhook Listener",
+        "Drizzle DB Studio",
+        "Go Backend Microservice"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [],
+      "runOptions": {
+        "runOn": "folderOpen"
+      },
+      "icon": {
+        "id": "rocket",
+        "color": "terminal.ansiRed"
+      }
+    }
+  ]
+}
