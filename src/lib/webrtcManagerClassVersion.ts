@@ -108,6 +108,7 @@ class WebRTCManager implements SignalHandler {
       remoteScreenShare: this.remoteScreenShare,
       isScreenSharing: this.isScreenSharing,
     };
+    console.log("manager state changed");
     this.subscribers.forEach((cb) => cb(state));
   }
 
@@ -139,11 +140,16 @@ class WebRTCManager implements SignalHandler {
     this.pc = new RTCPeerConnection({ iceServers });
 
     this.pc.ontrack = (e) => {
-      const [stream] = e.streams;
+      let stream = e.streams[0] ?? new MediaStream([e.track]);
 
-      if (e.transceiver === this.screenTransceiver) {
+      const track = e.track;
+      const label = track.label.toLowerCase();
+
+      if (label.includes("screen") || label.includes("display")) {
+        console.log("Detected screen share track:", label);
         this.remoteScreenShare = stream;
       } else {
+        console.log("Detected camera/mic track:", label);
         this.remoteStream = stream;
       }
 
@@ -187,14 +193,26 @@ class WebRTCManager implements SignalHandler {
         video: { frameRate: 30 },
         audio: false,
       });
+      const videoTrack = screenStream.getVideoTracks()[0];
+      if (!videoTrack) {
+        console.error("No video track found");
+        return;
+      }
+      this.localScreenShare = new MediaStream([videoTrack]);
+      this.notify();
 
-      this.localScreenShare = screenStream;
+      console.info(
+        "from initLocalScreenStream assigned localScreenShare = ",
+        this.localScreenShare
+      );
       this.isScreenSharing = true;
-      const track = screenStream.getTracks()[0];
+
       if (this.screenTransceiver) {
-        await this.screenTransceiver.sender.replaceTrack(track);
+        await this.screenTransceiver.sender.replaceTrack(videoTrack);
       } else {
-        this.screenTransceiver = this.pc.addTransceiver(track);
+        this.screenTransceiver = this.pc.addTransceiver(videoTrack, {
+          direction: "sendrecv",
+        });
       }
       this.configureScreenTransceiver();
       this.notify();
@@ -230,7 +248,6 @@ class WebRTCManager implements SignalHandler {
 
     const track = this.localScreenShare.getVideoTracks()[0];
     const sender = this.screenTransceiver.sender;
-    await sender.replaceTrack(track);
 
     try {
       const codecs = RTCRtpSender.getCapabilities("video")?.codecs || [];
@@ -368,6 +385,10 @@ class WebRTCManager implements SignalHandler {
         this.remoteStream = null;
         this.notify();
       }
+      if (this.remoteScreenShare) {
+        this.remoteScreenShare = null;
+        this.notify();
+      }
     }, 300);
   }
 
@@ -456,7 +477,6 @@ class WebRTCManager implements SignalHandler {
       await sender.replaceTrack(newTrack);
     }
 
-    
     const oldAudio = this.localStream.getAudioTracks()[0];
     if (oldAudio) {
       this.localStream.removeTrack(oldAudio);
