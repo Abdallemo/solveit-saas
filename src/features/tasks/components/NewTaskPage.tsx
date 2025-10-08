@@ -1,6 +1,6 @@
 "use client";
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading";
-import AuthGate from "@/components/AuthGate";
+import Gates from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { env } from "@/env/client";
@@ -129,7 +129,7 @@ export default function TaskCreationPage({
   ]);
 
   if (authLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
+  if (isBlocked) return <Gates.Auth />;
   async function onSubmit(data: TaskSchema) {
     try {
       toast.loading("checking content againt our rules....", { id: "openai" });
