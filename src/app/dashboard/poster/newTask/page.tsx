@@ -1,14 +1,12 @@
-import AuthGate from "@/components/AuthGate";
+import Gates from "@/components/GateComponents";
 import { NewTaskProvider } from "@/contexts/TaskContext";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
-import {
-  getDraftTaskWithDefualtVal,
-} from "@/features/tasks/server/data";
+import { getDraftTaskWithDefualtVal } from "@/features/tasks/server/data";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 export default async function Page() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
+  if (!currentUser || !currentUser.id) return <Gates.Auth />;
 
   const draft = await getDraftTaskWithDefualtVal(currentUser.id);
   const defaultValues: TaskSchema = {
