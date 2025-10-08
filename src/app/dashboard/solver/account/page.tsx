@@ -1,17 +1,16 @@
-import AuthGate from "@/components/AuthGate";
+import Gates from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getAllCustomerPaymentMethods } from "@/features/payments/server/action";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import AccountComponent from "@/features/users/components/poster/AccountComponent";
 import { isUserAccountOauth } from "@/features/users/server/actions";
-import { ArrowLeft, Settings } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 export default async function SolverAccountPage() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
+  if (!currentUser || !currentUser.id) return <Gates.Auth />;
   const refress =
     (await getServerReturnUrl()) ??
     `/dashboard/${currentUser.role?.toLocaleLowerCase()}/`;
