@@ -1,4 +1,4 @@
-import AuthGate from "@/components/AuthGate";
+import Gates from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getAllCustomerPaymentMethods } from "@/features/payments/server/action";
@@ -7,11 +7,10 @@ import AccountComponent from "@/features/users/components/poster/AccountComponen
 import { isUserAccountOauth } from "@/features/users/server/actions";
 import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
-import React from "react";
 
 export default async function PosterAccountPage() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
+  if (!currentUser || !currentUser.id) return <Gates.Auth />;
 
   const isOauthUser = await isUserAccountOauth(currentUser.id);
   const cards = await getAllCustomerPaymentMethods(currentUser.id);
