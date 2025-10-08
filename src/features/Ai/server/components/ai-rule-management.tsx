@@ -1,29 +1,28 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import Loading from "@/app/loading";
+import Gates from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
-  CardTitle,
+  CardTitle
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Plus, Edit2 } from "lucide-react";
-import { addNewRule, AiRule, deleteRule } from "../action";
+import { useAuthGate } from "@/hooks/useAuthGate";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { Edit2, Plus, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import useCurrentUser from "@/hooks/useCurrentUser";
-import { useAuthGate } from "@/hooks/useAuthGate";
-import AuthGate from "@/components/AuthGate";
-import Loading from "@/app/loading";
-import { useRouter } from "next/navigation";
+import { addNewRule, AiRule, deleteRule } from "../action";
 
 const AiSchema = z.object({
   rule: z
@@ -95,7 +94,7 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
     form.reset({ description: "", rule: "" });
   };
   if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
+  if (isBlocked) return <Gates.Auth />;
 
   return (
     <div className="w-4/5 ">
