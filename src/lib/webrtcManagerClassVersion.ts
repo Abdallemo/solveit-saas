@@ -11,8 +11,11 @@ type SignalMessage = {
 type WebRTCState = {
   localStream: MediaStream | null;
   remoteStream: MediaStream | null;
+  localScreenShare: MediaStream | null;
+  remoteScreenShare: MediaStream | null;
   cameraOn: boolean;
   micOn: boolean;
+  isScreenSharing: boolean;
 };
 
 type Subscriber = (state: WebRTCState) => void;
@@ -76,15 +79,18 @@ class WebRTCManager implements SignalHandler {
   private signaling: SignalingService;
   private localStream: MediaStream | null = null;
   private remoteStream: MediaStream | null = null;
+  private localScreenShare: MediaStream | null = null;
+  private remoteScreenShare: MediaStream | null = null;
   private pendingCandidates: RTCIceCandidateInit[] = [];
-  private makingOffer = false;
-  private isPolite = true;
   private subscribers = new Set<Subscriber>();
-
-  private cameraOn = true;
-  private micOn = true;
+  private screenTransceiver: RTCRtpTransceiver | null = null;
   private readonly userId: string;
   private readonly sessionId: string;
+  private makingOffer = false;
+  private isPolite = true;
+  private isScreenSharing = false;
+  private cameraOn = true;
+  private micOn = true;
 
   constructor({ userId, sessionId }: ManagerOptions) {
     this.userId = userId;
@@ -98,16 +104,22 @@ class WebRTCManager implements SignalHandler {
       remoteStream: this.remoteStream,
       cameraOn: this.cameraOn,
       micOn: this.micOn,
+      localScreenShare: this.localScreenShare,
+      remoteScreenShare: this.remoteScreenShare,
+      isScreenSharing: this.isScreenSharing,
     };
     this.subscribers.forEach((cb) => cb(state));
   }
 
   private async init() {
     if (typeof window === "undefined") return;
-
-    await this.initPeerConnection();
-    await this.initLocalStream();
-    this.signaling.connect();
+    try {
+      await this.initPeerConnection();
+      await this.initLocalStream();
+      this.signaling.connect();
+    } catch (error) {
+      console.error(error);
+    }
   }
 
   private async initPeerConnection() {
@@ -127,7 +139,14 @@ class WebRTCManager implements SignalHandler {
     this.pc = new RTCPeerConnection({ iceServers });
 
     this.pc.ontrack = (e) => {
-      this.remoteStream = e.streams[0];
+      const [stream] = e.streams;
+
+      if (e.transceiver === this.screenTransceiver) {
+        this.remoteScreenShare = stream;
+      } else {
+        this.remoteStream = stream;
+      }
+
       this.notify();
     };
 
@@ -160,6 +179,29 @@ class WebRTCManager implements SignalHandler {
       console.error("getUserMedia error:", err);
     }
   }
+  private async initLocalScreenStream() {
+    if (!this.pc) return;
+
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: { frameRate: 30 },
+        audio: false,
+      });
+
+      this.localScreenShare = screenStream;
+      this.isScreenSharing = true;
+      const track = screenStream.getTracks()[0];
+      if (this.screenTransceiver) {
+        await this.screenTransceiver.sender.replaceTrack(track);
+      } else {
+        this.screenTransceiver = this.pc.addTransceiver(track);
+      }
+      this.configureScreenTransceiver();
+      this.notify();
+    } catch (err) {
+      console.error("getUserMedia error:", err);
+    }
+  }
 
   private async configureVideoTransceiver() {
     if (!this.pc) return;
@@ -182,6 +224,33 @@ class WebRTCManager implements SignalHandler {
       params.encodings[0].priority = "high";
       await sender.setParameters(params);
     }
+  }
+  private async configureScreenTransceiver() {
+    if (!this.pc || !this.localScreenShare || !this.screenTransceiver) return;
+
+    const track = this.localScreenShare.getVideoTracks()[0];
+    const sender = this.screenTransceiver.sender;
+    await sender.replaceTrack(track);
+
+    try {
+      const codecs = RTCRtpSender.getCapabilities("video")?.codecs || [];
+      const h264 = codecs.filter((c) => c.mimeType === "video/H264");
+      const rest = codecs.filter((c) => c.mimeType !== "video/H264");
+      this.screenTransceiver.setCodecPreferences([...h264, ...rest]);
+    } catch (err) {
+      console.warn("setCodecPreferences unavailable or failed", err);
+    }
+
+    track.onended = async () => {
+      await this.toggleScreenShare(false);
+      this.remoteScreenShare = null;
+    };
+
+    const params = sender.getParameters();
+    params.encodings ??= [{}];
+    params.encodings[0].maxBitrate = 2_500_000;
+    params.encodings[0].maxFramerate = 30;
+    await sender.setParameters(params);
   }
 
   private async handleNegotiation() {
@@ -307,8 +376,11 @@ class WebRTCManager implements SignalHandler {
     cb({
       localStream: this.localStream,
       remoteStream: this.remoteStream,
+      localScreenShare: this.localScreenShare,
+      remoteScreenShare: this.remoteScreenShare,
       cameraOn: this.cameraOn,
       micOn: this.micOn,
+      isScreenSharing: this.isScreenSharing,
     });
     return () => this.subscribers.delete(cb);
   }
@@ -324,6 +396,75 @@ class WebRTCManager implements SignalHandler {
     this.localStream?.getAudioTracks().forEach((t) => (t.enabled = on));
     this.notify();
   };
+
+  public toggleScreenShare = async (on: boolean) => {
+    if (!this.pc) return;
+
+    if (on) {
+      await this.initLocalScreenStream();
+    } else {
+      if (this.localScreenShare) {
+        this.localScreenShare.getTracks().forEach((t) => t.stop());
+        this.localScreenShare = null;
+      }
+      this.isScreenSharing = false;
+      this.notify();
+
+      if (this.screenTransceiver) {
+        await this.screenTransceiver.sender.replaceTrack(null);
+        this.screenTransceiver.direction = "inactive";
+        this.screenTransceiver = null;
+      }
+    }
+  };
+
+  public async listDevices() {
+    const devices = await navigator.mediaDevices.enumerateDevices();
+    return {
+      cameras: devices.filter((d) => d.kind === "videoinput"),
+      microphones: devices.filter((d) => d.kind === "audioinput"),
+    };
+  }
+  public async switchCamera(deviceId: string) {
+    if (!this.localStream) return;
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      video: { deviceId: { exact: deviceId } },
+      audio: false,
+    });
+
+    const newTrack = newStream.getVideoTracks()[0];
+    const sender = this.pc?.getSenders().find((s) => s.track?.kind === "video");
+
+    if (sender && newTrack) {
+      await sender.replaceTrack(newTrack);
+    }
+
+    this.localStream = newStream;
+    this.notify();
+  }
+  public async switchMic(deviceId: string) {
+    if (!this.localStream) return;
+    const newStream = await navigator.mediaDevices.getUserMedia({
+      audio: { deviceId: { exact: deviceId } },
+      video: false,
+    });
+
+    const newTrack = newStream.getAudioTracks()[0];
+    const sender = this.pc?.getSenders().find((s) => s.track?.kind === "audio");
+
+    if (sender && newTrack) {
+      await sender.replaceTrack(newTrack);
+    }
+
+    
+    const oldAudio = this.localStream.getAudioTracks()[0];
+    if (oldAudio) {
+      this.localStream.removeTrack(oldAudio);
+      oldAudio.stop();
+    }
+    this.localStream.addTrack(newTrack);
+    this.notify();
+  }
 
   public leaveCall = async () => {
     try {
@@ -343,6 +484,9 @@ class WebRTCManager implements SignalHandler {
       this.localStream = null;
     }
     this.remoteStream = null;
+    this.screenTransceiver = null;
+    this.localScreenShare = null;
+    this.remoteScreenShare = null;
 
     if (this.pc) {
       this.pc.close();
