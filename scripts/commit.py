@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = "migration changes"
+commit_message = "webrtc changes"
 
 repo = Repo(repo_path)
 
