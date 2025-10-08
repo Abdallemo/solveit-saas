@@ -199,6 +199,7 @@ export default function MentorshipWorkspace() {
               </div>
             </div>
           )}
+
           <Button size="sm" className="gap-2" asChild>
             <Link href={`${path}/video-call`}>
               <Video className="h-4 w-4" />
