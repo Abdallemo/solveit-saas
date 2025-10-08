@@ -306,14 +306,14 @@ export const MenuItemsSolver: MenuItem[] = [
   {
     type: "category",
     title: "Mentorship",
-    url: "/dashboard/solver/mentor",
+    url: "/dashboard/solver/sessions",
     icon: LucideUsers,
     child: [
       {
         type: "link",
 
         title: "Sessions",
-        url: "/dashboard/solver/mentor",
+        url: "/dashboard/solver/sessions",
         icon: LucideUserPlus,
       },
       {
