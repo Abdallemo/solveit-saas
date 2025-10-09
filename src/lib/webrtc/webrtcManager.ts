@@ -483,7 +483,6 @@ export function getWebRTCManager(userId: string, sessionId: string) {
   }
   return managers[key];
 }
-
 class WebRTCManager implements SignalHandler {
   private readonly userId: string;
   private readonly sessionId: string;
