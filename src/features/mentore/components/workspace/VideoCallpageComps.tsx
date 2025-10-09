@@ -7,7 +7,9 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { useMentorshipCall } from "@/hooks/use-video-call";
+import useCurrentUser from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -24,7 +26,7 @@ import {
   VideoOff,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 export function VideoCallPageComps({
   userId,
@@ -57,6 +59,46 @@ export function VideoCallPageComps({
 
   const router = useRouter();
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
+  const { user } = useCurrentUser();
+  const { mentorshipSession } = useMentorshipSession();
+  useEffect(() => {
+    if (expandedVideo) {
+      const stillExists =
+        (expandedVideo === "local" && localStream) ||
+        (expandedVideo === "remote" && remoteStream) ||
+        (expandedVideo === "localScreen" && localScreenShare) ||
+        (expandedVideo === "remoteScreen" && remoteScreenStream);
+
+      if (!stillExists) {
+        const timer = setTimeout(() => setExpandedVideo(null), 200);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [
+    expandedVideo,
+    localStream,
+    remoteStream,
+    localScreenShare,
+    remoteScreenStream,
+  ]);
+
+  const remotePeerName = (() => {
+    if (!user || !mentorshipSession?.bookedSessions) {
+      return "Peer";
+    }
+
+    const session = mentorshipSession.bookedSessions;
+
+    if (user.id === session.posterId) {
+      return session.solver.displayName || "Solver";
+    }
+
+    if (user.id === session.solverId) {
+      return session.poster.name || "Poster";
+    }
+
+    return "Peer";
+  })();
 
   const activeStreams = [
     { ref: localStream, label: "You", type: "camera" },
@@ -176,8 +218,11 @@ export function VideoCallPageComps({
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-3 left-3 text-xs bg-black/70 text-white px-3 py-1.5 rounded-lg backdrop-blur-sm font-medium">
-                You {!cameraOn && <VideoOff size={20} />}{" "}
-                {!micOn && <MicOff size={20} />}
+                <div className="flex gap-2 justify-center items-center">
+                  <span>You</span>
+                  <span>{!cameraOn && <VideoOff size={10} />}</span>
+                  <span>{!micOn && <MicOff size={10} />}</span>
+                </div>
               </div>
               <Button
                 variant="ghost"
@@ -214,7 +259,7 @@ export function VideoCallPageComps({
                 className="w-full h-full object-cover"
               />
               <div className="absolute bottom-3 left-3 text-xs bg-black/70 text-white px-3 py-1.5 rounded-lg backdrop-blur-sm font-medium">
-                Peer
+                {remotePeerName}
               </div>
               <Button
                 variant="ghost"
@@ -231,7 +276,7 @@ export function VideoCallPageComps({
           ) : (
             <div className="flex flex-col h-full w-full items-center justify-center text-muted-foreground">
               <User size={48} />
-              <p className="mt-2">Waiting for peer...</p>
+              <p className="mt-2">Waiting for {remotePeerName}...</p>
             </div>
           )}
         </div>
@@ -286,7 +331,7 @@ export function VideoCallPageComps({
             />
             <div className="absolute bottom-3 left-3 text-xs bg-accent/90 text-accent-foreground px-3 py-1.5 rounded-lg backdrop-blur-sm flex items-center gap-1.5 font-medium">
               <Monitor size={14} />
-              Peer's Screen
+              {remotePeerName}'s Screen
             </div>
             <Button
               variant="ghost"
