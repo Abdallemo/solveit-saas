@@ -26,11 +26,12 @@ type Comment struct {
 	Owner     user.PublicUser `json:"owner"`
 }
 type SignalMessage struct {
-	From      string          `json:"from"`
-	To        string          `json:"to"`
-	Type      string          `json:"type"`
-	Payload   json.RawMessage `json:"payload"`
-	SessionId string          `json:"sessionId"`
+	From           string          `json:"from"`
+	To             string          `json:"to"`
+	Type           string          `json:"type"`
+	Payload        json.RawMessage `json:"payload"`
+	SessionId      string          `json:"sessionId"`
+	ConnectionType string          `json:"connectionType"`
 }
 
 type WsNotification struct {
