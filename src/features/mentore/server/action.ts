@@ -515,6 +515,7 @@ export async function getMentorSession(sessionId: string) {
             },
           },
         },
+        bookedSessions:{with:{poster:true,solver:true}}
       },
     });
     return session;
