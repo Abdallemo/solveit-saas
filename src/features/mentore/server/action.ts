@@ -35,6 +35,7 @@ import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { calculateSlotDuration, daysInWeek, sessionUtilsV2 } from "@/lib/utils";
+import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { and, count, eq, or } from "drizzle-orm";
@@ -616,13 +617,6 @@ export async function sendMentorMessages(values: {
     throw new Error("unable to send message");
   }
 }
-type SignalMessage = {
-  from: string;
-  to: string;
-  type: "offer" | "answer" | "candidate" | "leave";
-  payload: any;
-  sessionId: string;
-};
 
 export async function sendSignalMessage(message: SignalMessage) {
   await fetch(`${env.GO_API_URL}/send-signal`, {
