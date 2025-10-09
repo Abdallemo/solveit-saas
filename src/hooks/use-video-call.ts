@@ -1,4 +1,4 @@
-import { getWebRTCManager } from "@/lib/webrtcManagerClassVersion";
+import { getWebRTCManager } from "@/lib/webrtc/webrtcManagerClassVersion3";
 import { useEffect, useRef, useState } from "react";
 
 export function useMentorshipCall(userId: string, sessionId: string) {
