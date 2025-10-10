@@ -2,7 +2,8 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = "vscode task changes"
+commit_message = """Add persistent floating video UI via Zustand global state
+Implements a global Zustand store to cache live WebRTC stream data, decoupling it from unmounting route components. This fixes state loss on navigation and enables the display of a persistent, minimized video call interface in the main chat view."""
 
 repo = Repo(repo_path)
 
