@@ -4,48 +4,69 @@ import type React from "react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Maximize2, Minimize2, Move, X } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
-
-interface Position {
-  x: number;
-  y: number;
-}
+import {
+  GripVertical,
+  Maximize2,
+  Mic,
+  MicOff,
+  Minimize2,
+  Video,
+  VideoOff,
+} from "lucide-react";
+import { RefObject, useEffect, useRef, useState } from "react";
 
 interface FloatingVideoProps {
-  children: React.ReactNode;
-  defaultMinimized?: boolean;
-  onClose?: () => void;
+  videoRef: RefObject<HTMLVideoElement | null>;
+  isVisible?: boolean;
+  isMuted?: boolean;
+  isCameraOff?: boolean;
+  onToggleMute?: () => void;
+  onToggleCamera?: () => void;
   className?: string;
-  minimizedSize?: { width: number; height: number };
-  expandedSize?: { width: number; height: number };
 }
 
-export function FloatingVideo({
-  children,
-  defaultMinimized = false,
-  onClose,
-  className,
-  minimizedSize = { width: 192, height: 112 }, // w-48 h-28
-  expandedSize = { width: 320, height: 240 }, // w-80 h-60
-}: FloatingVideoProps) {
-  const [isMinimized, setIsMinimized] = useState(defaultMinimized);
-  const [isDragging, setIsDragging] = useState(false);
-  const [position, setPosition] = useState<Position>({ x: 20, y: 20 });
-  const [dragOffset, setDragOffset] = useState<Position>({ x: 0, y: 0 });
-  const [isVisible, setIsVisible] = useState(true);
+type ZoomLevel = "small" | "medium" | "large";
 
+const ZOOM_SIZES = {
+  small: { width: 200, height: 150 },
+  medium: { width: 280, height: 210 },
+  large: { width: 360, height: 270 },
+};
+
+export function FloatingVideo({
+  videoRef,
+  isVisible = true,
+  isMuted = false,
+  isCameraOff = false,
+  onToggleMute,
+  onToggleCamera,
+  className,
+}: FloatingVideoProps) {
+  const [position, setPosition] = useState({ x: 20, y: 20 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [zoomLevel, setZoomLevel] = useState<ZoomLevel>("medium");
+  const [showControls, setShowControls] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (!containerRef.current) return;
+  const currentSize = ZOOM_SIZES[zoomLevel];
 
-    const rect = containerRef.current.getBoundingClientRect();
-    setDragOffset({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top,
+  const cycleZoom = () => {
+    setZoomLevel((prev) => {
+      if (prev === "small") return "medium";
+      if (prev === "medium") return "large";
+      return "small";
     });
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button")) return;
+
     setIsDragging(true);
+    setDragOffset({
+      x: e.clientX - position.x,
+      y: e.clientY - position.y,
+    });
   };
 
   useEffect(() => {
@@ -55,13 +76,13 @@ export function FloatingVideo({
       const newX = e.clientX - dragOffset.x;
       const newY = e.clientY - dragOffset.y;
 
-      const currentSize = isMinimized ? minimizedSize : expandedSize;
-      const maxX = window.innerWidth - currentSize.width;
-      const maxY = window.innerHeight - currentSize.height;
+      // Keep within viewport bounds
+      const maxX = window.innerWidth - currentSize.width - 20;
+      const maxY = window.innerHeight - currentSize.height - 20;
 
       setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY)),
+        x: Math.max(20, Math.min(newX, maxX)),
+        y: Math.max(20, Math.min(newY, maxY)),
       });
     };
 
@@ -78,44 +99,17 @@ export function FloatingVideo({
       document.removeEventListener("mousemove", handleMouseMove);
       document.removeEventListener("mouseup", handleMouseUp);
     };
-  }, [isDragging, dragOffset, isMinimized, minimizedSize, expandedSize]);
-
-  const toggleMinimize = () => {
-    setIsMinimized(!isMinimized);
-  };
-
-  const handleClose = () => {
-    if (onClose) {
-      onClose();
-    } else {
-      setIsVisible(false);
-    }
-  };
-
-  useEffect(() => {
-    const updatePosition = () => {
-      const currentSize = isMinimized ? minimizedSize : expandedSize;
-      setPosition({
-        x: window.innerWidth - currentSize.width - 20,
-        y: window.innerHeight - currentSize.height - 20,
-      });
-    };
-
-    updatePosition();
-    window.addEventListener("resize", updatePosition);
-    return () => window.removeEventListener("resize", updatePosition);
-  }, [isMinimized, minimizedSize, expandedSize]);
+  }, [isDragging, dragOffset, currentSize]);
 
   if (!isVisible) return null;
-
-  const currentSize = isMinimized ? minimizedSize : expandedSize;
 
   return (
     <div
       ref={containerRef}
       className={cn(
-        "fixed z-50 bg-background rounded-lg shadow-2xl border border-border overflow-hidden transition-all duration-300 ease-in-out",
-        isDragging ? "cursor-grabbing scale-105 shadow-3xl" : "cursor-grab",
+        "fixed z-50 rounded-lg overflow-hidden shadow-2xl border border-border/50 backdrop-blur-sm",
+        !isDragging && "transition-all duration-200",
+        isDragging ? "cursor-grabbing scale-105" : "cursor-grab",
         className
       )}
       style={{
@@ -124,54 +118,96 @@ export function FloatingVideo({
         width: `${currentSize.width}px`,
         height: `${currentSize.height}px`,
       }}
-      onMouseDown={handleMouseDown}>
-      <div className="w-full h-full relative">{children}</div>
+      onMouseDown={handleMouseDown}
+      onMouseEnter={() => setShowControls(true)}
+      onMouseLeave={() => setShowControls(false)}>
+      {/* Video Container */}
+      <div className="relative w-full h-full bg-black">
+        <video
+          ref={videoRef}
+          className="w-full h-full object-cover"
+          autoPlay
+          playsInline
+        />
+        {/* ) : (
+          <div className="w-full h-full flex items-center justify-center bg-secondary">
+            <Video className="w-12 h-12 text-muted-foreground" />
+          </div>
+        )} */}
 
-      <div className="absolute top-2 left-2 opacity-0 hover:opacity-100 transition-opacity">
-        <div className="bg-black/50 rounded p-1">
-          <Move className="w-4 h-4 text-white" />
+        {/* Camera Off Overlay */}
+        {isCameraOff && (
+          <div className="absolute inset-0 bg-secondary flex items-center justify-center">
+            <VideoOff className="w-12 h-12 text-muted-foreground" />
+          </div>
+        )}
+
+        {/* Drag Handle */}
+        <div className="absolute top-2 left-2 text-white/60 pointer-events-none">
+          <GripVertical className="w-4 h-4" />
         </div>
-      </div>
 
-      <div
-        className={cn(
-          "absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 flex flex-col justify-end pointer-events-none",
-          isMinimized && "opacity-100"
-        )}>
-        <div className="p-3 flex items-center justify-end pointer-events-auto">
-          <div className="flex items-center gap-1">
+        {/* Controls Overlay */}
+        <div
+          className={cn(
+            "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 via-black/50 to-transparent p-3 transition-opacity duration-200",
+            showControls ? "opacity-100" : "opacity-0"
+          )}>
+          <div className="flex items-center justify-center gap-2">
+            {/* Mute Button */}
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
-              className="h-8 w-8 p-0 text-white hover:bg-white/20"
+              className={cn(
+                "h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0",
+                isMuted && "bg-destructive/80 hover:bg-destructive"
+              )}
               onClick={(e) => {
                 e.stopPropagation();
-                toggleMinimize();
+                onToggleMute?.();
               }}>
-              {isMinimized ? (
-                <Maximize2 className="w-4 h-4" />
+              {isMuted ? (
+                <MicOff className="h-4 w-4" />
               ) : (
-                <Minimize2 className="w-4 h-4" />
+                <Mic className="h-4 w-4" />
               )}
             </Button>
 
+            {/* Camera Button */}
             <Button
-              size="sm"
+              size="icon"
               variant="ghost"
-              className="h-8 w-8 p-0 text-white hover:bg-white/20"
+              className={cn(
+                "h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0",
+                isCameraOff && "bg-destructive/80 hover:bg-destructive"
+              )}
               onClick={(e) => {
                 e.stopPropagation();
-                handleClose();
+                onToggleCamera?.();
               }}>
-              <X className="w-4 h-4" />
+              {isCameraOff ? (
+                <VideoOff className="h-4 w-4" />
+              ) : (
+                <Video className="h-4 w-4" />
+              )}
+            </Button>
+
+            {/* Zoom Button */}
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0"
+              onClick={(e) => {
+                e.stopPropagation();
+                cycleZoom();
+              }}>
+              {zoomLevel === "large" ? (
+                <Minimize2 className="h-4 w-4" />
+              ) : (
+                <Maximize2 className="h-4 w-4" />
+              )}
             </Button>
           </div>
-        </div>
-      </div>
-
-      <div className="absolute bottom-0 right-0 w-4 h-4 opacity-0 hover:opacity-100 transition-opacity">
-        <div className="w-full h-full bg-white/20 rounded-tl-lg flex items-end justify-end p-1">
-          <div className="w-2 h-2 border-r-2 border-b-2 border-white/60" />
         </div>
       </div>
     </div>
