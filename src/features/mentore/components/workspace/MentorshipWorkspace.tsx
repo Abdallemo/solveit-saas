@@ -13,12 +13,10 @@ import {
   FileIconComponent,
 } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import type { MentorChatSession } from "@/features/mentore/server/types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useCallStore } from "@/hooks/useCallStore";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
-import useWebSocket from "@/hooks/useWebSocket";
 import { sessionUtilsV2, supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -41,14 +39,17 @@ import { FloatingVideo } from "../floating-video";
 
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace() {
-  const { mentorshipSession: session, updateSession } = useMentorshipSession();
+  const {
+    mentorshipSession: session,
+    uploadingFiles,
+    setUploadingFiles,
+  } = useMentorshipSession();
   const { isCallActive, cameraOn, micOn, localStream, remoteVideo } =
     useCallStore();
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const messageRef = useRef<HTMLDivElement>(null);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
@@ -79,22 +80,6 @@ export default function MentorshipWorkspace() {
     });
     console.log(`Deleted file: ${filename}`);
   };
-  useWebSocket<MentorChatSession>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
-    {
-      onMessage: (msg) => {
-        updateSession({
-          chats: [
-            ...(session?.chats || []),
-            { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
-          ],
-        });
-        if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
-          setUploadingFiles([]);
-        }
-      },
-    }
-  );
 
   const { mutate: sendMessage } = useMutation({
     mutationFn: sendMentorMessages,
