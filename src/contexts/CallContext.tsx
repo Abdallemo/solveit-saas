@@ -1,47 +1,75 @@
 "use client";
 import {
   createContext,
-  Dispatch,
+  ReactNode,
   RefObject,
-  SetStateAction,
   useContext,
   useRef,
   useState,
 } from "react";
-type CallContextType = {
+
+type MentorshipCallContextType = {
   localVideo: RefObject<HTMLVideoElement | null>;
   remoteVideo: RefObject<HTMLVideoElement | null>;
-  setCameraOn: Dispatch<SetStateAction<boolean>>;
+  localScreenShare: RefObject<HTMLVideoElement | null>;
+  remoteScreenShare: RefObject<HTMLVideoElement | null>;
+
+  localStream: MediaStream | null;
+  remoteStream: MediaStream | null;
+  localScreenStream: MediaStream | null;
+  remoteScreenStream: MediaStream | null;
+
   cameraOn: boolean;
-  setMicOn: Dispatch<SetStateAction<boolean>>;
   micOn: boolean;
+
+  setState: (state: Partial<MentorshipCallContextType>) => void;
 };
 
-const CallContext = createContext<CallContextType | null>(null);
+const MentorshipCallContext = createContext<MentorshipCallContextType | null>(
+  null
+);
 
-export function CallProvider({ children }: { children: React.ReactNode }) {
+type ProviderProps = { children: ReactNode };
+
+export const MentorshipCallProvider: React.FC<ProviderProps> = ({
+  children,
+}) => {
   const localVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
-  const [cameraOn, setCameraOn] = useState(true);
-  const [micOn, setMicOn] = useState(true);
+  const localScreenShare = useRef<HTMLVideoElement>(null);
+  const remoteScreenShare = useRef<HTMLVideoElement>(null);
+
+  const [state, setStateInternal] = useState<
+    Omit<MentorshipCallContextType, "setState">
+  >({
+    localVideo,
+    remoteVideo,
+    localScreenShare,
+    remoteScreenShare,
+    localStream: null,
+    remoteStream: null,
+    localScreenStream: null,
+    remoteScreenStream: null,
+    cameraOn: true,
+    micOn: true,
+  });
+
+  const setState = (newState: Partial<MentorshipCallContextType>) => {
+    setStateInternal((prev) => ({ ...prev, ...newState }));
+  };
 
   return (
-    <CallContext.Provider
-      value={{
-        localVideo,
-        remoteVideo,
-        cameraOn,
-        setCameraOn,
-        micOn,
-        setMicOn,
-      }}>
+    <MentorshipCallContext.Provider value={{ ...state, setState }}>
       {children}
-    </CallContext.Provider>
+    </MentorshipCallContext.Provider>
   );
-}
+};
 
-export function useWebRTCCall() {
-  const ctx = useContext(CallContext);
-  if (!ctx) throw new Error("useCallContext must be used inside CallProvider");
+export function useMentorshipCallContext() {
+  const ctx = useContext(MentorshipCallContext);
+  if (!ctx)
+    throw new Error(
+      "useMentorshipCallContext must be used inside MentorshipCallProvider"
+    );
   return ctx;
 }
