@@ -6,7 +6,7 @@
       "type": "shell",
       "command": "p dev",
       "presentation": {
-        "reveal": "always", 
+        "reveal": "always",
         "panel": "dedicated",
         "group": "dev-services"
       },
@@ -16,11 +16,42 @@
       }
     },
     {
+      "label": "Next.js Build Server",
+      "type": "shell",
+      "command": "git rev-parse --show-toplevel >/dev/null 2>&1;CURRENT_HASH=$(git rev-parse HEAD | tr -d '[:space:]'); BUILD_HASH=$(cat ./.next/BUILD_ID 2>/dev/null | tr -d '[:space:]' || true); if [ \"$CURRENT_HASH\" = \"$BUILD_HASH\" ]; then pnpm start -p 3001; else pnpm build && pnpm start -p 3001; fi",
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "dev-services"
+      },
+      "options": {
+        "shell": {
+          "executable": "bash",
+          "args": ["-c"]
+        }
+      },
+      "icon": {
+        "id": "file-binary",
+        "color": "terminal.ansiYellow"
+      }
+    },
+    {
+      "label": "Check Shell",
+      "type": "shell",
+      "command": "echo $0 && which bash",
+      "options": {
+        "shell": {
+          "executable": "bash",
+          "args": ["-c"]
+        }
+      }
+    },
+    {
       "label": "Stripe Webhook Listener",
       "type": "shell",
       "command": "p stripe",
       "presentation": {
-        "reveal": "silent", 
+        "reveal": "silent",
         "panel": "dedicated",
         "group": "dev-services"
       },
@@ -34,7 +65,7 @@
       "type": "shell",
       "command": "p db:std",
       "presentation": {
-        "reveal": "silent", 
+        "reveal": "silent",
         "panel": "dedicated",
         "group": "dev-services"
       },
@@ -48,7 +79,7 @@
       "type": "shell",
       "command": "cd server && make run",
       "presentation": {
-        "reveal": "always", 
+        "reveal": "always",
         "panel": "dedicated",
         "group": "dev-services"
       },
@@ -61,6 +92,7 @@
       "label": "Start All Dev Services",
       "dependsOn": [
         "Next.js Dev Server",
+        "Next.js Build Server",
         "Stripe Webhook Listener",
         "Drizzle DB Studio",
         "Go Backend Microservice"
