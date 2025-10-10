@@ -15,6 +15,7 @@ import {
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import type { MentorChatSession } from "@/features/mentore/server/types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useCallStore } from "@/hooks/useCallStore";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import useWebSocket from "@/hooks/useWebSocket";
@@ -36,11 +37,13 @@ import type React from "react";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
+import { FloatingVideo } from "../floating-video";
 
 type Files = { [key: string]: string };
 export default function MentorshipWorkspace() {
   const { mentorshipSession: session, updateSession } = useMentorshipSession();
-
+  const { isCallActive, cameraOn, micOn, localStream, remoteVideo } =
+    useCallStore();
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -485,6 +488,7 @@ export default function MentorshipWorkspace() {
               </Badge>
             </div>
           </div>
+
           <ScrollArea className="flex-1 h-0">
             {allFiles.length > 0 ? (
               <div className="flex flex-col w-fit h-100 gap-2 ">
@@ -520,6 +524,16 @@ export default function MentorshipWorkspace() {
             )}
           </ScrollArea>
         </div>
+      )}
+      {isCallActive && (
+        <FloatingVideo
+          videoRef={remoteVideo}
+          isVisible={true}
+          isMuted={true}
+          isCameraOff={false}
+          onToggleMute={() => {}}
+          onToggleCamera={() => {}}
+        />
       )}
     </main>
   );
