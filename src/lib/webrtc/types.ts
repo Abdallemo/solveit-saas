@@ -13,4 +13,5 @@ export type SignalMessage = {
   payload: any;
   sessionId: string;
   connectionType?: connType;
+  states?: { audioStatus: "muted" | "unmuted" };
 };
