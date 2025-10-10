@@ -1,7 +1,9 @@
 import { getWebRTCManager } from "@/lib/webrtc/webrtcManager";
+import { useMentorshipCallStore } from "@/store/CallStore";
 import { useEffect, useRef, useState } from "react";
 
 export function useMentorshipCall(userId: string, sessionId: string) {
+  const { setPersistentState, clearPersistentState } = useMentorshipCallStore();
   const {
     localStream,
     remoteStream,
@@ -53,6 +55,38 @@ export function useMentorshipCall(userId: string, sessionId: string) {
       remoteScreenShare.current.srcObject = remoteScreenStream;
     }
   }, [remoteScreenStream]);
+  useEffect(() => {
+    if (localStream) {
+      setPersistentState({
+        localStream,
+        remoteStream,
+        localScreenStream,
+        remoteScreenStream,
+        isScreenSharing,
+        cameraOn,
+        micOn,
+        devices,
+        selectedCamera,
+        selectedMic,
+      });
+    }
+    if (!localStream) {
+      clearPersistentState();
+    }
+  }, [
+    localStream,
+    remoteStream,
+    localScreenStream,
+    remoteScreenStream,
+    isScreenSharing,
+    cameraOn,
+    micOn,
+    devices,
+    selectedCamera,
+    selectedMic,
+    setPersistentState,
+    clearPersistentState, // Include Zustand setters
+  ]);
 
   return {
     localVideo,
