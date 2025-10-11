@@ -311,7 +311,6 @@ class CameraShare extends WebRTCPeer {
       const sender = videoTransceiver.sender;
       const params = sender.getParameters();
       params.encodings ??= [{}];
-      params.encodings[0].maxBitrate = 10_000_000;
       params.encodings[0].maxFramerate = 30;
       params.encodings[0].priority = "high";
       await sender.setParameters(params);
@@ -381,7 +380,7 @@ class ScreenShare extends WebRTCPeer {
     });
     const videoTrack = screenStream.getVideoTracks()[0];
     if (!videoTrack) return;
-
+    videoTrack.contentHint='text'
     this.localScreenShare = new MediaStream([videoTrack]);
 
     if (!this.pc) {
@@ -435,11 +434,11 @@ class ScreenShare extends WebRTCPeer {
       console.warn("setCodecPreferences unavailable or failed for screen", err);
     }
 
-    const params = sender.getParameters();
-    params.encodings ??= [{}];
-    params.encodings[0].maxBitrate = 10_000_000;
-    params.encodings[0].maxFramerate = 30;
-    await sender.setParameters(params);
+    // const params = sender.getParameters();
+    // params.encodings ??= [{}];
+    // params.encodings[0].maxBitrate = 10_000_000;
+    // params.encodings[0].maxFramerate = 30;
+    // await sender.setParameters(params);
   }
   private localCleanup() {
     if (this.localScreenShare) {
