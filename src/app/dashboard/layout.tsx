@@ -112,7 +112,7 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
                   <DashboardSidebar user={session?.user!} />
                 </Suspense>
                 <div className="flex flex-col flex-1 ">
-                  <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                  <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
                     <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                       <div className="flex items-center">
                         <SidebarTrigger className="mr-2" />
