@@ -21,7 +21,6 @@ import { sessionUtilsV2, supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCheck,
-  Clock,
   FileText,
   Paperclip,
   Send,
@@ -38,7 +37,12 @@ import { sendMentorMessages } from "../../server/action";
 import { FloatingVideo } from "../floating-video";
 
 type Files = { [key: string]: string };
-export default function MentorshipWorkspace() {
+export default function MentorshipWorkspace(
+  { sidebar, controlled }: { sidebar?: boolean; controlled?: boolean } = {
+    sidebar: true,
+    controlled: false,
+  }
+) {
   const {
     mentorshipSession: session,
     uploadingFiles,
@@ -56,8 +60,11 @@ export default function MentorshipWorkspace() {
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
-  const {remoteStream,remoteVideo} = useMentorshipCall(user?.id!, session?.id!)
-  
+  const { remoteStream, remoteVideo } = useMentorshipCall(
+    user?.id!,
+    session?.id!
+  );
+
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
   };
@@ -159,28 +166,22 @@ export default function MentorshipWorkspace() {
     <main className="w-full h-full flex bg-background">
       <div className="flex-1 flex flex-col h-full">
         <div className="border-b bg-card px-6 py-2 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="space-y-1">
-              <p className="font-medium">{sessionDate}</p>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Clock className="h-3 w-3" />
-                <span>
-                  {timeSlot?.start} - {timeSlot?.end}
-                </span>
-              </div>
-            </div>
+          <div className={`flex flex-col md:flex gap-2`}>
+            <p className="font-medium">{sessionDate}</p>
+            <p className="text-muted-foreground">
+              {timeSlot?.start} - {timeSlot?.end}
+            </p>
           </div>
-          {/*  */}
 
           {isPreSession && (
-            <div className="flex justify-center w-full my-3">
+            <div className="flex justify-center ">
               <div className="bg-sidebar px-3 py-1.5 rounded-full text-xs font-medium shadow-inner">
                 <p>This is a pre-session</p>
               </div>
             </div>
           )}
           {isPostSession && (
-            <div className="flex justify-center w-full my-3">
+            <div className="flex justify-center ">
               <div className="bg-sidebar px-3 py-1.5 rounded-full text-xs font-medium shadow-inner">
                 <p>This Session is Ended and its now ReadOnly</p>
               </div>
@@ -226,7 +227,7 @@ export default function MentorshipWorkspace() {
                         <AvatarImage src={chat.chatOwner.image ?? ""} />
                       </Avatar>
                       <div
-                        className={`flex-1 max-w-md space-y-2 flex flex-col ${
+                        className={`flex-1 space-y-2 flex flex-col min-w-0 max-w-sm md:max-w-lg xl:max-w-xl ${
                           isCurrentUser ? "items-end" : "items-start"
                         }`}>
                         <div
@@ -234,7 +235,7 @@ export default function MentorshipWorkspace() {
                             isCurrentUser ? "flex-row-reverse" : ""
                           }`}>
                           <p className="text-sm font-medium text-foreground">
-                            {chat.chatOwner.name}
+                            {chat.chatOwner.name.split(" ")[0]}
                           </p>
                           <div className="flex items-center gap-1">
                             <p className="text-xs text-muted-foreground">
@@ -258,7 +259,7 @@ export default function MentorshipWorkspace() {
                                 ? "bg-primary text-primary-foreground rounded-br-md"
                                 : "bg-muted rounded-bl-md"
                             }`}>
-                            <p className="text-sm leading-relaxed">
+                            <p className="text-sm leading-relaxed break-all">
                               {chat.message}
                             </p>
                           </div>
@@ -355,7 +356,7 @@ export default function MentorshipWorkspace() {
                       </AvatarFallback>
                       <AvatarImage src={user?.image ?? ""} />
                     </Avatar>
-                    <div className="flex-1 max-w-md flex flex-col items-end space-y-2">
+                    <div className="flex-1 flex flex-col items-end space-y-2 ">
                       <div className="flex items-center gap-2 flex-row-reverse">
                         <p className="text-sm font-medium text-foreground">
                           {user?.name || "You"}
@@ -391,9 +392,10 @@ export default function MentorshipWorkspace() {
             )}
           </div>
         </ScrollArea>
-        <div className="border-t bg-card p-4 flex-shrink-0">
+        <div className="relative border-t bg-card p-4 flex-shrink-0">
+      
           {selectedFiles.length > 0 && (
-            <div className="mb-3 p-3 rounded-lg bg-muted/50 border border-dashed max-h-[120px] overflow-y-auto">
+            <div className="absolute bottom-full left-0 w-full mb-2 p-3 rounded-lg bg-muted border border-dashed max-h-[120px] overflow-y-auto z-10">
               <p className="text-sm font-medium mb-2">Selected files:</p>
               <div className="flex flex-wrap gap-2">
                 {selectedFiles.map((file, index) => (
@@ -406,7 +408,9 @@ export default function MentorshipWorkspace() {
                       }
                       className="h-4 w-4 text-primary flex-shrink-0"
                     />
-                    <span className="text-sm">{file.name}</span>
+                    <span className="text-sm truncate max-w-[150px]">
+                      {file.name}
+                    </span>
                     <button
                       onClick={() =>
                         setSelectedFiles((prev) =>
@@ -421,6 +425,7 @@ export default function MentorshipWorkspace() {
               </div>
             </div>
           )}
+
           <div className="flex gap-3">
             <Input
               placeholder="Type your message..."
@@ -461,7 +466,7 @@ export default function MentorshipWorkspace() {
           </div>
         </div>
       </div>
-      {!isMobile && (
+      {!isMobile && sidebar && (
         <div className="w-80 border-l  flex flex-col h-full p-5 gap-2">
           <div className="border-b bg-card px-4 py-4">
             <div className="flex items-center gap-3">
@@ -509,7 +514,7 @@ export default function MentorshipWorkspace() {
           </ScrollArea>
         </div>
       )}
-      {remoteStream && (
+      {controlled && remoteStream && (
         <FloatingVideo
           videoRef={remoteVideo}
           isVisible={true}
