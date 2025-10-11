@@ -121,6 +121,7 @@ export default function DashboardSidebar({ user }: { user: Session["user"] }) {
 
       <SidebarFooter>
         <NavSecondary items={navSecondary} />
+
         <Suspense fallback={<ProfileSkeleton />}>
           <NavUser
             email={user?.email}
