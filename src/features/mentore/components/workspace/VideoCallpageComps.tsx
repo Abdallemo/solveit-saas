@@ -8,8 +8,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { useMentorshipCall } from "@/hooks/use-video-call";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { useMentorshipCall } from "@/hooks/useVideoCall";
 import { cn } from "@/lib/utils";
 import {
   ChevronDown,
@@ -53,9 +53,10 @@ export function VideoCallPageComps({
     switchMic,
     setToggleScreenShare,
     localStream,
+    startCall,
     remoteStream,
     remoteScreenStream,
-  } = useMentorshipCall(userId, sessionId as string);
+  } = useMentorshipCall(userId, sessionId);
 
   const router = useRouter();
   const [expandedVideo, setExpandedVideo] = useState<string | null>(null);
@@ -81,6 +82,12 @@ export function VideoCallPageComps({
     localScreenShare,
     remoteScreenStream,
   ]);
+  useEffect(()=>{
+    const start = async()=>{
+      await startCall()
+    }
+    start()
+  },[startCall])
 
   const remotePeerName = (() => {
     if (!user || !mentorshipSession?.bookedSessions) {
@@ -353,7 +360,7 @@ export function VideoCallPageComps({
           variant={micOn ? "ghost" : "destructive"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={() => setMicOn(!micOn)}>
+          onClick={() => setMicOn()}>
           {micOn ? <Mic size={20} /> : <MicOff size={20} />}
         </Button>
 
@@ -361,7 +368,7 @@ export function VideoCallPageComps({
           variant={cameraOn ? "ghost" : "destructive"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={() => setCameraOn(!cameraOn)}>
+          onClick={() => setCameraOn()}>
           {cameraOn ? <Video size={20} /> : <VideoOff size={20} />}
         </Button>
 
@@ -369,7 +376,7 @@ export function VideoCallPageComps({
           variant={isScreenSharing ? "default" : "ghost"}
           size="icon"
           className="h-12 w-12 rounded-full"
-          onClick={async () => await setToggleScreenShare(!isScreenSharing)}>
+          onClick={async () => await setToggleScreenShare()}>
           {isScreenSharing ? <Monitor size={20} /> : <MonitorOff size={20} />}
         </Button>
 

@@ -27,7 +27,6 @@ abstract class WebRTCPeer {
   protected readonly sessionId: string;
   protected readonly connectionType: connType;
   protected makingOffer = false;
-  protected isPolite = true;
   protected pendingCandidates: RTCIceCandidateInit[] = [];
   protected readonly notifyManager: () => void;
   protected readonly notifyError: (
@@ -139,12 +138,9 @@ abstract class WebRTCPeer {
 
   private async handleOffer(msg: SignalMessage) {
     if (!this.pc) return;
-    const offerCollision =
-      this.makingOffer || this.pc.signalingState !== "stable";
-    if (!this.isPolite && offerCollision) return;
 
     try {
-      if (offerCollision) {
+      if (this.makingOffer || this.pc.signalingState !== "stable") {
         await Promise.all([
           this.pc.setLocalDescription({ type: "rollback" }),
           this.pc.setRemoteDescription(new RTCSessionDescription(msg.payload)),
@@ -282,7 +278,9 @@ class CameraShare extends WebRTCPeer {
       await sender.replaceTrack(newTrack);
     }
 
-    const oldTrack = this.localCameraShare?.getTracks().find((t) => t.kind === kind);
+    const oldTrack = this.localCameraShare
+      ?.getTracks()
+      .find((t) => t.kind === kind);
     if (oldTrack) {
       this.localCameraShare!.removeTrack(oldTrack);
       oldTrack.stop();
@@ -380,7 +378,7 @@ class ScreenShare extends WebRTCPeer {
     });
     const videoTrack = screenStream.getVideoTracks()[0];
     if (!videoTrack) return;
-    videoTrack.contentHint='text'
+    videoTrack.contentHint = "text";
     this.localScreenShare = new MediaStream([videoTrack]);
 
     if (!this.pc) {
@@ -517,26 +515,16 @@ class WebRTCManager implements SignalHandler {
       (workerType: connType, message: string) =>
         this.handleWorkerError(workerType, message)
     );
-
-    this.init();
   }
   private handleWorkerError = (type: connType, message: string) => {
     console.error(`[Worker Error - ${type}]: ${message}`);
     this.currentError = { type, message };
     this.notify();
   };
-  private async init() {
-    if (typeof window === "undefined") return;
-    try {
-      await this.cameraWorker.init();
-      this.signaling.connect();
-    } catch (error) {
-      console.error("Manager initialization error:", error);
-    }
-  }
 
   private notify() {
     const localScreen = this.screenWorker.getLocalStream();
+    // const s = this.cameraWorker.getLocalStream();
 
     const state: WebRTCState = {
       localStream: this.cameraWorker.getLocalStream(),
@@ -616,6 +604,15 @@ class WebRTCManager implements SignalHandler {
     };
   }
 
+  public startCall = async () => {
+    if (typeof window === "undefined") return;
+    try {
+      await this.cameraWorker.init();
+      this.signaling.connect();
+    } catch (error) {
+      console.error("Manager initialization error:", error);
+    }
+  };
   public leaveCall = async () => {
     try {
       if (this.screenWorker.getLocalStream()) {

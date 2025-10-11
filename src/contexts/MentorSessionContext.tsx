@@ -37,7 +37,7 @@ export const MentorshipSessionProvider = ({
   };
 
   useWebSocket<MentorChatSession>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${session?.id}`,
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${mentorshipSession?.id}`,
     {
       onMessage: (msg) => {
         updateSession({

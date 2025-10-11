@@ -14,9 +14,9 @@ import {
 } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useCallStore } from "@/hooks/useCallStore";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
+import { useMentorshipCall } from "@/hooks/useVideoCall";
 import { sessionUtilsV2, supportedExtentions } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -44,8 +44,6 @@ export default function MentorshipWorkspace() {
     uploadingFiles,
     setUploadingFiles,
   } = useMentorshipSession();
-  const { isCallActive, cameraOn, micOn, localStream, remoteVideo } =
-    useCallStore();
   const [messageInput, setMessageInput] = useState("");
   const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -58,7 +56,8 @@ export default function MentorshipWorkspace() {
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
-
+  const {remoteStream,remoteVideo} = useMentorshipCall(user?.id!, session?.id!)
+  
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
   };
@@ -510,7 +509,7 @@ export default function MentorshipWorkspace() {
           </ScrollArea>
         </div>
       )}
-      {isCallActive && (
+      {remoteStream && (
         <FloatingVideo
           videoRef={remoteVideo}
           isVisible={true}
