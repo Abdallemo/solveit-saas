@@ -15,7 +15,7 @@ export default function Error({ error, reset }: ErrorProps) {
   }, [error]);
 
   return (
-    <div className="flex h-screen flex-col items-center justify-center text-center gap-4">
+    <div className="flex h-full flex-col items-center justify-center text-center gap-4">
       <AlertCircle className="w-12 h-12 text-red-500" />
       <h2 className="text-xl font-semibold">
         This workspace ID doesn't exist.
