@@ -12,7 +12,7 @@ type ErrorProps = {
 export default function Error({ error, reset }: ErrorProps) {
   if (error instanceof DisputeNotFoundError) {
     return (
-      <div className="flex h-screen flex-col items-center justify-center text-center gap-4">
+      <div className="flex h-full flex-col items-center justify-center text-center gap-4">
         <AlertCircle className="w-12 h-12 text-red-500" />
 
         <h2 className="text-xl font-semibold">{error.data.headline}</h2>
@@ -24,7 +24,7 @@ export default function Error({ error, reset }: ErrorProps) {
     );
   }
   return (
-    <div className="flex h-screen flex-col items-center justify-center text-center gap-4">
+    <div className="flex h-full flex-col items-center justify-center text-center gap-4">
       <AlertCircle className="w-12 h-12 text-red-500" />
 
       <h2 className="text-xl font-semibold">{error.message}</h2>
