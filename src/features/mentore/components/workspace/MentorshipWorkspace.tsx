@@ -61,10 +61,16 @@ export default function MentorshipWorkspace({
   const [open, setOpen] = useState(false);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
-  const { remoteStream, remoteVideo } = useMentorshipCall(
-    user?.id!,
-    session?.id!
-  );
+  const {
+    remoteStream,
+    remoteVideo,
+    cameraOn,
+    micOn,
+    setCameraOn,
+    setMicOn,
+    clearState,
+    endCall,
+  } = useMentorshipCall(user?.id!, session?.id!);
 
   const handleFilesChange = (filename: string, content: string) => {
     setFiles((prev) => ({ ...prev, [filename]: content }));
@@ -518,10 +524,14 @@ export default function MentorshipWorkspace({
         <FloatingVideo
           videoRef={remoteVideo}
           isVisible={true}
-          isMuted={true}
-          isCameraOff={false}
-          onToggleMute={() => {}}
-          onToggleCamera={() => {}}
+          micOn={micOn}
+          cameraOn={cameraOn}
+          onToggleMute={setMicOn}
+          onToggleCamera={setCameraOn}
+          endCall={async () => {
+            endCall();
+            clearState();
+          }}
         />
       )}
     </main>
