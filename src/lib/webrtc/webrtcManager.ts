@@ -349,7 +349,6 @@ class ScreenShare extends WebRTCPeer {
   private localScreenShare: MediaStream | null = null;
   private remoteScreenShare: MediaStream | null = null;
   private screenSender: RTCRtpSender | null = null;
-
   constructor(
     userId: string,
     sessionId: string,
@@ -484,12 +483,19 @@ const managers: Record<string, WebRTCManager> = {};
 
 export function getWebRTCManager(userId: string, sessionId: string) {
   const key = `${userId}_${sessionId}`;
+  for (const existingKey in managers) {
+    if (existingKey !== key) {
+      console.log(`[WebRTCManager] Cleaning up old manager: ${existingKey}`);
+      managers[existingKey].leaveCall();
+      delete managers[existingKey];
+    }
+  }
   if (!managers[key]) {
     managers[key] = new WebRTCManager({ userId, sessionId });
   }
   return managers[key];
 }
-class WebRTCManager implements SignalHandler {
+export class WebRTCManager implements SignalHandler {
   private readonly userId: string;
   private readonly sessionId: string;
   private signaling: SignalingService;
@@ -501,6 +507,7 @@ class WebRTCManager implements SignalHandler {
   private cameraOn = true;
   private micOn = true;
   private currentError: WebRTCState["error"] = null;
+  private callStarted = false;
 
   constructor({ userId, sessionId }: ManagerOptions) {
     this.userId = userId;
@@ -615,6 +622,8 @@ class WebRTCManager implements SignalHandler {
 
   public startCall = async () => {
     if (typeof window === "undefined") return;
+    if (this.callStarted) return;
+    this.callStarted = true;
     try {
       await this.cameraWorker.init();
       this.signaling.connect();
@@ -623,6 +632,8 @@ class WebRTCManager implements SignalHandler {
     }
   };
   public leaveCall = async () => {
+    if (!this.callStarted) return;
+    this.callStarted = false;
     try {
       if (this.screenWorker.getLocalStream()) {
         await this.screenWorker.stopScreenShare();
