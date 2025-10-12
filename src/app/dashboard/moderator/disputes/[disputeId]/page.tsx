@@ -10,16 +10,9 @@ export default async function Page({
   const { user } = await isAuthorized(["MODERATOR"]);
   const { disputeId } = await params;
   const dispute = await getModeratorDisputes(disputeId);
-
-  const isResponsible = dispute.moderatorId === user.id;
-  const canDecide =
-    isResponsible &&
-    (dispute.refundStatus === "PROCESSING" ||
-      dispute.refundStatus === "PENDING");
-
   return (
     <main className="w-full h-full">
-      <DisputePageComps dispute={dispute} canDecide={canDecide} />
+      <DisputePageComps dispute={dispute}  />
     </main>
   );
 }
