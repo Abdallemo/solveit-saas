@@ -22,7 +22,6 @@ import type {
 } from "@/features/tasks/server/task-types";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
-import { DisputeNotFoundError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { formatTimeRemaining } from "@/lib/utils";
 import {
@@ -41,6 +40,7 @@ import {
   sum,
 } from "drizzle-orm";
 import { unionAll } from "drizzle-orm/pg-core";
+import isUUID from "validator/es/lib/isUUID";
 import { calculateTaskProgressV2 } from "./action";
 
 export async function getBlockedSolver(solverId: string, taskId: string) {
@@ -154,16 +154,43 @@ export async function getUserTasksbyId(userId: string) {
   return userTasks;
 }
 export async function getTasksbyId(id: string) {
-  const Task = await db.query.TaskTable.findFirst({
-    where: (table, fn) => fn.eq(table.id, id),
-    with: {
-      poster: { columns: publicUserColumns },
-      solver: { columns: publicUserColumns },
-      workspace: true,
-    },
-  });
-  if (!Task || !Task.id) return;
-  return Task;
+  if (!isUUID(id, "4")) {
+    return null;
+  }
+  try {
+    const Task = await db.query.TaskTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, id),
+      with: {
+        poster: { columns: publicUserColumns },
+        solver: { columns: publicUserColumns },
+        workspace: true,
+      },
+    });
+    if (!Task || !Task.id) return null;
+    return Task;
+  } catch (error) {
+    return null;
+  }
+}
+export async function getTasksbyIdWithFiles(id: string) {
+  if (!isUUID(id, "4")) {
+    return null;
+  }
+  try {
+    const Task = await db.query.TaskTable.findFirst({
+      where: (table, fn) => fn.eq(table.id, id),
+      with: {
+        poster: { columns: publicUserColumns },
+        solver: { columns: publicUserColumns },
+        workspace: true,
+        taskFiles: true,
+      },
+    });
+    if (!Task || !Task.id) return null;
+    return Task;
+  } catch (error) {
+    return null;
+  }
 }
 export async function getAllTasks() {
   const allTasksFiltred = db.query.TaskTable.findMany({
@@ -259,6 +286,7 @@ export async function getAssignedTasksbyIdPaginated(
         solver: { columns: publicUserColumns },
         blockedSolvers: true,
         category: true,
+        taskFiles:true
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -822,11 +850,11 @@ export async function getModeratorDisputes(disputeId: string) {
       },
     });
     if (!dispute) {
-      throw new DisputeNotFoundError();
+      return null;
     }
 
     return dispute;
   } catch (error) {
-    throw new DisputeNotFoundError();
+    return null;
   }
 }
