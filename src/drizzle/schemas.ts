@@ -273,22 +273,22 @@ export const TaskTable = pgTable(
   {
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
-    description: text("description"),
-    content: text("content"),
-    price: integer("price"),
+    description: text("description").notNull(),
+    content: text("content").notNull(),
+    price: integer("price").notNull(),
     posterId: uuid("poster_id")
       .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
     solverId: uuid("solver_id").references(() => UserTable.id, {
       onDelete: "no action",
     }),
-    visibility: TaskVisibility("visibility").default("public"),
+    visibility: TaskVisibility("visibility").default("public").notNull(),
     categoryId: uuid("category_id")
       .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
       .notNull(),
     paymentId: uuid("payment_id").references(() => PaymentTable.id, {
       onDelete: "cascade",
-    }),
+    }).notNull(),
     deadline: text("deadline")
       .references(() => TaskDeadlineTable.deadline, { onDelete: "cascade" })
       .notNull()
@@ -296,12 +296,12 @@ export const TaskTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
+    }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
     }).defaultNow(),
-    status: TaskStatusEnum("task_status").default("OPEN"),
+    status: TaskStatusEnum("task_status").default("OPEN").notNull(),
     assignedAt: timestamp("assigned_at", { mode: "date", withTimezone: true }),
   },
   (task) => [
