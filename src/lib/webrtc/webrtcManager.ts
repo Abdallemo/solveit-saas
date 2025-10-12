@@ -87,6 +87,12 @@ abstract class WebRTCPeer {
     };
 
     this.pc.onnegotiationneeded = () => this.handleNegotiation();
+    this.pc.onsignalingstatechange = () => {
+      console.log(
+        `[${this.connectionType}] signalingState:`,
+        this.pc?.signalingState
+      );
+    };
   }
 
   protected async handleNegotiation() {
@@ -174,9 +180,16 @@ abstract class WebRTCPeer {
   private async handleAnswer(msg: SignalMessage) {
     if (!this.pc) return;
     try {
-      await this.pc.setRemoteDescription(
-        new RTCSessionDescription(msg.payload)
-      );
+      if (!this.makingOffer || this.pc.signalingState !== "stable") {
+        await Promise.all([
+          this.pc.setLocalDescription({ type: "rollback" }),
+          this.pc.setRemoteDescription(new RTCSessionDescription(msg.payload)),
+        ]);
+      } else {
+        await this.pc.setRemoteDescription(
+          new RTCSessionDescription(msg.payload)
+        );
+      }
       for (const c of this.pendingCandidates) {
         await this.pc.addIceCandidate(new RTCIceCandidate(c));
       }
@@ -205,6 +218,9 @@ abstract class WebRTCPeer {
 
   public async close() {
     if (this.pc) {
+      this.pc.onnegotiationneeded = null;
+      this.pc.onicecandidate = null;
+      this.pc.ontrack = null;
       this.pc.close();
       this.pc = null;
     }
