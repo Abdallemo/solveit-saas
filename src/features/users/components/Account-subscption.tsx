@@ -2,34 +2,18 @@
 import { CardWrapper } from "@/components/card-wrapper";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { TierType, UserRoleType } from "@/drizzle/schemas";
-import { plans } from "@/features/subscriptions/plans";
-import {
-  createCancelSession,
-  createStripeCheckoutSession,
-  CreateUserSubSessionPortal,
-} from "@/features/subscriptions/server/action";
+import { TierType } from "@/drizzle/schemas";
+import { CreateUserSubSessionPortal } from "@/features/subscriptions/server/action";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { AlertCircle, ArrowRight, Calendar, Loader2 } from "lucide-react";
+import { Calendar, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useTransition } from "react";
-const subscription = {
-  name: "Pro Plan",
-  status: "active",
-  nextBillingDate: "May 11, 2025",
-  price: "$19.99",
-  billingCycle: "monthly",
-  features: ["Unlimited posts", "Premium content", "Priority support"],
-  usagePercent: 65,
-};
-
+import { useTransition } from "react";
 export default function AccountSubscption() {
-  const [isPending, startTransition] = useTransition();
   const { subTier, price } = useStripeSubscription();
-  const router = useRouter();
+
   const { user } = useCurrentUser();
-  const { email, id, image, name, role } = user!;
+  const { role } = user!;
 
   return (
     <CardWrapper
