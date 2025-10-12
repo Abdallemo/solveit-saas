@@ -1,11 +1,11 @@
 // components/SubscribeButton.tsx
 "use client";
 
-import { useFormStatus } from "react-dom";
 import { Button } from "@/components/ui/button";
-import { Loader2 } from "lucide-react";
 import { TierType } from "@/drizzle/schemas";
 import { cn } from "@/lib/utils";
+import { Loader2 } from "lucide-react";
+import { useFormStatus } from "react-dom";
 
 export function SubscribeButton({
   tier,
@@ -22,7 +22,11 @@ export function SubscribeButton({
     <Button
       type="submit"
       className={cn("w-full", className)}
-      disabled={pending || currentTier === tier}
+      disabled={
+        pending ||
+        currentTier === tier ||
+        (currentTier === "SOLVER++" && tier !== "POSTER")
+      }
       variant={
         currentTier === tier
           ? "default"
