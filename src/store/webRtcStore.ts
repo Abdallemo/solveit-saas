@@ -21,7 +21,7 @@ export interface PersistentCallState {
   switchCamera: (deviceId: string) => Promise<void>;
   switchMic: (deviceId: string) => Promise<void>;
   startCall: () => Promise<void>;
-  endCall: () => void;
+  endCall: () => Promise<void>;
 
   manager: ReturnType<typeof getWebRTCManager> | null;
 }
@@ -49,7 +49,7 @@ const initialState: PersistentCallState = {
   setToggleScreenShare: () => {},
   switchCamera: async () => {},
   switchMic: async () => {},
-  endCall: () => {},
+  endCall: async() => {},
   startCall: async () => {},
 
   manager: null,
@@ -123,8 +123,6 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
 
     updateState: (state) => set((s) => ({ ...s, ...state })),
     clearState: () => {
-      const mgr = get().manager;
-      mgr?.leaveCall();
       set(initialState);
     },
   })
