@@ -17,6 +17,8 @@ import { Separator } from "@/components/ui/separator";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { approveRefund, rejectRefund } from "@/features/payments/server/action";
 import type { ModDisputeType as Dispute } from "@/features/tasks/server/task-types";
+import useCurrentUser from "@/hooks/useCurrentUser";
+import { DisputeNotFoundError } from "@/lib/Errors";
 import { useMutation } from "@tanstack/react-query";
 import {
   CalendarIcon,
@@ -33,14 +35,15 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { AllPreview } from "../richTextEdito/TaskPreview";
 
-export default function DisputePageComps({
-  dispute,
-  canDecide,
-}: {
-  dispute: Dispute;
-  canDecide: boolean;
-}) {
+export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
+  if (!dispute) throw new DisputeNotFoundError();
   const task = dispute.taskRefund;
+  const { user } = useCurrentUser();
+  const isResponsible = dispute.moderatorId === user?.id;
+  const canDecide =
+    isResponsible &&
+    (dispute.refundStatus === "PROCESSING" ||
+      dispute.refundStatus === "PENDING");
   const [confirmInput, setConfirmInput] = useState("");
   const [confirmRejectInput, setConfirmRejectInput] = useState("");
   const [isRefundDialogOpen, setIsRefundDialogOpen] = useState(false);
@@ -68,13 +71,13 @@ export default function DisputePageComps({
     });
   async function handleTaskRefund() {
     toast.loading("loading", { id: "refund-task" });
-    await ApproveRefundMutation(dispute.id);
+    await ApproveRefundMutation(dispute!.id);
     setIsRefundDialogOpen((prev) => !prev);
     setConfirmInput("");
   }
   async function handleTaskReject() {
     toast.loading("loading", { id: "reject-task" });
-    await RejectRefundMutation(dispute.id);
+    await RejectRefundMutation(dispute!.id);
     setIsRejectDialogOpen((prev) => !prev);
     setConfirmInput("");
   }
@@ -397,7 +400,7 @@ function ApproveRefundDialog({
   setConfirmInput,
   handleTaskRefund,
 }: {
-  dispute: Dispute;
+  dispute: Exclude<Dispute,null>;
 
   confirmInput: string;
   isRefunding: boolean;
@@ -473,7 +476,7 @@ function RejectRefundDialog({
   setConfirmInput,
   handleTaskReject,
 }: {
-  dispute: Dispute;
+  dispute: Exclude<Dispute,null>;
 
   confirmInput: string;
   isRejecting: boolean;
