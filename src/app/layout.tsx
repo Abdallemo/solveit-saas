@@ -1,5 +1,6 @@
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "@/components/ui/sonner";
+import ReactQueryProvider from "@/contexts/ReactQueryProvider";
 import { GeistMono } from "geist/font/mono";
 import { GeistSans } from "geist/font/sans";
 import type { Metadata } from "next";
@@ -19,19 +20,21 @@ export default function RootLayout({
 }>) {
   return (
     <SessionProvider>
-      <html lang="en" suppressHydrationWarning>
-        <body
-          className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange>
-            <CookiesProvider>{children}</CookiesProvider>
-            <Toaster position="top-center" richColors />
-          </ThemeProvider>
-        </body>
-      </html>
+      <ReactQueryProvider>
+        <html lang="en" suppressHydrationWarning>
+          <body
+            className={`${GeistSans.variable} ${GeistMono.variable} font-sans antialiased`}>
+            <ThemeProvider
+              attribute="class"
+              defaultTheme="system"
+              enableSystem
+              disableTransitionOnChange>
+              <CookiesProvider>{children}</CookiesProvider>
+              <Toaster position="top-center" richColors />
+            </ThemeProvider>
+          </body>
+        </html>
+      </ReactQueryProvider>
     </SessionProvider>
   );
 }
