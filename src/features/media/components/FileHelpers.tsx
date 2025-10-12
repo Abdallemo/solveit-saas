@@ -55,7 +55,7 @@ export function FileChatCardComps({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
-          {truncateText(removeFileExtension(file.fileName!), 10)}.
+          {truncateText(removeFileExtension(file.fileName!), 6)}.
           {file.fileName?.split(".").at(-1)}
         </p>
         <p className="text-xs text-slate-500 dark:text-slate-400">
