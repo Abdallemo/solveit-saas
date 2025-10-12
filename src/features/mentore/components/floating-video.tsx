@@ -193,9 +193,9 @@ export function FloatingVideo({
               )}
             </Button>
             <Button
-              variant="destructive"
               size="icon"
-              className="h-12 w-12 rounded-full"
+              variant="ghost"
+              className={cn("bg-destructive/80 hover:bg-destructive")}
               onClick={async () => {
                 await endCall();
               }}>
