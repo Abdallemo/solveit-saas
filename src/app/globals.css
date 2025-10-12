@@ -205,4 +205,38 @@ html {
   .animate-scroll {
     animation: scroll linear infinite;
   }
+
+  @keyframes shimmer-wave {
+    0% {
+
+      background-position: -200% 0;
+    }
+
+    100% {
+
+      background-position: 200% 0;
+    }
+  }
+
+
+  .shimmer-wave {
+
+    background-color: var(--muted);
+
+
+    background: linear-gradient(90deg,
+
+        var(--muted) 0%,
+
+        var(--background) 48%,
+
+        var(--background) 52%,
+
+        var(--muted) 100%);
+
+
+    background-size: 200% 100%;
+
+    animation: shimmer-wave 1.0s infinite linear;
+  }
 }
