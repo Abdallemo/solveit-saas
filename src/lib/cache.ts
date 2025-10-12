@@ -15,11 +15,11 @@ type CacheOptions<T, P> = {
   revalidate?: number;
   enabled?: boolean;
 };
-
+export const DEFAULTREVALIDATEDURATION = 120 
 export function withCache<T, P>({
   callback,
   dep = [],
-  revalidate = 120,
+  revalidate = DEFAULTREVALIDATEDURATION,
   tag,
   enabled = true,
 }: CacheOptions<T, P>) {
