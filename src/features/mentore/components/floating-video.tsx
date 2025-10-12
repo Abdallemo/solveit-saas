@@ -195,11 +195,11 @@ export function FloatingVideo({
             <Button
               size="icon"
               variant="ghost"
-              className={cn("bg-destructive/80 hover:bg-destructive")}
+              className={cn("bg-destructive/80 hover:bg-destructive rounded-full")}
               onClick={async () => {
                 await endCall();
               }}>
-              <PhoneOff size={20} />
+              <PhoneOff className="h-4 w-4" />
             </Button>
 
             <Button

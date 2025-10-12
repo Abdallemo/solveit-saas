@@ -195,12 +195,14 @@ export default function MentorshipWorkspace({
             </div>
           )}
 
-          <Button size="sm" className="gap-2" asChild>
-            <Link href={`${path}/video-call`}>
-              <Video className="h-4 w-4" />
-              Video Call
-            </Link>
-          </Button>
+          {sidebar && (
+            <Button size="sm" className="gap-2" asChild>
+              <Link href={`${path}/video-call`}>
+                <Video className="h-4 w-4" />
+                Video Call
+              </Link>
+            </Button>
+          )}
         </div>
         <ScrollArea className="flex-1 h-[500px] p-5">
           <div className="p-6 space-y-6 max-h-[500px]">
