@@ -1,8 +1,10 @@
+import { getServerUserSession } from "@/features/auth/server/actions";
 import { UserRole } from "@/features/auth/server/auth-uitls";
 
 function createSelection<T extends Record<string, true>>(selection: T): T {
   return selection;
 }
+export type userSessionType = Exclude<Awaited<ReturnType<typeof getServerUserSession>>,null>
 export type publicUserType = {
   id: string;
   name: string | null;
