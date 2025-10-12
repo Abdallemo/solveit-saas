@@ -37,12 +37,13 @@ import { sendMentorMessages } from "../../server/action";
 import { FloatingVideo } from "../floating-video";
 
 type Files = { [key: string]: string };
-export default function MentorshipWorkspace(
-  { sidebar, controlled }: { sidebar?: boolean; controlled?: boolean } = {
-    sidebar: true,
-    controlled: false,
-  }
-) {
+export default function MentorshipWorkspace({
+  sidebar,
+  controlled,
+}: {
+  sidebar: boolean;
+  controlled: boolean;
+}) {
   const {
     mentorshipSession: session,
     uploadingFiles,
@@ -393,7 +394,6 @@ export default function MentorshipWorkspace(
           </div>
         </ScrollArea>
         <div className="relative border-t bg-card p-4 flex-shrink-0">
-      
           {selectedFiles.length > 0 && (
             <div className="absolute bottom-full left-0 w-full mb-2 p-3 rounded-lg bg-muted border border-dashed max-h-[120px] overflow-y-auto z-10">
               <p className="text-sm font-medium mb-2">Selected files:</p>
@@ -514,7 +514,7 @@ export default function MentorshipWorkspace(
           </ScrollArea>
         </div>
       )}
-      {controlled && remoteStream && (
+      {sidebar && remoteStream && (
         <FloatingVideo
           videoRef={remoteVideo}
           isVisible={true}
