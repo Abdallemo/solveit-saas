@@ -39,6 +39,7 @@ import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { and, count, eq, or } from "drizzle-orm";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function validateMentorAccess() {
@@ -515,7 +516,7 @@ export async function getMentorSession(sessionId: string) {
             },
           },
         },
-        bookedSessions:{with:{poster:true,solver:true}}
+        bookedSessions: { with: { poster: true, solver: true } },
       },
     });
     return session;
@@ -547,12 +548,15 @@ export async function sendMentorMessages(values: {
   const { message, sessionId, sentBy, uploadedFiles } = values;
   if (!sessionId || !sentBy) return;
 
-  const session = await withCache({
-    callback: () => getSessionById(sessionId),
-    tag: "mentor-session-chat-data-cache",
-    dep: [sessionId],
-    revalidate: 3600 * 1,
-  })();
+  const [{ user }, session] = await Promise.all([
+    isAuthorized(["POSTER", "SOLVER"]),
+    withCache({
+      callback: () => getSessionById(sessionId),
+      tag: "mentor-session-chat-data-cache",
+      dep: [sessionId],
+      revalidate: 3600 * 1,
+    })(),
+  ]);
   if (!session) throw new Error("Invalid Session");
 
   if (
@@ -608,6 +612,11 @@ export async function sendMentorMessages(values: {
         },
       },
     });
+    revalidatePath(
+      `${
+        env.NEXTAUTH_URL
+      }/dashboard/${user.role.toLocaleLowerCase()}/sessions/${sessionId}`
+    );
     await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
       method: "POST",
       headers: GoHeaders,
@@ -625,4 +634,11 @@ export async function sendSignalMessage(message: SignalMessage) {
     headers: GoHeaders,
     body: JSON.stringify(message),
   });
+}
+export async function revalidateMentorSessinoData(values: {
+  sessionId: string;
+  role: string;
+}) {
+  const { role, sessionId } = values;
+  revalidatePath(`${env.NEXTAUTH_URL}/dashboard/${role}/sessions/${sessionId}`);
 }
