@@ -80,12 +80,6 @@ export const MenuItemsModerator: MenuItem[] = [
         url: "/dashboard/moderator/disputes",
         icon: LucideAlertTriangle,
       },
-      {
-        type: "link",
-        title: "Resolved Cases",
-        url: "/dashboard/moderator/disputes/resolved",
-        icon: LucideClipboardCheck,
-      },
     ],
   },
   {
