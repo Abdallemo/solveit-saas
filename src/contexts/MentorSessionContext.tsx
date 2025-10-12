@@ -1,5 +1,10 @@
 "use client";
+import Loading from "@/app/dashboard/poster/(mentorship)/sessions/[sessionId]/loading";
 import { env } from "@/env/client";
+import {
+  getMentorSession,
+  revalidateMentorSessinoData,
+} from "@/features/mentore/server/action";
 import {
   MentorChatSession,
   MentorSession,
@@ -7,13 +12,22 @@ import {
 import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
 import { SessionNotFoundError } from "@/lib/Errors";
-import { createContext, Dispatch, ReactNode, SetStateAction, useContext, useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  createContext,
+  Dispatch,
+  ReactNode,
+  SetStateAction,
+  useContext,
+  useEffect,
+  useState,
+} from "react";
 type PartialMentorSession = Partial<MentorSession>;
 type MentorshipSessionContextType = {
   mentorshipSession: MentorSession;
   updateSession: (updates: PartialMentorSession) => void;
   uploadingFiles: File[];
-  setUploadingFiles: Dispatch<SetStateAction<File[]>>
+  setUploadingFiles: Dispatch<SetStateAction<File[]>>;
 };
 
 const MentorshipSessionContext = createContext<
@@ -21,23 +35,48 @@ const MentorshipSessionContext = createContext<
 >(undefined);
 type MentorshipSessionPorviderProps = {
   children: ReactNode;
-  mentorshipSession: MentorSession;
+  sessionId: string;
 };
 export const MentorshipSessionProvider = ({
   children,
-  mentorshipSession,
+  sessionId,
 }: MentorshipSessionPorviderProps) => {
-  const [session, setSession] = useState(mentorshipSession);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const { user } = useCurrentUser();
+  const queryClient = useQueryClient();
+  const {
+    data: session,
+    isLoading,
+    error,
+  } = useQuery({
+    queryKey: [sessionId, user?.id!],
+    queryFn: async () => {
+      return await getMentorSession(sessionId);
+    },
+    enabled: !!user?.id,
+  });
+  if (error) throw new SessionNotFoundError();
 
-  if (!session) throw new SessionNotFoundError();
+  useEffect(() => {
+    if (!isLoading && !session) throw new SessionNotFoundError();
+  }, [isLoading, session]);
+
   const updateSession = (updates: PartialMentorSession) => {
-    setSession((prev) => ({ ...prev!, ...updates }));
+    queryClient.setQueryData<MentorSession>(
+      [sessionId, user?.id!],
+      (oldSession) => {
+        if (!oldSession) return oldSession;
+        return { ...oldSession, ...updates };
+      }
+    );
   };
 
+  const mentorSessoin = useMutation({
+    mutationFn: revalidateMentorSessinoData,
+  });
+
   useWebSocket<MentorChatSession>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${mentorshipSession?.id}`,
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}`,
     {
       onMessage: (msg) => {
         updateSession({
@@ -49,9 +88,18 @@ export const MentorshipSessionProvider = ({
         if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
           setUploadingFiles([]);
         }
+        mentorSessoin.mutate({
+          role: "solver",
+          sessionId: msg.sessionId,
+        });
+        mentorSessoin.mutate({
+          role: "poster",
+          sessionId: msg.sessionId,
+        });
       },
     }
   );
+  if (isLoading || !session) return <Loading />;
 
   return (
     <MentorshipSessionContext.Provider
@@ -59,7 +107,7 @@ export const MentorshipSessionProvider = ({
         mentorshipSession: session,
         updateSession,
         uploadingFiles,
-        setUploadingFiles
+        setUploadingFiles,
       }}>
       {children}
     </MentorshipSessionContext.Provider>
