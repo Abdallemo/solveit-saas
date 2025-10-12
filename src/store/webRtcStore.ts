@@ -1,4 +1,4 @@
-import { getWebRTCManager } from "@/lib/webrtc/webrtcManager";
+import { getWebRTCManager, WebRTCManager } from "@/lib/webrtc/webrtcManager";
 import { create } from "zustand";
 
 export interface PersistentCallState {
@@ -27,7 +27,7 @@ export interface PersistentCallState {
 }
 
 interface CallActions {
-  initManager: (userId: string, sessionId: string) => void;
+  initManager: (userId: string, sessionId: string) => WebRTCManager;
   updateState: (state: Partial<PersistentCallState>) => void;
   clearState: () => void;
 }
@@ -119,6 +119,7 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
         startCall: manager.startCall,
         endCall: manager.leaveCall,
       });
+      return manager
     },
 
     updateState: (state) => set((s) => ({ ...s, ...state })),
