@@ -1,13 +1,12 @@
 "use server";
 
 import { getServerUserSession } from "@/features/auth/server/actions";
-import { plans } from "@/features/subscriptions/plans";
 import {
   getServerUserSubscriptionById,
   getUserById,
   UpdateUserField,
 } from "@/features/users/server/actions";
-import { stripe } from "@/lib/stripe";
+import { stripe, SubPriceMap } from "@/lib/stripe";
 import { redirect } from "next/navigation";
 
 import { TierType } from "@/drizzle/schemas";
@@ -21,10 +20,7 @@ export const {
   CreateUserSubsciption,
   updateUserSubscription,
   getAllSubscriptions,
-  
 } = db;
-
-
 
 export async function getServerReturnUrl() {
   const headersList = await headers();
@@ -45,8 +41,8 @@ export async function createStripeCheckoutSession(tier: TierType) {
       currentUser?.id!
     );
 
-    const selectedPlan = plans.find((plan) => plan.teir === tier);
-    if (!selectedPlan) throw new Error("Plan not found");
+    if (!SubPriceMap[tier]) throw new Error("Plan not found");
+    const stripePriceId = SubPriceMap[tier];
 
     if (!currentUser.email || !currentUser!.id) return;
     if (userSubscription?.tier !== "POSTER") return;
@@ -75,7 +71,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
       cancel_url: referer,
       line_items: [
         {
-          price: selectedPlan.stripePriceId,
+          price: stripePriceId,
           quantity: 1,
         },
       ],
