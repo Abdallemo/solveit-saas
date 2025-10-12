@@ -180,16 +180,9 @@ abstract class WebRTCPeer {
   private async handleAnswer(msg: SignalMessage) {
     if (!this.pc) return;
     try {
-      if (!this.makingOffer || this.pc.signalingState !== "stable") {
-        await Promise.all([
-          this.pc.setLocalDescription({ type: "rollback" }),
-          this.pc.setRemoteDescription(new RTCSessionDescription(msg.payload)),
-        ]);
-      } else {
-        await this.pc.setRemoteDescription(
-          new RTCSessionDescription(msg.payload)
-        );
-      }
+      await this.pc.setRemoteDescription(
+        new RTCSessionDescription(msg.payload)
+      );
       for (const c of this.pendingCandidates) {
         await this.pc.addIceCandidate(new RTCIceCandidate(c));
       }
