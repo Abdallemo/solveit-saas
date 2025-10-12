@@ -47,16 +47,27 @@ export class DisputeUnauthorizedError extends Error {
   }
 }
 export class TaskNotFoundError extends Error {
+  public readonly data: { headline: string; message: string };
+  public readonly digest: string = "TaskNotFoundError";
+
   constructor(
-    message = "The requested task could not be found. It may have been removed or already opened"
+    data = {
+      headline: "Task Not Found",
+      message:
+        "The requested task could not be found. It may have been removed, or the ID provided is invalid.",
+    }
   ) {
-    super(message);
+    super(data.message);
     this.name = "TaskNotFoundError";
+    this.data = data;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, TaskNotFoundError);
+    }
   }
 }
 export class DisputeNotFoundError extends Error {
   public readonly data: { headline: string; message: string };
-
+  public readonly digest: string = "DisputeNotFound";
   constructor(
     data = {
       headline: "Dispute Not Found",
@@ -67,6 +78,9 @@ export class DisputeNotFoundError extends Error {
     super(data.message);
     this.name = "DisputeNotFoundError";
     this.data = data;
+    if (Error.captureStackTrace) {
+      Error.captureStackTrace(this, DisputeNotFoundError);
+    }
   }
 }
 export class SessionNotFoundError extends Error {
