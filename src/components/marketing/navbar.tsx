@@ -27,13 +27,14 @@ import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
 import { ModeToggle } from "../toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
+import { Skeleton } from "../ui/skeleton";
 export default function Navbar() {
-  const { user } = useCurrentUser();
+  const { user, state } = useCurrentUser();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
-
+  const isLoading = state === "loading";
   const handleNavigation = (path: string) => {
     setIsNavigating(true);
     router.push(path);
@@ -124,11 +125,17 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          {!user ? (
-            <Button size="sm" asChild>
-              <Link href={"/login"}>SignIn</Link>
-            </Button>
-          ) : (
+          {state == "loading" && (
+            <Skeleton className="size-8 rounded-full shimmer-wave" />
+          )}
+
+          {!user ||
+            (state == "unauthenticated" && (
+              <Button size="sm" asChild>
+                <Link href={"/login"}>SignIn</Link>
+              </Button>
+            ))}
+          {user && (
             <DropdownMenu>
               <DropdownMenuTrigger>
                 <Avatar>
@@ -168,6 +175,7 @@ export default function Navbar() {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
+
           <ModeToggle />
         </div>
       </div>
