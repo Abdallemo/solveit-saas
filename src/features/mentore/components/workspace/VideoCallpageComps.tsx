@@ -24,9 +24,9 @@ import {
   PhoneOff,
   User,
   Video,
-  VideoOff
+  VideoOff,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import MentorshipWorkspace from "./MentorshipWorkspace";
 
@@ -58,6 +58,7 @@ export function VideoCallPageComps({
     startCall,
     remoteStream,
     remoteScreenStream,
+    clearState,
   } = useMentorshipCall(userId, sessionId);
 
   const router = useRouter();
@@ -66,6 +67,7 @@ export function VideoCallPageComps({
   const { mentorshipSession } = useMentorshipSession();
   const [messageSideOpen, setMessageSideOpen] = useState(false); // RESTORED
   const isMobile = useIsMobile();
+  const path = usePathname().replace("video-call", "");
 
   useEffect(() => {
     if (expandedVideo) {
@@ -202,7 +204,6 @@ export function VideoCallPageComps({
             ))}
           </DropdownMenuContent>
         </DropdownMenu>
-
       </div>
 
       <div className="relative flex-1 w-full overflow-hidden">
@@ -383,7 +384,7 @@ export function VideoCallPageComps({
                 "relative h-full w-full sm:w-[400px] bg-background border-l border-border shadow-xl transition-transform duration-300 ease-in-out rounded-l-2xl flex-shrink-0",
                 messageSideOpen ? "translate-x-0" : "translate-x-full"
               )}>
-              <MentorshipWorkspace />
+              <MentorshipWorkspace sidebar={false} controlled />
             </div>
           </div>
         )}
@@ -421,8 +422,9 @@ export function VideoCallPageComps({
             variant="destructive"
             size="icon"
             className="h-12 w-12 rounded-full"
-            onClick={() => {
-              endCall();
+            onClick={async () => {
+              await endCall();
+              clearState();
               router.back();
             }}>
             <PhoneOff size={20} />
