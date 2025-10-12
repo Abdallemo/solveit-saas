@@ -10,7 +10,7 @@ import {
   UpdateUserField,
 } from "@/features/users/server/actions";
 import { auth, signIn, signOut } from "@/lib/auth";
-import { withCache } from "@/lib/cache";
+import { DEFAULTREVALIDATEDURATION, withCache } from "@/lib/cache";
 import { sendVerificationEmail } from "@/lib/nodemailer";
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
@@ -205,7 +205,10 @@ export async function verifyVerificationToken(
 
 export async function isAuthorized(
   whichRole: UserRole[],
-  options: { useCache: boolean } = { useCache: true }
+  options: { useCache: boolean; revalidate?: number } = {
+    useCache: true,
+    revalidate: DEFAULTREVALIDATEDURATION,
+  }
 ) {
   const session = await getServerSession();
   if (!session) {
@@ -220,6 +223,7 @@ export async function isAuthorized(
     tag: "user-data-cache",
     dep: [user.id],
     enabled: options?.useCache,
+    revalidate: options.revalidate,
   })();
 
   if (!userDb) {
