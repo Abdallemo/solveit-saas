@@ -14,6 +14,7 @@ import {
   getPosterTasksbyIdPaginated,
   getSolutionById,
   getTasksbyId,
+  getTasksbyIdWithFiles,
   getUserDisputes,
   getUserTasksbyId,
   getWorkspaceById,
@@ -81,6 +82,7 @@ export type FlatDispute = {
   solutionContent: string | null;
 };
 export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
+export type TaskWithFilesType = Awaited<ReturnType<typeof getTasksbyIdWithFiles>>;
 export type assignTaskReturnType = {
   error?:
     | "no such task available"
