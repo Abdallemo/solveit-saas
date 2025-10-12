@@ -10,6 +10,7 @@ import {
   Mic,
   MicOff,
   Minimize2,
+  PhoneOff,
   Video,
   VideoOff,
 } from "lucide-react";
@@ -18,10 +19,11 @@ import { RefObject, useEffect, useRef, useState } from "react";
 interface FloatingVideoProps {
   videoRef: RefObject<HTMLVideoElement | null>;
   isVisible?: boolean;
-  isMuted?: boolean;
-  isCameraOff?: boolean;
-  onToggleMute?: () => void;
-  onToggleCamera?: () => void;
+  micOn: boolean;
+  cameraOn: boolean;
+  onToggleMute: () => void;
+  onToggleCamera: () => void;
+  endCall: () => Promise<void>;
   className?: string;
 }
 
@@ -36,11 +38,12 @@ const ZOOM_SIZES = {
 export function FloatingVideo({
   videoRef,
   isVisible = true,
-  isMuted = false,
-  isCameraOff = false,
+  micOn,
+  cameraOn,
   onToggleMute,
   onToggleCamera,
   className,
+  endCall,
 }: FloatingVideoProps) {
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [isDragging, setIsDragging] = useState(false);
@@ -135,8 +138,7 @@ export function FloatingVideo({
           </div>
         )} */}
 
-        {/* Camera Off Overlay */}
-        {isCameraOff && (
+        {!cameraOn && (
           <div className="absolute inset-0 bg-secondary flex items-center justify-center">
             <VideoOff className="w-12 h-12 text-muted-foreground" />
           </div>
@@ -160,39 +162,46 @@ export function FloatingVideo({
               variant="ghost"
               className={cn(
                 "h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0",
-                isMuted && "bg-destructive/80 hover:bg-destructive"
+                !micOn && "bg-destructive/80 hover:bg-destructive"
               )}
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleMute?.();
+                onToggleMute();
               }}>
-              {isMuted ? (
-                <MicOff className="h-4 w-4" />
-              ) : (
+              {micOn ? (
                 <Mic className="h-4 w-4" />
+              ) : (
+                <MicOff className="h-4 w-4" />
               )}
             </Button>
 
-            {/* Camera Button */}
             <Button
               size="icon"
               variant="ghost"
               className={cn(
                 "h-8 w-8 rounded-full bg-white/10 hover:bg-white/20 text-white border-0",
-                isCameraOff && "bg-destructive/80 hover:bg-destructive"
+                !cameraOn && "bg-destructive/80 hover:bg-destructive"
               )}
               onClick={(e) => {
                 e.stopPropagation();
-                onToggleCamera?.();
+                onToggleCamera();
               }}>
-              {isCameraOff ? (
-                <VideoOff className="h-4 w-4" />
-              ) : (
+              {cameraOn ? (
                 <Video className="h-4 w-4" />
+              ) : (
+                <VideoOff className="h-4 w-4" />
               )}
             </Button>
+            <Button
+              variant="destructive"
+              size="icon"
+              className="h-12 w-12 rounded-full"
+              onClick={async () => {
+                await endCall();
+              }}>
+              <PhoneOff size={20} />
+            </Button>
 
-            {/* Zoom Button */}
             <Button
               size="icon"
               variant="ghost"
