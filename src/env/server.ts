@@ -15,7 +15,7 @@ export const env = createEnv({
     HUGGINGFACE_API_KEY: z.string(),
     NEXTAUTH_URL: z.string(),
     AUTH_GOOGLE_REFRESH_TOKEN: z.string(),
-    STRIPE_SOLVER_PRODUCT_ID: z.string(),
+    STRIPE_SOLVER_PRICE_ID: z.string(),
     STRIPE_WEBHOOK_SECRET: z.string(),
     SENTRY_DSN: z.string(),
     SENTRY_ENVIRONMENT: z.string(),
