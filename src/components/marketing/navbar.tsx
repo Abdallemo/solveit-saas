@@ -129,12 +129,11 @@ export default function Navbar() {
             <Skeleton className="size-8 rounded-full shimmer-wave" />
           )}
 
-          {!user ||
-            (state == "unauthenticated" && (
-              <Button size="sm" asChild>
-                <Link href={"/login"}>SignIn</Link>
-              </Button>
-            ))}
+          {!user && state != "loading" && (
+            <Button size="sm" asChild>
+              <Link href={"/login"}>SignIn</Link>
+            </Button>
+          )}
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger>
