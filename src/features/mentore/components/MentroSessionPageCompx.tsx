@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { formatDateAndTimeNUTC, getColorClass } from "@/lib/utils";
+import { useWebRTCStore } from "@/store/webRtcStore";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
 import {
@@ -17,7 +18,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { MentorBookingSessions } from "../server/types";
 
 export function SessionsList({
@@ -25,6 +26,14 @@ export function SessionsList({
 }: {
   booking: MentorBookingSessions;
 }) {
+  useEffect(() => {
+    const { manager } = useWebRTCStore.getState();
+    if (manager) {
+      console.log("[SessionList] Found active manager, ending call...");
+      manager.leaveCall();
+    }
+  }, []);
+  
   const { user } = useCurrentUser();
   const [globalFilter, setGlobalFilter] = useState("");
   const [collapsedBookings, setCollapsedBookings] = useState<Set<string>>(
@@ -42,11 +51,6 @@ export function SessionsList({
     }
     setCollapsedBookings(newCollapsed);
   };
-
-  const formatTime = (time: string) => {
-    return time;
-  };
-
 
   const filteredBookings = useMemo(() => {
     if (!globalFilter) return bookings;
