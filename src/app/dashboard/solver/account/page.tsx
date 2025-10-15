@@ -1,4 +1,4 @@
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { getAllCustomerPaymentMethods } from "@/features/payments/server/action";
@@ -10,7 +10,7 @@ import Link from "next/link";
 
 export default async function SolverAccountPage() {
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <Gates.Auth />;
+  if (!currentUser || !currentUser.id) return <AuthGate />;
   const refress =
     (await getServerReturnUrl()) ??
     `/dashboard/${currentUser.role?.toLocaleLowerCase()}/`;
