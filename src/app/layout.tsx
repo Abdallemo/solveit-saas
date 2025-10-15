@@ -19,7 +19,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <SessionProvider>
+    <SessionProvider
+      basePath="/api/auth"
+      refetchInterval={30 * 60}
+      refetchOnWindowFocus={true}>
       <ReactQueryProvider>
         <html lang="en" suppressHydrationWarning>
           <body
