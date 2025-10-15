@@ -12,8 +12,9 @@ import BridCarmComponent from "@/components/BridCarmComponent";
 import OnboardingForm from "@/components/dashboard/user-onboarding-lazyloaded";
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { Motion3DBackground } from "@/features/auth/components/feature-panel";
-import NotificationDropDown from "@/features/notifications/components/notificationDropDown";
+import NotificationDropDown, { Message } from "@/features/notifications/components/notificationDropDown";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
+import { Session } from "next-auth";
 import { Suspense } from "react";
 
 const dbFlags = {
@@ -31,8 +32,8 @@ interface UserSessionProps {
       onboardingCompleted: boolean;
     };
   };
-  sessionUser: any;
-  allNotifications: any;
+  sessionUser: Session["user"];
+  allNotifications: Message[];
 }
 
 interface DashboardClientProvidersProps {

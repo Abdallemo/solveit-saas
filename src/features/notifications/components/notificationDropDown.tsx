@@ -52,7 +52,7 @@ export function formatTimeAgo(date: Date | null) {
 
   return new Date(date).toLocaleDateString();
 }
-type Message = {
+export type Message = {
   id: string;
   createdAt: Date | null;
   content: string;
