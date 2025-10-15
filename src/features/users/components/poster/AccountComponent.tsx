@@ -13,7 +13,7 @@ import { useState, useTransition } from "react";
 import AccountSubscption from "../Account-subscption";
 
 import Loading from "@/app/loading";
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -66,7 +66,7 @@ export default function AccountComponent({
   const { isLoading, isBlocked } = useAuthGate();
 
   if (isLoading) return <Loading />;
-  if (isBlocked) return <Gates.Auth />;
+  if (isBlocked) return <AuthGate />;
 
   return (
     <div className="w-full  mt-5" suppressHydrationWarning>
