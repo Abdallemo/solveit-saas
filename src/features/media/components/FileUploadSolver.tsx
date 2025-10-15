@@ -1,7 +1,7 @@
 "use client";
 
 import Loading from "@/app/loading";
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -40,7 +40,7 @@ export default function FileUploadSolver({
     isError,
   } = useDeleteFile();
   if (isLoading) return <Loading />;
-  if (isBlocked) return <Gates.Auth />;
+  if (isBlocked) return <AuthGate />;
   const fileDisabled =
     currentWorkspace?.task.status === "SUBMITTED" ||
     currentWorkspace?.task.status === "COMPLETED";
