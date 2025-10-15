@@ -1,6 +1,6 @@
 "use client";
 
-import Gates from "@/components/GateComponents";
+import { PostSessionGate } from "@/components/GateComponents";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { sessionUtilsV2 } from "@/lib/utils";
 
@@ -16,7 +16,7 @@ export function VideoCallClientWraper({
   );
   
   if (isPostSession) {
-    return <Gates.PostSession sessionId={mentorshipSession?.id!} />;
+    return <PostSessionGate sessionId={mentorshipSession?.id!} />;
   }
   return <div className="w-full h-full">{children}</div>;
 }
