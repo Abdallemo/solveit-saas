@@ -1,7 +1,7 @@
 "use client";
 
 import Loading from "@/app/loading";
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -94,7 +94,7 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
     form.reset({ description: "", rule: "" });
   };
   if (isLoading) return <Loading />;
-  if (isBlocked) return <Gates.Auth />;
+  if (isBlocked) return <AuthGate />;
 
   return (
     <div className="w-4/5 ">
