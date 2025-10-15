@@ -221,10 +221,3 @@ export function PostSessionGate({ sessionId }: { sessionId: string }) {
   );
 }
 
-const Gates = {
-  Auth: AuthGate,
-  Mentor: MentorGate,
-  Billing: BillingGate,
-  PostSession: PostSessionGate,
-};
-export default Gates;
