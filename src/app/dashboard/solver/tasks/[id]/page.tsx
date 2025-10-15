@@ -1,4 +1,4 @@
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import TaskPageComps from "@/features/tasks/components/TaskPageComps";
 import { getTasksbyIdWithFiles } from "@/features/tasks/server/data";
@@ -9,7 +9,7 @@ export default async function Page({
 }) {
   const { id } = await params;
   const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <Gates.Auth />;
+  if (!currentUser || !currentUser.id) return <AuthGate />;
 
   const task = await getTasksbyIdWithFiles(id);
 
