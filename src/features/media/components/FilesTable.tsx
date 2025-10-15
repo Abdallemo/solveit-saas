@@ -1,6 +1,6 @@
 "use client";
 
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -105,7 +105,7 @@ type FilesTablePropss =
 
 export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
   const currentUser = useCurrentUser();
-  if (!currentUser) return <Gates.Auth />;
+  if (!currentUser) return <AuthGate />;
 
   if (files.length === 0) {
     return (
