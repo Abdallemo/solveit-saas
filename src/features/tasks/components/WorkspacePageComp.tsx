@@ -1,6 +1,6 @@
 "use client";
 import Loading from "@/app/dashboard/solver/loading";
-import Gates from "@/components/GateComponents";
+import { AuthGate } from "@/components/GateComponents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -79,7 +79,7 @@ export default function WorkspacePageComp() {
   }, [form, content]);
 
   if (isLoading) return <Loading />;
-  if (isBlocked) return <Gates.Auth />;
+  if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
     if (progress == 100) {
