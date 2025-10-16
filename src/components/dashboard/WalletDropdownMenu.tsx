@@ -8,7 +8,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { getWalletInfo } from "@/features/tasks/server/data";
-import useCurrentUser from "@/hooks/useCurrentUser";
+import { userSessionType } from "@/features/users/server/user-types";
 import { cn } from "@/lib/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
@@ -16,8 +16,8 @@ import { ArrowUpRight, Info, Wallet } from "lucide-react";
 import { Skeleton } from "../ui/skeleton";
 import { Tooltip, TooltipContent } from "../ui/tooltip";
 
-export default function WalletDropdownMenu() {
-  const { user } = useCurrentUser();
+export default function WalletDropdownMenu({user}:{user:userSessionType}) {
+  
   const { data, isFetching } = useQuery({
     queryKey: ["wallet", user?.id],
     queryFn: () => getWalletInfo(user?.id!),
@@ -25,6 +25,7 @@ export default function WalletDropdownMenu() {
     gcTime: 0,
     refetchOnWindowFocus: true,
     refetchOnMount: "always",
+    enabled:!!user.id
   });
   return (
     <DropdownMenu>

@@ -75,12 +75,13 @@ export function DashboardClientProviders({
                 <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                   <div className="flex items-center">
                     <SidebarTrigger className="mr-2" />
-                    <BridCarmComponent />
+                    <BridCarmComponent role={user.role}/>
                   </div>
                   <div className="flex gap-2 justify-center items-center">
-                    {user.role === "SOLVER" && <WalletDropdownMenu />}
+                    {user.role === "SOLVER" && <WalletDropdownMenu user={user} />}
                     <NotificationDropDown
                       initailAllNotifications={allNotifications}
+                      user={user}
                     />
                   </div>
                 </div>

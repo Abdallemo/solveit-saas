@@ -12,13 +12,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { env } from "@/env/client";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Bell, Mail, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { userSessionType } from "@/features/users/server/user-types";
 import {
   useNotificationDelete,
   useNotificationMarkAllAsRead,
@@ -64,10 +64,11 @@ export type Message = {
 };
 export default function NotificationDropDown({
   initailAllNotifications,
+  user
 }: {
   initailAllNotifications: Message[];
+  user:userSessionType
 }) {
-  const { user } = useCurrentUser();
   const [messages, setMessages] = useState<Message[]>(
     (initailAllNotifications ?? []).slice(0, 3)
   );

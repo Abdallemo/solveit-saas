@@ -1,6 +1,6 @@
 "use client";
 
-import useCurrentUser from "@/hooks/useCurrentUser";
+import { UserRole } from "@/types/next-auth";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -21,10 +21,8 @@ function formatBreadcrumbText(text: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export default function BridCarmComponent() {
+export default function BridCarmComponent({role}:{role:UserRole}) {
   const pathName = usePathname();
-  const { user } = useCurrentUser();
-  const role = user?.role?.toLowerCase();
 
   const paths = pathName.split("/").filter(Boolean);
 
