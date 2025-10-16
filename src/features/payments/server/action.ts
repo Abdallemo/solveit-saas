@@ -186,10 +186,8 @@ export async function CreateUserStripeConnectAccount(
           : "5734",
       product_description:
         "SolveIt is a student job board where students post and solve academic tasks.",
-      url:
-        process.env.NODE_ENV === "development"
-          ? env.PRODUCTION_URL
-          : env.NEXTAUTH_URL,
+      url:env.PRODUCTION_URL
+          
     },
   });
 
