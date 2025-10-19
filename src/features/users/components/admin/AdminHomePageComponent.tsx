@@ -33,43 +33,6 @@ import {
 import Link from "next/link";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 import { AdminActivityOverview, statsDataType } from "./AdminActivityOverview";
-const statsData = [
-  {
-    date: "2024-08-01",
-    users: 12,
-    revenue: 1200,
-    subscriptions: 1,
-    newUsers: 1,
-  },
-  {
-    date: "2024-08-02",
-    users: 15,
-    revenue: 1500,
-    subscriptions: 5,
-    newUsers: 1,
-  },
-  {
-    date: "2024-08-03",
-    users: 9,
-    revenue: 1000,
-    subscriptions: 2,
-    newUsers: 1,
-  },
-  {
-    date: "2024-08-04",
-    users: 20,
-    revenue: 2000,
-    subscriptions: 0,
-    newUsers: 1,
-  },
-  {
-    date: "2024-08-06",
-    users: 18,
-    revenue: 1700,
-    subscriptions: 8,
-    newUsers: 1,
-  },
-];
 
 const usersConfig = {
   users: { label: "All Users", color: "#3b82f6" },
