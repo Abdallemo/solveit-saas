@@ -246,7 +246,7 @@ function SideBarForm() {
                     <p className="text-xs mt-1">Start the conversation above</p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-80 w-full px-2">
+                  <ScrollArea className="h-60 w-full px-2">
                     {comments.map((commentItem, index) => {
                       const isLast = index === comments.length - 1;
                       return (
