@@ -3,37 +3,37 @@
 import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { taskTableType } from "@/drizzle/schemas";
 import { SolutionById } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { supportedExtentions } from "@/lib/utils";
+import { supportedExtentionTypes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
-  Archive,
-  Copy,
-  Download,
-  Eye,
-  File,
-  FileAudio,
-  FileText,
-  FileVideo,
-  ImageIcon,
-  MoreHorizontal,
-  Trash2,
+    Archive,
+    Copy,
+    Download,
+    Eye,
+    File,
+    FileAudio,
+    FileText,
+    FileVideo,
+    ImageIcon,
+    MoreHorizontal,
+    Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { FileIconComponent } from "./FileHelpers";
@@ -135,7 +135,7 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
               <TableCell>
                 <FileIconComponent
                   extension={
-                    file.fileName?.split(".").at(-1) as supportedExtentions
+                    file.fileName?.split(".").at(-1) as supportedExtentionTypes
                   }
                   className="h-4 w-4 text-primary flex-shrink-0"
                 />
