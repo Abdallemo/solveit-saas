@@ -79,6 +79,7 @@ func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /send-signal", s.wsSig.HandleSendSignalingMessage)
 	mux.HandleFunc("POST /media", s.handleUploadMedia)
 	mux.HandleFunc("DELETE /media", s.handleDeleteMedia)
+	mux.HandleFunc("GET /media/download", s.handleMediaDownload)
 	mux.HandleFunc("POST /openai", s.hanleOpenAi)
 }
 
