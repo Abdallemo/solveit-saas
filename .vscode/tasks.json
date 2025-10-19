@@ -77,7 +77,7 @@
     {
       "label": "Go Backend Microservice",
       "type": "shell",
-      "command": "cd server && make run",
+      "command": "cd server && make watch",
       "presentation": {
         "reveal": "always",
         "panel": "dedicated",
