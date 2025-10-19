@@ -16,9 +16,6 @@ import {
   format,
   isAfter,
   isBefore,
-  isSameDay,
-  parse,
-  parseISO,
 } from "date-fns";
 import {
   FileArchive,
@@ -199,7 +196,20 @@ export function getValidEndTimes(startTime: string) {
 export type ImageType = "jpg" | "jpeg" | "png" | "gif" | "svg";
 export type VideoType = "mp4" | "mov";
 export type AudioType = "mp3" | "wav";
-export type ArchiveType = "zip" | "rar";
+export type ArchiveType =
+  | "zip"
+  | "rar"
+  | "7z"
+  | "tar"
+  | "gz"
+  | "bz2"
+  | "xz"
+  | "iso"
+  | "cab"
+  | "z"
+  | "lz"
+  | "arj"
+  | "lzh";
 export type DocType = "doc" | "docx" | "xls" | "xlsx" | "csv" | "pptx";
 export type CodeType =
   | "js"
@@ -213,8 +223,9 @@ export type CodeType =
   | "ejs"
   | "go"
   | "c"
-  | "cpp";
-export type supportedExtentions =
+  | "cpp"
+  | "py";
+export type supportedExtentionTypes =
   | ImageType
   | AudioType
   | VideoType
@@ -224,9 +235,9 @@ export type supportedExtentions =
   | "pdf";
 
 export function fileExtention(fileName: string) {
-  return fileName?.split(".").at(-1) as supportedExtentions;
+  return fileName?.split(".").at(-1) as supportedExtentionTypes;
 }
-export const getIconForFileExtension = (extension: supportedExtentions) => {
+export const getIconForFileExtension = (extension: supportedExtentionTypes) => {
   switch (extension) {
     case "pdf":
     case "doc":
@@ -280,6 +291,7 @@ const imageExtensions: ImageType[] = ["jpg", "jpeg", "png", "gif", "svg"];
 const videoExtensions: VideoType[] = ["mp4", "mov"];
 const audioExtensions: AudioType[] = ["mp3", "wav"];
 const docExtensions: DocType[] = ["csv", "doc", "docx", "xls", "xlsx", "pptx"];
+
 const codeExtensions: CodeType[] = [
   "css",
   "html",
@@ -293,25 +305,65 @@ const codeExtensions: CodeType[] = [
   "cpp",
   "ejs",
   "go",
+  "py",
+];
+const supportedExtentions: supportedExtentionTypes[] = [
+  ...codeExtensions,
+  ...docExtensions,
+  ...audioExtensions,
+  ...videoExtensions,
+  ...imageExtensions,
 ];
 
-export function isImage(ext: supportedExtentions): ext is ImageType {
+export function isImage(ext: supportedExtentionTypes): ext is ImageType {
   return imageExtensions.includes(ext as ImageType);
 }
+export function isUnsupportedExtention(
+  ext: supportedExtentionTypes
+): ext is supportedExtentionTypes {
+  return !supportedExtentions.includes(ext as supportedExtentionTypes);
+}
 
-export function isVideo(ext: supportedExtentions): ext is VideoType {
+export function isVideo(ext: supportedExtentionTypes): ext is VideoType {
   return videoExtensions.includes(ext as VideoType);
 }
 
-export function isAudio(ext: supportedExtentions): ext is AudioType {
+export function isAudio(ext: supportedExtentionTypes): ext is AudioType {
   return audioExtensions.includes(ext as AudioType);
 }
-export function isDoc(ext: supportedExtentions): ext is DocType {
+export function isDoc(ext: supportedExtentionTypes): ext is DocType {
   return docExtensions.includes(ext as DocType);
 }
 
-export function isCode(ext: supportedExtentions): ext is CodeType {
+export function isCode(ext: supportedExtentionTypes): ext is CodeType {
   return codeExtensions.includes(ext as CodeType);
+}
+export function browserFileDownload({
+  fileName,
+  blob,
+  storageLocation,
+}: {
+  fileName: string;
+  storageLocation?: string;
+  blob?: Blob;
+}) {
+  if (blob) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = fileName;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+  if (storageLocation) {
+    const link = document.createElement("a");
+    link.href = storageLocation;
+    link.download = fileName;
+    link.rel = "noopener";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }
 
 export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
@@ -344,55 +396,11 @@ export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
   }
 }
 
-type SessionActiveType = {
-  now: Date;
-  sessionDate: string;
-  session: AvailabilitySlot;
-};
-
-export function isSessionActive({
-  session,
-  sessionDate,
-  now,
-}: SessionActiveType) {
-  const sessionDay = parseISO(sessionDate);
-  const startTime = parse(session.start, "HH:mm", sessionDay);
-  const endTime = parse(session.end, "HH:mm", sessionDay);
-
-  return (
-    isSameDay(now, sessionDay) &&
-    (isAfter(now, startTime) || now.getTime() === startTime.getTime()) &&
-    isBefore(now, endTime)
-  );
-}
-
-export function isBeforeSession({
-  session,
-  sessionDate,
-  now,
-}: SessionActiveType) {
-  const sessionDay = parseISO(sessionDate);
-  const startTime = parse(session.start, "HH:mm", sessionDay);
-
-  return isBefore(now, startTime);
-}
-
-export function isAfterSession({
-  session,
-  sessionDate,
-  now,
-}: SessionActiveType) {
-  const sessionDay = parseISO(sessionDate);
-  const endTime = parse(session.end, "HH:mm", sessionDay);
-
-  return isAfter(now, endTime);
-}
-
 function normalizeDate(input: string | Date): Date {
   return typeof input === "string" ? new Date(input) : input;
 }
 
-export const sessionUtilsV2 = {
+export const sessionTimeUtils = {
   isSessionActive: (
     session: { sessionStart: string | Date; sessionEnd: string | Date },
     now: Date
