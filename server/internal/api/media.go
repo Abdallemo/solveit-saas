@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -101,4 +102,34 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(uploadedFiles)
+}
+
+func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {
+
+	Key := r.URL.Query().Get("key")
+	if Key == "" {
+		http.Error(w, "Missing key", http.StatusBadRequest)
+		return
+	}
+
+	obj, err := s.s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String("solveit"),
+		Key:    aws.String(Key),
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error fetching object: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer obj.Body.Close()
+
+	key := Key
+	slashIdx := strings.LastIndex(key, "/")
+	fileName := key
+	if slashIdx != -1 {
+		fileName = key[slashIdx+1:]
+	}
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%q", fileName))
+	w.Header().Set("Content-Type", "application/octet-stream")
+
+	io.Copy(w, obj.Body)
 }
