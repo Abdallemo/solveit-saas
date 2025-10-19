@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """fixed the bug of minfast casued by gate component"""
+commit_message = """added file preview features and somee tweaks"""
 
 repo = Repo(repo_path)
 
