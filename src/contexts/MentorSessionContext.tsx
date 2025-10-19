@@ -53,7 +53,6 @@ export const MentorshipSessionProvider = ({
     queryFn: async () => {
       return await getMentorSession(sessionId);
     },
-    enabled: !!user?.id,
   });
   if (error) throw new SessionNotFoundError();
 
