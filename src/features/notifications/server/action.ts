@@ -40,7 +40,6 @@ export async function processSystemNotification({
       read: false,
     })
     .returning();
-  logger.info("found results", result);
   await fetch(`${env.GO_API_URL}/send-notification`, {
     method: "POST",
     headers: GoHeaders,
