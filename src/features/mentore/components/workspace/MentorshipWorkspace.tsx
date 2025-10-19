@@ -1,6 +1,4 @@
 "use client";
-import { MonacoEditor } from "@/components/editors/MonocaEditor";
-import { CodeEditorDialog } from "@/components/editors/MonocaWraper";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,12 +10,13 @@ import {
   FileChatCardComps,
   FileIconComponent,
 } from "@/features/media/components/FileHelpers";
+import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useFileUpload } from "@/hooks/useFile";
+import { useDownloadFile, useFileUpload } from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
-import { sessionUtilsV2, supportedExtentions } from "@/lib/utils";
+import { sessionTimeUtils, supportedExtentionTypes } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
   CheckCheck,
@@ -36,7 +35,6 @@ import { toast } from "sonner";
 import { sendMentorMessages } from "../../server/action";
 import { FloatingVideo } from "../floating-video";
 
-type Files = { [key: string]: string };
 export default function MentorshipWorkspace({
   sidebar,
   controlled,
@@ -50,17 +48,14 @@ export default function MentorshipWorkspace({
     setUploadingFiles,
   } = useMentorshipSession();
   const [messageInput, setMessageInput] = useState("");
-  const [isCodeEditorOpen, setIsCodeEditorOpen] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const messageRef = useRef<HTMLDivElement>(null);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
   const isMobile = useIsMobile();
   const path = usePathname();
-  const [open, setOpen] = useState(false);
-  const [filePreview, setFilePreview] = useState<UploadedFileMeta>();
-  const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
+
   const {
     remoteStream,
     remoteVideo,
@@ -71,27 +66,13 @@ export default function MentorshipWorkspace({
     clearState,
     endCall,
   } = useMentorshipCall(user?.id!, session?.id!);
-
-  const handleFilesChange = (filename: string, content: string) => {
-    setFiles((prev) => ({ ...prev, [filename]: content }));
-  };
-
-  const handleSave = (filename: string, content: string) => {
-    console.log(`Saving ${filename}:`, content);
-  };
-
-  const handleFileAdd = (filename: string) => {
-    setFiles((prev) => ({ ...prev, [filename]: "" }));
-    console.log(`Added new file: ${filename}`);
-  };
-
-  const handleFileDelete = (filename: string) => {
-    setFiles((prev) => {
-      const newFiles = { ...prev };
-      delete newFiles[filename];
-      return newFiles;
+  const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
+    useDownloadFile();
+  const handleFileDownload = async (key: string, fileName: string) => {
+    toast.loading("preparing file downlad..", {
+      id: `file-${fileName}-download`,
     });
-    console.log(`Deleted file: ${filename}`);
+    await downloadFile({ fileName, key });
   };
 
   const { mutate: sendMessage } = useMutation({
@@ -105,6 +86,7 @@ export default function MentorshipWorkspace({
       messageRef.current.scrollIntoView({ behavior: "smooth" });
     }
   }, [session, uploadingFiles]);
+
   if (!session) {
     return (
       <main className="w-full h-full flex items-center justify-center bg-background">
@@ -119,11 +101,11 @@ export default function MentorshipWorkspace({
   }
   const { sessionDate, timeSlot, sessionStart, sessionEnd } = session;
   const allFiles = session.chats?.flatMap((chat) => chat.chatFiles) || [];
-  const isPreSession = sessionUtilsV2.isBeforeSession(
+  const isPreSession = sessionTimeUtils.isBeforeSession(
     { sessionStart: sessionStart! },
     new Date()
   );
-  const isPostSession = sessionUtilsV2.isAfterSession(
+  const isPostSession = sessionTimeUtils.isAfterSession(
     { sessionEnd },
     new Date()
   );
@@ -276,6 +258,10 @@ export default function MentorshipWorkspace({
                         {chat.chatFiles.map((file) => (
                           <FileChatCardComps
                             key={file.id}
+                            disabled={
+                              isRequestingDownload &&
+                              file.fileName === filePreview?.fileName
+                            }
                             file={{
                               fileName: file.fileName,
                               filePath: file.filePath,
@@ -285,10 +271,17 @@ export default function MentorshipWorkspace({
                             }}
                             action={() => {
                               setFilePreview(file);
-                              setOpen((prev) => !prev);
-                              setIsCodeEditorOpen((prev) => !prev);
                             }}
-                            opt={{ deleteDisable: isPostSession }}
+                            opt={{
+                              deleteDisable:
+                                isPostSession || user?.id !== file.uploadedById,
+                            }}
+                            downloadAction={async (file) => {
+                              await handleFileDownload(
+                                file.filePath,
+                                file.fileName
+                              );
+                            }}
                           />
                         ))}
                       </div>
@@ -296,62 +289,6 @@ export default function MentorshipWorkspace({
                   );
                 })}
                 <div ref={messageRef} />
-                {/* <Dialog open={open} onOpenChange={setOpen}>
-                  <DialogContent className="sm:max-w-[calc(100vw-300px)] lg:max-w-[calc(100vw-500px)] xl:max-w-[calc(100vw-600px)] h-[calc(100vh-100px)] flex flex-col justify-center items-center p-4">
-                    <DialogHeader className="w-full h-full">
-                      <DialogTitle></DialogTitle>
-
-                      {isImage(fileExtention(filePreview?.fileName!)) && (
-                        <Image
-                          alt={filePreview?.fileName!}
-                          src={filePreview?.storageLocation!}
-                          width={0}
-                          height={0}
-                          sizes="100vw"
-                          style={{ width: "100%", height: "auto" }}
-                          className="object-contain max-h-full max-w-full"
-                        />
-                      )}
-                      {isVideo(fileExtention(filePreview?.fileName!)) && (
-                        <video
-                          src={filePreview?.storageLocation!}
-                          autoPlay
-                          controls
-                        />
-                      )}
-
-                      {isDoc(fileExtention(filePreview?.fileName!)) && (
-                        <iframe
-                          src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-                            filePreview?.storageLocation!
-                          )}`}
-                          className="w-full h-full rounded-lg shadow-md border"
-                        />
-                      )}
-                    </DialogHeader>
-                  </DialogContent>
-                </Dialog> */}
-                <CodeEditorDialog
-                  isOpen={isCodeEditorOpen}
-                  onClose={() => setIsCodeEditorOpen(false)}
-                  isFullscreen={isFullscreen}
-                  setIsFullscreen={setIsFullscreen}
-                  activeFile={{
-                    name: filePreview?.fileName!,
-                    type: filePreview?.fileType!,
-                  }}
-                  mode="editor">
-                  <MonacoEditor
-                    files={files}
-                    onChange={handleFilesChange}
-                    onSave={handleSave}
-                    onFileAdd={handleFileAdd}
-                    onFileDelete={handleFileDelete}
-                    height="800px"
-                    theme="vs-dark"
-                    className="shadow-lg"
-                  />
-                </CodeEditorDialog>
 
                 {uploadingFiles.map((file) => (
                   <div key={file.name} className="flex gap-3 flex-row-reverse">
@@ -412,7 +349,7 @@ export default function MentorshipWorkspace({
                     className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-background border shadow-sm">
                     <FileIconComponent
                       extension={
-                        file.name?.split(".").at(-1) as supportedExtentions
+                        file.name?.split(".").at(-1) as supportedExtentionTypes
                       }
                       className="h-4 w-4 text-primary flex-shrink-0"
                     />
@@ -488,22 +425,30 @@ export default function MentorshipWorkspace({
 
           <ScrollArea className="flex-1 h-0">
             {allFiles.length > 0 ? (
-              <div className="flex flex-col w-fit h-100 gap-2 ">
+              <div className="flex flex-col w-full h-100 gap-2  ">
                 {allFiles.map((file) => (
-                  <FileChatCardComps
-                    key={file.id}
-                    file={{
-                      fileName: file.fileName,
-                      filePath: file.filePath,
-                      fileSize: file.fileSize,
-                      fileType: file.fileType,
-                      storageLocation: file.storageLocation,
-                    }}
-                    action={() => {
-                      setFilePreview(file);
-                      setOpen((prev) => !prev);
-                    }}
-                  />
+                  <div key={file.id} className="w-70">
+                    <FileChatCardComps
+                      key={file.id}
+                      file={{
+                        fileName: file.fileName,
+                        filePath: file.filePath,
+                        fileSize: file.fileSize,
+                        fileType: file.fileType,
+                        storageLocation: file.storageLocation,
+                      }}
+                      action={() => {
+                        setFilePreview(file);
+                      }}
+                      downloadAction={async (file) => {
+                        await handleFileDownload(file.filePath, file.fileName);
+                      }}
+                      disabled={
+                        isRequestingDownload &&
+                        file.fileName === filePreview?.fileName
+                      }
+                    />
+                  </div>
                 ))}
               </div>
             ) : (
@@ -536,6 +481,16 @@ export default function MentorshipWorkspace({
           }}
         />
       )}
+
+          <MediaPreviewer
+            filePreview={filePreview}
+            onClose={() => {
+              setFilePreview(null);
+            }}
+            onDownload={() => {
+              setFilePreview(null);
+            }}
+          />
     </main>
   );
 }
