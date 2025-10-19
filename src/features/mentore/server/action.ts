@@ -34,7 +34,7 @@ import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { calculateSlotDuration, daysInWeek, sessionUtilsV2 } from "@/lib/utils";
+import { calculateSlotDuration, daysInWeek, sessionTimeUtils } from "@/lib/utils";
 import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
@@ -560,7 +560,7 @@ export async function sendMentorMessages(values: {
   if (!session) throw new Error("Invalid Session");
 
   if (
-    sessionUtilsV2.isAfterSession(
+    sessionTimeUtils.isAfterSession(
       { sessionEnd: session.sessionEnd },
       new Date()
     )
