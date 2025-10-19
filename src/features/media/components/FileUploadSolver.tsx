@@ -10,13 +10,14 @@ import { env } from "@/env/client";
 import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useDeleteFile, useFileUpload } from "@/hooks/useFile";
+import { useDeleteFile, useDownloadFile, useFileUpload } from "@/hooks/useFile";
 import { cn } from "@/lib/utils";
-import { File, Loader2, Upload } from "lucide-react";
+import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import { UploadedFileMeta } from "../server/media-types";
 import { FileChatCardComps } from "./FileHelpers";
+import MediaPreviewer from "./MediaPreviewer";
 
 interface FileUploadProps {
   maxFiles?: number;
@@ -32,8 +33,17 @@ export default function FileUploadSolver({
   const { uploadedFiles, setUploadedFiles, currentWorkspace } = useWorkspace();
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { uploadMutate, isUploading } = useFileUpload({});
+  const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
+    useDownloadFile();
+  const handleFileDownload = async (key: string, fileName: string) => {
+    toast.loading("preparing file downlad..", {
+      id: `file-${fileName}-download`,
+    });
+    await downloadFile({ fileName, key });
+  };
   const {
     mutateAsync: deleteFile,
     isPending: isDeleting,
@@ -96,6 +106,12 @@ export default function FileUploadSolver({
 
   return (
     <div className={cn("w-full", className)}>
+      <MediaPreviewer
+        filePreview={filePreview}
+        onClose={() => {
+          setFilePreview(null);
+        }}
+      />
       <div
         className={cn(
           "border-2 border-dashed rounded-md p-4 text-center",
@@ -151,29 +167,32 @@ export default function FileUploadSolver({
 
       {(uploadingFiles.length > 0 || uploadedFiles.length > 0) && (
         <ScrollArea className="flex-1">
-          <div className="mt-2 space-y-2 h-[100px] overflow-scroll p-2">
+          <div className="mt-2 space-y-2 h-[100px] overflow-scroll p-2 " >
             {uploadingFiles.map((file) => (
-              <div
-                key={`uploading-${file.name}`}
-                className="flex items-center gap-3 p-2 bg-muted rounded-md">
-                <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <div className="text-sm font-medium truncate flex ">
-                    {file.name}
-                  </div>
-
-                  <p className="text-xs text-muted-foreground">
-                    {(file.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                {isUploading && (
-                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground mt-1" />
-                )}
-              </div>
+              <FileChatCardComps
+                key={file.name}
+                loading
+                file={{
+                  fileName: file.name,
+                  filePath: "",
+                  fileSize: file.size,
+                  fileType: file.type,
+                  storageLocation: "",
+                }}
+              />
             ))}
             {uploadedFiles.map((file) => (
               <FileChatCardComps
-                action={() => window.open(file.storageLocation, "_blank")}
+                action={() => {
+                  console.log("Opening preview for:", file.fileName);
+                  setFilePreview({
+                    fileName: file.fileName,
+                    filePath: file.filePath,
+                    fileSize: file.fileSize,
+                    fileType: file.fileType,
+                    storageLocation: file.storageLocation,
+                  });
+                }}
                 key={file.id}
                 file={file}
                 deleteAction={async () => {
@@ -187,6 +206,9 @@ export default function FileUploadSolver({
                       prev.filter((f) => f.filePath !== file.filePath)
                     );
                   } catch (error) {}
+                }}
+                downloadAction={async (file) => {
+                  await handleFileDownload(file.filePath, file.fileName);
                 }}
               />
             ))}
