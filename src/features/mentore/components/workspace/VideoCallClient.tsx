@@ -2,7 +2,7 @@
 
 import { PostSessionGate } from "@/components/GateComponents";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { sessionUtilsV2 } from "@/lib/utils";
+import { sessionTimeUtils } from "@/lib/utils";
 
 export function VideoCallClientWraper({
   children,
@@ -10,7 +10,7 @@ export function VideoCallClientWraper({
   children: React.ReactNode;
 }) {
   const { mentorshipSession } = useMentorshipSession();
-  const isPostSession = sessionUtilsV2.isAfterSession(
+  const isPostSession = sessionTimeUtils.isAfterSession(
     { sessionEnd: mentorshipSession?.sessionEnd! },
     new Date()
   );
