@@ -14,6 +14,7 @@ import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
+import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import {
   AvailabilitySlot,
@@ -34,7 +35,11 @@ import { MentorError, SubscriptionError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { calculateSlotDuration, daysInWeek, sessionTimeUtils } from "@/lib/utils";
+import {
+  calculateSlotDuration,
+  daysInWeek,
+  sessionTimeUtils
+} from "@/lib/utils";
 import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
@@ -641,4 +646,55 @@ export async function revalidateMentorSessinoData(values: {
 }) {
   const { role, sessionId } = values;
   revalidatePath(`${env.NEXTAUTH_URL}/dashboard/${role}/sessions/${sessionId}`);
+}
+
+export async function deleteFileFromChatSession(fileId: string) {
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  try {
+    const file = await db.query.MentorshipChatFilesTable.findFirst({
+      where: eq(MentorshipChatFilesTable.id, fileId),
+      with: {
+        chat: true,
+      },
+    });
+
+    if (!file) {
+      return { error: "File not found" };
+    }
+    await deleteFileFromR2(file.filePath);
+    await db.transaction(async (dx) => {
+      await dx
+        .delete(MentorshipChatFilesTable)
+        .where(
+          and(
+            eq(MentorshipChatFilesTable.id, fileId),
+            eq(MentorshipChatFilesTable.uploadedById, user.id)
+          )
+        );
+      await dx
+        .update(MentorshipChatTable)
+        .set({ isDeleted: true })
+        .where(
+          and(
+            eq(MentorshipChatTable.id, file.chatId),
+            eq(MentorshipChatTable.sentBy, user.id)
+          )
+        );
+    });
+
+    revalidatePath(
+      `${env.NEXTAUTH_URL}/dashboard/solver/sessions/${file?.chat.sessionId}`
+    );
+    revalidatePath(
+      `${env.NEXTAUTH_URL}/dashboard/poster/sessions/${file?.chat.sessionId}`
+    );
+    return {
+      file: file.fileName,
+      fileId:file.id
+      
+    };
+  } catch (error) {
+    console.error(error);
+    throw new Error("Something went Wrong", { cause: error });
+  }
 }
