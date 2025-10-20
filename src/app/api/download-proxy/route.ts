@@ -1,3 +1,4 @@
+import { env } from "@/env/server";
 import { GoHeaders } from "@/lib/go-config";
 import { NextRequest } from "next/server";
 
@@ -8,9 +9,10 @@ export async function GET(req: NextRequest) {
   }
 
   const res = await fetch(
-    `${process.env.GO_API_URL}/media/download?key=${encodeURIComponent(key)}`,
+    `${env.GO_API_URL}/media/download?key=${encodeURIComponent(key)}`,
     {
       headers: GoHeaders,
+      method:"GET"
     }
   );
 
