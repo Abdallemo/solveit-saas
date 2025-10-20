@@ -14,7 +14,11 @@ import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useDownloadFile, useFileUpload } from "@/hooks/useFile";
+import {
+  useDeleteFileChat,
+  useDownloadFile,
+  useFileUpload,
+} from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
 import { sessionTimeUtils, supportedExtentionTypes } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
@@ -68,11 +72,19 @@ export default function MentorshipWorkspace({
   } = useMentorshipCall(user?.id!, session?.id!);
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
+  const { mutateAsync: deleteFile, isPending: isDeletingFile } =
+    useDeleteFileChat();
   const handleFileDownload = async (key: string, fileName: string) => {
     toast.loading("preparing file downlad..", {
       id: `file-${fileName}-download`,
     });
     await downloadFile({ fileName, key });
+  };
+  const handleFiledelete = async (fileId: string, filePath: string) => {
+    toast.loading("deleting..", {
+      id: `delete-file-${fileId}`,
+    });
+    await deleteFile({ fileId, filePath });
   };
 
   const { mutate: sendMessage } = useMutation({
@@ -81,6 +93,7 @@ export default function MentorshipWorkspace({
       toast.error(e.message);
     },
   });
+
   useEffect(() => {
     if (messageRef.current) {
       messageRef.current.scrollIntoView({ behavior: "smooth" });
@@ -255,6 +268,20 @@ export default function MentorshipWorkspace({
                             </p>
                           </div>
                         )}
+                        {chat.isDeleted && (
+                          <div
+                            className={`rounded-2xl px-4 py-3  hover:shadow-md ${
+                              isCurrentUser
+                                ? "bg-primary/50 text-primary-foreground rounded-br-md"
+                                : "bg-muted/50 rounded-bl-md"
+                            }`}>
+                            <p className="text-sm leading-relaxed break-all">
+                              {isCurrentUser
+                                ? "you deleted this message"
+                                : "this message is deleted"}
+                            </p>
+                          </div>
+                        )}
                         {chat.chatFiles.map((file) => (
                           <FileChatCardComps
                             key={file.id}
@@ -281,6 +308,9 @@ export default function MentorshipWorkspace({
                                 file.filePath,
                                 file.fileName
                               );
+                            }}
+                            deleteAction={async (f) => {
+                              await handleFiledelete(file.id, f.filePath);
                             }}
                           />
                         ))}
@@ -447,6 +477,13 @@ export default function MentorshipWorkspace({
                         isRequestingDownload &&
                         file.fileName === filePreview?.fileName
                       }
+                      opt={{
+                        deleteDisable:
+                          isPostSession || user?.id !== file.uploadedById,
+                      }}
+                      deleteAction={async (f) => {
+                        await handleFiledelete(file.id, f.filePath);
+                      }}
                     />
                   </div>
                 ))}
@@ -482,15 +519,16 @@ export default function MentorshipWorkspace({
         />
       )}
 
-          <MediaPreviewer
-            filePreview={filePreview}
-            onClose={() => {
-              setFilePreview(null);
-            }}
-            onDownload={() => {
-              setFilePreview(null);
-            }}
-          />
+      <MediaPreviewer
+        fileRecords={allFiles}
+        filePreview={filePreview}
+        onClose={() => {
+          setFilePreview(null);
+        }}
+        onDownload={() => {
+          setFilePreview(null);
+        }}
+      />
     </main>
   );
 }
