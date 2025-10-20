@@ -1,7 +1,8 @@
 import { env } from "@/env/client";
 import { uploadFiles } from "@/features/media/server/action";
+import { deleteFileFromChatSession } from "@/features/mentore/server/action";
 import { deleteFileFromWorkspace } from "@/features/tasks/server/action";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 type FileUploadProps = {
   successMsg?: boolean;
@@ -57,6 +58,29 @@ export function useDeleteFile() {
     },
   });
 }
+export function useDeleteFileChat() {
+  return useMutation({
+    mutationFn: async ({
+      fileId,
+      filePath,
+    }: {
+      fileId: string;
+      filePath: string;
+    }) => {
+      return await deleteFileFromChatSession(fileId);
+    },
+    onSuccess: ({ fileId }) => {
+      toast.success("File deleted successfully!", {
+        id: `delete-file-${fileId}`,
+      });
+    },
+    onError: (error: any, { fileId }) => {
+      toast.error(`Failed to delete file: ${error.message}`, {
+        id: `delete-file-${fileId}`,
+      });
+    },
+  });
+}
 export function useDownloadFile() {
   return useMutation({
     mutationFn: async ({
@@ -93,6 +117,33 @@ export function useDownloadFile() {
       toast.error(`Failed to download file: ${error.message}`, {
         id: `file-${fileName}-download`,
       });
+    },
+  });
+}
+type FileContent = string;
+export function useFileStream(key: string | null) {
+  return useQuery<FileContent, Error>({
+    queryKey: ["fileContent", key],
+
+    enabled: !!key,
+
+    queryFn: async () => {
+      if (!key) {
+        throw new Error("Key is required for fetching file content.");
+      }
+
+      const res = await fetch(
+        `${env.NEXT_PUBLIC_URL}/api/media-stream?key=${encodeURIComponent(key)}`
+      );
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(
+          `Failed to fetch file content: ${errorText || res.statusText}`
+        );
+      }
+      const content = await res.text();
+
+      return content;
     },
   });
 }
