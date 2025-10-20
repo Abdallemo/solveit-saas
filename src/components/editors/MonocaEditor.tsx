@@ -4,6 +4,8 @@ import type React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { useFileStream } from "@/hooks/useFile";
 import { Editor } from "@monaco-editor/react";
 import {
   Check,
@@ -21,9 +23,8 @@ import {
 import { useEffect, useRef, useState } from "react";
 
 interface MonacoEditorProps {
-  /**files contains a record of <string,string> fileName and its content */
-  files: Record<string, string>;
-  currentFile?: string;
+  files: UploadedFileMeta[];
+  currentFile?: string; // This is the fileName of the file to be opened initially
   onChange?: (filename: string, content: string) => void;
   onFileChange?: (filename: string) => void;
   onSave?: (filename: string, content: string) => void;
@@ -33,6 +34,7 @@ interface MonacoEditorProps {
   theme?: "vs-dark" | "light";
   className?: string;
   sidebar?: boolean;
+  filePath: string;
 }
 
 function FileIcon({
@@ -156,7 +158,7 @@ function AddFileInput({
 }
 
 export function MonacoEditor({
-  files,
+  files: rawFiles,
   currentFile,
   onChange,
   onFileChange,
@@ -167,19 +169,45 @@ export function MonacoEditor({
   theme = "vs-dark",
   className = "",
   sidebar = false,
+  filePath: singleFilePath,
 }: MonacoEditorProps) {
-  const [activeFile, setActiveFile] = useState(
-    currentFile || Object.keys(files)[0] || ""
-  );
+  const files: UploadedFileMeta[] =
+    sidebar && Array.isArray(rawFiles) ? rawFiles : [];
+
+  const initialFileName = sidebar
+    ? currentFile || files[0]?.fileName || ""
+    : currentFile || "";
+
+  const [activeFile, setActiveFile] = useState(initialFileName);
+
+  const activeFileMeta = files.find((f) => f.fileName === activeFile);
+
+  const fileKeyToFetch = sidebar
+    ? activeFileMeta?.filePath || null
+    : singleFilePath || null;
+
+  const { data: fileContent, isLoading, error } = useFileStream(fileKeyToFetch);
+
   const [showAddInput, setShowAddInput] = useState(false);
   const editorRef = useRef<any>(null);
-  const fileList = Object.keys(files);
+
+  const fileList = files.map((f) => f.fileName);
 
   useEffect(() => {
     if (currentFile && currentFile !== activeFile) {
       setActiveFile(currentFile);
     }
   }, [currentFile, activeFile]);
+
+  // useEffect(() => {
+  //   if (editorRef.current) {
+  //     const timer = setTimeout(() => {
+  //       editorRef.current.layout();
+  //     }, 50);
+
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [activeFile, fileContent, isLoading]);
 
   const handleFileSelect = (filename: string) => {
     setActiveFile(filename);
@@ -198,6 +226,8 @@ export function MonacoEditor({
       const remainingFiles = fileList.filter((f) => f !== filename);
       if (remainingFiles.length > 0) {
         setActiveFile(remainingFiles[0]);
+      } else {
+        setActiveFile("");
       }
     }
   };
@@ -227,7 +257,6 @@ export function MonacoEditor({
       case "html":
         return "html";
       case "css":
-        return "css";
       case "scss":
         return "scss";
       case "json":
@@ -236,6 +265,10 @@ export function MonacoEditor({
         return "markdown";
       case "sql":
         return "sql";
+      case "py":
+        return "python";
+      case "go":
+        return "go";
       default:
         return "plaintext";
     }
@@ -339,12 +372,20 @@ export function MonacoEditor({
         )}
 
         <div className="flex-1">
-          {activeFile && files[activeFile] !== undefined ? (
+          {isLoading ? (
+            <div className="flex items-center justify-center h-full text-muted-foreground">
+              <p>Loading file content...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-full text-red-500">
+              <p>Error loading content: {error.message}</p>
+            </div>
+          ) : activeFile && fileContent !== undefined ? (
             <Editor
               height={height}
               language={getLanguage(activeFile)}
               theme={theme}
-              value={files[activeFile]}
+              value={fileContent}
               onChange={handleEditorChange}
               onMount={(editor) => {
                 editorRef.current = editor;
