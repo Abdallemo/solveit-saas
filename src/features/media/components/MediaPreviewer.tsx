@@ -23,6 +23,7 @@ type MediaPreviewerProps = {
   filePreview: UploadedFileMeta | null;
   onClose?: () => void;
   onDownload?: () => void;
+  fileRecords: UploadedFileMeta[];
 };
 
 type Files = { [key: string]: string };
@@ -31,6 +32,7 @@ export default function MediaPreviewer({
   filePreview,
   onClose,
   onDownload,
+  fileRecords,
 }: MediaPreviewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
@@ -102,7 +104,7 @@ export default function MediaPreviewer({
         }}>
         <VideoPlayer
           src={filePreview.storageLocation}
-          className="w-full aspect-video"
+          className="w-full h-full aspect-video"
         />
       </FileDialogDialog>
     );
@@ -152,14 +154,16 @@ export default function MediaPreviewer({
         }}
         mode="editor">
         <MonacoEditor
-          files={files}
+          files={fileRecords}
+          currentFile={filePreview.fileName}
           onChange={handleFilesChange}
           onSave={handleSave}
           onFileAdd={handleFileAdd}
           onFileDelete={handleFileDelete}
-          height="800px"
+         height="100%"
           theme="vs-dark"
           className="shadow-lg"
+          filePath={filePreview.filePath}
         />
       </CodeEditorDialog>
     );
