@@ -35,7 +35,7 @@ export function FileChatCardComps({
   file: UploadedFileMeta;
   action?: () => void;
   downloadAction?: (file: UploadedFileMeta) => Promise<void>;
-  deleteAction?: () => void;
+  deleteAction?: (file: UploadedFileMeta) => Promise<void>;
   opt?: { deleteDisable: boolean };
   loading?: boolean;
   disabled?: boolean;
@@ -85,7 +85,12 @@ export function FileChatCardComps({
             size={"sm"}
             className="p-0"
             disabled={deleteDisable}
-            onClick={disabled == true ? () => {} : deleteAction}>
+            onClick={async () => {
+              if (disabled == true) return;
+              if (deleteAction) {
+                await deleteAction(file);
+              }
+            }}>
             <X />
           </Button>
         )}
