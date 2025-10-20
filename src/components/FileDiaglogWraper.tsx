@@ -57,12 +57,12 @@ export function FileDialogDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-4 z-50 bg-black/50">
+    <div className="absolute inset-0 flex items-center justify-center py-2 z-50 bg-black/50">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        className={`bg-background rounded-lg shadow-2xl focus:outline-none ${"w-[80%] h-[80%]"} flex flex-col`}
+        className={`bg-background rounded-lg shadow-2xl focus:outline-none ${"w-[70%] h-[70%]"} flex flex-col`}
         tabIndex={-1}>
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
