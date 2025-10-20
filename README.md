@@ -1,163 +1,157 @@
 
-# SolveIt – SaaS-Based Student Job Board for UTHM
+# SolveIt
 
-**SolveIt** is a comprehensive SaaS platform designed exclusively for **UTHM students**, enabling academic collaboration and peer-to-peer task solving with secure payments, AI-powered moderation, and a structured workspace.  
-<img width="1910" height="1023" alt="image" src="https://github.com/user-attachments/assets/f32c76d1-acba-4b37-ab0d-71ae2061e0f6" />
-<img width="1900" height="1015" alt="image" src="https://github.com/user-attachments/assets/e4c08f6e-7d4f-45c4-8017-6be7d02a093e" />
+**SaaS Platform for Academic Collaboration and Task Solving at UTHM**
+
+SolveIt connects students in a secure and structured environment to **post, pick up, and complete academic tasks** while managing payments and preventing cheating. With **real-time updates, AI moderation, and an integrated workspace**, SolveIt ensures tasks are completed efficiently and safely.
+
+**Key Features:**
+
+* **Role-based system:** Posters, Solvers, Moderators, Admins
+* **Secure payments:** Escrow system with Stripe integration
+* **Real-time collaboration:** Messaging and notifications
+* **AI moderation:** Automatic detection of cheating and inappropriate content
+* **Structured workspace:** Organize and submit solutions seamlessly
+
+![SolveIt Dashboard](https://github.com/user-attachments/assets/c9b08c9f-f487-44ec-b4cd-38ac3b72e714)
+
 
 ---
 
-## 🌟 Highlights
-
-- [x] Multi-role platform: **Poster**, **Solver**, **Moderator**, **Admin**  
-- [x] **Subscription-based access** via Stripe (Solver features gated by tier)  
-- [x] **Real-time task updates and messaging** using WebSockets  
-- [x] **AI-powered moderation** to prevent cheating and toxic content  
-- [x] **Structured workspace** for solution uploads  
-- [x] **Escrow-based payments** with automated release or moderator intervention  
-- [x] Modular, maintainable folder structure for scalability  
-
----
-
-## 🚀 Features Overview
+## Features
 
 ### Task Management
-- [x] Posters can create, edit, delete tasks (title, description, category, deadline, budget)  
-- [x] Attach **files (PDFs, images)**  
-- [x] Solvers can browse, search, filter, and request tasks  
-- [x] Posters can assign tasks, monitor progress, and leave feedback  
-- [x] Task status flow: `Open → In Progress → Completed`  
 
-### Admin & Moderation
-- [x] View users & roles  
-- [x] Promote/demote to Moderator  
-- [x] Suspend or soft-ban accounts  
-- [ ] Moderators can review flagged tasks  
-- [x] Analytics dashboards (task completion, platform usage, user activity)  
+* Create, browse, assign, and track tasks with attachments (PDFs, images)
+* Task status workflow: `Open → In Progress → Completed`
+* Search and filter tasks
 
-### Payments & Escrow
-- [x] Hold payments in escrow until Poster approval  
-- [x] Auto-release if Poster is unresponsive  
-- [ ] Dispute resolution workflow via Moderators  
-- [x] Subscription management via Stripe  
+### Payments & Subscriptions
+
+* Escrow-based payments for secure transactions
+* Subscription tiers for Solver features via Stripe
 
 ### Real-Time & Notifications
-- [x] Live messaging between Posters and Solvers  
-- [x] Task progress and deadline alerts  
-- [ ] System error notifications to Admins  
 
-### Mentoring (Future / PSM2)
-- [ ] Solvers can offer mentoring/tutoring  
-- [ ] Posters can book mentoring sessions (chat + video)  
+* Instant messaging between Posters and Solvers
+* Task progress and deadline notifications
 
-### AI Integrations (PSM2)
-- [ ] Automatic task category classification  
-- [ ] Content moderation (toxicity & cheating detection)  
-- [ ] AI mentoring guidance  
+### AI & Mentoring 
+
+* Automatic task categorization and content moderation
+* Mentoring sessions with chat + video
+* Integrated code and PDF viewer
 
 ---
 
-## 🗂 Tech Stack
+## Tech Stack
 
-| Layer           | Technology                           |
-|-----------------|-------------------------------------|
-| Frontend        | Next.js (App Router)                 |
-| Backend         | Node.js, Go (WebSockets & APIs)     |
-| Database        | PostgreSQL + Drizzle ORM             |
-| Authentication  | NextAuth.js                          |
-| Payments        | Stripe (Subscriptions & Escrow)     |
-| AI              | OpenAI API (Moderation, Classification) |
-| Deployment      | Railway                              |
-| PM Tools        | Notion, Instagantt, GitHub Projects |
+| Layer          | Technology                              |
+| -------------- | --------------------------------------- |
+| Frontend       | Next.js (App Router)                    |
+| Backend        | Node.js, Go (WebSockets & APIs)         |
+| Database       | PostgreSQL + Drizzle ORM                |
+| Authentication | NextAuth.js                             |
+| Payments       | Stripe (Subscriptions & Escrow)         |
+| AI             | OpenAI API (Moderation, Classification) |
+| Deployment     | Railway                                 |
 
 ---
 
-## 📂 Folder Structure (Simplified)
+## Project Structure
 
 ```
-
-src/
-├── app/
-│   ├── marketing/
-│   ├── dashboard/
-│   ├── api/
-│   │   ├── auth/
-│   │   ├── tasks/
-│   │   ├── payments/
-├── components/
-├── features/
-│   ├── auth/
-│   ├── tasks/
-│   ├── ai/
-│   ├── users/
-│   ├── notifications/
-├── lib/
-├── db/ (Drizzle config + migrations)
-
-````
-
----
-
-## ⚙️ Development Status
-
-### Core Modules
-- [x] Authentication & Email Verification  
-- [x] Role Management (Poster/Solver/Moderator/Admin)  
-- [x] Subscription Module (Stripe)  
-- [ ] Task Posting & Application  
-- [ ] Task Assignment & Completion Workflow  
-- [ ] Escrow & Refund Management (partial)  
-- [x]/[ ] Real-time Chat & Notifications (partial)  
-- [ ] AI Moderation & Classification  
-- [ ] Mentoring System (Chat + Video)  
-- [ ] Admin Analytics & Reporting  
-
-> See `docs/progress.md` for detailed functional requirements tracking (PSM1 + PSM2).  
-
----
-
-## 📋 Functional Scope
-
-SolveIt implements **19 core functional requirements** for academic freelancing:
-
-- [x] User accounts & role-based permissions  
-- [x] Task posting with attachments  
-- [x] Subscription-based Solver access  
-- [x] Real-time notifications & messaging  
-- [x] Structured workspace for solutions  
-- [x] Escrow-based payments & dispute resolution  
-- [ ] AI-powered moderation & classification (PSM2)  
-- [ ] Admin dashboards & analytics  
-- [ ] Mentoring features (future expansion)  
-
-**Additional Enhancements:**
-- [ ] Monaco editor integration (code viewer/editor)  
-- [ ] PDF viewer & 3D model viewer  
-- [ ] AI task guidance & mentoring assistance  
+solveit-saas/
+├── server/                         # Go backend
+│   ├── bin/                        # Compiled executables
+│   ├── cmd/                        # Go CLI entry points
+│   ├── internal/
+│   │   ├── api/                    # API routes & WebSocket hub
+│   │   ├── db/                     # Database setup & migrations
+│   │   ├── middleware/             # Logging & request middleware
+│   │   ├── storage/                # File & SQL storage
+│   │   ├── user/                   # User domain logic
+│   │   ├── utils/                  # Utility functions
+│   │   └── worker/                 # Background workers & deadlines
+│   ├── makefile
+│   └── tmp/                        # Build errors & temp files
+├── src/                            # Next.js 
+│   ├── app/
+│   │   ├── (authentication)/       # Login & registration
+│   │   ├── (marketing)/            # Landing & marketing pages
+│   │   ├── dashboard/              # All dashboards by roles
+│   │   │   ├── admin/              # Admin modules
+│   │   │   ├── moderator/          # Moderator modules
+│   │   │   ├── poster/             # Poster modules + mentorship
+│   │   │   └── solver/             # Solver modules + mentorship
+│   │   ├── error.tsx
+│   │   ├── globals.css
+│   │   ├── layout.tsx
+│   │   └── not-found.tsx
+│   ├── components/                 # UI components
+│   │   ├── dashboard/              # Dashboard-specific components
+│   │   ├── editors/                # Monaco & Rich Text editor
+│   │   ├── marketing/              # Hero, features, CTA, footer, etc.
+│   │   └── ui/                     # Reusable UI primitives
+│   ├── contexts/                   # React context providers
+│   ├── drizzle/                     # DB schemas, relations & seeds
+│   ├── env/                        # Client/server environment configs
+│   ├── features/                   # Feature modules (Ai, tasks, media, mentorship, payments, subscriptions, users, notifications)
+│   ├── hooks/                       # Custom React hooks
+│   ├── lib/                         # Utilities, logging, email, webrtc
+│   ├── middleware.ts
+│   ├── routes.ts
+│   ├── store/                        # Global state (e.g., WebRTC)
+│   └── styles/
+├── LICENSE
+├── README.md
+├── package.json
+├── pnpm-lock.yaml
+├── tsconfig.json
+└── types/                           # Type definitions
+```
 
 ---
 
-## ⚡ Usage
+## Getting Started
 
 ```bash
 # Clone the repository
 git clone https://github.com/yourusername/solveit.git
+cd solveit
 
 # Install dependencies
-cd solveit
 npm install
 
-# Configure environment variables (.env)
+# Configure environment variables
 cp .env.example .env
 
 # Run development server
 npm run dev
+cd .. & cd server
+make run
 
-# Visit in browser
+# Open in browser
 http://localhost:3000
-````
+```
 
 ---
 
-Do you want me to do that next?
-```
+## Screenshots
+
+![Dashboard](https://github.com/user-attachments/assets/c9b08c9f-f487-44ec-b4cd-38ac3b72e714)
+![Task View](https://github.com/user-attachments/assets/ea56984f-5c6b-42ba-a841-b2a0384b2e38)
+
+
+
+---
+
+## Roadmap
+
+* PDF & 3D model viewer
+
+---
+
+## License
+
+MIT License
