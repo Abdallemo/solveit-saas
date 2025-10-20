@@ -107,6 +107,7 @@ export default function FileUploadSolver({
   return (
     <div className={cn("w-full", className)}>
       <MediaPreviewer
+        fileRecords={uploadedFiles}
         filePreview={filePreview}
         onClose={() => {
           setFilePreview(null);
@@ -166,8 +167,8 @@ export default function FileUploadSolver({
       </div>
 
       {(uploadingFiles.length > 0 || uploadedFiles.length > 0) && (
-        <ScrollArea className="flex-1">
-          <div className="mt-2 space-y-2 h-[100px] overflow-scroll p-2 " >
+        <ScrollArea className="flex-1 ">
+          <div className="mt-2 space-y-2 h-[100px] overflow-scroll p-2 ">
             {uploadingFiles.map((file) => (
               <FileChatCardComps
                 key={file.name}
@@ -182,35 +183,37 @@ export default function FileUploadSolver({
               />
             ))}
             {uploadedFiles.map((file) => (
-              <FileChatCardComps
-                action={() => {
-                  console.log("Opening preview for:", file.fileName);
-                  setFilePreview({
-                    fileName: file.fileName,
-                    filePath: file.filePath,
-                    fileSize: file.fileSize,
-                    fileType: file.fileType,
-                    storageLocation: file.storageLocation,
-                  });
-                }}
-                key={file.id}
-                file={file}
-                deleteAction={async () => {
-                  try {
-                    toast.loading("deleting", { id: "file-delete" });
-                    await deleteFile({
-                      fileId: file.id,
-                      filePath: file.storageLocation,
+              <div key={file.id} className="w-70">
+                <FileChatCardComps
+                  action={() => {
+                    console.log("Opening preview for:", file.fileName);
+                    setFilePreview({
+                      fileName: file.fileName,
+                      filePath: file.filePath,
+                      fileSize: file.fileSize,
+                      fileType: file.fileType,
+                      storageLocation: file.storageLocation,
                     });
-                    setUploadedFiles((prev) =>
-                      prev.filter((f) => f.filePath !== file.filePath)
-                    );
-                  } catch (error) {}
-                }}
-                downloadAction={async (file) => {
-                  await handleFileDownload(file.filePath, file.fileName);
-                }}
-              />
+                  }}
+                  key={file.id}
+                  file={file}
+                  deleteAction={async () => {
+                    try {
+                      toast.loading("deleting", { id: "file-delete" });
+                      await deleteFile({
+                        fileId: file.id,
+                        filePath: file.storageLocation,
+                      });
+                      setUploadedFiles((prev) =>
+                        prev.filter((f) => f.filePath !== file.filePath)
+                      );
+                    } catch (error) {}
+                  }}
+                  downloadAction={async (file) => {
+                    await handleFileDownload(file.filePath, file.fileName);
+                  }}
+                />
+              </div>
             ))}
           </div>
         </ScrollArea>
