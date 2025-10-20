@@ -8,6 +8,8 @@ import (
 	"io"
 	"log"
 	"net/http"
+	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -132,4 +134,41 @@ func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/octet-stream")
 
 	io.Copy(w, obj.Body)
+}
+func (s *Server) handleMedia(w http.ResponseWriter, r *http.Request) {
+	Key := r.URL.Query().Get("key")
+	if Key == "" {
+		http.Error(w, "Missing key", http.StatusBadRequest)
+		return
+	}
+	obj, err := s.s3Client.GetObject(context.TODO(), &s3.GetObjectInput{
+		Bucket: aws.String("solveit"),
+		Key:    aws.String(Key),
+	})
+	if err != nil {
+		http.Error(w, fmt.Sprintf("error fetching object: %v", err), http.StatusInternalServerError)
+		return
+	}
+	defer obj.Body.Close()
+
+	contentType := "application/octet-stream"
+	if obj.ContentType != nil {
+		contentType = *obj.ContentType
+	}
+
+	filename := filepath.Base(Key)
+
+	contentDisposition := fmt.Sprintf("attachment; filename=\"%s\"", filename)
+	if obj.ContentDisposition != nil {
+		contentDisposition = *obj.ContentDisposition
+	}
+	if obj.ContentLength != nil {
+		w.Header().Set("Content-Length", strconv.FormatInt(*obj.ContentLength, 10))
+	}
+	w.Header().Set("Content-Type", contentType)
+	w.Header().Set("Content-Disposition", contentDisposition)
+	_, err = io.Copy(w, obj.Body)
+	if err != nil {
+		fmt.Printf("Error during streaming: %v\n", err)
+	}
 }
