@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
 import {
   Card,
   CardContent,
@@ -18,6 +19,11 @@ import {
 } from "@/components/ui/chart";
 import { Input } from "@/components/ui/input";
 import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -32,7 +38,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import useQueryParam from "@/hooks/useQueryParms";
+import { toYMD } from "@/lib/utils";
+import { subDays } from "date-fns";
 import {
+  ChevronDownIcon,
   ClipboardList,
   DollarSign,
   Download,
@@ -41,7 +51,8 @@ import {
   Flag,
   Users,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { DateRange } from "react-day-picker";
 import {
   Area,
   AreaChart,
@@ -57,43 +68,23 @@ import {
   YAxis,
 } from "recharts";
 
-const handleGenerateReport = () => {};
-const handleExportPDF = () => {};
-const handleExportExcel = () => {};
-const handleDateRangeChange = (value: any) => {};
-const handleSearchChange = (value: string) => {};
-const handleViewReport = (reportId: string) => {};
+type aiFlagsDataType = {
+  date: string;
+  flags: number;
+};
+type taskCategoriesDataType = {
+  name: string;
+  value: number;
+};
+type userGrowthDataTyoe = {
+  month: string;
+  users: number;
+};
+type revenueDataType = {
+  month: string;
+  revenue: number;
+};
 
-const userGrowthData = [
-  { month: "Jan", users: 120 },
-  { month: "Feb", users: 180 },
-  { month: "Mar", users: 250 },
-  { month: "Apr", users: 320 },
-  { month: "May", users: 410 },
-  { month: "Jun", users: 520 },
-];
-
-const revenueData = [
-  { month: "Jan", revenue: 4500 },
-  { month: "Feb", revenue: 5200 },
-  { month: "Mar", revenue: 6100 },
-  { month: "Apr", revenue: 7300 },
-  { month: "May", revenue: 8200 },
-  { month: "Jun", revenue: 9900 },
-];
-
-const taskCategoriesData = [
-  { name: "Bug Reports", value: 35 },
-  { name: "Feature Requests", value: 25 },
-  { name: "Support", value: 20 },
-  { name: "Moderation", value: 20 },
-];
-
-
-type aiFlagsDataType= {
-    date: string;
-    flags: number;
-}
 const userGrowthConfig = {
   users: {
     label: "Users",
@@ -134,7 +125,6 @@ const aiFlagsConfig = {
   },
 } satisfies ChartConfig;
 
-
 type reportDataType = {
   id: string;
   name: string;
@@ -142,9 +132,23 @@ type reportDataType = {
   lastGenerated: string;
 };
 
-export default function SystemReportsPage({reportsData,aiFlagsData}:{reportsData:reportDataType[],aiFlagsData:aiFlagsDataType[]}) {
+export default function SystemReportsPage({
+  reportsData,
+  aiFlagsData,
+  userGrowthData,
+  revenueData,
+  taskCategoriesData,
+}: {
+  reportsData: reportDataType[];
+  aiFlagsData: aiFlagsDataType[];
+  userGrowthData: userGrowthDataTyoe[];
+  revenueData: revenueDataType[];
+  taskCategoriesData: taskCategoriesDataType[];
+}) {
   const [searchQuery, setSearchQuery] = useState("");
   const [reportType, setReportType] = useState("all");
+  const [from, setFrom] = useQueryParam("cat", "");
+  const [to, setTo] = useQueryParam("to", "");
 
   const shouldShowUsers =
     reportType === "all" || reportType === "user-activity";
@@ -179,6 +183,14 @@ export default function SystemReportsPage({reportsData,aiFlagsData}:{reportsData
     visibleChartsCount === 1
       ? "grid gap-4 md:grid-cols-1"
       : "grid gap-4 md:grid-cols-2";
+  const handleGenerateReport = () => {
+    setTo(Math.random().toString());
+    setFrom(Math.random().toString());
+  };
+  const handleExportPDF = () => {};
+  const handleExportExcel = () => {};
+  const handleSearchChange = (value: string) => {};
+  const handleViewReport = (reportId: string) => {};
 
   return (
     <div className="w-full h-full p-6 space-y-6">
@@ -210,19 +222,7 @@ export default function SystemReportsPage({reportsData,aiFlagsData}:{reportsData
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <Input
-              type="date"
-              placeholder="Start Date"
-              className="md:w-48"
-              onChange={(e) => handleDateRangeChange(e.target.value)}
-            />
-            <span className="hidden md:inline text-muted-foreground">to</span>
-            <Input
-              type="date"
-              placeholder="End Date"
-              className="md:w-48"
-              onChange={(e) => handleDateRangeChange(e.target.value)}
-            />
+            <Calendar22 />
             <Select value={reportType} onValueChange={setReportType}>
               <SelectTrigger className="md:w-56">
                 <SelectValue placeholder="Report Type" />
@@ -495,6 +495,85 @@ export default function SystemReportsPage({reportsData,aiFlagsData}:{reportsData
         Reports are generated based on system activity logs and user
         transactions.
       </div>
+    </div>
+  );
+}
+
+export function Calendar22() {
+  const today = new Date();
+
+  const initialRange: DateRange = {
+    from: subDays(new Date(), 30),
+    to: today,
+  };
+
+  const [open, setOpen] = useState(false);
+
+  const [dateRange, setDateRange] = useState<DateRange | undefined>(
+    initialRange
+  );
+  const [isRangeComplete, setIsRangeComplete] = useState(true);
+
+  useEffect(() => {
+    if (isRangeComplete && dateRange?.from && dateRange?.to) {
+      console.log(
+        `Final Range Selected/Initialized (Triggering Action):from=${toYMD(
+          dateRange.from
+        )} to=${toYMD(dateRange.to)}`
+      );
+    }
+  }, [isRangeComplete, dateRange]);
+
+  const handleDateSelect = (range: DateRange | undefined) => {
+    setDateRange(range);
+
+    const complete = range && range.from && range.to;
+    setIsRangeComplete(!!complete);
+    if (isRangeComplete && dateRange?.from && dateRange?.to) {
+      // setFrom(toYMD(range?.from!));
+      // setTo(toYMD(range?.to!));
+    }
+  };
+
+  const getDisplayText = () => {
+    if (!dateRange || !dateRange.from) {
+      return "Select date range";
+    }
+    const start = dateRange.from.toLocaleDateString();
+    if (!dateRange.to) {
+      return `${start} - ...`;
+    }
+    const end = dateRange.to.toLocaleDateString();
+    return `${start} - ${end}`;
+  };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverTrigger asChild>
+          <Button
+            variant="outline"
+            id="date"
+            className="w-64 justify-between font-normal">
+            {getDisplayText()}
+            <ChevronDownIcon className="h-4 w-4 opacity-50 ml-2" />
+          </Button>
+        </PopoverTrigger>
+        <PopoverContent className="w-auto overflow-hidden p-0" align="start">
+          <Calendar
+            mode="range"
+            selected={dateRange}
+            onSelect={handleDateSelect}
+            defaultMonth={today}
+            numberOfMonths={2}
+            className="rounded-lg border shadow-sm"
+            hidden={{ after: today }}
+            endMonth={today}
+            // Optional: Limit the maximum range size to prevent accidental massive queries
+            max={90}
+          />
+        </PopoverContent>
+      </Popover>
     </div>
   );
 }
