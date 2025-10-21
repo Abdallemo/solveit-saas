@@ -1,52 +1,75 @@
-import { Skeleton } from "@/components/ui/skeleton"
-import { Search } from "lucide-react"
+"use client";
 
-export default function Loading() {
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+
+export default function TaskLoading() {
   return (
-    <div className="pt-10 py-10 md:p-6 w-6xl mx-auto">
-      <div className="flex justify-between items-center mb-6">
+    <div className="flex flex-col px-6 py-8 gap-4 overflow-x-hidden w-full h-full">
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-8 w-48" />
+        <Badge variant="outline">
+          <Skeleton className="h-4 w-10" />
+        </Badge>
+      </div>
 
-        <Skeleton className="h-5 w-16" />
-        <div className="text-sm text-muted-foreground">
-          <Skeleton className="h-5 w-16" />
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-1 gap-2">
+          <Skeleton className="h-10 flex-1" />
+          <Button disabled className="shrink-0">
+            <Skeleton className="h-4 w-16" />
+          </Button>
+        </div>
+
+        <div className="sm:flex gap-2 items-center sm:w-fit">
+          <Skeleton className="h-10 w-[200px]" />
         </div>
       </div>
 
-      {/* Search bar */}
-      <div className="relative mb-6">
-        <Skeleton className="h-10 w-full rounded-md" />
-        <div className="absolute right-3 top-2.5">
-          <Search className="h-5 w-5 text-muted-foreground" />
+      {/* Cards Grid */}
+      <div className="h-[670px] max-h-[670px]">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Card key={i} className="flex flex-col">
+              <CardHeader className="pb-2 space-y-2">
+                <div className="flex items-center justify-between">
+                  <Skeleton className="h-5 w-20 rounded-md" />
+                  <Skeleton className="h-5 w-16 rounded-md" />
+                </div>
+                <Skeleton className="h-5 w-3/4" />
+                <Skeleton className="h-4 w-full" />
+              </CardHeader>
+
+              <CardContent className="flex flex-col gap-2 flex-1">
+                <div className="flex items-center justify-between text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-6 w-6 rounded-full" />
+                    <Skeleton className="h-4 w-20" />
+                  </div>
+                  <Skeleton className="h-4 w-20" />
+                </div>
+
+                <Skeleton className="h-4 w-16" />
+                <Skeleton className="h-3 w-32" />
+              </CardContent>
+
+              <CardFooter className="flex gap-2">
+                <Skeleton className="h-8 w-full" />
+                <Skeleton className="h-8 w-full" />
+              </CardFooter>
+            </Card>
+          ))}
         </div>
       </div>
 
-      {/* Task cards */}
-      {Array.from({ length: 3 }).map((_, index) => (
-        <div key={index} className="mb-4 border rounded-lg p-4">
-          <div className="flex justify-between items-start mb-2">
-            <Skeleton className="h-6 w-3/4" />
-            <Skeleton className="h-6 w-24 rounded-full" />
-          </div>
-          <div className="flex items-center gap-1 mb-3">
-            <Skeleton className="h-4 w-32" />
-            <span className="mx-1">•</span>
-            <Skeleton className="h-4 w-20" />
-          </div>
-          <div className="flex items-center gap-2 mb-4">
-            <Skeleton className="h-6 w-24 rounded-full" />
-            <Skeleton className="h-6 w-32" />
-          </div>
-          <Skeleton className="h-4 w-full mb-1" />
-          <Skeleton className="h-4 w-5/6" />
+      <div className="flex justify-center mt-4">
+        <div className="flex gap-2">
+          <Skeleton className="h-8 w-24" />
+          <Skeleton className="h-8 w-24" />
         </div>
-      ))}
-
-      {/* Pagination */}
-      <div className="flex justify-center items-center mt-8 gap-2">
-        <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="h-8 w-8 rounded-md" />
-        <Skeleton className="h-8 w-16 rounded-md" />
       </div>
     </div>
-  )
+  );
 }
