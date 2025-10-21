@@ -38,7 +38,7 @@ import { stripe } from "@/lib/stripe";
 import {
   calculateSlotDuration,
   daysInWeek,
-  sessionTimeUtils
+  sessionTimeUtils,
 } from "@/lib/utils";
 import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
@@ -476,14 +476,11 @@ export async function updateMentorBooking(
 }
 
 export async function getMentorBookingSessions() {
-  const user = (await getServerUserSession())!;
-  if (!user || !user.id) {
-    throw new Error("Unauthorized");
-  }
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
   const where = and(
     or(
-      eq(MentorshipBookingTable.posterId, user.id!),
-      eq(MentorshipBookingTable.solverId, user.id!)
+      eq(MentorshipBookingTable.posterId, user.id),
+      eq(MentorshipBookingTable.solverId, user.id)
     ),
     eq(MentorshipBookingTable.status, "PAID")
   );
@@ -690,8 +687,7 @@ export async function deleteFileFromChatSession(fileId: string) {
     );
     return {
       file: file.fileName,
-      fileId:file.id
-      
+      fileId: file.id,
     };
   } catch (error) {
     console.error(error);
