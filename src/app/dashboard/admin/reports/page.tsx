@@ -33,8 +33,37 @@ const aiFlagsData = [
   { date: "Oct 14", flags: 18 },
   { date: "Oct 15", flags: 25 },
 ];
+const userGrowthData = [
+  { month: "Jan", users: 120 },
+  { month: "Feb", users: 180 },
+  { month: "Mar", users: 250 },
+  { month: "Apr", users: 320 },
+  { month: "May", users: 410 },
+  { month: "Jun", users: 520 },
+];
+const revenueData = [
+  { month: "Jan", revenue: 4500 },
+  { month: "Feb", revenue: 5200 },
+  { month: "Mar", revenue: 6100 },
+  { month: "Apr", revenue: 7300 },
+  { month: "May", revenue: 8200 },
+  { month: "Jun", revenue: 9900 },
+];
+const taskCategoriesData = [
+  { name: "Bug Reports", value: 35 },
+  { name: "Feature Requests", value: 25 },
+  { name: "Support", value: 20 },
+  { name: "Moderation", value: 20 },
+];
+
 export default function page() {
   return (
-    <SystemReportsPage reportsData={reportsData} aiFlagsData={aiFlagsData} />
+    <SystemReportsPage
+      reportsData={reportsData}
+      aiFlagsData={aiFlagsData}
+      userGrowthData={userGrowthData}
+      revenueData={revenueData}
+      taskCategoriesData={taskCategoriesData}
+    />
   );
 }
