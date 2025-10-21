@@ -2,7 +2,10 @@
 import { FileDialogDialog } from "@/components/FileDiaglogWraper";
 import ZoomableImage from "@/components/ImageZoomble";
 import { VideoPlayer } from "@/components/VidoePlayer";
-import { MonacoEditor } from "@/components/editors/MonocaEditor";
+import {
+  editorConfOptions,
+  MonacoEditor
+} from "@/components/editors/MonocaEditor";
 import { CodeEditorDialog } from "@/components/editors/MonocaWraper";
 import { useDownloadFile } from "@/hooks/useFile";
 import {
@@ -24,6 +27,7 @@ type MediaPreviewerProps = {
   onClose?: () => void;
   onDownload?: () => void;
   fileRecords: UploadedFileMeta[];
+  codeEditorOptions?: editorConfOptions;
 };
 
 type Files = { [key: string]: string };
@@ -33,6 +37,7 @@ export default function MediaPreviewer({
   onClose,
   onDownload,
   fileRecords,
+  codeEditorOptions,
 }: MediaPreviewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [files, setFiles] = useState<Files>({ "index.js": "console.log" });
@@ -160,10 +165,11 @@ export default function MediaPreviewer({
           onSave={handleSave}
           onFileAdd={handleFileAdd}
           onFileDelete={handleFileDelete}
-         height="100%"
+          height="100%"
           theme="vs-dark"
           className="shadow-lg"
           filePath={filePreview.filePath}
+          editorConfOpts={codeEditorOptions}
         />
       </CodeEditorDialog>
     );
