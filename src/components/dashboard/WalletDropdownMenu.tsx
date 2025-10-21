@@ -90,7 +90,7 @@ export default function WalletDropdownMenu({user}:{user:userSessionType}) {
                   </TooltipContent>
                 )}
 
-                <TooltipTrigger className="w-full">
+                <TooltipTrigger className="w-full" asChild>
                   <div className="w-full">
                     <Button
                       size="sm"
