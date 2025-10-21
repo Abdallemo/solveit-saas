@@ -82,12 +82,6 @@ export const MenuItemsModerator: MenuItem[] = [
       },
     ],
   },
-  {
-    type: "link",
-    title: "Moderation Logs",
-    url: "/dashboard/moderator/logs",
-    icon: LucideHistory,
-  },
 
   {
     type: "link",
@@ -134,12 +128,6 @@ export const MenuItemsAdmin: MenuItem[] = [
         type: "link",
         title: "Rules",
         url: "/dashboard/admin/ai",
-        icon: LucideHistory,
-      },
-      {
-        type: "link",
-        title: "Moderation Logs",
-        url: "#", //"/dashboard/admin/ai/logs",
         icon: LucideHistory,
       },
     ],
