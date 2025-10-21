@@ -18,6 +18,8 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import type {
   dataOptions,
   FlatDispute,
+  PosterTaskReturn,
+  SolverTaskReturn,
   Units,
 } from "@/features/tasks/server/task-types";
 import { publicUserColumns } from "@/features/users/server/user-types";
@@ -172,26 +174,56 @@ export async function getTasksbyId(id: string) {
     return null;
   }
 }
-export async function getTasksbyIdWithFiles(id: string) {
+
+type SpecificRole = Exclude<UserRoleType, "ADMIN" | "MODERATOR">;
+
+export async function getTasksbyIdWithFiles(
+  id: string,
+  role: "POSTER"
+): Promise<PosterTaskReturn | null>;
+
+export async function getTasksbyIdWithFiles(
+  id: string,
+  role: "SOLVER"
+): Promise<SolverTaskReturn | null>;
+
+export async function getTasksbyIdWithFiles(
+  id: string,
+  role: SpecificRole
+): Promise<PosterTaskReturn | SolverTaskReturn | null> {
   if (!isUUID(id, "4")) {
     return null;
   }
   try {
-    const Task = await db.query.TaskTable.findFirst({
-      where: (table, fn) => fn.eq(table.id, id),
-      with: {
-        poster: { columns: publicUserColumns },
-        solver: { columns: publicUserColumns },
-        workspace: true,
-        taskFiles: true,
-      },
-    });
-    if (!Task || !Task.id) return null;
-    return Task;
+    switch (role) {
+      case "POSTER":
+        return (
+          ((await db.query.TaskTable.findFirst({
+            where: (table, fn) => fn.eq(table.id, id),
+            with: {
+              taskFiles: true,
+            },
+          })) as PosterTaskReturn | null) ?? null
+        );
+
+      case "SOLVER":
+        const t = await db.query.TaskTable.findFirst({
+          where: (table, fn) => fn.eq(table.id, id),
+          with: {
+            poster: { columns: publicUserColumns },
+            taskFiles: true,
+            blockedSolvers: true,
+          },
+        });
+        return t
+          ? ({ ...t, blockedSolvers: t?.blockedSolvers[0] } as SolverTaskReturn)
+          : null;
+    }
   } catch (error) {
     return null;
   }
 }
+
 export async function getAllTasks() {
   const allTasksFiltred = db.query.TaskTable.findMany({
     where: (table, fn) =>
@@ -223,6 +255,9 @@ export async function getPosterTasksbyIdPaginated(
     status: TaskStatusType;
   }
 ) {
+    console.log(
+    `[BACKEND FETCH]search=${search}, limit=${limit}, offset=${offset},  status=${status}`
+  );
   const where = and(
     eq(TaskTable.posterId, userId),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined,
@@ -249,7 +284,7 @@ export async function getPosterTasksbyIdPaginated(
 
   return { tasks, totalCount };
 }
-export async function getAssignedTasksbyIdPaginated(
+export async function getSolverAssignedTasksbyIdPaginated(
   userId: string,
   {
     search,
@@ -259,6 +294,7 @@ export async function getAssignedTasksbyIdPaginated(
   }: { search?: string; limit: number; offset: number; status: TaskStatusType },
   showBlocked: boolean
 ) {
+  console.log("[BACKEND FETCH]", search, limit, offset, status);
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
     where: (table, fn) => fn.eq(table.userId, userId),
@@ -286,7 +322,7 @@ export async function getAssignedTasksbyIdPaginated(
         solver: { columns: publicUserColumns },
         blockedSolvers: true,
         category: true,
-        taskFiles:true
+        taskFiles: true,
       },
     }),
     db.select({ count: count() }).from(TaskTable).where(where),
@@ -311,6 +347,9 @@ export async function getAllTasksByRolePaginated(
     offset: number;
   }
 ) {
+  console.log(
+    `[BACKEND FETCH]search=${search}, limit=${limit}, offset=${offset}, categoryId=${categoryId}`
+  );
   let where;
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
@@ -857,4 +896,8 @@ export async function getModeratorDisputes(disputeId: string) {
   } catch (error) {
     return null;
   }
+}
+
+export async function getAdminSystemStats() {
+  const {} = await isAuthorized(["ADMIN"]);
 }
