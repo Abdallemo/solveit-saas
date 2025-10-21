@@ -38,7 +38,10 @@ import type {
   TaskReturnType,
   Units,
 } from "@/features/tasks/server/task-types";
-import { taskRefundSchema, workspaceFileType } from "@/features/tasks/server/task-types";
+import {
+  taskRefundSchema,
+  workspaceFileType,
+} from "@/features/tasks/server/task-types";
 import {
   getServerUserSubscriptionById,
   getUserById,
@@ -387,9 +390,16 @@ export async function assignTaskToSolverById(values: {
   try {
     const oldTask = await db.query.TaskTable.findFirst({
       where: (table, fn) => fn.eq(table.id, taskId),
+      with: { blockedSolvers: true },
     });
     if (!oldTask) throw new Error("no such task available");
     if (oldTask.solverId) throw new Error("task already assigned to solver");
+    if (oldTask.blockedSolvers && oldTask.blockedSolvers.length > 0)
+      throw new Error(
+        `you are blocked From this Task, Reason:${
+          oldTask.blockedSolvers[0].reason ?? "unknown"
+        }`
+      );
 
     const result = await db.transaction(async (tx) => {
       const updated = await tx
@@ -859,7 +869,10 @@ export async function createTaskComment(values: {
       throw new Error("all field are required ");
     }
     if (!(posterId !== userId || solverId !== userId)) {
-      console.warn(`posterId !== userId || solverId !== userId`,posterId == userId )
+      console.warn(
+        `posterId !== userId || solverId !== userId`,
+        posterId == userId
+      );
       throw new UnauthorizedError();
     }
 
