@@ -37,9 +37,61 @@ export async function addNewRule(values: {
     throw new Error("Unable to add new Rule ", { cause: error });
   }
 }
+export async function updateRule(values: {
+  rule: string;
+  description: string;
+  ruleId: string;
+  adminId: string;
+}) {
+  const { rule, description, ruleId, adminId } = values;
+
+  if (!rule || !ruleId || !description || !adminId) {
+    throw new Error("All fields are required");
+  }
+  try {
+    await db
+      .update(RulesTable)
+      .set({ description, rule })
+      .where(eq(RulesTable.id, ruleId));
+
+    revalidatePath("/dashboard/admin/ai");
+    logger.info("Successfully updated Ai Rule By " + adminId);
+  } catch (error) {
+    logger.error("Unable to update Rule by " + adminId, {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error("Unable to update Rule ", { cause: error });
+  }
+}
+export async function toggleRuleActivation(values: {
+  state: boolean;
+  ruleId: string;
+  adminId:string;
+}) {
+  const { state, adminId, ruleId } = values;
+  try {
+    await db
+      .update(RulesTable)
+      .set({ isActive: state })
+      .where(eq(RulesTable.id, ruleId));
+
+    revalidatePath("/dashboard/admin/ai");
+    logger.info("Successfully updated Ai Rule Active State By " + adminId);
+  } catch (error) {
+    logger.error("Unable to update Rule by Active State" + adminId, {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    throw new Error("Unable to update Rule State", { cause: error });
+  }
+}
+
 export type AiRule = Awaited<ReturnType<typeof getAllAiRules>>[number];
 export async function getAllAiRules() {
-  return await db.query.RulesTable.findMany();
+  return await db.query.RulesTable.findMany({
+    orderBy: (tb, ty) => ty.desc(tb.createdAt),
+  });
 }
 const openaiResSchema = z.object({
   violatesRules: z.boolean(),
