@@ -75,7 +75,8 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New()
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
-		if fileHeader.Size >= 20 {
+		if fileHeader.Size >= 200<<20 {
+			log.Println(fileHeader.Size)
 			sendHttpError(w, "exeded server limit", http.StatusBadRequest)
 			return
 		}
