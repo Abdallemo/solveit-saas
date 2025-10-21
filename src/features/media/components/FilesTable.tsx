@@ -3,40 +3,43 @@
 import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import { taskTableType } from "@/drizzle/schemas";
 import { SolutionById } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { useDownloadFile } from "@/hooks/useFile";
 import { supportedExtentionTypes } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
-    Archive,
-    Copy,
-    Download,
-    Eye,
-    File,
-    FileAudio,
-    FileText,
-    FileVideo,
-    ImageIcon,
-    MoreHorizontal,
-    Trash2,
+  Archive,
+  Copy,
+  Download,
+  Eye,
+  File,
+  FileAudio,
+  FileText,
+  FileVideo,
+  ImageIcon,
+  MoreHorizontal,
+  Trash2,
 } from "lucide-react";
+import { useState } from "react";
 import { toast } from "sonner";
 import { FileIconComponent } from "./FileHelpers";
+import MediaPreviewer from "./MediaPreviewer";
 
 interface FileData {
   id: string;
@@ -73,31 +76,6 @@ function formatFileSize(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-async function handleFileAction(action: string, file: FileData) {
-  switch (action) {
-    case "view":
-      window.open(file.storageLocation, "_blank");
-      break;
-    case "download":
-      const link = document.createElement("a");
-      link.href = file.storageLocation;
-      link.download = file.fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      break;
-    case "copy":
-      await navigator.clipboard.writeText(file.storageLocation);
-      toast.success("Link copied to clipboard", { duration: 2000 });
-      break;
-    case "delete":
-      console.log("Delete file:", file.id);
-      break;
-    default:
-      break;
-  }
-}
-
 type FilesTablePropss =
   | { files: FileData[]; scopeType: "task"; scope?: taskTableType }
   | { files: FileData[]; scopeType: "solution"; scope?: SolutionById };
@@ -105,6 +83,22 @@ type FilesTablePropss =
 
 export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
   const currentUser = useCurrentUser();
+  const [filePreview, setFilePreview] = useState<FileData | null>(null);
+  const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
+    useDownloadFile();
+  const handleFileDownload = async ({
+    fileName,
+    key,
+  }: {
+    key: string;
+    fileName: string;
+  }) => {
+    toast.loading("preparing file downlad..", {
+      id: `file-${fileName}-download`,
+    });
+    await downloadFile({ fileName, key });
+  };
+
   if (!currentUser) return <AuthGate />;
 
   if (files.length === 0) {
@@ -114,6 +108,25 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
         <p>No files attached to this task</p>
       </div>
     );
+  }
+  async function handleFileAction(action: string, file: FileData) {
+    switch (action) {
+      case "view":
+        setFilePreview(file);
+        break;
+      case "download":
+        handleFileDownload({ key: file.filePath, fileName: file.fileName });
+        break;
+      case "copy":
+        await navigator.clipboard.writeText(file.storageLocation);
+        toast.success("Link copied to clipboard", { duration: 2000 });
+        break;
+      case "delete":
+        console.log("Delete file:", file.id);
+        break;
+      default:
+        break;
+    }
   }
 
   return (
@@ -202,6 +215,13 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
           ))}
         </TableBody>
       </Table>
+      <MediaPreviewer
+        filePreview={filePreview}
+        fileRecords={files}
+        codeEditorOptions={{ readOnly: true }}
+        onClose={() => setFilePreview(null)}
+        onDownload={() => setFilePreview(null)}
+      />
     </div>
   );
 }
