@@ -3,17 +3,11 @@
 import Loading from "@/app/loading";
 import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Edit2, Plus, Trash2 } from "lucide-react";
@@ -22,7 +16,13 @@ import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { addNewRule, AiRule, deleteRule } from "../action";
+import {
+  addNewRule,
+  AiRule,
+  deleteRule,
+  toggleRuleActivation,
+  updateRule,
+} from "../action";
 
 const AiSchema = z.object({
   rule: z
@@ -33,13 +33,19 @@ const AiSchema = z.object({
 });
 type AiSchemaFormData = z.infer<typeof AiSchema>;
 
-export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
+export function AIRuleManagement({
+  allAiRules,
+  adminId,
+}: {
+  allAiRules: AiRule[];
+  adminId: string;
+}) {
   const { isLoading, isBlocked } = useAuthGate();
-  const { user } = useCurrentUser();
-  const { id: adminId } = user!;
+
   const [isAddingRule, setIsAddingRule] = useState(false);
   const [editingRule, setEditingRule] = useState<AiRule | null>(null);
-  const router = useRouter()
+  const [togglingRuleId, setTogglingRuleId] = useState<string | null>(null);
+  const router = useRouter();
   const form = useForm<AiSchemaFormData>({
     resolver: zodResolver(AiSchema),
     defaultValues: { rule: "", description: "" },
@@ -62,6 +68,34 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
       toast.error("Unable to add new rule: " + err.message, { id: "add-rule" });
     },
   });
+  const { mutate: toggleRule, isPending: isToggelingState } = useMutation({
+    mutationFn: toggleRuleActivation,
+    onMutate: (variables) => {
+      setTogglingRuleId(variables.ruleId);
+      toast.loading("Toggling rule...", { id: "disable-rule" });
+    },
+    onSuccess: () => {
+      toast.success("Successfull", { id: "disable-rule" });
+      setTogglingRuleId(null);
+    },
+    onError: (err) => {
+      toast.error("Unable to add new rule: " + err.message, {
+        id: "disable-rule",
+      });
+      setTogglingRuleId(null);
+    },
+  });
+  const { mutate: updateRuleMutation, isPending: isUpdating } = useMutation({
+    mutationFn: updateRule,
+    onSuccess: () => {
+      toast.success("Successfully updated  AI rule", { id: "update-rule" });
+    },
+    onError: (err) => {
+      toast.error("Unable to updated rule: " + err.message, {
+        id: "update-rule",
+      });
+    },
+  });
   const { mutateAsync: ruleDeleteMutate, isPending: isDeleting } = useMutation({
     mutationFn: deleteRule,
     onSuccess: () => {
@@ -74,8 +108,13 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
 
   const handleSubmit = (data: AiSchemaFormData) => {
     if (editingRule) {
-      // TODO: Replace with update mutation
-      console.log("Update rule", editingRule.id, data);
+      toast.loading("updating..", { id: "update-rule" });
+      updateRuleMutation({
+        adminId: editingRule.adminId,
+        description: data.description,
+        rule: data.rule,
+        ruleId: editingRule.id,
+      });
       setEditingRule(null);
       form.reset();
     } else {
@@ -196,9 +235,13 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
                         <Button
                           variant="outline"
                           size="sm"
-                          // TODO: toggle mutation here
+                          disabled={togglingRuleId === rule.id}
                           onClick={() =>
-                            console.log("Toggle", rule.id, !rule.isActive)
+                            toggleRule({
+                              adminId: rule.adminId,
+                              ruleId: rule.id,
+                              state: !rule.isActive,
+                            })
                           }>
                           {rule.isActive ? "Disable" : "Enable"}
                         </Button>
@@ -213,12 +256,10 @@ export function AIRuleManagement({ allAiRules }: { allAiRules: AiRule[] }) {
                           disabled={isDeleting}
                           variant="outline"
                           size="sm"
-                          // TODO: delete mutation here
                           onClick={async () => {
                             toast.loading("deleting..", { id: "delete-rule" });
                             await ruleDeleteMutate(rule.id);
-                            router.refresh()
-                            
+                            router.refresh();
                           }}
                           className="text-destructive hover:text-destructive">
                           <Trash2 className="w-4 h-4" />
