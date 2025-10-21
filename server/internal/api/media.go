@@ -27,6 +27,15 @@ type FileMeta struct {
 type DeleteKey struct {
 	Key string `json:"key"`
 }
+type JSONError struct {
+	Message string `json:"message"`
+}
+
+func sendHttpError(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(JSONError{Message: message})
+}
 
 func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 	body, err := io.ReadAll(r.Body)
@@ -56,7 +65,7 @@ func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
-		http.Error(w, "Unable to parse form", http.StatusBadRequest)
+		sendHttpError(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
 
@@ -66,6 +75,10 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New()
 	for _, fileHeader := range files {
 		file, err := fileHeader.Open()
+		if fileHeader.Size >= 20 {
+			sendHttpError(w, "exeded server limit", http.StatusBadRequest)
+			return
+		}
 		if err != nil {
 			log.Println("file open error:", err)
 			continue
