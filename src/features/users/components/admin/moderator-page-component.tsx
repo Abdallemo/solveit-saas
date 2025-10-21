@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, ChevronUp, MoreHorizontal, Search } from "lucide-react";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -152,7 +152,7 @@ export default function ModeratorsPageComponent({
           </TableHeader>
           <TableBody>
             {filteredUsers.map((user) => (
-              <>
+              <Fragment key={user.id}>
                 <TableRow key={user.id}>
                   <TableCell>
                     <div className="flex items-center space-x-3">
@@ -290,7 +290,7 @@ export default function ModeratorsPageComponent({
                       </TableCell>
                     </TableRow>
                   ))}
-              </>
+              </Fragment>
             ))}
           </TableBody>
         </Table>
