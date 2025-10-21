@@ -21,21 +21,15 @@ import {
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import {
-  Pagination,
-  PaginationContent,
-  PaginationEllipsis,
-  PaginationItem,
-  PaginationLink,
-  PaginationNext,
-  PaginationPrevious,
-} from "@/components/ui/pagination";
-import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { TaskStatusType } from "@/drizzle/schemas";
-import useCurrentUser from "@/hooks/useCurrentUser";
+import {
+  PosterTasksFiltred,
+  SolverAssignedTaskType,
+} from "@/features/tasks/server/task-types";
 import useQueryParam from "@/hooks/useQueryParms";
 import { cn, getColorClass } from "@/lib/utils";
 import { debounce } from "lodash";
@@ -47,25 +41,22 @@ import {
   SquareArrowUpRight,
 } from "lucide-react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
-import {
-  PosterTasksFiltred,
-  SolverAssignedTaskType,
-} from "../server/task-types";
 
+import TaskLoading from "@/app/dashboard/solver/tasks/loading";
+import { UserDbType } from "@/features/users/server/actions";
+import { useQuery } from "@tanstack/react-query";
+import { tasksQuery } from "../client/queries";
+import PaginationControls from "./PaginatedControls";
 import GetStatusBadge from "./taskStatusBadge";
 
 type DisplayComponentProps = {
-  itretable: SolverAssignedTaskType[] | PosterTasksFiltred[];
-  totalCount: number;
-  pages: number;
-  totalPages: number;
-  hasPrevious: boolean;
-  hasNext: boolean;
   filterType: "status" | "category";
   title: string;
   categoryMap: Record<string, string>;
+  type: "PosterTasks" | "AllTasks" | "SolverTasks";
+  currentUser: UserDbType;
+  limit: number;
 };
 
 const STATUS_OPTIONS: TaskStatusType[] = [
@@ -76,25 +67,33 @@ const STATUS_OPTIONS: TaskStatusType[] = [
   "SUBMITTED",
 ];
 
-function typeGuardIsSolver(
-  tasks: SolverAssignedTaskType[] | PosterTasksFiltred[]
-): tasks is SolverAssignedTaskType[] {
-  return tasks.length > 0 && "blockedSolvers" in tasks[0];
-}
-type viewType = "cards" | "table";
 export default function DisplayListComponent({
   categoryMap,
-  hasNext,
-  hasPrevious,
-  pages,
-  itretable: itretables,
-  totalCount,
   title,
   filterType,
+  type,
+  currentUser,
+  limit,
 }: DisplayComponentProps) {
   const [search, setSearch] = useQueryParam("search", "");
+  const [selectedValue, setSelectedValue] = useQueryParam(filterType, "");
+  const [page, setPage] = useQueryParam("page", 1);
   const [open, setOpen] = useState(false);
-  const { user: currentUser } = useCurrentUser();
+  const offset = (page - 1) * limit;
+  const { data, isLoading, error } = useQuery(
+    tasksQuery({
+      title,
+      search,
+      selectedValue,
+      type,
+      currentUser,
+      limit,
+      offset,
+      status: selectedValue as TaskStatusType,
+      categoryMap,
+    })
+  );
+
   const debouncedSetSearch = useMemo(
     () =>
       debounce((val: string) => {
@@ -103,12 +102,16 @@ export default function DisplayListComponent({
     [setSearch]
   );
 
-  const searchKey =
-    typeGuardIsSolver(itretables) == true || filterType == "status"
-      ? "status"
-      : "category";
-
-  const [selectedValue, setSelectedValue] = useQueryParam(searchKey, "");
+  if (isLoading) {
+    return <TaskLoading />;
+  }
+  if (error) {
+    throw error;
+  }
+  const { tasks = [], totalCount = 0 } = data ?? {};
+  const hasPrevious = page > 1;
+  const totalPages = Math.ceil(totalCount / limit);
+  const hasNext = page < totalPages;
 
   function statusUiCheck(task: SolverAssignedTaskType | PosterTasksFiltred) {
     return "blockedSolvers" in task &&
@@ -197,7 +200,7 @@ export default function DisplayListComponent({
     return (
       <div className="h-[670px] max-h-[670px]">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {itretables.map((task) => (
+          {tasks.map((task) => (
             <Card
               key={task.id}
               className="hover:shadow-md transition-shadow flex flex-col">
@@ -344,92 +347,23 @@ export default function DisplayListComponent({
         </div>
       </div>
 
-      {itretables.length > 0 ? (
+      {tasks.length > 0 ? (
         <CardsView />
       ) : (
         <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-muted/30">
           No tasks found for this page or search query.
         </div>
       )}
-      {itretables.length > 8 && (
+      {tasks.length > 8 && (
         <div className="flex justify-center">
           <PaginationControls
             hasNext={hasNext}
             hasPrevious={hasPrevious}
-            page={pages}
+            page={page}
+            setPage={setPage}
           />
         </div>
       )}
     </div>
-  );
-}
-function PaginationControls({
-  page,
-  hasNext,
-  hasPrevious,
-  type = "regular",
-  className,
-}: {
-  page: number;
-  hasNext: boolean;
-  hasPrevious: boolean;
-  type?: "regular" | "table";
-  className?: string;
-}) {
-  const router = useRouter();
-  const params = new URLSearchParams(useSearchParams());
-
-  const goToPage = (newPage: number) => {
-    params.set("page", newPage.toString());
-    router.push(`?${params.toString()}`);
-  };
-
-  return (
-    <Pagination className={cn("w-full", className)}>
-      {type === "regular" ? (
-        <PaginationContent>
-          {hasPrevious && (
-            <PaginationItem>
-              <PaginationPrevious onClick={() => goToPage(page - 1)} />
-            </PaginationItem>
-          )}
-          <PaginationItem>
-            <PaginationLink isActive>{page}</PaginationLink>
-          </PaginationItem>
-          {hasNext && (
-            <>
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
-
-              <PaginationItem>
-                <PaginationNext onClick={() => goToPage(page + 1)} />
-              </PaginationItem>
-            </>
-          )}
-        </PaginationContent>
-      ) : (
-        <PaginationContent>
-          <PaginationItem>
-            <Button
-              variant={"outline"}
-              className="h-8"
-              onClick={() => goToPage(page - 1)}
-              disabled={!hasPrevious}>
-              Previous
-            </Button>
-          </PaginationItem>
-          <PaginationItem>
-            <Button
-              variant={"outline"}
-              className="h-8"
-              onClick={() => goToPage(page + 1)}
-              disabled={!hasNext}>
-              Next
-            </Button>
-          </PaginationItem>
-        </PaginationContent>
-      )}
-    </Pagination>
   );
 }
