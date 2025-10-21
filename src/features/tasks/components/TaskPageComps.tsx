@@ -1,29 +1,21 @@
 "use client"
 import { FilesTable } from "@/features/media/components/FilesTable";
-import { userSessionType } from "@/features/users/server/user-types";
 import { TaskNotFoundError } from "@/lib/Errors";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
-import { TaskWithFilesType } from "../server/task-types";
-import { AssignTaskButton } from "./AssignTaskButton";
+import { PosterTaskReturn } from "../server/task-types";
 import TaskPreview from "./richTextEdito/TaskPreview";
 
 export default function TaskPageComps({
   task,
-  currentUser,
 }: {
-  task: TaskWithFilesType;
-  currentUser: userSessionType;
+  task: PosterTaskReturn|null;
+
 }) {
   if (!task) throw new TaskNotFoundError();
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end ">
-        {currentUser.role === "SOLVER" &&
-          task.solverId !== currentUser.id &&
-          !task.solver && (
-            <AssignTaskButton taskId={task.id} userId={currentUser.id!} />
-          )}
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
           <TaskPreview content={task?.content} />
         </Suspense>
