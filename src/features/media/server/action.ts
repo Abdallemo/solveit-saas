@@ -35,7 +35,6 @@ export async function downloadFileFromR2(filePath: string) {
     const arrayBuffer = await res.arrayBuffer();
     const fileName = filePath.split("/").pop() || "downloaded-file";
     return { arrayBuffer, fileName };
-
   } catch (error) {
     logger.error("error download,", error);
     throw new Error("Failed to download");
