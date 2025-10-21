@@ -11,7 +11,7 @@ export default async function Page({
   const currentUser = await getServerUserSession();
   if (!currentUser || !currentUser.id) return <AuthGate />;
 
-  const task = await getTasksbyIdWithFiles(id);
+  const task = await getTasksbyIdWithFiles(id, "POSTER");
 
-  return <TaskPageComps currentUser={currentUser} task={task} />;
+  return <TaskPageComps task={task} />;
 }
