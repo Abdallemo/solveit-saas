@@ -1,21 +1,26 @@
-"use client"
-import { useEditor, EditorContent } from "@tiptap/react"
-import StarterKit from "@tiptap/starter-kit"
-import Image from "@tiptap/extension-image"
-import TextAlign from "@tiptap/extension-text-align"
-import { common, createLowlight } from "lowlight"
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight"
-import Highlight from "@tiptap/extension-highlight"
-import MenuBar from "../MenuBar"
+"use client";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import Highlight from "@tiptap/extension-highlight";
+import Image from "@tiptap/extension-image";
+import TextAlign from "@tiptap/extension-text-align";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { common, createLowlight } from "lowlight";
+import MenuBar from "../MenuBar";
 
-import { useState } from "react"
+export type workspaceEditorOptions = {
+  editable: boolean;
+};
+type WorkspaceEditorProps = {
+  editorOptions?: workspaceEditorOptions;
+};
+export default function WorkspaceEditor({
+  editorOptions = { editable: true },
+}: WorkspaceEditorProps) {
+  const { content, setContent } = useWorkspace();
 
-export default function WorkspaceEditor() {
-    const {content,setContent} = useWorkspace()
-  
-
-  const lowlight = createLowlight(common)
+  const lowlight = createLowlight(common);
   const editor = useEditor({
     extensions: [
       StarterKit.configure({
@@ -43,23 +48,25 @@ export default function WorkspaceEditor() {
       Image,
     ],
     onUpdate({ editor }) {
-      setContent(editor.getHTML())
+      setContent(editor.getHTML());
     },
     content: content,
     immediatelyRender: false,
+
     editorProps: {
       attributes: {
         class: "w-full h-full p-14 focus:outline-none",
       },
     },
-  })
+    ...editorOptions,
+  });
 
   return (
-    <div className="border rounded-md flex flex-col h-[650px] md:h-[800px] lg:h-[800px] bg-sidebar" >
-      <MenuBar editor={editor} />
+    <div className="border rounded-md flex flex-col h-[650px] md:h-[800px] lg:h-[800px] bg-sidebar">
+      <MenuBar editor={editor} disabled={!editorOptions.editable} />
       <div className="flex-1 overflow-hidden">
         <EditorContent editor={editor} className="h-full overflow-y-auto" />
       </div>
     </div>
-  )
+  );
 }
