@@ -47,3 +47,6 @@ export type PresignedUrlResponse = {
   filePath: string;
   publicUrl: string;
 };
+
+/** current supported media upload limit per file upload in Migabyte format */
+export const MediaUploadLimit = 200
