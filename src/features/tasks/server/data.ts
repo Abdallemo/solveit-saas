@@ -255,7 +255,7 @@ export async function getPosterTasksbyIdPaginated(
     status: TaskStatusType;
   }
 ) {
-    console.log(
+  console.log(
     `[BACKEND FETCH]search=${search}, limit=${limit}, offset=${offset},  status=${status}`
   );
   const where = and(
@@ -898,6 +898,36 @@ export async function getModeratorDisputes(disputeId: string) {
   }
 }
 
-export async function getAdminSystemStats() {
+export async function getUserGrowthData(from: string, to: string) {
   const {} = await isAuthorized(["ADMIN"]);
+  const d = await db
+    .select({
+      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      users: count(UserTable.id).mapWith(Number).as("users"),
+    })
+    .from(UserTable)
+    .where(sql`${UserTable.createdAt} BETWEEN ${from} AND ${to}`)
+    .groupBy(sql`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`);
+  return d;
+}
+export async function getRevenueData(from: string, to: string) {
+  const {} = await isAuthorized(["ADMIN"]);
+  const d = await db
+    .select({
+      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
+        "date"
+      ),
+      totalRevenue: sum(PaymentTable.amount).mapWith(Number).as("totalRevenue"),
+    })
+    .from(PaymentTable)
+    .where(
+      and(
+        sql`${PaymentTable.createdAt} BETWEEN ${from} AND ${to}`,
+        eq(PaymentTable.status, "HOLD")
+      )
+    )
+    .groupBy(sql`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`);
+  return d;
 }
