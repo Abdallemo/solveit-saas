@@ -20,14 +20,10 @@ import { FileChatCardComps } from "./FileHelpers";
 import MediaPreviewer from "./MediaPreviewer";
 
 interface FileUploadProps {
-  maxFiles?: number;
   className?: string;
 }
 
-export default function FileUploadSolver({
-  maxFiles = 5,
-  className,
-}: FileUploadProps) {
+export default function FileUploadSolver({ className }: FileUploadProps) {
   const useCurrentSolver = useCurrentUser();
   const { isLoading, isBlocked } = useAuthGate();
   const { uploadedFiles, setUploadedFiles, currentWorkspace } = useWorkspace();
@@ -55,15 +51,11 @@ export default function FileUploadSolver({
     currentWorkspace?.task.status === "SUBMITTED" ||
     currentWorkspace?.task.status === "COMPLETED";
   const uploadedById = useCurrentSolver.user?.id!;
-  const fileLimitReached = uploadedFiles.length >= maxFiles;
 
   const handleFiles = async (newFiles: FileList | null) => {
     if (!newFiles || fileDisabled) return;
 
-    const fileArray = Array.from(newFiles).slice(
-      0,
-      maxFiles - uploadedFiles.length
-    );
+    const fileArray = Array.from(newFiles).slice(0, uploadedFiles.length);
 
     for (const file of fileArray) {
       try {
@@ -132,7 +124,7 @@ export default function FileUploadSolver({
           handleFiles(e.dataTransfer.files);
         }}>
         <Input
-          disabled={fileLimitReached || fileDisabled}
+          disabled={fileDisabled}
           ref={inputRef}
           type="file"
           multiple
@@ -151,12 +143,11 @@ export default function FileUploadSolver({
             Drop files here or click to browse
           </div>
           <div className="text-xs text-muted-foreground">
-            PDF, DOC, JPG, PNG up to 200MB • {uploadedFiles.length}/{maxFiles}{" "}
-            files
+            PDF, DOC, JPG, PNG up to 200MB • {uploadedFiles.length} files
           </div>
           <Button
             type="button"
-            disabled={fileLimitReached || fileDisabled}
+            disabled={fileDisabled}
             variant="outline"
             size="sm"
             className="mt-2"
@@ -212,6 +203,7 @@ export default function FileUploadSolver({
                   downloadAction={async (file) => {
                     await handleFileDownload(file.filePath, file.fileName);
                   }}
+                  opt={{ deleteDisable: fileDisabled }}
                 />
               </div>
             ))}
