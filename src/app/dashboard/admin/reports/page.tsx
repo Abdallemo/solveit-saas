@@ -1,3 +1,4 @@
+import { getRevenueData } from "@/features/tasks/server/data";
 import SystemReportsPage from "@/features/users/components/admin/SystemReportPageComps";
 const reportsData = [
   {
@@ -56,7 +57,9 @@ const taskCategoriesData = [
   { name: "Moderation", value: 20 },
 ];
 
-export default function page() {
+export default async function page() {
+  const d = await getRevenueData("2025-09-21", "2025-10-21");
+  console.log(d);
   return (
     <SystemReportsPage
       reportsData={reportsData}
