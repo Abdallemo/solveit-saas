@@ -22,9 +22,12 @@ import {
 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
-interface MonacoEditorProps {
+export type editorConfOptions = {
+  readOnly?: boolean;
+};
+export interface MonacoEditorProps {
   files: UploadedFileMeta[];
-  currentFile?: string; // This is the fileName of the file to be opened initially
+  currentFile?: string;
   onChange?: (filename: string, content: string) => void;
   onFileChange?: (filename: string) => void;
   onSave?: (filename: string, content: string) => void;
@@ -35,6 +38,7 @@ interface MonacoEditorProps {
   className?: string;
   sidebar?: boolean;
   filePath: string;
+  editorConfOpts?: editorConfOptions;
 }
 
 function FileIcon({
@@ -169,6 +173,7 @@ export function MonacoEditor({
   theme = "vs-dark",
   className = "",
   sidebar = false,
+  editorConfOpts: editorOpts = { readOnly: false },
   filePath: singleFilePath,
 }: MonacoEditorProps) {
   const files: UploadedFileMeta[] =
@@ -357,7 +362,7 @@ export function MonacoEditor({
                 {getLanguage(activeFile)}
               </span>
             </div>
-            {onSave && (
+            {onSave && !editorOpts.readOnly && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -402,6 +407,7 @@ export function MonacoEditor({
                 wordWrap: "on",
                 contextmenu: true,
                 selectOnLineNumbers: true,
+                ...editorOpts,
               }}
             />
           ) : (
