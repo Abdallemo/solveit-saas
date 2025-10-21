@@ -41,6 +41,7 @@ export default function WorkspacePageComp() {
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
     currentWorkspace?.task.status == "COMPLETED";
+
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
     autoSaveArgs: [
@@ -49,6 +50,7 @@ export default function WorkspacePageComp() {
       currentWorkspace?.taskId!,
     ],
     delay: 700,
+    disabled: alreadySubmitedSolution,
   });
   const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
     mutationFn: publishSolution,
@@ -208,7 +210,9 @@ export default function WorkspacePageComp() {
               </div>
               <div className="flex-1 min-h-0 overflow-auto px-3 pt-0">
                 <Suspense>
-                  <WorkspaceEditor />
+                  <WorkspaceEditor
+                    editorOptions={{ editable: !alreadySubmitedSolution }}
+                  />
                 </Suspense>
               </div>
             </div>
