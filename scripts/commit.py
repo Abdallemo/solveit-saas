@@ -2,7 +2,11 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """added file preview features and somee tweaks"""
+commit_message = """refactor: switch DisplayListComponent to client-side data flow w/ custom useQueryParam + react-query
+Integrated custom useQueryParam manager to handle URL state sync without Next.js router.refresh.
+Reworked DisplayListComponent to fetch data client-side via useQuery for smoother state updates,
+removing SSR dependency and avoiding unnecessary reloads.
+"""
 
 repo = Repo(repo_path)
 
