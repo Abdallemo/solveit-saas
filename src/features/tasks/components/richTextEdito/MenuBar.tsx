@@ -1,11 +1,13 @@
 "use client";
 import { Button } from "@/components/ui/button";
+import { Toggle } from "@/components/ui/toggle";
 import type { Editor } from "@tiptap/react";
 import {
   AlignCenter,
   AlignLeft,
   AlignRight,
   Bold,
+  Code,
   Heading1,
   Heading2,
   Heading3,
@@ -14,11 +16,9 @@ import {
   List,
   ListOrdered,
   Underline,
-  Code,
 } from "lucide-react";
 import type React from "react";
 import { FormEvent, useRef } from "react";
-import { Toggle } from "@/components/ui/toggle";
 
 function toggleMergedCodeBlock(editor: Editor) {
   const { state, commands } = editor;
@@ -42,14 +42,15 @@ function toggleMergedCodeBlock(editor: Editor) {
 
 type menuBarProp = {
   editor: Editor | null;
+  disabled?: boolean;
 };
 
-export default function MenuBar({ editor }: menuBarProp) {
+export default function MenuBar({ editor, disabled = false }: menuBarProp) {
   const fileInputRef = useRef<HTMLInputElement>(null);
   // const { selectedFiles } = useTask();
 
   const handleImageUpload = (e: FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     fileInputRef.current?.click();
   };
 
@@ -69,6 +70,7 @@ export default function MenuBar({ editor }: menuBarProp) {
   return (
     <div className="border-b p-2 flex items-center gap-0.5 flex-wrap">
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("heading", { level: 1 })}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 1 }).run();
@@ -78,6 +80,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <Heading1 className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("heading", { level: 2 })}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 2 }).run();
@@ -87,6 +90,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <Heading2 className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("heading", { level: 3 })}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 3 }).run();
@@ -96,6 +100,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <Heading3 className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("bold")}
         onPressedChange={() => {
           editor.chain().focus().toggleBold().run();
@@ -105,6 +110,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <Bold className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("italic")}
         onPressedChange={() => {
           editor.chain().focus().toggleItalic().run();
@@ -114,6 +120,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <Italic className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("strike")}
         onPressedChange={() => {
           editor.chain().focus().toggleStrike().run();
@@ -126,6 +133,7 @@ export default function MenuBar({ editor }: menuBarProp) {
       <div className="h-6 w-px bg-border mx-1" />
 
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("bulletList")}
         onPressedChange={() => {
           editor.chain().focus().toggleBulletList().run();
@@ -135,6 +143,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <List className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("orderedList")}
         onPressedChange={() => {
           editor.chain().focus().toggleOrderedList().run();
@@ -147,6 +156,7 @@ export default function MenuBar({ editor }: menuBarProp) {
       <div className="h-6 w-px bg-border mx-1" />
 
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive("codeBlock")}
         onPressedChange={() => {
           editor && toggleMergedCodeBlock(editor);
@@ -168,6 +178,7 @@ export default function MenuBar({ editor }: menuBarProp) {
       <div className="h-6 w-px bg-border mx-1" />
 
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive({ textAlign: "left" })}
         onPressedChange={() => {
           editor.chain().focus().setTextAlign("left").run();
@@ -177,6 +188,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <AlignLeft className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive({ textAlign: "center" })}
         onPressedChange={() => {
           editor.chain().focus().setTextAlign("center").run();
@@ -186,6 +198,7 @@ export default function MenuBar({ editor }: menuBarProp) {
         <AlignCenter className="h-4 w-4" />
       </Toggle>
       <Toggle
+        disabled={disabled}
         pressed={editor.isActive({ textAlign: "right" })}
         onPressedChange={() => {
           editor.chain().focus().setTextAlign("right").run();
@@ -206,155 +219,3 @@ export default function MenuBar({ editor }: menuBarProp) {
     </div>
   );
 }
-/**
- 
-<div className="border-b p-2 flex items-center gap-0.5 flex-wrap">
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleHeading({ level: 1 }).run();
-        }}
-        data-active={editor.isActive("heading", { level: 1 })}>
-        <Heading1 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleHeading({ level: 2 }).run();
-        }}
-        data-active={editor.isActive("heading", { level: 2 })}>
-        <Heading2 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleHeading({ level: 3 }).run();
-        }}
-        data-active={editor.isActive("heading", { level: 3 })}>
-        <Heading3 className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleBold().run();
-        }}
-        data-active={editor.isActive("bold")}>
-        <Bold className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleItalic().run();
-        }}
-        data-active={editor.isActive("italic")}>
-        <Italic className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleStrike().run();
-        }}
-        data-active={editor.isActive("strike")}>
-        <Underline className="h-4 w-4" />
-      </Button>
-
-      <div className="h-6 w-px bg-border mx-1" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleBulletList().run();
-        }}
-        data-active={editor.isActive("bulletList")}>
-        <List className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().toggleOrderedList().run();
-        }}
-        data-active={editor.isActive("orderedList")}>
-        <ListOrdered className="h-4 w-4" />
-      </Button>
-
-      <div className="h-6 w-px bg-border mx-1" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor && toggleMergedCodeBlock(editor);
-        }}
-        data-active={editor.isActive("codeBlock")}>
-        <Code className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={handleImageUpload}
-        disabled>
-        <ImageIcon className="h-4 w-4" />
-      </Button>
-
-      <div className="h-6 w-px bg-border mx-1" />
-
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().setTextAlign("left").run();
-        }}
-        data-active={editor.isActive({ textAlign: "left" })}>
-        <AlignLeft className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().setTextAlign("center").run();
-        }}
-        data-active={editor.isActive({ textAlign: "center" })}>
-        <AlignCenter className="h-4 w-4" />
-      </Button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-8 w-8"
-        onClick={(e) => {
-          editor.chain().focus().setTextAlign("right").run();
-        }}
-        data-active={editor.isActive({ textAlign: "right" })}>
-        <AlignRight className="h-4 w-4" />
-      </Button>
-
-      <input
-        type="file"
-        accept="image/*"
-        ref={fileInputRef}
-        onChange={handleFileChange}
-        hidden
-        alt="input"
-      />
-    </div>
- */
