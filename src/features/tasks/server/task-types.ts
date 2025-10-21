@@ -1,5 +1,6 @@
 // app/features/tasks/task-form-schema.ts
-import { RefundStatusEnumType } from "@/drizzle/schemas";
+import { BlockedSolverType, RefundStatusEnumType, taskFileType, TaskType } from "@/drizzle/schemas";
+import { publicUserType } from "@/features/users/server/user-types";
 import { z } from "zod";
 import {
   getAllDisputes,
@@ -7,17 +8,16 @@ import {
   getAllTaskDeadlines,
   getAllTasks,
   getAllTasksByRolePaginated,
-  getAssignedTasksbyIdPaginated,
   getDraftTask,
   getDraftTaskWithDefualtVal,
   getModeratorDisputes,
   getPosterTasksbyIdPaginated,
   getSolutionById,
+  getSolverAssignedTasksbyIdPaginated,
   getTasksbyId,
-  getTasksbyIdWithFiles,
   getUserDisputes,
   getUserTasksbyId,
-  getWorkspaceById,
+  getWorkspaceById
 } from "./data";
 export type taskRefundSchemaType = z.infer<typeof taskRefundSchema>;
 export type TaskFormValues = z.infer<typeof TaskFormSchema>;
@@ -37,7 +37,7 @@ export type UserDisputeswithTask = Awaited<ReturnType<typeof getUserDisputes>>[n
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type ModDisputeType = Awaited<ReturnType<typeof getModeratorDisputes>>;
 export type SolverAssignedTaskType = Awaited<
-  ReturnType<typeof getAssignedTasksbyIdPaginated>
+  ReturnType<typeof getSolverAssignedTasksbyIdPaginated>
 >["tasks"][number];
 export type PosterTasksFiltred = Awaited<
   ReturnType<typeof getPosterTasksbyIdPaginated>
@@ -82,7 +82,6 @@ export type FlatDispute = {
   solutionContent: string | null;
 };
 export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
-export type TaskWithFilesType = Awaited<ReturnType<typeof getTasksbyIdWithFiles>>;
 export type assignTaskReturnType = {
   error?:
     | "no such task available"
@@ -90,6 +89,14 @@ export type assignTaskReturnType = {
     | "task already assigned to solver";
   success?: "Task successfully assigned to you!";
   newTask: TaskReturnType;
+};
+export type PosterTaskReturn = TaskType & {
+  taskFiles: taskFileType[];
+};
+export type SolverTaskReturn = TaskType & {
+  poster: publicUserType;
+  taskFiles: taskFileType[];
+  blockedSolvers: BlockedSolverType | undefined;
 };
 
 export type workspaceFileType = {
