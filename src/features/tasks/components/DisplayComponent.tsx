@@ -108,7 +108,8 @@ export default function DisplayListComponent({
   if (error) {
     throw error;
   }
-  const { tasks = [], totalCount = 0 } = data ?? {};
+  const tasks = data ? data.tasks : [];
+  const totalCount = data ? data.totalCount : 1;
   const hasPrevious = page > 1;
   const totalPages = Math.ceil(totalCount / limit);
   const hasNext = page < totalPages;
@@ -198,7 +199,7 @@ export default function DisplayListComponent({
 
   function CardsView() {
     return (
-      <div className="h-[670px] max-h-[670px]">
+      <div className="flex-1">
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {tasks.map((task) => (
             <Card
@@ -259,7 +260,7 @@ export default function DisplayListComponent({
   }
 
   return (
-    <div className="flex flex-col px-6 py-8 gap-4  overflow-x-hidden w-full h-full">
+    <div className="flex flex-col px-6 py-8 gap-4 w-full h-full">
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold">{title}</h1>
         <Badge variant="outline">Total: {totalCount}</Badge>
@@ -348,21 +349,21 @@ export default function DisplayListComponent({
       </div>
 
       {tasks.length > 0 ? (
-        <CardsView />
+        <>
+          <CardsView />
+        </>
       ) : (
         <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-muted/30">
           No tasks found for this page or search query.
         </div>
       )}
-      {tasks.length > 8 && (
-        <div className="flex justify-center">
-          <PaginationControls
-            hasNext={hasNext}
-            hasPrevious={hasPrevious}
-            page={page}
-            setPage={setPage}
-          />
-        </div>
+      {(hasNext||hasPrevious) && (
+        <PaginationControls
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          page={page}
+          setPage={setPage}
+        />
       )}
     </div>
   );
