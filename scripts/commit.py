@@ -2,7 +2,8 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """fixed some bugs regarding search params
+commit_message = """fixed some bugs regarding search params and shifted to route handlers due to 
+server action issue 
 """
 
 repo = Repo(repo_path)
