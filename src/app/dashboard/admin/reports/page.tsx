@@ -1,4 +1,3 @@
-import { getRevenueData } from "@/features/tasks/server/data";
 import SystemReportsPage from "@/features/users/components/admin/SystemReportPageComps";
 const reportsData = [
   {
@@ -57,9 +56,14 @@ const taskCategoriesData = [
   { name: "Moderation", value: 20 },
 ];
 
-export default async function page() {
-  const d = await getRevenueData("2025-09-21", "2025-10-21");
-  console.log(d);
+export default async function page({
+  params,
+}: {
+  params: Promise<{ from: string; to: string }>;
+}) {
+  // const d = await getRevenueData("2025-09-21", "2025-10-21");
+  const { from, to } = await params;
+  // console.log(d);
   return (
     <SystemReportsPage
       reportsData={reportsData}
@@ -67,6 +71,8 @@ export default async function page() {
       userGrowthData={userGrowthData}
       revenueData={revenueData}
       taskCategoriesData={taskCategoriesData}
+      f={from}
+      t={to}
     />
   );
 }
