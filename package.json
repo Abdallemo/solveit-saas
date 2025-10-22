@@ -13,6 +13,7 @@
     "db:d": "pnpm  drizzle-kit drop",
     "db:p": "pnpm  drizzle-kit push",
     "db:std": "pnpm  drizzle-kit studio",
+    "db:seed":"tsx .\\src\\drizzle\\seed.ts  ",
     "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe"
   },
   "dependencies": {
