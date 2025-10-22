@@ -21,7 +21,7 @@ export default function SolverTaskPageComps({
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end ">
-        {!isBlocked && (
+        {!isBlocked && task.status === "OPEN" && (
           <AssignTaskButton taskId={task.id} userId={currentUser.id!} />
         )}
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
