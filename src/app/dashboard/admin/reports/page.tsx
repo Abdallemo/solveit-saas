@@ -1,4 +1,5 @@
 import SystemReportsPage from "@/features/users/components/admin/SystemReportPageComps";
+
 const reportsData = [
   {
     id: "1",
@@ -33,46 +34,48 @@ const aiFlagsData = [
   { date: "Oct 14", flags: 18 },
   { date: "Oct 15", flags: 25 },
 ];
-const userGrowthData = [
-  { month: "Jan", users: 120 },
-  { month: "Feb", users: 180 },
-  { month: "Mar", users: 250 },
-  { month: "Apr", users: 320 },
-  { month: "May", users: 410 },
-  { month: "Jun", users: 520 },
-];
-const revenueData = [
-  { month: "Jan", revenue: 4500 },
-  { month: "Feb", revenue: 5200 },
-  { month: "Mar", revenue: 6100 },
-  { month: "Apr", revenue: 7300 },
-  { month: "May", revenue: 8200 },
-  { month: "Jun", revenue: 9900 },
-];
-const taskCategoriesData = [
-  { name: "Bug Reports", value: 35 },
-  { name: "Feature Requests", value: 25 },
-  { name: "Support", value: 20 },
-  { name: "Moderation", value: 20 },
-];
 
 export default async function page({
-  params,
+  searchParams,
 }: {
-  params: Promise<{ from: string; to: string }>;
+  searchParams: Promise<{ from: string; to: string }>;
 }) {
-  // const d = await getRevenueData("2025-09-21", "2025-10-21");
-  const { from, to } = await params;
+  const { from, to } = await searchParams;
+  // console.log("from:", from);
+  // console.log("to:", to);
+  // const u = await getUserGrowthData(from, to);
+
+  // const u = await fetch(`http://localhost:3000/api/user_growth`, {
+  //   method: "GET",
+  //   headers: await headers(),
+  // }).then(s=>s.json());
+  // const r = await fetch(`http://localhost:3000/api/revenue`, {
+  //   method: "GET",
+  //   headers: await headers(),
+  // }).then(s=>s.json());
+  // const t = await fetch(`http://localhost:3000/api/task_categories`, {
+  //   method: "GET",
+  //   headers: await headers(),
+  // }).then(s=>s.json());
+
+  // const r = await getRevenueData(from, to);
+  // const t = await getTaskCategoriesData(from, to);
   // console.log(d);
   return (
-    <SystemReportsPage
-      reportsData={reportsData}
-      aiFlagsData={aiFlagsData}
-      userGrowthData={userGrowthData}
-      revenueData={revenueData}
-      taskCategoriesData={taskCategoriesData}
-      f={from}
-      t={to}
-    />
+    <SystemReportsPage reportsData={reportsData} aiFlagsData={aiFlagsData}  />
+    // <div className="flex flex-col gap-2 justify-between items-center w-full h-full p-20">
+    //   <div className="w-full h-full">
+    //     <h1>debug mode</h1>
+    //     <p>user growth</p>
+    //     <pre>{JSON.stringify(u, null, 2)}</pre>
+    //     <br />
+    //     <p>revenue</p>
+    //     <pre>{JSON.stringify(r, null, 2)}</pre>
+    //     <br />
+    //     <p>cat per task</p>
+    //     <pre>{JSON.stringify(t, null, 2)}</pre>
+    //     <br />
+    //   </div>
+    // </div>
   );
 }
