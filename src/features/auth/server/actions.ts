@@ -8,14 +8,16 @@ import {
   getUserByEmail,
   getUserById,
   UpdateUserField,
+  UserDbType,
 } from "@/features/users/server/actions";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { DEFAULTREVALIDATEDURATION, withCache } from "@/lib/cache";
 import { sendVerificationEmail } from "@/lib/nodemailer";
 import bcrypt from "bcryptjs";
-import { AuthError } from "next-auth";
+import { AuthError, Session } from "next-auth";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { NextResponse } from "next/server";
 import { UserRole } from "../../../../types/next-auth";
 import {
   loginFormSchema,
@@ -203,46 +205,110 @@ export async function verifyVerificationToken(
   }
 }
 
+type UnauthorizedRespType = {
+  isAuthError: boolean;
+  response: NextResponse;
+};
+
+const createSuccessAuth = (): UnauthorizedRespType => ({
+  isAuthError: false,
+  response: new NextResponse(JSON.stringify({ message: "Authorized" }), {
+    status: 200,
+  }),
+});
+
+const createFailureAuth = (): UnauthorizedRespType => ({
+  isAuthError: true,
+  response: new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+    status: 403,
+    headers: { "Content-Type": "application/json" },
+  }),
+});
+
 export async function isAuthorized(
   whichRole: UserRole[],
-  options: { useCache: boolean; revalidate?: number } = {
+  options?: { useCache?: boolean; revalidate?: number; useResponse?: false }
+): Promise<{ user: UserDbType; session: Session }>;
+
+export async function isAuthorized(
+  whichRole: UserRole[],
+  options: { useCache?: boolean; revalidate?: number; useResponse: true }
+): Promise<{
+  user: UserDbType | null;
+  session: Session | null;
+  Auth: UnauthorizedRespType;
+}>;
+
+export async function isAuthorized(
+  whichRole: UserRole[],
+  options: {
+    useCache?: boolean;
+    revalidate?: number;
+    useResponse?: boolean;
+  } = {
     useCache: true,
     revalidate: DEFAULTREVALIDATEDURATION,
+    useResponse: false,
   }
-) {
+): Promise<any> {
+
+  const redirectOrReturnError = (url: string): UnauthorizedRespType | void => {
+    if (options.useResponse) return createFailureAuth();
+    return redirect(url);
+  };
+
+  const handleFailure = (url: string, status: number = 302): any => {
+    const errorResult = redirectOrReturnError(url);
+    if (options.useResponse && errorResult) {
+      return { user: null, session: null, Auth: errorResult };
+    }
+
+  };
+
   const session = await getServerSession();
   if (!session) {
-    return redirect("/api/auth/signout?callbackUrl=/login");
+    return handleFailure("/api/auth/signout?callbackUrl=/login");
   }
-  const { user } = session;
-  if (!user || !user.id || !user?.role || !user.id) {
-    return redirect("/api/auth/signout?callbackUrl=/login");
+
+  const user = session.user;
+  if (!user || !user.id || !user.role) {
+    return handleFailure("/api/auth/signout?callbackUrl=/login");
   }
-  const userDb = await withCache({
-    callback: () => getUserById(user.id!),
+
+  const userId: string = user.id;
+  const userRole: UserRole = user.role as UserRole;
+
+  const userDb = (await withCache({
+    callback: () => getUserById(userId),
     tag: "user-data-cache",
-    dep: [user.id],
+    dep: [userId],
     enabled: options?.useCache,
     revalidate: options.revalidate,
-  })();
+  })()) as UserDbType;
 
   if (!userDb) {
-    return redirect(
+    return handleFailure(
       "/api/auth/signout?callbackUrl=/login?error=account_deleted"
     );
   }
   if (!userDb.emailVerified) {
-    return redirect(`/${userDb.id}/account-deactivated`);
+    return handleFailure(`/${userDb.id}/account-deactivated`);
   }
 
-  if (!whichRole.includes(user.role)) {
-    console.log("redrecting user");
-    redirect(`/dashboard/${user.role.toLocaleLowerCase()}`);
+  if (!whichRole.includes(userRole)) {
+    console.log("redirecting user");
+    return handleFailure(`/dashboard/${userRole.toLocaleLowerCase()}`);
   }
 
+  if (options.useResponse) {
+    return {
+      user: userDb,
+      session: session,
+      Auth: createSuccessAuth(),
+    };
+  }
   return { user: userDb, session: session };
 }
-
 export async function DeleteUserAccount() {
   console.log("delete trigered");
   const user = await getServerUserSession();
