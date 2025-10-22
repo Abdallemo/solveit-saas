@@ -14,6 +14,7 @@ import {
   UserSubscriptionTable,
   UserTable,
 } from "@/drizzle/schemas";
+import { generateSqlYMDFormateDate } from "@/drizzle/utils";
 import { isAuthorized } from "@/features/auth/server/actions";
 import type {
   dataOptions,
@@ -25,7 +26,8 @@ import type {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
-import { formatTimeRemaining } from "@/lib/utils";
+import { formatTimeRemaining, toYMD } from "@/lib/utils";
+import { subDays } from "date-fns";
 import {
   and,
   asc,
@@ -255,7 +257,6 @@ export async function getPosterTasksbyIdPaginated(
     status: TaskStatusType;
   }
 ) {
-
   const where = and(
     eq(TaskTable.posterId, userId),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined,
@@ -344,7 +345,6 @@ export async function getAllTasksByRolePaginated(
     offset: number;
   }
 ) {
-  
   let where;
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
@@ -894,35 +894,80 @@ export async function getModeratorDisputes(disputeId: string) {
 }
 
 export async function getUserGrowthData(from: string, to: string) {
-  const {} = await isAuthorized(["ADMIN"]);
+  if (!from) {
+    from = toYMD(subDays(new Date(), 30));
+  }
+  if (!to) {
+    to = toYMD(new Date());
+  }
+  console.info("fetching from getUserGrowthData");
+  // await isAuthorized(["ADMIN"]);
   const d = await db
     .select({
-      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: generateSqlYMDFormateDate(UserTable.createdAt),
       users: count(UserTable.id).mapWith(Number).as("users"),
     })
     .from(UserTable)
-    .where(sql`${UserTable.createdAt} BETWEEN ${from} AND ${to}`)
-    .groupBy(sql`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`);
+    .where(
+      sql`${generateSqlYMDFormateDate(
+        UserTable.createdAt
+      )} BETWEEN ${from} AND ${to}`
+    )
+    .groupBy(UserTable.createdAt);
   return d;
 }
+
 export async function getRevenueData(from: string, to: string) {
-  const {} = await isAuthorized(["ADMIN"]);
+  if (!from) {
+    from = toYMD(subDays(new Date(), 30));
+  }
+  if (!to) {
+    to = toYMD(new Date());
+  }
+  console.info("fetching from getUserGrowthData");
+
+  // await isAuthorized(["ADMIN"]);
+
   const d = await db
     .select({
-      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: generateSqlYMDFormateDate(PaymentTable.createdAt),
       totalRevenue: sum(PaymentTable.amount).mapWith(Number).as("totalRevenue"),
     })
     .from(PaymentTable)
     .where(
       and(
-        sql`${PaymentTable.createdAt} BETWEEN ${from} AND ${to}`,
+        sql`${generateSqlYMDFormateDate(
+          PaymentTable.createdAt
+        )} BETWEEN ${from} AND ${to}`,
         eq(PaymentTable.status, "HOLD")
       )
     )
-    .groupBy(sql`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`);
+    .groupBy(PaymentTable.createdAt);
+
   return d;
+}
+
+export async function getTaskCategoriesData(from: string, to: string) {
+  if (!from) {
+    from = toYMD(subDays(new Date(), 30));
+  }
+  if (!to) {
+    to = toYMD(new Date());
+  }
+  const res = await db
+    .select({
+      date: generateSqlYMDFormateDate(TaskCategoryTable.createdAt),
+      name: TaskCategoryTable.name,
+      taskCount: count(TaskTable.id),
+    })
+    .from(TaskCategoryTable)
+    .leftJoin(TaskTable, eq(TaskTable.categoryId, TaskCategoryTable.id))
+    .where(
+      sql`${generateSqlYMDFormateDate(
+        TaskCategoryTable.createdAt
+      )} BETWEEN ${from} AND ${to}`
+    )
+    .groupBy(TaskCategoryTable.id);
+
+  return res;
 }
