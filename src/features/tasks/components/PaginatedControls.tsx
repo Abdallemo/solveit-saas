@@ -1,4 +1,3 @@
-import { Button } from "@/components/ui/button";
 import {
   Pagination,
   PaginationContent,
@@ -27,50 +26,50 @@ export default function PaginationControls({
 }) {
   return (
     <Pagination className={cn("w-full", className)}>
-      {type === "regular" ? (
-        <PaginationContent>
-          {hasPrevious && (
-            <PaginationItem>
-              <PaginationPrevious onClick={() => setPage(page - 1)} />
-            </PaginationItem>
-          )}
+      <PaginationContent>
+        {hasPrevious && (
           <PaginationItem>
-            <PaginationLink isActive>{page}</PaginationLink>
+            <PaginationPrevious onClick={() => setPage(page - 1)} />
           </PaginationItem>
-          {hasNext && (
-            <>
-              <PaginationItem>
-                <PaginationEllipsis />
-              </PaginationItem>
+        )}
 
-              <PaginationItem>
-                <PaginationNext onClick={() => setPage(page + 1)} />
-              </PaginationItem>
-            </>
-          )}
-        </PaginationContent>
-      ) : (
-        <PaginationContent>
-          <PaginationItem>
-            <Button
-              variant={"outline"}
-              className="h-8"
-              onClick={() => setPage(page - 1)}
-              disabled={!hasPrevious}>
-              Previous
-            </Button>
-          </PaginationItem>
-          <PaginationItem>
-            <Button
-              variant={"outline"}
-              className="h-8"
-              onClick={() => setPage(page + 1)}
-              disabled={!hasNext}>
-              Next
-            </Button>
-          </PaginationItem>
-        </PaginationContent>
-      )}
+        <PaginationItem>
+          <PaginationLink isActive>{page}</PaginationLink>
+        </PaginationItem>
+        {hasNext && (
+          <>
+            <PaginationItem>
+              <PaginationEllipsis />
+            </PaginationItem>
+
+            <PaginationItem>
+              <PaginationNext onClick={() => setPage(page + 1)} />
+            </PaginationItem>
+          </>
+        )}
+      </PaginationContent>
+      {/* //
+      //   <PaginationContent>
+      //     <PaginationItem>
+      //       <Button
+      //         variant={"outline"}
+      //         className="h-8"
+      //         onClick={() => setPage(page - 1)}
+      //         disabled={!hasPrevious}>
+      //         Previous
+      //       </Button>
+      //     </PaginationItem>
+      //     <PaginationItem>
+      //       <Button
+      //         variant={"outline"}
+      //         className="h-8"
+      //         onClick={() => setPage(page + 1)}
+      //         disabled={!hasNext}>
+      //         Next
+      //       </Button>
+      //     </PaginationItem>
+      //   </PaginationContent>
+      // ) */}
     </Pagination>
   );
 }
