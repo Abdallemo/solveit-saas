@@ -255,9 +255,7 @@ export async function getPosterTasksbyIdPaginated(
     status: TaskStatusType;
   }
 ) {
-  console.log(
-    `[BACKEND FETCH]search=${search}, limit=${limit}, offset=${offset},  status=${status}`
-  );
+
   const where = and(
     eq(TaskTable.posterId, userId),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined,
@@ -269,7 +267,7 @@ export async function getPosterTasksbyIdPaginated(
       where,
       limit,
       offset,
-      orderBy: (table, fn) => fn.desc(table.createdAt),
+      orderBy: (table, fn) => fn.desc(table.updatedAt),
       with: {
         poster: { columns: publicUserColumns },
         solver: { columns: publicUserColumns },
@@ -294,7 +292,6 @@ export async function getSolverAssignedTasksbyIdPaginated(
   }: { search?: string; limit: number; offset: number; status: TaskStatusType },
   showBlocked: boolean
 ) {
-  console.log("[BACKEND FETCH]", search, limit, offset, status);
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
     where: (table, fn) => fn.eq(table.userId, userId),
@@ -315,7 +312,7 @@ export async function getSolverAssignedTasksbyIdPaginated(
       where,
       limit,
       offset,
-      orderBy: (table, fn) => fn.desc(table.createdAt),
+      orderBy: (table, fn) => fn.desc(table.updatedAt),
       with: {
         workspace: true,
         poster: { columns: publicUserColumns },
@@ -347,9 +344,7 @@ export async function getAllTasksByRolePaginated(
     offset: number;
   }
 ) {
-  console.log(
-    `[BACKEND FETCH]search=${search}, limit=${limit}, offset=${offset}, categoryId=${categoryId}`
-  );
+  
   let where;
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
@@ -395,7 +390,7 @@ export async function getAllTasksByRolePaginated(
       where,
       limit,
       offset,
-      orderBy: (table, fn) => fn.desc(table.createdAt),
+      orderBy: (table, fn) => fn.desc(table.updatedAt),
       with: {
         poster: { columns: publicUserColumns },
         solver: { columns: publicUserColumns },
