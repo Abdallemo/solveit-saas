@@ -38,17 +38,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  revenueQuery,
+  taskCategoriesQuery,
+  userGrowthQuery,
+} from "@/features/tasks/client/queries";
 import useQueryParam from "@/hooks/useQueryParms";
 import { toYMD } from "@/lib/utils";
+import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
 import {
   ChevronDownIcon,
   ClipboardList,
   DollarSign,
-  Download,
-  FileSpreadsheet,
-  FileText,
   Flag,
+  // Assuming Loader2 is available from lucide-react as you mentioned
+  Loader2,
   Users,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -68,6 +73,7 @@ import {
   YAxis,
 } from "recharts";
 
+// --- Type Definitions (Kept as is) ---
 type aiFlagsDataType = {
   date: string;
   flags: number;
@@ -132,28 +138,36 @@ type reportDataType = {
   lastGenerated: string;
 };
 
+const LoadingStatsContent = () => (
+  <CardContent>
+    <div className="text-2xl font-bold flex items-center gap-2">
+      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+    </div>
+    <p className="text-xs text-muted-foreground mt-1">
+      Fetching latest metrics...
+    </p>
+  </CardContent>
+);
+
+const LoadingChartContent = () => (
+  <CardContent className="flex items-center justify-center h-[300px]">
+    <div className="text-muted-foreground flex flex-col items-center">
+      <Loader2 className="h-8 w-8 animate-spin" />
+      <span className="mt-2">Loading Chart...</span>
+    </div>
+  </CardContent>
+);
+
 export default function SystemReportsPage({
   reportsData,
   aiFlagsData,
-  userGrowthData,
-  revenueData,
-  taskCategoriesData,
-  f,
-  t,
 }: {
   reportsData: reportDataType[];
   aiFlagsData: aiFlagsDataType[];
-  userGrowthData: userGrowthDataTyoe[];
-  revenueData: revenueDataType[];
-  taskCategoriesData: taskCategoriesDataType[];
-  f?: string;
-  t?: string;
 }) {
+  const today = new Date();
   const [searchQuery, setSearchQuery] = useState("");
   const [reportType, setReportType] = useState("all");
-  const [from, setFrom] = useQueryParam("from", "");
-  const [to, setTo] = useQueryParam("to", "");
-
   const shouldShowUsers =
     reportType === "all" || reportType === "user-activity";
   const shouldShowTasks = reportType === "all" || reportType === "tasks";
@@ -174,6 +188,45 @@ export default function SystemReportsPage({
     shouldShowAIFlags,
   ].filter(Boolean).length;
 
+  const [from, setFrom] = useQueryParam("from", toYMD(subDays(today, 30)));
+  const [to, setTo] = useQueryParam("to", toYMD(today));
+  // const [stateFrom, setStateFrom] = useState(toYMD(subDays(today, 30)));
+  // const [stateTo, setStateTo] = useState(toYMD(today));
+
+  const { data: userGrowthData, isLoading: isUserGrowthLoading } = useQuery(
+    userGrowthQuery({ from: from, to: to })
+  );
+  const {
+    data: revenueData,
+    isLoading: isRevenueLoading,
+    status,
+    error,
+  } = useQuery(revenueQuery({ from: from, to: to }));
+  const { data: taskCategoriesData, isLoading: isTaskCategoriesLoading } =
+    useQuery(taskCategoriesQuery({ from: from, to: to }));
+
+  const aggregatedTaskData = taskCategoriesData
+    ? Object.values(
+        taskCategoriesData.reduce((acc, cur) => {
+          const name = cur.name || "Unknown";
+          if (!acc[name]) acc[name] = { name, value: 0 };
+          acc[name].value += cur.taskCount ?? 0;
+          return acc;
+        }, {} as Record<string, { name: string; value: number }>)
+      )
+    : [];
+
+  const dynamicTaskCategoriesConfig = aggregatedTaskData.reduce(
+    (config, cat, index) => {
+      config[cat.name] = {
+        label: cat.name,
+        color: `var(--chart-${(index % 5) + 1})`,
+      };
+      return config;
+    },
+    {} as Record<string, { label: string; color: string }>
+  );
+
   const statsGridClass =
     visibleStatsCount === 1
       ? "grid gap-4 md:grid-cols-1"
@@ -187,6 +240,7 @@ export default function SystemReportsPage({
     visibleChartsCount === 1
       ? "grid gap-4 md:grid-cols-1"
       : "grid gap-4 md:grid-cols-2";
+
   const handleGenerateReport = () => {};
   const handleExportPDF = () => {};
   const handleExportExcel = () => {};
@@ -195,35 +249,9 @@ export default function SystemReportsPage({
 
   return (
     <div className="w-full h-full p-6 space-y-6">
-      {/* Header Section */}
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">System Reports</h1>
-          <h3>passed 'from' value from server {f}</h3>
-          <h3>passed 'to' value from server {t}</h3>
-          <h3> 'from' value from from client {from}</h3>
-          <h3> 'to' value from client {to}</h3>
-          <p className="text-muted-foreground mt-1">
-            Generate and export analytical reports across the SolveIt platform.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <Button onClick={handleGenerateReport}>
-            <FileText className="mr-2 h-4 w-4" />
-            Generate Report
-          </Button>
-          <Button onClick={handleExportPDF} variant="outline">
-            <Download className="mr-2 h-4 w-4" />
-            Export PDF
-          </Button>
-          <Button onClick={handleExportExcel} variant="outline">
-            <FileSpreadsheet className="mr-2 h-4 w-4" />
-            Export Excel
-          </Button>
-        </div>
-      </div>
-
-      {/* Filters Section */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"></div>
+      <span>from:={from}</span>
+      <span>to:={to}</span>
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -253,7 +281,6 @@ export default function SystemReportsPage({
         </CardContent>
       </Card>
 
-      {/* Summary Cards Row */}
       <div className={statsGridClass}>
         {shouldShowUsers && (
           <Card>
@@ -261,12 +288,18 @@ export default function SystemReportsPage({
               <CardTitle className="text-sm font-medium">Total Users</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">520</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                +12% from last month
-              </p>
-            </CardContent>
+            {isUserGrowthLoading ? (
+              <LoadingStatsContent />
+            ) : (
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {userGrowthData ? "520" : "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +12% from last month
+                </p>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -276,12 +309,18 @@ export default function SystemReportsPage({
               <CardTitle className="text-sm font-medium">Total Tasks</CardTitle>
               <ClipboardList className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">1,284</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                +8% from last month
-              </p>
-            </CardContent>
+            {isTaskCategoriesLoading ? (
+              <LoadingStatsContent />
+            ) : (
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {taskCategoriesData ? "1,284" : "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +8% from last month
+                </p>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -293,12 +332,18 @@ export default function SystemReportsPage({
               </CardTitle>
               <DollarSign className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">RM 9,900</div>
-              <p className="text-xs text-muted-foreground mt-1">
-                +21% from last month
-              </p>
-            </CardContent>
+            {isRevenueLoading ? (
+              <LoadingStatsContent />
+            ) : (
+              <CardContent>
+                <div className="text-2xl font-bold">
+                  {revenueData ? "RM 9,900" : "N/A"}
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  +21% from last month
+                </p>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -318,9 +363,7 @@ export default function SystemReportsPage({
         )}
       </div>
 
-      {/* Charts Section */}
       <div className={chartsGridClass}>
-        {/* User Growth Chart */}
         {shouldShowUsers && (
           <Card>
             <CardHeader>
@@ -329,31 +372,42 @@ export default function SystemReportsPage({
                 Monthly user registration trends
               </CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={userGrowthConfig}
-                className="h-[300px] w-full">
-                <LineChart accessibilityLayer data={userGrowthData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Line
-                    type="monotone"
-                    dataKey="users"
-                    stroke="var(--color-users)"
-                    strokeWidth={2}
-                    dot={false}
-                  />
-                </LineChart>
-              </ChartContainer>
-            </CardContent>
+            {isUserGrowthLoading || !userGrowthData ? (
+              <LoadingChartContent />
+            ) : (
+              <CardContent>
+                <ChartContainer
+                  config={userGrowthConfig}
+                  className="h-[300px] w-full">
+                  <LineChart accessibilityLayer data={userGrowthData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        });
+                      }}
+                    />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Line
+                      type="monotone"
+                      dataKey="users"
+                      stroke="var(--color-users)"
+                      strokeWidth={2}
+                      dot={false}
+                    />
+                  </LineChart>
+                </ChartContainer>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -363,29 +417,40 @@ export default function SystemReportsPage({
               <CardTitle>Revenue Breakdown by Month</CardTitle>
               <CardDescription>Monthly revenue in RM</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={revenueConfig}
-                className="h-[300px] w-full">
-                <BarChart accessibilityLayer data={revenueData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="month"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Bar
-                    dataKey="revenue"
-                    fill="var(--color-revenue)"
-                    radius={4}
-                  />
-                </BarChart>
-              </ChartContainer>
-            </CardContent>
+            {isRevenueLoading || !revenueData ? (
+              <LoadingChartContent />
+            ) : (
+              <CardContent>
+                <ChartContainer
+                  config={revenueConfig}
+                  className="h-[300px] w-full">
+                  <BarChart accessibilityLayer data={revenueData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        });
+                      }}
+                    />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Bar
+                      dataKey="totalRevenue"
+                      fill="var(--color-revenue)"
+                      radius={4}
+                    />
+                  </BarChart>
+                </ChartContainer>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -395,29 +460,35 @@ export default function SystemReportsPage({
               <CardTitle>Task Categories Distribution</CardTitle>
               <CardDescription>Breakdown of task types</CardDescription>
             </CardHeader>
-            <CardContent>
-              <ChartContainer
-                config={taskCategoriesConfig}
-                className="h-[300px] w-full">
-                <PieChart>
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <Pie
-                    data={taskCategoriesData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    dataKey="value">
-                    {taskCategoriesData.map((entry, index) => (
-                      <Cell
-                        key={`cell-${index}`}
-                        fill={`var(--chart-${(index % 5) + 1})`}
-                      />
-                    ))}
-                  </Pie>
-                </PieChart>
-              </ChartContainer>
-            </CardContent>
+            {isTaskCategoriesLoading || !taskCategoriesData ? (
+              <LoadingChartContent />
+            ) : (
+              <CardContent>
+                <ChartContainer
+                  config={dynamicTaskCategoriesConfig}
+                  className="h-[300px] w-full">
+                  <PieChart>
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <Pie
+                      data={aggregatedTaskData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      dataKey="value"
+                      nameKey="name">
+                      {aggregatedTaskData.map((entry, index) => (
+                        <Cell
+                          key={`cell-${index}`}
+                          fill={`var(--chart-${(index % 5) + 1})`}
+                        />
+                      ))}
+                    </Pie>
+                    <ChartLegend content={<ChartLegendContent />} />
+                  </PieChart>
+                </ChartContainer>
+              </CardContent>
+            )}
           </Card>
         )}
 
@@ -438,6 +509,13 @@ export default function SystemReportsPage({
                     tickLine={false}
                     axisLine={false}
                     tickMargin={8}
+                    tickFormatter={(value) => {
+                      const date = new Date(value);
+                      return date.toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      });
+                    }}
                   />
                   <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                   <ChartTooltip content={<ChartTooltipContent />} />
@@ -532,17 +610,20 @@ function Calendar22({
           dateRange.from
         )} to=${toYMD(dateRange.to)}`
       );
+     
     }
-  }, [isRangeComplete, dateRange]);
+  }, [isRangeComplete, dateRange, setFrom, setTo]);
 
   const handleDateSelect = (range: DateRange | undefined) => {
     setDateRange(range);
 
     const complete = range && range.from && range.to;
     setIsRangeComplete(!!complete);
-    if (isRangeComplete && dateRange?.from && dateRange?.to) {
-      setFrom(toYMD(range?.from!));
-      setTo(toYMD(range?.to!));
+
+    if (complete) {
+      setFrom(toYMD(range.from!));
+      setTo(toYMD(range.to!));
+      setOpen(false);
     }
   };
 
@@ -580,7 +661,6 @@ function Calendar22({
             className="rounded-lg border shadow-sm"
             hidden={{ after: today }}
             endMonth={today}
-            // Optional: Limit the maximum range size to prevent accidental massive queries
             max={90}
           />
         </PopoverContent>
