@@ -3,7 +3,6 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-// Shared state across all hook instances
 let sharedParams: URLSearchParams | null = null;
 const subscribers = new Set<() => void>();
 
@@ -11,20 +10,11 @@ function notifyAll() {
   for (const fn of subscribers) fn();
 }
 
-/**
- * useQueryParam — identical API, but safe for multiple concurrent updates.
- *
- * Example:
- * const [from, setFrom] = useQueryParam("from", "");
- * const [to, setTo] = useQueryParam("to", "");
- *
- * setFrom("A"); setTo("B"); // ✅ works, no overwrite
- */
+
 export default function useQueryParam<T>(key: string, def: T) {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Initialize sharedParams once per app load
   if (typeof window !== "undefined" && !sharedParams) {
     sharedParams = new URLSearchParams(window.location.search);
   }
