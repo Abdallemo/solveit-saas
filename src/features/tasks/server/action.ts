@@ -768,7 +768,7 @@ export async function acceptSolution(solution: SolutionById) {
     if (updatedTask.length > 0) {
       await db
         .update(PaymentTable)
-        .set({ status: "SUCCEEDED", releaseDate: releaseDate })
+        .set({ status: "RELEASED", releaseDate: releaseDate })
         .where(eq(PaymentTable.id, paymentId));
     }
 
