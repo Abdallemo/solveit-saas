@@ -138,16 +138,20 @@ export default function SystemReportsPage({
   userGrowthData,
   revenueData,
   taskCategoriesData,
+  f,
+  t,
 }: {
   reportsData: reportDataType[];
   aiFlagsData: aiFlagsDataType[];
   userGrowthData: userGrowthDataTyoe[];
   revenueData: revenueDataType[];
   taskCategoriesData: taskCategoriesDataType[];
+  f?: string;
+  t?: string;
 }) {
   const [searchQuery, setSearchQuery] = useState("");
   const [reportType, setReportType] = useState("all");
-  const [from, setFrom] = useQueryParam("cat", "");
+  const [from, setFrom] = useQueryParam("from", "");
   const [to, setTo] = useQueryParam("to", "");
 
   const shouldShowUsers =
@@ -183,10 +187,7 @@ export default function SystemReportsPage({
     visibleChartsCount === 1
       ? "grid gap-4 md:grid-cols-1"
       : "grid gap-4 md:grid-cols-2";
-  const handleGenerateReport = () => {
-    setTo(Math.random().toString());
-    setFrom(Math.random().toString());
-  };
+  const handleGenerateReport = () => {};
   const handleExportPDF = () => {};
   const handleExportExcel = () => {};
   const handleSearchChange = (value: string) => {};
@@ -198,6 +199,10 @@ export default function SystemReportsPage({
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">System Reports</h1>
+          <h3>passed 'from' value from server {f}</h3>
+          <h3>passed 'to' value from server {t}</h3>
+          <h3> 'from' value from from client {from}</h3>
+          <h3> 'to' value from client {to}</h3>
           <p className="text-muted-foreground mt-1">
             Generate and export analytical reports across the SolveIt platform.
           </p>
@@ -222,7 +227,7 @@ export default function SystemReportsPage({
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
-            <Calendar22 />
+            <Calendar22 setFrom={setFrom} setTo={setTo} />
             <Select value={reportType} onValueChange={setReportType}>
               <SelectTrigger className="md:w-56">
                 <SelectValue placeholder="Report Type" />
@@ -499,7 +504,13 @@ export default function SystemReportsPage({
   );
 }
 
-export function Calendar22() {
+function Calendar22({
+  setFrom,
+  setTo,
+}: {
+  setFrom: (val: string) => void;
+  setTo: (val: string) => void;
+}) {
   const today = new Date();
 
   const initialRange: DateRange = {
@@ -530,8 +541,8 @@ export function Calendar22() {
     const complete = range && range.from && range.to;
     setIsRangeComplete(!!complete);
     if (isRangeComplete && dateRange?.from && dateRange?.to) {
-      // setFrom(toYMD(range?.from!));
-      // setTo(toYMD(range?.to!));
+      setFrom(toYMD(range?.from!));
+      setTo(toYMD(range?.to!));
     }
   };
 
