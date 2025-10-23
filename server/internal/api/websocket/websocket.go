@@ -89,13 +89,13 @@ func (s *WsNotification) HandleSendNotification(w http.ResponseWriter, r *http.R
 		CreatedAt:  msg.CreatedAt,
 	}
 
-	s.sendToUser(msg.ReceiverId, notification)
+	s.SendToUser(msg.ReceiverId, notification)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Notification sent"))
 }
 
-func (s *WsNotification) sendToUser(userID string, msg Message) {
+func (s *WsNotification) SendToUser(userID string, msg Message) {
 	s.hub.sendToChannel("notif:"+userID, msg)
 }
 
