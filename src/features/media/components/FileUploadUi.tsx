@@ -1,142 +1,218 @@
 "use client";
 
-import type React from "react";
-import { useState, useRef } from "react";
-import { Upload, X, File } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { toast } from "sonner";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewuseTask } from "@/contexts/TaskContext";
+import { env } from "@/env/client";
+import {
+  autoSaveDraftTask,
+  deleteDraftFile,
+} from "@/features/tasks/server/action";
+import {
+  useDeleteFileGeneric,
+  useDownloadFile,
+  useFileUpload,
+} from "@/hooks/useFile";
+import { cn } from "@/lib/utils";
+import { Upload } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import type { UploadedFileMeta } from "../server/media-types";
+import { FileChatCardComps } from "./FileHelpers";
+import MediaPreviewer from "./MediaPreviewer";
 
-interface FileUploadProps {
-  onFilesChange?: (files: File[]) => void;
+interface FileUploadUiProps {
   maxFiles?: number;
   className?: string;
 }
 
 export default function FileUploadUi({
-  onFilesChange,
   maxFiles = 5,
   className,
-}: FileUploadProps) {
-  // const { selectedFiles, setSelectedFiles } = useTask(); // Migrated from
-  const { selectedFiles, setSelectedFiles } = NewuseTask(); // migrated to
-
-  const [isDragging, setIsDragging] = useState(false);
+}: FileUploadUiProps) {
+  const { updateDraft, draft } = NewuseTask();
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
+  const {
+    category,
+    content,
+    deadline,
+    description,
+    price,
+    title,
+    visibility,
+    userId,
+  } = draft;
 
-  const handleFiles = (newFiles: FileList | null) => {
+  const { uploadMutate } = useFileUpload({});
+
+  const { mutateAsync: deleteFile } = useDeleteFileGeneric(deleteDraftFile);
+  const { mutateAsync: downloadFile } = useDownloadFile();
+
+  const handleFiles = async (newFiles: FileList | null) => {
     if (!newFiles) return;
-    console.log("files: " + newFiles);
-    const fileArray = Array.from(newFiles).slice(
-      0,
-      maxFiles - selectedFiles.length
-    );
-    const updatedFiles = [...selectedFiles, ...fileArray];
-    setSelectedFiles(updatedFiles);
-    onFilesChange?.(updatedFiles);
-  };
+    const fileArray = Array.from(newFiles);
+    const uploadedMetas: UploadedFileMeta[] = [];
+    setUploadingFiles(() => [...fileArray]);
 
-  const removeFile = (index: number) => {
-    const updatedFiles = selectedFiles.filter((_, i) => i !== index);
-    setSelectedFiles(updatedFiles);
-    onFilesChange?.(updatedFiles);
-  };
+    for (const file of fileArray) {
+      try {
+        toast.loading("Uploading...", { id: "file-upload" });
+        const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
+          files: [file],
+          scope: "task",
+          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+        });
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
+        uploadedMetas.push(uploadedMeta);
 
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    handleFiles(e.dataTransfer.files);
-  };
-
-  const showFiles = () => {
-    if (selectedFiles.length === 0) {
-      toast.info("No files selected");
-      return;
+        setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
+      } catch (err) {
+        console.error(err);
+        toast.error(`Failed to upload ${file.name}`);
+      }
     }
+    const newUploadedFiles = [...(draft.uploadedFiles || []), ...uploadedMetas];
+    updateDraft({ uploadedFiles: newUploadedFiles });
 
-    const fileList = selectedFiles
-      .map((file) => `• ${file.name} (${(file.size / 1024).toFixed(1)} KB)`)
-      .join("\n");
-    toast.success(`Selected Files (${selectedFiles.length}):\n${fileList}`);
+    const uploadedFilesString = JSON.stringify(newUploadedFiles);
+    await autoSaveDraftTask(
+      title,
+      description,
+      content,
+      userId,
+      category,
+      price,
+      visibility,
+      deadline,
+      uploadedFilesString
+    );
+
+    inputRef.current!.value = "";
+    setUploadingFiles([]);
   };
 
-  const handleButtonClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    inputRef.current?.click();
+  const handleFileDelete = async (meta: UploadedFileMeta) => {
+    try {
+      toast.loading("Deleting...", { id: "file-delete" });
+      await deleteFile({
+        filePath: meta.storageLocation,
+        userId: userId,
+      });
+      const filtered = (draft.uploadedFiles || []).filter(
+        (f) => f.filePath !== meta.filePath
+      );
+      updateDraft({ uploadedFiles: filtered });
+
+      toast.dismiss("file-delete");
+      toast.success(`Deleted ${meta.fileName}`);
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to delete file");
+    }
+  };
+
+  const handleFileDownload = async (file: UploadedFileMeta) => {
+    toast.loading("Preparing download...", {
+      id: `file-${file.fileName}-download`,
+    });
+    await downloadFile({ fileName: file.fileName, key: file.filePath });
   };
 
   return (
     <div className={cn("w-full", className)}>
+      <MediaPreviewer
+        fileRecords={draft.uploadedFiles || []}
+        filePreview={filePreview}
+        onClose={() => setFilePreview(null)}
+      />
+
       <div
-        className={`border-2 border-dashed rounded-md p-4 text-center ${
+        className={cn(
+          "border-2 border-dashed rounded-md p-4 text-center",
           isDragging ? "border-primary bg-primary/5" : "border-muted"
-        }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}>
+        )}
+        onDragOver={(e) => {
+          e.preventDefault();
+          setIsDragging(true);
+        }}
+        onDragLeave={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+        }}
+        onDrop={(e) => {
+          e.preventDefault();
+          setIsDragging(false);
+          handleFiles(e.dataTransfer.files);
+        }}>
         <Input
           ref={inputRef}
           type="file"
           multiple
           className="hidden"
-          onChange={(e) => {
-            e.preventDefault();
-            handleFiles(e.target.files);
-            e.target.value = "";
-          }}
+          onChange={(e) => handleFiles(e.target.files)}
         />
         <div className="flex flex-col items-center gap-2">
-          <div className="p-2 rounded-full bg-muted">
+          <div className="rounded-full bg-muted">
             <Upload className="h-4 w-4 text-muted-foreground" />
           </div>
           <div className="text-sm font-medium">
             Drop files here or click to browse
           </div>
+          <div className="text-xs text-muted-foreground">
+            PDF, DOC, JPG, PNG up to 50MB • {draft.uploadedFiles?.length || 0}{" "}
+            files
+          </div>
           <Button
+            type="button"
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={handleButtonClick}>
+            onClick={() => inputRef.current?.click()}>
             Select Files
           </Button>
         </div>
       </div>
-      {selectedFiles.length > 0 && (
-        <ScrollArea className="flex-1 flex flex-col gap-3 h-50">
-          <div className="mt-2 space-y-2  bg-amber-40 h-[120px] overflow-auto">
-            {selectedFiles.map((file, index) => (
-              <div
-                key={`${file.name}-${index}`}
-                className="flex items-center gap-3 p-2 bg-muted rounded-md ">
-                <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {(file.size / 1024).toFixed(1)} KB
-                  </p>
-                </div>
-                <Button
-                  variant="ghost"
-                  type="button"
-                  size="sm"
-                  onClick={() => removeFile(index)}
-                  className="h-6 w-6 p-0">
-                  <X className="h-3 w-3" />
-                </Button>
+
+      {(uploadingFiles.length > 0 ||
+        (draft.uploadedFiles?.length ?? 0) > 0) && (
+        <ScrollArea className="flex-1">
+          <div className="space-y-2 h-[200px] overflow-scroll p-2 ">
+            {uploadingFiles.map((file) => (
+              <div key={file.name} className="w-58">
+                <FileChatCardComps
+                  key={file.name}
+                  loading
+                  file={{
+                    fileName: file.name,
+                    filePath: "",
+                    fileSize: file.size,
+                    fileType: file.type,
+                    storageLocation: "",
+                  }}
+                />
+              </div>
+            ))}
+            {(draft.uploadedFiles || []).map((file) => (
+              <div key={file.filePath} className="w-58">
+                <FileChatCardComps
+                  file={file}
+                  action={() =>
+                    setFilePreview({
+                      fileName: file.fileName,
+                      filePath: file.filePath,
+                      fileSize: file.fileSize,
+                      fileType: file.fileType,
+                      storageLocation: file.storageLocation,
+                    })
+                  }
+                  deleteAction={() => handleFileDelete(file)}
+                  downloadAction={() => handleFileDownload(file)}
+                />
               </div>
             ))}
           </div>
