@@ -1,0 +1,1 @@
+ALTER TABLE "task_drafts" DROP COLUMN "finalized";
