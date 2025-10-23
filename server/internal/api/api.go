@@ -2,14 +2,17 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"github/abdallemo/solveit-saas/internal/api/websocket"
 	"github/abdallemo/solveit-saas/internal/database"
 	"github/abdallemo/solveit-saas/internal/middleware"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sashabaranov/go-openai"
 )
@@ -83,7 +86,7 @@ func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
 	mux.HandleFunc("GET /mentorship", s.wsChat.HandleMentorChats)
 	mux.HandleFunc("GET /signaling", s.wsSig.HandleSignaling)
-	// mux.HandleFunc("GET /test_tasks", s.hanleTasks)
+	mux.HandleFunc("GET /healthz", s.healthz)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
@@ -101,4 +104,15 @@ func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
 func (s *Server) Run() error {
 	log.Printf("server running on port:%s", s.addr)
 	return http.ListenAndServe(s.addr, s.routes())
+}
+
+func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
+	taskDrafts, err := s.store.GetAllTaskDrafts(r.Context(), pgtype.Timestamptz{
+		Time:  time.Now().Add(time.Second),
+		Valid: true,
+	})
+	if err != nil {
+		log.Println(err)
+	}
+	fmt.Println(taskDrafts)
 }
