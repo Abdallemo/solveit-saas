@@ -142,6 +142,7 @@ function AddFileInput({
           autoFocus
         />
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 hover:bg-green-500/20 hover:text-green-600"
@@ -149,6 +150,7 @@ function AddFileInput({
           <Check className="w-3 h-3" />
         </Button>
         <Button
+          type="button"
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-600"
@@ -294,6 +296,7 @@ export function MonacoEditor({
             </div>
             {onFileAdd && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 className="h-7 w-7 p-0 hover:bg-primary/10"
@@ -335,6 +338,7 @@ export function MonacoEditor({
                   </div>
                   {onFileDelete && fileList.length > 1 && (
                     <Button
+                      type="button"
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 hover:bg-destructive/20 hover:text-destructive transition-all"
@@ -364,6 +368,7 @@ export function MonacoEditor({
             </div>
             {onSave && !editorOpts.readOnly && (
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 className="h-7 px-2 hover:bg-primary/10"
