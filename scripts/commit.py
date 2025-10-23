@@ -2,8 +2,10 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """added background jobs to monitor task deadlines
-"""
+commit_message = """fixed the deadline calculation Issue
+added deadline cron job to auto block solvers
+fixed file upload ux issues
+unified go microservice migration with nextjs verison"""
 
 repo = Repo(repo_path)
 
