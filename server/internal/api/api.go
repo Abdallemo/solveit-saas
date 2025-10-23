@@ -1,14 +1,16 @@
 package api
 
 import (
+	"encoding/json"
 	"github/abdallemo/solveit-saas/internal/api/websocket"
+	"github/abdallemo/solveit-saas/internal/database"
 	"github/abdallemo/solveit-saas/internal/middleware"
-	"github/abdallemo/solveit-saas/internal/storage"
 	"log"
 	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sashabaranov/go-openai"
 )
 
@@ -21,14 +23,19 @@ type Server struct {
 	wsChat       *websocket.WsMentorChat
 	s3Client     *s3.Client
 	openaiClient *openai.Client
-	store        storage.Storage
+	store        *database.Queries
 	redisClient  *redis.Client
+	dbConn       *pgxpool.Pool
 }
 
-func NewServer(addr string, s3Client *s3.Client,
+func NewServer(
+	addr string, s3Client *s3.Client,
 	openaiClient *openai.Client,
-	store storage.Storage,
-	redisClient *redis.Client) *Server {
+	store *database.Queries,
+	redisClient *redis.Client,
+	dbConn *pgxpool.Pool,
+
+) *Server {
 	hub := websocket.NewHub()
 
 	return &Server{
@@ -42,6 +49,7 @@ func NewServer(addr string, s3Client *s3.Client,
 		openaiClient: openaiClient,
 		store:        store,
 		redisClient:  redisClient,
+		dbConn:       dbConn,
 	}
 }
 
@@ -65,11 +73,17 @@ func (s *Server) routes() http.Handler {
 
 }
 
+func sendHttpResp(w http.ResponseWriter, payload any, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(payload)
+}
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /notification", s.wsNotif.HandleNotification)
 	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
 	mux.HandleFunc("GET /mentorship", s.wsChat.HandleMentorChats)
 	mux.HandleFunc("GET /signaling", s.wsSig.HandleSignaling)
+	// mux.HandleFunc("GET /test_tasks", s.hanleTasks)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
