@@ -40,8 +40,8 @@ export default function WorkspacePageComp() {
   } = DeadlineProgress();
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
-    currentWorkspace?.task.status == "COMPLETED" ||
-    currentWorkspace?.task.status == "OPEN";
+    currentWorkspace?.task.status == "COMPLETED" 
+    // ||currentWorkspace?.task.status == "OPEN";
 
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
@@ -134,7 +134,7 @@ export default function WorkspacePageComp() {
               )}>
               {currentWorkspace?.task.category.name}
             </Badge>
-            current Status : {currentWorkspace?.task.status}
+            
           </div>
 
           <div className="flex gap-3 items-center">
