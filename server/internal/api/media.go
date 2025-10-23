@@ -1,7 +1,6 @@
 package api
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -63,7 +62,7 @@ func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 
 }
 func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
-	err := r.ParseMultipartForm(10 << 20)
+	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		sendHttpError(w, "Unable to parse form", http.StatusBadRequest)
 		return
@@ -73,21 +72,16 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	scope := r.FormValue("scope")
 	var uploadedFiles []FileMeta
 	id := uuid.New()
+
 	for _, fileHeader := range files {
-		file, err := fileHeader.Open()
-		if fileHeader.Size >= 200<<20 {
-			log.Println(fileHeader.Size)
-			sendHttpError(w, "exeded server limit", http.StatusBadRequest)
+		if fileHeader.Size >= 50<<20 {
+			sendHttpError(w, "Exceeded server limit (50MB)", http.StatusBadRequest)
 			return
 		}
+
+		file, err := fileHeader.Open()
 		if err != nil {
 			log.Println("file open error:", err)
-			continue
-		}
-		defer file.Close()
-		fileBytes, err := io.ReadAll(file)
-		if err != nil {
-			log.Println("file read error:", err)
 			continue
 		}
 
@@ -96,9 +90,11 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 		_, err = s.s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
 			Bucket:      aws.String("solveit"),
 			Key:         aws.String(key),
-			Body:        bytes.NewReader(fileBytes),
+			Body:        file,
 			ContentType: aws.String(fileHeader.Header.Get("Content-Type")),
 		})
+		file.Close()
+
 		if err != nil {
 			log.Println("upload error:", err)
 			continue
@@ -109,11 +105,10 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 		uploadedFiles = append(uploadedFiles, FileMeta{
 			FileName:        fileHeader.Filename,
 			FileType:        fileHeader.Header.Get("Content-Type"),
-			FileSize:        float64(len(fileBytes)),
+			FileSize:        float64(fileHeader.Size),
 			FilePath:        key,
 			StorageLocation: publicURL,
 		})
-
 	}
 
 	w.Header().Set("Content-Type", "application/json")
