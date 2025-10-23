@@ -116,7 +116,7 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
   });
   const form = useFormContext<TaskSchema>();
   return (
-    <div className="px-5 py-3 mb-3 space-y-4 overflow-x-auto">
+    <div className="px-5 py-3 mb-3 flex flex-col gap-2 overflow-x-auto">
       <FormField
         control={form.control}
         name="title"
@@ -298,12 +298,12 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
 
       <Separator />
 
-      <div className="space-y-1 overflow-auto ">
+      <div className="space-y-1 ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi className="overflow-x-auto" />
+        <FileUploadUi  />
       </div>
     </div>
   );
