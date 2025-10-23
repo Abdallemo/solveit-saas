@@ -1,5 +1,5 @@
 {
-  "id": "00690669-bd8a-45e7-b00d-8ad942014c51",
+  "id": "c90b0774-f8b8-4a62-aa1e-928a7ab3ca38",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -77,10 +77,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "account_userId_user_id_fk": {
-          "name": "account_userId_user_id_fk",
+        "account_userId_users_id_fk": {
+          "name": "account_userId_users_id_fk",
           "tableFrom": "account",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
@@ -164,13 +164,34 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "unique_blocked_task": {
+          "name": "unique_blocked_task",
+          "columns": [
+            {
+              "expression": "user_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "task_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": true,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
-        "blocked_tasks_user_id_user_id_fk": {
-          "name": "blocked_tasks_user_id_user_id_fk",
+        "blocked_tasks_user_id_users_id_fk": {
+          "name": "blocked_tasks_user_id_users_id_fk",
           "tableFrom": "blocked_tasks",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -265,10 +286,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "feedback_poster_id_user_id_fk": {
-          "name": "feedback_poster_id_user_id_fk",
+        "feedback_poster_id_users_id_fk": {
+          "name": "feedback_poster_id_users_id_fk",
           "tableFrom": "feedback",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "poster_id"
           ],
@@ -278,10 +299,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "feedback_solver_id_user_id_fk": {
-          "name": "feedback_solver_id_user_id_fk",
+        "feedback_solver_id_users_id_fk": {
+          "name": "feedback_solver_id_users_id_fk",
           "tableFrom": "feedback",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "solver_id"
           ],
@@ -449,10 +470,10 @@
         }
       },
       "foreignKeys": {
-        "mentorship_bookings_solver_id_user_id_fk": {
-          "name": "mentorship_bookings_solver_id_user_id_fk",
+        "mentorship_bookings_solver_id_users_id_fk": {
+          "name": "mentorship_bookings_solver_id_users_id_fk",
           "tableFrom": "mentorship_bookings",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "solver_id"
           ],
@@ -462,10 +483,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "mentorship_bookings_student_id_user_id_fk": {
-          "name": "mentorship_bookings_student_id_user_id_fk",
+        "mentorship_bookings_student_id_users_id_fk": {
+          "name": "mentorship_bookings_student_id_users_id_fk",
           "tableFrom": "mentorship_bookings",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "student_id"
           ],
@@ -587,10 +608,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "mentorship_chat_files_uploaded_by_id_user_id_fk": {
-          "name": "mentorship_chat_files_uploaded_by_id_user_id_fk",
+        "mentorship_chat_files_uploaded_by_id_users_id_fk": {
+          "name": "mentorship_chat_files_uploaded_by_id_users_id_fk",
           "tableFrom": "mentorship_chat_files",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "uploaded_by_id"
           ],
@@ -694,10 +715,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "mentorship_chats_sent_by_user_id_fk": {
-          "name": "mentorship_chats_sent_by_user_id_fk",
+        "mentorship_chats_sent_by_users_id_fk": {
+          "name": "mentorship_chats_sent_by_users_id_fk",
           "tableFrom": "mentorship_chats",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "sent_by"
           ],
@@ -813,10 +834,10 @@
         }
       },
       "foreignKeys": {
-        "mentorship_profiles_user_id_user_id_fk": {
-          "name": "mentorship_profiles_user_id_user_id_fk",
+        "mentorship_profiles_user_id_users_id_fk": {
+          "name": "mentorship_profiles_user_id_users_id_fk",
           "tableFrom": "mentorship_profiles",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -977,18 +998,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "platform_fee": {
-          "name": "platform_fee",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "payout_amount": {
-          "name": "payout_amount",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
         "created_at": {
           "name": "created_at",
           "type": "timestamp with time zone",
@@ -1036,10 +1045,10 @@
         }
       },
       "foreignKeys": {
-        "payments_user_id_user_id_fk": {
-          "name": "payments_user_id_user_id_fk",
+        "payments_user_id_users_id_fk": {
+          "name": "payments_user_id_users_id_fk",
           "tableFrom": "payments",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -1223,10 +1232,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "refunds_moderatorId_user_id_fk": {
-          "name": "refunds_moderatorId_user_id_fk",
+        "refunds_moderatorId_users_id_fk": {
+          "name": "refunds_moderatorId_users_id_fk",
           "tableFrom": "refunds",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "moderatorId"
           ],
@@ -1288,10 +1297,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "ai_rules_admin_id_user_id_fk": {
-          "name": "ai_rules_admin_id_user_id_fk",
+        "ai_rules_admin_id_users_id_fk": {
+          "name": "ai_rules_admin_id_users_id_fk",
           "tableFrom": "ai_rules",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "admin_id"
           ],
@@ -1575,10 +1584,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "solver_profile_user_id_user_id_fk": {
-          "name": "solver_profile_user_id_user_id_fk",
+        "solver_profile_user_id_users_id_fk": {
+          "name": "solver_profile_user_id_users_id_fk",
           "tableFrom": "solver_profile",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -1719,10 +1728,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "task_comments_user_id_user_id_fk": {
-          "name": "task_comments_user_id_user_id_fk",
+        "task_comments_user_id_users_id_fk": {
+          "name": "task_comments_user_id_users_id_fk",
           "tableFrom": "task_comments",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -1896,10 +1905,10 @@
         }
       },
       "foreignKeys": {
-        "task_drafts_user_id_user_id_fk": {
-          "name": "task_drafts_user_id_user_id_fk",
+        "task_drafts_user_id_users_id_fk": {
+          "name": "task_drafts_user_id_users_id_fk",
           "tableFrom": "task_drafts",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -2183,10 +2192,10 @@
         }
       },
       "foreignKeys": {
-        "tasks_poster_id_user_id_fk": {
-          "name": "tasks_poster_id_user_id_fk",
+        "tasks_poster_id_users_id_fk": {
+          "name": "tasks_poster_id_users_id_fk",
           "tableFrom": "tasks",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "poster_id"
           ],
@@ -2196,10 +2205,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "tasks_solver_id_user_id_fk": {
-          "name": "tasks_solver_id_user_id_fk",
+        "tasks_solver_id_users_id_fk": {
+          "name": "tasks_solver_id_users_id_fk",
           "tableFrom": "tasks",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "solver_id"
           ],
@@ -2312,10 +2321,10 @@
       },
       "indexes": {},
       "foreignKeys": {
-        "user_details_user_id_user_id_fk": {
-          "name": "user_details_user_id_user_id_fk",
+        "user_details_user_id_users_id_fk": {
+          "name": "user_details_user_id_users_id_fk",
           "tableFrom": "user_details",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "user_id"
           ],
@@ -2434,10 +2443,10 @@
         }
       },
       "foreignKeys": {
-        "subscription_userId_user_id_fk": {
-          "name": "subscription_userId_user_id_fk",
+        "subscription_userId_users_id_fk": {
+          "name": "subscription_userId_users_id_fk",
           "tableFrom": "subscription",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "userId"
           ],
@@ -2454,8 +2463,8 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
-    "public.user": {
-      "name": "user",
+    "public.users": {
+      "name": "users",
       "schema": "",
       "columns": {
         "id": {
@@ -2550,8 +2559,8 @@
       "foreignKeys": {},
       "compositePrimaryKeys": {},
       "uniqueConstraints": {
-        "user_email_unique": {
-          "name": "user_email_unique",
+        "users_email_unique": {
+          "name": "users_email_unique",
           "nullsNotDistinct": false,
           "columns": [
             "email"
@@ -2729,10 +2738,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "solution_workspace_files_uploaded_by_id_user_id_fk": {
-          "name": "solution_workspace_files_uploaded_by_id_user_id_fk",
+        "solution_workspace_files_uploaded_by_id_users_id_fk": {
+          "name": "solution_workspace_files_uploaded_by_id_users_id_fk",
           "tableFrom": "solution_workspace_files",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "uploaded_by_id"
           ],
@@ -2832,10 +2841,10 @@
           "onDelete": "cascade",
           "onUpdate": "no action"
         },
-        "solution_workspaces_solver_id_user_id_fk": {
-          "name": "solution_workspaces_solver_id_user_id_fk",
+        "solution_workspaces_solver_id_users_id_fk": {
+          "name": "solution_workspaces_solver_id_users_id_fk",
           "tableFrom": "solution_workspaces",
-          "tableTo": "user",
+          "tableTo": "users",
           "columnsFrom": [
             "solver_id"
           ],
