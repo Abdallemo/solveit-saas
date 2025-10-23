@@ -1,37 +1,55 @@
+// Client-side hook using date-fns
 import { upcomingTasks } from "@/features/tasks/server/data";
-import { formatTimeRemaining } from "@/lib/utils";
+import { formatDistanceToNow, isPast } from "date-fns";
 import { useEffect, useState } from "react";
+
+type RealtimeTaskState = Omit<upcomingTasks, "deadlineDate"> & {
+  deadlineDate: Date;
+  due: string;
+};
+
+const calculateDue = (task: RealtimeTaskState) => {
+  if (isPast(task.deadlineDate)) {
+    return "Passed";
+  }
+
+  return formatDistanceToNow(task.deadlineDate, {
+    addSuffix: true,
+  });
+};
 
 export default function useRealtimeDeadlines(
   initialDeadlines: upcomingTasks[]
 ) {
-  const [clientStartTime] = useState(Date.now());
-  const [deadlineState, setDeadlineState] = useState(initialDeadlines);
+  const initialClientState: RealtimeTaskState[] = initialDeadlines.map(
+    (task) => {
+      const deadlineDate =
+        task.deadlineDate instanceof Date
+          ? task.deadlineDate
+          : new Date(task.deadlineDate);
 
+      const due = calculateDue({ ...task, deadlineDate } as RealtimeTaskState);
+      return { ...task, deadlineDate, due };
+    }
+  );
+  const [deadlineState, setDeadlineState] = useState(initialClientState);
   useEffect(() => {
     const interval = setInterval(() => {
-      const now = Date.now();
       setDeadlineState((prev) =>
         prev.map((task) => {
-          const elapsed = now - clientStartTime;
+          const newDue = calculateDue(task);
 
-          const remaining = task.totalTime - (task.timePassed + elapsed);
+          if (newDue === task.due) {
+            return task;
+          }
 
-          if (remaining <= 0) return { ...task, due: "Passed" };
-
-          const due = formatTimeRemaining(
-            new Date(now + remaining),
-            new Date(now),
-            task.unit
-          );
-
-          return { ...task, due };
+          return { ...task, due: newDue };
         })
       );
-    }, 1000);
+    }, 30000);
 
     return () => clearInterval(interval);
-  }, [clientStartTime]);
+  }, []);
 
   return deadlineState;
 }
