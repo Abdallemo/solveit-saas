@@ -61,6 +61,45 @@ func (q *Queries) GetAIRules(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const getAllTaskDrafts = `-- name: GetAllTaskDrafts :many
+SELECT id, user_id, title, description, content, category, deadline, updated_at, "uploadedFiles", visibility, price
+FROM task_drafts
+WHERE updated_at < $1
+  AND json_array_length("uploadedFiles") > 0
+`
+
+func (q *Queries) GetAllTaskDrafts(ctx context.Context, updatedAt pgtype.Timestamptz) ([]TaskDraft, error) {
+	rows, err := q.db.Query(ctx, getAllTaskDrafts, updatedAt)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []TaskDraft
+	for rows.Next() {
+		var i TaskDraft
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.Title,
+			&i.Description,
+			&i.Content,
+			&i.Category,
+			&i.Deadline,
+			&i.UpdatedAt,
+			&i.UploadedFiles,
+			&i.Visibility,
+			&i.Price,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAvailbleTasks = `-- name: GetAvailbleTasks :many
 SELECT id, title, description, content, price, poster_id, solver_id, visibility, category_id, payment_id, deadline, created_at, updated_at, task_status, assigned_at
 FROM tasks
@@ -169,8 +208,16 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 }
 
 const processSystemNotification = `-- name: ProcessSystemNotification :one
-INSERT INTO notifications (sender_id,receiver_id,subject,content,method,read)
-VALUES ($1,$2,$3,$4,'SYSTEM',$5) RETURNING id, sender_id, receiver_id, subject, content, method, read, created_at
+INSERT INTO notifications (
+    sender_id,
+    receiver_id,
+    subject,
+    content,
+    method,
+    read
+  )
+VALUES ($1, $2, $3, $4, 'SYSTEM', $5)
+RETURNING id, sender_id, receiver_id, subject, content, method, read, created_at
 `
 
 type ProcessSystemNotificationParams struct {
@@ -205,13 +252,11 @@ func (q *Queries) ProcessSystemNotification(ctx context.Context, arg ProcessSyst
 
 const resetTaskInfo = `-- name: ResetTaskInfo :exec
 UPDATE tasks
-SET 
-    task_status = 'OPEN',
-    assigned_at = NULL,
-    updated_at = NOW(),
-    solver_id = NULL
-WHERE 
-    id = $1
+SET task_status = 'OPEN',
+  assigned_at = NULL,
+  updated_at = NOW(),
+  solver_id = NULL
+WHERE id = $1
 `
 
 func (q *Queries) ResetTaskInfo(ctx context.Context, id pgtype.UUID) error {
