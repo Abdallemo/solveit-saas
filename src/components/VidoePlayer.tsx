@@ -152,6 +152,7 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
           <Button
             variant="ghost"
             size="icon"
+            type="button"
             onClick={togglePlay}
             className="h-8 w-8 text-foreground hover:bg-accent">
             {isPlaying ? (
@@ -169,6 +170,7 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
 
           <div className="flex items-center gap-2">
             <Button
+              type="button"
               variant="ghost"
               size="icon"
               onClick={toggleMute}
@@ -191,6 +193,7 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
           <Button
             variant="ghost"
             size="icon"
+            type="button"
             onClick={toggleFullscreen}
             className="h-8 w-8 text-foreground hover:bg-accent">
             {isFullscreen ? (
