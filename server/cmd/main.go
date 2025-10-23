@@ -6,9 +6,11 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"time"
 
 	"github/abdallemo/solveit-saas/internal/api"
-	"github/abdallemo/solveit-saas/internal/storage"
+
+	"github/abdallemo/solveit-saas/internal/database"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -48,6 +50,7 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to connect to database:", err)
 	}
+
 	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
 	if err != nil {
 		log.Fatal("unable to parse redis url")
@@ -59,12 +62,14 @@ func main() {
 	}
 
 	defer db.Close()
-	store := storage.NewSPostgressStore(db)
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
 		o.BaseEndpoint = aws.String(os.Getenv("S3_ENDPOINT"))
 	})
 	openaiClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
-	server := api.NewServer(":3030", s3Client, openaiClient, store, redisClient)
+	server := api.NewServer(":3030", s3Client, openaiClient, database.New(db), redisClient, db)
+
+	go server.StartTaskBackgroundCheckup(context.Background(), 10, time.Minute)
+
 	log.Fatal(server.Run())
 }
