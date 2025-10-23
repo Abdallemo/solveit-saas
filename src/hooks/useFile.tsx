@@ -81,6 +81,25 @@ export function useDeleteFileChat() {
     },
   });
 }
+export function useDeleteFileGeneric<
+  Args extends Record<string, any> & { filePath: string }
+>(deleteCallback: (args: Args) => Promise<any>) {
+  return useMutation({
+    mutationFn: async (args: Args) => {
+      return await deleteCallback(args);
+    },
+    onSuccess: (_data, { filePath }) => {
+      toast.success("File deleted successfully!", {
+        id: `delete-file-${filePath ?? "unknown"}`,
+      });
+    },
+    onError: (error: any, { filePath }) => {
+      toast.error(`Failed to delete file: ${error.message}`, {
+        id: `delete-file-${filePath ?? "unknown"}`,
+      });
+    },
+  });
+}
 export function useDownloadFile() {
   return useMutation({
     mutationFn: async ({
