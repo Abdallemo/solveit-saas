@@ -17,6 +17,7 @@ export default async function Page() {
     visibility: draft?.visibility ?? "public",
     category: draft?.category ?? "",
     price: draft?.price ?? 10,
+    uploadedFiles: draft?.uploadedFiles,
   };
 
   // console.log("initial draft:\n", draft);
