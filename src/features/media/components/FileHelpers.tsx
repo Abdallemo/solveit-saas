@@ -68,6 +68,7 @@ export function FileChatCardComps({
       </div>
       <div className="flex ">
         <Button
+          type="button"
           variant={"ghost"}
           size={"sm"}
           className="p-0"
@@ -81,6 +82,7 @@ export function FileChatCardComps({
         </Button>
         {!deleteDisable && (
           <Button
+            type="button"
             variant={"ghost"}
             size={"sm"}
             className="p-0"
