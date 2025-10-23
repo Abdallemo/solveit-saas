@@ -54,7 +54,14 @@ import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { isError, truncateText } from "@/lib/utils";
-import { addDays, addHours, addMonths, addWeeks, addYears } from "date-fns";
+import {
+  addDays,
+  addHours,
+  addMonths,
+  addWeeks,
+  addYears,
+  isPast,
+} from "date-fns";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -130,13 +137,13 @@ export async function calculateTaskProgressV2(
 
   const deadline = parseDeadlineV2(
     workspace.task.deadline!,
-    workspace.createdAt!
+    workspace.task.assignedAt!
   );
-  if (!deadline) return { timePassed: null, percentage: null, totalTime: null };
+  if (!deadline || !workspace.task.assignedAt)
+    return { timePassed: null, percentage: null, totalTime: null };
 
-  const startTime = workspace.createdAt!.getTime();
+  const startTime = workspace.task.assignedAt.getTime();
   const currentTime = Date.now();
-
   const timePassed = currentTime - startTime;
   const totalTime = deadline.getTime() - startTime;
   const percentage = Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
@@ -614,7 +621,11 @@ export async function publishSolution(values: {
       );
     }
     const workspaceStats = workspace.task.status;
-    if (workspaceStats === "COMPLETED" || workspaceStats === "SUBMITTED") {
+    if (
+      workspaceStats === "COMPLETED" ||
+      workspaceStats === "SUBMITTED" ||
+      workspaceStats === "OPEN"
+    ) {
       throw new SolutionError(
         "This solution has already been marked as completed. No further submissions are allowed."
       );
@@ -699,11 +710,12 @@ export async function handleTaskDeadline(task: TaskReturnType) {
   )
     return;
   if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
-    const { percentage } = await calculateTaskProgressV2(
+    const { percentage, deadline } = await calculateTaskProgressV2(
       task.solverId,
       task.workspace.taskId
     );
-    if (percentage! < 100) return;
+    console.log("in this");
+    if (deadline && !isPast(deadline)) return;
 
     try {
       const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
