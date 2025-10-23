@@ -77,6 +77,7 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
       onMouseLeave={handleMouseLeave}>
       <div className="absolute top-3 right-3 z-20 flex gap-2">
         <Button
+          type="button"
           variant="secondary"
           size="icon"
           className="h-8 w-8"
@@ -87,6 +88,7 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
           <Minus className="h-4 w-4" />
         </Button>
         <Button
+          type="button"
           variant="secondary"
           size="icon"
           className="h-8 w-8 text-xs font-semibold"
@@ -97,6 +99,7 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
           1:1
         </Button>
         <Button
+          type="button"
           variant="secondary"
           size="icon"
           className="h-8 w-8"
@@ -112,7 +115,8 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
         src={src}
         alt={alt}
         draggable={false}
-        width={1000} height={1000}
+        width={1000}
+        height={1000}
         style={{
           transform: `translate(${position.x}px, ${position.y}px) scale(${scale})`,
           transition: dragging ? "none" : "transform 0.2s ease-out",
