@@ -16,6 +16,7 @@ import {
   real,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -83,7 +84,7 @@ export type PaymentPorposeEnumType =
   (typeof PaymentPorposeEnum.enumValues)[number];
 
 export const UserTable = pgTable(
-  "user",
+  "users",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     name: text("name").notNull(),
@@ -333,6 +334,7 @@ export const BlockedTasksTable = pgTable(
   (blokedTask) => [
     index("blocked_taskId_idx").on(blokedTask.taskId),
     index("blocked_userId_idx").on(blokedTask.userId),
+    uniqueIndex("unique_blocked_task").on(blokedTask.userId, blokedTask.taskId),
   ]
 );
 export const TaskDraftTable = pgTable(
