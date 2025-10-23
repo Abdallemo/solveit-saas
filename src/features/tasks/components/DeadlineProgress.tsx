@@ -22,11 +22,11 @@ export function DeadlineProgress() {
   });
 
   if (isLoading || !data) {
-    return { progress: -1, deadline: "N/A", isLoading };
+    return { progress: 100, deadline: "N/A", isLoading };
   }
 
   return {
-    progress: data.percentage ?? -1,
+    progress: data.percentage ?? 100,
     deadline: data.deadline
       ? new Date(data.deadline).toLocaleString(undefined, {
           year: "numeric",
