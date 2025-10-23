@@ -1,5 +1,10 @@
 // app/features/tasks/task-form-schema.ts
-import { BlockedSolverType, RefundStatusEnumType, taskFileType, TaskType } from "@/drizzle/schemas";
+import {
+  BlockedSolverType,
+  RefundStatusEnumType,
+  taskFileType,
+  TaskType,
+} from "@/drizzle/schemas";
 import { publicUserType } from "@/features/users/server/user-types";
 import { z } from "zod";
 import {
@@ -17,7 +22,7 @@ import {
   getTasksbyId,
   getUserDisputes,
   getUserTasksbyId,
-  getWorkspaceById
+  getWorkspaceById,
 } from "./data";
 export type taskRefundSchemaType = z.infer<typeof taskRefundSchema>;
 export type TaskFormValues = z.infer<typeof TaskFormSchema>;
@@ -33,7 +38,9 @@ export type taskDraftType = Exclude<
   null
 >;
 export type catagoryType = Awaited<ReturnType<typeof getAllTaskCatagories>>;
-export type UserDisputeswithTask = Awaited<ReturnType<typeof getUserDisputes>>[number];
+export type UserDisputeswithTask = Awaited<
+  ReturnType<typeof getUserDisputes>
+>[number];
 export type userTasksType = Awaited<ReturnType<typeof getUserTasksbyId>>;
 export type ModDisputeType = Awaited<ReturnType<typeof getModeratorDisputes>>;
 export type SolverAssignedTaskType = Awaited<
@@ -52,6 +59,10 @@ export type allDisputesType = Awaited<
 export type SolutionById = Awaited<ReturnType<typeof getSolutionById>>;
 export type WorkpaceSchemReturnedType = Awaited<
   ReturnType<typeof getWorkspaceById>
+>;
+export type WorkpaceWithRelationType = Exclude<
+  Awaited<ReturnType<typeof getWorkspaceById>>,
+  undefined | null
 >;
 export type CatagoryType = Exclude<
   Awaited<ReturnType<typeof getAllTaskCatagories>>[number],
