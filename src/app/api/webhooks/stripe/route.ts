@@ -1,5 +1,4 @@
 import { env } from "@/env/server";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
 
 import {
   createTaskAction,
@@ -304,7 +303,7 @@ async function handleTaskCreate(
       visibility,
       deadline,
       price,
-      uploadedFiles as UploadedFileMeta[],
+      uploadedFiles,
       paymentId
     );
   } catch (error) {
