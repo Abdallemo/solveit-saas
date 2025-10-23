@@ -53,6 +53,9 @@ type UploadOptions = {
 export async function uploadFiles({ files, scope, url }: UploadOptions) {
   const formData = new FormData();
   files.forEach((file) => {
+    if(file.size >= 50<<20){
+      throw new Error("file Exceeded Limit")
+    }
     formData.append("files", file);
   });
   formData.append("scope", scope);
