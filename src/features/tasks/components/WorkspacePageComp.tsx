@@ -40,7 +40,8 @@ export default function WorkspacePageComp() {
   } = DeadlineProgress();
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
-    currentWorkspace?.task.status == "COMPLETED";
+    currentWorkspace?.task.status == "COMPLETED" ||
+    currentWorkspace?.task.status == "OPEN";
 
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
@@ -56,6 +57,7 @@ export default function WorkspacePageComp() {
     mutationFn: publishSolution,
     onSuccess: (data) => {
       toast.success(data.message, { id: "publish-solution" });
+      setCurrentWorkspace(data.workspace);
     },
     onError: (err) => {
       toast.error(err.message, { id: "publish-solution" });
@@ -132,6 +134,7 @@ export default function WorkspacePageComp() {
               )}>
               {currentWorkspace?.task.category.name}
             </Badge>
+            current Status : {currentWorkspace?.task.status}
           </div>
 
           <div className="flex gap-3 items-center">
