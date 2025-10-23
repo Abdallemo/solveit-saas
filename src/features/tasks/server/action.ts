@@ -1,5 +1,5 @@
 "use server";
-import db from "@/drizzle/db";
+import db, { DBTransaction } from "@/drizzle/db";
 import {
   BlockedTasksTable,
   PaymentPorposeEnumType,
@@ -20,7 +20,10 @@ import {
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { validateContentWithAi } from "@/features/Ai/server/action";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  getServerUserSession,
+  isAuthorized,
+} from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { Notifier } from "@/features/notifications/server/notifier";
@@ -33,10 +36,9 @@ import {
   getWorkspaceByTaskId,
 } from "@/features/tasks/server/data";
 import type {
-  assignTaskReturnType,
   SolutionById,
-  TaskReturnType,
   Units,
+  WorkpaceWithRelationType,
 } from "@/features/tasks/server/task-types";
 import {
   taskRefundSchema,
@@ -49,7 +51,7 @@ import {
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
-import { UnauthorizedError } from "@/lib/Errors";
+import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
@@ -60,6 +62,9 @@ import {
   addMonths,
   addWeeks,
   addYears,
+  differenceInMilliseconds,
+  isAfter,
+  isBefore,
   isPast,
 } from "date-fns";
 import { and, eq, inArray, isNull } from "drizzle-orm";
@@ -131,22 +136,38 @@ export async function calculateTaskProgressV2(
   solverId: string,
   taskId: string
 ) {
+  const currentTime = new Date();
+
   const workspace = await getWorkspaceByTaskId(taskId, solverId);
-  if (!workspace)
-    return { timePassed: null, percentage: null, totalTime: null };
 
-  const deadline = parseDeadlineV2(
-    workspace.task.deadline!,
-    workspace.task.assignedAt!
-  );
-  if (!deadline || !workspace.task.assignedAt)
+  if (!workspace) {
     return { timePassed: null, percentage: null, totalTime: null };
+  }
+  const startTime = workspace.createdAt;
+  const deadline = parseDeadlineV2(workspace.task.deadline, startTime);
 
-  const startTime = workspace.task.assignedAt.getTime();
-  const currentTime = Date.now();
-  const timePassed = currentTime - startTime;
-  const totalTime = deadline.getTime() - startTime;
-  const percentage = Math.min(Math.max((timePassed / totalTime) * 100, 0), 100);
+  if (!deadline) {
+    return { timePassed: null, percentage: null, totalTime: null };
+  }
+
+  const totalTime = differenceInMilliseconds(deadline, startTime);
+
+  const timePassed = differenceInMilliseconds(currentTime, startTime);
+
+  let percentage;
+
+  if (isBefore(currentTime, startTime)) {
+    percentage = 0;
+  } else if (isAfter(currentTime, deadline)) {
+    percentage = 100;
+  } else if (totalTime <= 0) {
+    percentage = 100;
+  } else {
+    percentage = (timePassed / totalTime) * 100;
+  }
+
+  percentage = Math.min(Math.max(percentage, 0), 100);
+
   return {
     timePassed: timePassed,
     percentage: percentage,
@@ -310,7 +331,7 @@ export async function createTaksPaymentCheckoutSession(values: {
         type: "Task Payment" as PaymentPorposeEnumType,
         draftTaskId: draftTaskId,
       },
-      cancel_url: `${referer}`,
+      cancel_url: `${env.NEXTAUTH_URL}/dashboard/poster/newTask?cancel=true`,
       success_url: `${env.NEXTAUTH_URL}/dashboard/poster/yourTasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
@@ -339,6 +360,7 @@ export async function autoSaveDraftTask(
   deadline: string,
   uploadedFiles?: string
 ) {
+  const now = new Date();
   try {
     let parsedFiles: UploadedFileMeta[] = [];
     if (uploadedFiles) {
@@ -367,6 +389,7 @@ export async function autoSaveDraftTask(
           visibility,
           deadline,
           uploadedFiles: parsedFiles,
+          updatedAt: now,
         })
         .where(eq(TaskDraftTable.userId, userId));
     } else {
@@ -392,9 +415,10 @@ export async function autoSaveDraftTask(
 export async function assignTaskToSolverById(values: {
   taskId: string;
   solverId: string;
-}): Promise<assignTaskReturnType> {
+}) {
   const { solverId, taskId } = values;
   try {
+    const startDateOperation = new Date(); //new stratgy
     const oldTask = await db.query.TaskTable.findFirst({
       where: (table, fn) => fn.eq(table.id, taskId),
       with: { blockedSolvers: true },
@@ -414,31 +438,34 @@ export async function assignTaskToSolverById(values: {
         .set({
           solverId: solverId,
           status: "ASSIGNED",
-          updatedAt: new Date(),
-          assignedAt: new Date(),
+          updatedAt: startDateOperation,
+          assignedAt: startDateOperation,
         })
         .where(and(eq(TaskTable.id, taskId), isNull(TaskTable.solverId)))
         .returning();
 
       if (!updated.length) return null;
+      const [_, freshVerison] = await Promise.all([
+        createWorkspace(tx, solverId, taskId, startDateOperation),
+        tx.query.TaskTable.findFirst({
+          where: (table, fn) => fn.eq(table.id, taskId),
+          with: {
+            poster: true,
+            solver: true,
+          },
+        }),
+      ]);
 
-      return await tx.query.TaskTable.findFirst({
-        where: (table, fn) => fn.eq(table.id, taskId),
-        with: {
-          poster: true,
-          solver: true,
-          workspace: true,
-        },
-      });
+      return freshVerison;
     });
 
     if (!result) {
       throw new Error("unable to assign task");
     }
-    await createWorkspace(result);
+
     const deadline = parseDeadlineV2(
-      result.deadline!,
-      new Date()
+      result.deadline,
+      startDateOperation
     )?.toLocaleString(undefined);
     Notifier()
       .email({
@@ -455,19 +482,24 @@ export async function assignTaskToSolverById(values: {
     revalidatePath(`/yourTasks/${taskId}`);
     return {
       success: "Task successfully assigned to you!",
-      newTask: result,
     };
   } catch (error) {
     console.error(error);
     throw new Error("unable to assign task");
   }
 }
-export async function createWorkspace(task: TaskReturnType) {
-  const newWorkspace = await db
+export async function createWorkspace(
+  dx: DBTransaction,
+  solverId: string,
+  taskId: string,
+  startDateOperation: Date
+) {
+  const newWorkspace = await dx
     .insert(WorkspaceTable)
     .values({
-      solverId: task?.solverId!,
-      taskId: task?.id!,
+      solverId: solverId,
+      taskId: taskId,
+      createdAt: startDateOperation,
     })
     .returning();
   return newWorkspace[0];
@@ -604,17 +636,21 @@ export async function publishSolution(values: {
   const { content, solverId, workspaceId } = values;
   try {
     const workspace = await getWorkspaceById(workspaceId, solverId);
-    workspace?.task;
+
+    if (!workspace?.task) {
+      throw new TaskNotFoundError();
+    }
     if (!workspace) {
       throw new SolutionError(
         "Unable to locate the specified workspace. Please verify the ID and try again."
       );
     }
-    await handleTaskDeadline(workspace.task);
+    await handleTaskDeadline(workspace);
     const alreadyBlocked = await getBlockedSolver(
-      workspace.task.solverId!,
+      workspace.solverId,
       workspace.task.id
     );
+    console.log(alreadyBlocked);
     if (alreadyBlocked) {
       throw new SolutionError(
         "Submission window has closed. You can no longer publish a solution for this task."
@@ -697,59 +733,63 @@ export async function publishSolution(values: {
     );
   }
 }
-export async function handleTaskDeadline(task: TaskReturnType) {
-  //if this task status is assigned or on progress check these
-  if (
-    !task ||
-    !task.solverId ||
-    !task.id ||
-    !task.workspace?.createdAt ||
-    !task.deadline ||
-    !task.updatedAt ||
-    !task.assignedAt
-  )
+export async function handleTaskDeadline(
+  solverWorksapce: WorkpaceWithRelationType
+) {
+  const status = solverWorksapce.task.status;
+
+  if (!(status === "IN_PROGRESS" || status === "ASSIGNED")) {
     return;
-  if (task.status === "ASSIGNED" || task.status === "IN_PROGRESS") {
-    const { percentage, deadline } = await calculateTaskProgressV2(
-      task.solverId,
-      task.workspace.taskId
+  }
+
+  const { percentage, deadline } = await calculateTaskProgressV2(
+    solverWorksapce.solverId,
+    solverWorksapce.taskId
+  );
+  console.log("in this");
+  if (deadline && !isPast(deadline)) return;
+
+  try {
+    const alreadyBlocked = await getBlockedSolver(
+      solverWorksapce.solverId,
+      solverWorksapce.taskId
     );
-    console.log("in this");
-    if (deadline && !isPast(deadline)) return;
+    if (alreadyBlocked) return;
+    Notifier()
+      .system({
+        receiverId: solverWorksapce.solverId,
+        content: `You are blocked from task: "${solverWorksapce.task.title}" you no longer able to submit it but you can still access your previouse work `,
+        subject: `Blocked From A Task`,
+      })
+      .email({
+        receiverEmail: solverWorksapce.solver?.email!,
+        content: `You are blocked from task: "${solverWorksapce.task.title}" you no longer able to submit it but you can still access your previouse work `,
+        subject: `Blocked From A Task`,
+      });
 
-    try {
-      const alreadyBlocked = await getBlockedSolver(task.solverId, task.id);
-      if (alreadyBlocked) return;
-      Notifier()
-        .system({
-          receiverId: task.solverId!,
-          content: `You are blocked from task: "${task.title}" you no longer able to submit it but you can still access your previouse work `,
-          subject: `Blocked From A Task`,
-        })
-        .email({
-          receiverEmail: task.solver?.email!,
-          content: `You are blocked from task: "${task.title}" you no longer able to submit it but you can still access your previouse work `,
-          subject: `Blocked From A Task`,
-        });
-
-      await db
-        .update(TaskTable)
-        .set({ status: "OPEN", assignedAt: null, solverId: null })
-        .where(
-          and(
-            eq(TaskTable.id, task.id),
-            inArray(TaskTable.status, ["ASSIGNED", "IN_PROGRESS"])
-          )
-        );
-
-      await addSolverToTaskBlockList(task.solverId, task.id, "Missed deadline");
-      logger.warn(
-        `Task ${task.id} missed deadline. Solver ${task.solverId} blocked.`
+    await db
+      .update(TaskTable)
+      .set({ status: "OPEN", assignedAt: null, solverId: null })
+      .where(
+        and(
+          eq(TaskTable.id, solverWorksapce.taskId),
+          inArray(TaskTable.status, ["ASSIGNED", "IN_PROGRESS"])
+        )
       );
-    } catch (error) {
-      logger.error("unable to find blocked user", { task: task });
-      console.error(error);
-    }
+
+    await addSolverToTaskBlockList(
+      solverWorksapce.solverId,
+      solverWorksapce.taskId,
+      "Missed deadline"
+    );
+    logger.warn(
+      `Task ${solverWorksapce.taskId} missed deadline. Solver ${solverWorksapce.solverId} blocked.`
+    );
+  } catch (error) {
+    logger.error("unable to find blocked user", {
+      task: solverWorksapce.taskId,
+    });
+    console.error(error);
   }
 }
 
@@ -920,5 +960,21 @@ export async function createTaskComment(values: {
       message: (error as Error)?.message,
       stack: (error as Error)?.stack,
     });
+  }
+}
+export async function deleteDraftFile(values: {
+  filePath: string;
+  userId: string;
+}) {
+  const { filePath, userId } = values;
+  try {
+    const {} = await isAuthorized(["POSTER"]);
+    await deleteFileFromR2(filePath);
+    await db
+      .update(TaskDraftTable)
+      .set({ uploadedFiles: [] })
+      .where(eq(TaskDraftTable.userId, userId));
+  } catch (error) {
+    throw new Error("unable to delete ");
   }
 }
