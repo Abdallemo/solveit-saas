@@ -26,8 +26,8 @@ import type {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
-import { formatTimeRemaining, toYMD } from "@/lib/utils";
-import { subDays } from "date-fns";
+import { toYMD } from "@/lib/utils";
+import { formatDistance, isPast, subDays } from "date-fns";
 import {
   and,
   asc,
@@ -48,10 +48,12 @@ import isUUID from "validator/es/lib/isUUID";
 import { calculateTaskProgressV2 } from "./action";
 
 export async function getBlockedSolver(solverId: string, taskId: string) {
+  console.log(`[getBlockedSolver]: solverId=${solverId},TaskId=${taskId}`);
   const result = db.query.BlockedTasksTable.findFirst({
     where: (table, fn) =>
       fn.and(fn.eq(table.userId, solverId), fn.eq(table.taskId, taskId)),
   });
+  console.log(`[found] ${result}`);
   return [result][0];
 }
 export async function getAllTaskCatagories(
@@ -427,6 +429,7 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
     category: oldTask.category ?? "",
     price: oldTask.price ?? 10,
     updatedAt: oldTask.updatedAt,
+    uploadedFiles:oldTask.uploadedFiles
   };
 }
 export async function getDraftTask(userId: string, draftId: string) {
@@ -636,9 +639,11 @@ export type upcomingTasks = {
   totalTime: number;
   timePassed: number;
   unit: Units;
+  deadlineDate:Date
 };
 export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
   const { user } = await isAuthorized(["SOLVER"]);
+  const now = new Date();
 
   const tasks = await db.query.TaskTable.findMany({
     columns: { id: true, title: true, deadline: true },
@@ -647,26 +652,25 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
 
   const result = await Promise.all(
     tasks.map(async (task) => {
-      const { timePassed, totalTime } = await calculateTaskProgressV2(
-        user.id,
-        task.id
-      );
-      if (!task.deadline || timePassed === null || totalTime === null)
+      const progress = await calculateTaskProgressV2(user.id, task.id);
+      const { timePassed, totalTime, deadline } = progress;
+
+      if (!deadline || timePassed === null || totalTime === null) {
         return null;
-
+      }
+      if (isPast(deadline)) {
+        return {
+          id: task.id,
+          due: "Passed",
+          title: task.title,
+          totalTime,
+          timePassed,
+          unit: "d",
+        };
+      }
+      const due = formatDistance(deadline, now, { addSuffix: true });
       const match = task.deadline.toLowerCase().match(/^(\d+)([hdwmy])$/);
-      if (!match) return null;
-
-      const [, , unit] = match;
-      const timeRemaining = totalTime - timePassed;
-
-      if (timeRemaining <= 0)
-        return { id: task.id, due: "Passed", title: task.title };
-
-      const now = new Date();
-      const futureTime = new Date(now.getTime() + timeRemaining);
-
-      const due = formatTimeRemaining(futureTime, now, unit as Units);
+      const unit = match ? (match[2] as Units) : "d";
 
       return {
         id: task.id,
@@ -674,7 +678,8 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
         due,
         totalTime,
         timePassed,
-        unit: unit as Units,
+        unit: unit,
+        deadlineDate:deadline
       };
     })
   );
