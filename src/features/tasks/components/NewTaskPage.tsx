@@ -3,12 +3,10 @@ import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading";
 import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { NewuseTask } from "@/contexts/TaskContext";
-import { env } from "@/env/client";
 import {
   autoSuggestWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
 import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
 import TaskPostingEditor from "@/features/tasks/components/richTextEdito/Tiptap";
 import {
@@ -33,7 +31,7 @@ export default function TaskCreationPage({
   defaultValues: TaskSchema;
 }) {
   const { draft, selectedFiles, updateDraft } = NewuseTask(); //new Migrations
-  const { category, content, deadline, description, price, title, visibility } =
+  const { category, content, deadline, description, price, title, visibility,uploadedFiles } =
     draft;
   const currentUser = useCurrentUser();
   const { user } = currentUser;
@@ -53,6 +51,7 @@ export default function TaskCreationPage({
       price,
       visibility,
       deadline,
+      JSON.stringify(uploadedFiles),
     ],
     delay: 700,
   });
@@ -149,19 +148,7 @@ export default function TaskCreationPage({
         );
         return; //todo will do in the server side too
       }
-      toast.loading("uploading files", { id: "file-upload" });
-      let uploadedFileMetadata: UploadedFileMeta[] | undefined;
-      let uploadedFilesString: string | undefined;
-      if (selectedFiles && selectedFiles.length > 0) {
-        uploadedFileMetadata = await uploadMutate({
-          files: selectedFiles,
-          scope: "task",
-          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
-        }); //golang api
-        uploadedFilesString = JSON.stringify(uploadedFileMetadata);
-      } else {
-        toast.dismiss("file-upload");
-      }
+     
       const lastUpdDraft = await autoSaveDraftTask(
         title,
         description,
@@ -171,7 +158,7 @@ export default function TaskCreationPage({
         price,
         visibility,
         deadline,
-        uploadedFilesString
+        JSON.stringify(uploadedFiles),
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({
@@ -228,7 +215,7 @@ export default function TaskCreationPage({
                   it effectively.
                 </p>
               </div>
-              <div className="px-5 overflow-auto">
+              <div className="px-5 overflow-auto break-all">
                 <Suspense>
                   <TaskPostingEditor />
                 </Suspense>
