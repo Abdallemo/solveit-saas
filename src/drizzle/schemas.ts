@@ -1,4 +1,5 @@
 import { relations } from "@/drizzle/relations";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Address, Business } from "@/features/users/server/user-types";
 import { sql } from "drizzle-orm";
@@ -71,9 +72,9 @@ export type PaymentPorposeType = (typeof PaymentPorposeEnum.enumValues)[number];
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
-export type TaskType = typeof TaskTable.$inferSelect
-export type taskFileType = typeof TaskFileTable.$inferSelect
-export type BlockedSolverType = typeof BlockedTasksTable.$inferSelect
+export type TaskType = typeof TaskTable.$inferSelect;
+export type taskFileType = typeof TaskFileTable.$inferSelect;
+export type BlockedSolverType = typeof BlockedTasksTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
 export type MentorChatStatusType = (typeof MentorChatStatus.enumValues)[number];
 export type MentorChatFileStatusType =
@@ -102,7 +103,9 @@ export const UserTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow().notNull(),
+    })
+      .defaultNow()
+      .notNull(),
   },
   (user) => [index("user_role_idx").on(user.role)]
 );
@@ -290,9 +293,11 @@ export const TaskTable = pgTable(
     categoryId: uuid("category_id")
       .references(() => TaskCategoryTable.id, { onDelete: "cascade" })
       .notNull(),
-    paymentId: uuid("payment_id").references(() => PaymentTable.id, {
-      onDelete: "cascade",
-    }).notNull(),
+    paymentId: uuid("payment_id")
+      .references(() => PaymentTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
     deadline: text("deadline")
       .references(() => TaskDeadlineTable.deadline, { onDelete: "cascade" })
       .notNull()
@@ -300,7 +305,9 @@ export const TaskTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
@@ -353,8 +360,10 @@ export const TaskDraftTable = pgTable(
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
-    uploadedFiles: json("uploadedFiles").default("[]").notNull(),
+    })
+      .notNull()
+      .defaultNow(),
+    uploadedFiles: json("uploadedFiles").default("[]").notNull().$type<UploadedFileMeta[]>(),
     visibility: TaskVisibility("visibility").default("public").notNull(),
     price: integer("price").default(10).notNull(),
   },
@@ -469,7 +478,9 @@ export const WorkspaceTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (solutionWorkspaces) => [
     index("solution_workspaces_taskId_idx").on(solutionWorkspaces.taskId),
@@ -496,11 +507,15 @@ export const WorkspaceFilesTable = pgTable(
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
-    }).defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (solutionWorkspaceFiles) => [
     index("solution_workspace_files_workspaceId_idx").on(
