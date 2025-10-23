@@ -85,6 +85,7 @@ export function CodeEditorDialog({
             </div>
             <div className="flex items-center gap-2">
               <Button
+                type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => setIsFullscreen(!isFullscreen)}>
@@ -94,7 +95,7 @@ export function CodeEditorDialog({
                   <Maximize2 className="w-4 h-4" />
                 )}
               </Button>
-              <Button variant="ghost" size="sm" onClick={onClose}>
+              <Button variant="ghost" size="sm" onClick={onClose} type="button">
                 <X className="w-4 h-4" />
               </Button>
             </div>
