@@ -33,7 +33,7 @@ export function AssignTaskButton({
       onClick={handleClick}
       variant="success"
       disabled={isPending}
-      className="hover:cursor-pointer flex items-center justify-center gap-2 w-[200px]">
+      className="hover:cursor-pointer flex items-center justify-center gap-2 w-[250px]">
       {isPending ? (
         <>
           <Loader2 className="animate-spin w-4 h-4" />
