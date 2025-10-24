@@ -55,7 +55,7 @@ export default function WorkspaceEditor({
 
     editorProps: {
       attributes: {
-        class: "w-full h-full p-14 focus:outline-none",
+        class: "w-full h-full p-14 focus:outline-none break-all",
       },
     },
     ...editorOptions,
