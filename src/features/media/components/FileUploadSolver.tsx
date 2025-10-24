@@ -53,11 +53,14 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
   const uploadedById = useCurrentSolver.user?.id!;
 
   const handleFiles = async (newFiles: FileList | null) => {
-    if (!newFiles || fileDisabled) return;
+    if (!newFiles || fileDisabled) {
+      return;
+    }
 
-    const fileArray = Array.from(newFiles).slice(0, uploadedFiles.length);
+    const fileArray = Array.from(newFiles);
 
     for (const file of fileArray) {
+      console.log("in the for loop");
       try {
         toast.loading("uploading..", { id: "file-upload" });
         const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
