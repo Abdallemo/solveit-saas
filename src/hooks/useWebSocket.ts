@@ -3,13 +3,29 @@ import { useEffect, useRef, useState } from "react";
 
 interface UseWebSocketOptions<MsgType extends object> {
   onMessage: (msg: MsgType) => void;
+  onOpen?: () => void;
+  onClose?: () => void;
+  onError?: (err: Event) => void;
   autoReconnect?: boolean;
+  /** base ms for backoff (default: 2000)*/
+  reconnectIntervalInMs?: number;
+  /**max reconnect attempts (default: 5)*/
+  maxRetries?: number;
 }
+
 type ConnectionState = "connecting" | "connected" | "disconnected";
 
 export default function useWebSocket<MsgType extends object>(
   url: string,
-  { onMessage, autoReconnect = true }: UseWebSocketOptions<MsgType>
+  {
+    onMessage,
+    onOpen,
+    onClose,
+    onError,
+    autoReconnect = true,
+    reconnectIntervalInMs = 2000,
+    maxRetries = 10,
+  }: UseWebSocketOptions<MsgType>
 ) {
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("connecting");
@@ -18,18 +34,24 @@ export default function useWebSocket<MsgType extends object>(
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
   const attempts = useRef(0);
   const onMessageRef = useRef(onMessage);
-  useEffect(() => {
-  onMessageRef.current = onMessage;
-}, [onMessage]);
 
   useEffect(() => {
-    function connect() {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    let stopped = false;
+
+    const connect = () => {
+      if (stopped) return;
       const ws = new WebSocket(url);
       wsRef.current = ws;
+      setConnectionState("connecting");
 
       ws.onopen = () => {
         setConnectionState("connected");
         attempts.current = 0;
+        onOpen?.();
       };
 
       ws.onmessage = (event) => {
@@ -37,28 +59,48 @@ export default function useWebSocket<MsgType extends object>(
           const msg: MsgType = JSON.parse(event.data);
           onMessageRef.current(msg);
         } catch (error) {
-          console.log("Invalid WS message:", event.data, error);
+          console.error("Invalid WS message:", event.data, error);
         }
       };
 
       ws.onerror = (event) => {
         setConnectionState("disconnected");
-        console.log("WS error:", event);
+        onError?.(event);
       };
 
       ws.onclose = () => {
         setConnectionState("disconnected");
+        onClose?.();
+
+        if (autoReconnect && attempts.current < maxRetries) {
+          const delay = reconnectIntervalInMs * Math.pow(2, attempts.current);
+          console.log(`Reconnecting in ${delay / 1000}s...`);
+          attempts.current++;
+          reconnectTimeout.current = setTimeout(connect, delay);
+        } else {
+          console.warn(
+            "Max reconnect attempts reached or autoReconnect disabled."
+          );
+        }
       };
-    }
+    };
 
     connect();
 
     return () => {
+      stopped = true;
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
       if (wsRef.current) wsRef.current.close();
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current)
     };
-  }, [url]);
+  }, [
+    url,
+    autoReconnect,
+    reconnectIntervalInMs,
+    maxRetries,
+    onOpen,
+    onClose,
+    onError,
+  ]);
 
-  return { connectionState };
+  return { connectionState, ws: wsRef };
 }
