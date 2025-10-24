@@ -250,6 +250,15 @@ func (q *Queries) ProcessSystemNotification(ctx context.Context, arg ProcessSyst
 	return i, err
 }
 
+const removeFileFromTaskDraft = `-- name: RemoveFileFromTaskDraft :exec
+UPDATE task_drafts SET "uploadedFiles" = '[]' WHERE id = $1
+`
+
+func (q *Queries) RemoveFileFromTaskDraft(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, removeFileFromTaskDraft, id)
+	return err
+}
+
 const resetTaskInfo = `-- name: ResetTaskInfo :exec
 UPDATE tasks
 SET task_status = 'OPEN',
