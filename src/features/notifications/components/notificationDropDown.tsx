@@ -64,10 +64,10 @@ export type Message = {
 };
 export default function NotificationDropDown({
   initailAllNotifications,
-  user
+  user,
 }: {
   initailAllNotifications: Message[];
-  user:userSessionType
+  user: userSessionType;
 }) {
   const [messages, setMessages] = useState<Message[]>(
     (initailAllNotifications ?? []).slice(0, 3)
@@ -91,7 +91,6 @@ export default function NotificationDropDown({
           return [msg, ...prev].slice(0, 3);
         });
       },
-      autoReconnect: false,
     }
   );
 
@@ -252,7 +251,11 @@ export default function NotificationDropDown({
                     variant="ghost"
                     className="w-full justify-center text-sm h-9"
                     asChild>
-                    <Link href={urlPrfix} onClick={()=>setIsOpen(prev=>!prev)}>View all notifications</Link>
+                    <Link
+                      href={urlPrfix}
+                      onClick={() => setIsOpen((prev) => !prev)}>
+                      View all notifications
+                    </Link>
                   </Button>
                 </div>
               </div>
