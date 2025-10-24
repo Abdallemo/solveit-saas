@@ -56,7 +56,7 @@ func parseDuration(lowerValue string, assignedAt pgtype.Timestamptz) (int, strin
 	return num, unit, newTime, nil
 }
 
-func (s *Server) StartTaskBackgroundCheckup(ctx context.Context, concurrency int, timeBetweenChecks time.Duration) {
+func (s *Server) StartDeadlineEnforcerJob(ctx context.Context, concurrency int, timeBetweenChecks time.Duration) {
 	log.Println("Starting Background Job for task checkup")
 	ticker := time.NewTicker(timeBetweenChecks)
 	for {
@@ -79,7 +79,7 @@ func (s *Server) StartTaskBackgroundCheckup(ctx context.Context, concurrency int
 				_, _, tm, _ := parseDuration(task.Deadline, task.AssignedAt)
 				tmUTC := tm.In(time.UTC)
 
-				go s.processTask(ctx, task, nowUTC, tmUTC, wg)
+				go s.checkAndEnforceDeadline(ctx, task, nowUTC, tmUTC, wg)
 
 			}
 			wg.Wait()
@@ -87,7 +87,7 @@ func (s *Server) StartTaskBackgroundCheckup(ctx context.Context, concurrency int
 	}
 
 }
-func (s *Server) processTask(ctx context.Context, task database.Task, nowUTC, tmUTC time.Time, wg *sync.WaitGroup) {
+func (s *Server) checkAndEnforceDeadline(ctx context.Context, task database.Task, nowUTC, tmUTC time.Time, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Printf("starting process on task %v on %v", task.ID, nowUTC)
 
@@ -109,7 +109,7 @@ func (s *Server) processTask(ctx context.Context, task database.Task, nowUTC, tm
 	if blockedSolver.ID.Valid {
 
 		log.Printf("blcoked %v from task %v", blockedSolver.UserID, blockedSolver.TaskID)
-		notif, err := s.transactionTaskUpdate(ctx, task.SolverID.String(), task.Title, task.ID)
+		notif, err := s.notifySolverAndResetTaskTx(ctx, task.SolverID.String(), task.Title, task.ID)
 		if err != nil {
 			log.Print(err)
 			return
@@ -129,7 +129,7 @@ func (s *Server) processTask(ctx context.Context, task database.Task, nowUTC, tm
 
 }
 
-func (s *Server) transactionTaskUpdate(ctx context.Context, SolverID, Title string, TaskID pgtype.UUID) (database.Notification, error) {
+func (s *Server) notifySolverAndResetTaskTx(ctx context.Context, SolverID, Title string, TaskID pgtype.UUID) (database.Notification, error) {
 	tx, err := s.dbConn.Begin(ctx)
 	if err != nil {
 		return database.Notification{}, err
