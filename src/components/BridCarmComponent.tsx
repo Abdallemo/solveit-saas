@@ -21,12 +21,16 @@ function formatBreadcrumbText(text: string) {
     .replace(/\b\w/g, (char) => char.toUpperCase());
 }
 
-export default function BridCarmComponent({role}:{role:UserRole}) {
+export default function BridCarmComponent({
+  userRole,
+}: {
+  userRole: UserRole;
+}) {
   const pathName = usePathname();
+  const role = userRole.toLocaleLowerCase();
 
   const paths = pathName.split("/").filter(Boolean);
 
-  // special case: just /dashboard
   if (paths.length === 1 && paths[0] === "dashboard") {
     return (
       <Breadcrumb>
