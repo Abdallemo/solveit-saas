@@ -5,7 +5,8 @@ repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
 commit_message = """fixed the deadline calculation Issue
 added deadline cron job to auto block solvers
 fixed file upload ux issues
-unified go microservice migration with nextjs verison"""
+unified go microservice migration with nextjs verison
+added websocket reconnection and heatbeats and file upload limit issue"""
 
 repo = Repo(repo_path)
 
