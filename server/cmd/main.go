@@ -69,7 +69,8 @@ func main() {
 	openaiClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 	server := api.NewServer(":3030", s3Client, openaiClient, database.New(db), redisClient, db)
 
-	go server.StartTaskBackgroundCheckup(context.Background(), 10, time.Minute)
+	go server.StartDeadlineEnforcerJob(context.Background(), 10, time.Minute)
+	go server.StartDraftMediaCleanupJob(context.Background(), time.Hour)
 
 	log.Fatal(server.Run())
 }
