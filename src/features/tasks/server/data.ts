@@ -429,7 +429,7 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
     category: oldTask.category ?? "",
     price: oldTask.price ?? 10,
     updatedAt: oldTask.updatedAt,
-    uploadedFiles:oldTask.uploadedFiles
+    uploadedFiles:oldTask.uploadedFiles ?? []
   };
 }
 export async function getDraftTask(userId: string, draftId: string) {
