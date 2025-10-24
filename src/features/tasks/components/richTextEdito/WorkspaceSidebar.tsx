@@ -12,7 +12,7 @@ import {
   Sheet,
   SheetContent,
   SheetHeader,
-  SheetTitle
+  SheetTitle,
 } from "@/components/ui/sheet";
 import {
   Tooltip,
@@ -35,7 +35,7 @@ import {
   Lock,
   MessageCircle,
   Send,
-  User2
+  User2,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Ref, useEffect, useRef, useState } from "react";
@@ -90,7 +90,7 @@ export type commentType = {
   createdAt: Date | null;
   userId: string;
   taskId: string;
-  owner: publicUserType
+  owner: publicUserType;
 };
 
 function SideBarForm() {
@@ -152,8 +152,8 @@ function SideBarForm() {
       comment,
       taskId: currentWorkspace?.taskId!,
       userId: user?.id!,
-      posterId:currentWorkspace?.task.posterId,
-      solverId:currentWorkspace?.solverId
+      posterId: currentWorkspace?.task.posterId,
+      solverId: currentWorkspace?.solverId,
     });
   }
 
@@ -175,6 +175,7 @@ function SideBarForm() {
             <Label>Attachments</Label>
             {monacoEditor ? (
               <Button
+                type="button"
                 onClick={() => router.push(`${pathName}/codeEditor`)}
                 className="cursor-pointer">
                 Open Code Editor <Code2 />{" "}
@@ -183,6 +184,7 @@ function SideBarForm() {
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
+                    type="button"
                     disabled={false}
                     className="opacity-50 cursor-not-allowed">
                     Open Code Editor <Code2 /> <Lock />
@@ -216,6 +218,7 @@ function SideBarForm() {
               onKeyPress={handleKeyPress}
             />
             <Button
+              type="button"
               size="sm"
               onClick={handleSendComment}
               disabled={!comment.trim() || isPending}
@@ -274,86 +277,130 @@ interface CommentCardProps {
   comment: commentType;
   currentUserId: string;
   ref: Ref<HTMLDivElement>;
-  showRole?:boolean
-  compact?:boolean
+  showRole?: boolean;
+  compact?: boolean;
 }
 
-export function CommentCard (
-  { comment, currentUserId, compact = false, showRole = false ,ref}:CommentCardProps){
-    const isOwner = comment.owner.id === currentUserId
-    const displayName = isOwner ? "You" : comment.owner.name?.split(" ")[0] 
-    const createdAt = new Date(comment.createdAt as any)
+export function CommentCard({
+  comment,
+  currentUserId,
+  compact = false,
+  showRole = false,
+  ref,
+}: CommentCardProps) {
+  const isOwner = comment.owner.id === currentUserId;
+  const displayName = isOwner ? "You" : comment.owner.name?.split(" ")[0];
+  const createdAt = new Date(comment.createdAt as any);
 
-    const formatDate = (date: Date) => {
-      const now = new Date()
-      const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60)
+  const formatDate = (date: Date) => {
+    const now = new Date();
+    const diffInHours = (now.getTime() - date.getTime()) / (1000 * 60 * 60);
 
-      if (diffInHours < 24) {
-        return date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
-      } else if (diffInHours < 168) {
-        // 7 days
-        return date.toLocaleDateString([], { weekday: "short" })
-      } else {
-        return date.toLocaleDateString([], { month: "short", day: "numeric" })
-      }
+    if (diffInHours < 24) {
+      return date.toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+    } else if (diffInHours < 168) {
+      // 7 days
+      return date.toLocaleDateString([], { weekday: "short" });
+    } else {
+      return date.toLocaleDateString([], { month: "short", day: "numeric" });
     }
+  };
 
-    if (compact) {
-      return (
-        <div ref={ref} className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors">
-          <Avatar className="h-8 w-8 flex-shrink-0">
-            <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
-            <AvatarFallback className="text-xs">
-              {comment.owner.name ? comment.owner.name.charAt(0).toUpperCase() : <User2 className="h-4 w-4" />}
-            </AvatarFallback>
-          </Avatar>
-
-          <div className="min-w-0 space-y-1">
-            <div className="flex items-center justify-between gap-2 mb-1">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`text-sm font-medium truncate ${isOwner ? "text-primary" : "text-foreground"}`}>
-                  {displayName}
-                </span>
-                {showRole && comment.owner.role && (
-                  <Badge variant="secondary" className={`text-xs px-1.5 py-0.5 ${getColorClass(comment.owner.role)}`}>
-                    {comment.owner.role.toLowerCase()}
-                  </Badge>
-                )}
-              </div>
-              <span className="text-xs text-muted-foreground flex-shrink-0">{formatDate(createdAt)}</span>
-            </div>
-
-            <p className="text-sm text-muted-foreground break-words w-40">{comment.content}</p>
-          </div>
-        </div>
-      )
-    }
-
+  if (compact) {
     return (
-      <div ref={ref} className="flex items-start gap-4 p-4 border-b border-border/50 last:border-b-0">
-        <Avatar className="h-10 w-10 flex-shrink-0">
-          <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
-          <AvatarFallback>
-            {comment.owner.name ? comment.owner.name.charAt(0).toUpperCase() : <User2 className="h-5 w-5" />}
+      <div
+        ref={ref}
+        className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors">
+        <Avatar className="h-8 w-8 flex-shrink-0">
+          <AvatarImage
+            src={comment.owner.image || undefined}
+            alt={displayName}
+          />
+          <AvatarFallback className="text-xs">
+            {comment.owner.name ? (
+              comment.owner.name.charAt(0).toUpperCase()
+            ) : (
+              <User2 className="h-4 w-4" />
+            )}
           </AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 space-y-1">
-          <div className="flex items-center justify-between gap-3 mb-2">
-            <div className="flex items-center gap-2">
-              <span className={`font-medium ${isOwner ? "text-primary" : "text-foreground"}`}>{displayName}</span>
+          <div className="flex items-center justify-between gap-2 mb-1">
+            <div className="flex items-center gap-2 min-w-0">
+              <span
+                className={`text-sm font-medium truncate ${
+                  isOwner ? "text-primary" : "text-foreground"
+                }`}>
+                {displayName}
+              </span>
               {showRole && comment.owner.role && (
-                <Badge variant="secondary" className={`text-xs ${getColorClass(comment.owner.role)}`}>
+                <Badge
+                  variant="secondary"
+                  className={`text-xs px-1.5 py-0.5 ${getColorClass(
+                    comment.owner.role
+                  )}`}>
                   {comment.owner.role.toLowerCase()}
                 </Badge>
               )}
             </div>
-            <span className="text-sm text-muted-foreground">{formatDate(createdAt)}</span>
+            <span className="text-xs text-muted-foreground flex-shrink-0">
+              {formatDate(createdAt)}
+            </span>
           </div>
 
-          <p className="text-sm text-muted-foreground break-words w-52  lg:w-96">{comment.content}</p>
+          <p className="text-sm text-muted-foreground break-words w-40">
+            {comment.content}
+          </p>
         </div>
       </div>
-    )
+    );
   }
 
+  return (
+    <div
+      ref={ref}
+      className="flex items-start gap-4 p-4 border-b border-border/50 last:border-b-0">
+      <Avatar className="h-10 w-10 flex-shrink-0">
+        <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
+        <AvatarFallback>
+          {comment.owner.name ? (
+            comment.owner.name.charAt(0).toUpperCase()
+          ) : (
+            <User2 className="h-5 w-5" />
+          )}
+        </AvatarFallback>
+      </Avatar>
+
+      <div className="min-w-0 space-y-1">
+        <div className="flex items-center justify-between gap-3 mb-2">
+          <div className="flex items-center gap-2">
+            <span
+              className={`font-medium ${
+                isOwner ? "text-primary" : "text-foreground"
+              }`}>
+              {displayName}
+            </span>
+            {showRole && comment.owner.role && (
+              <Badge
+                variant="secondary"
+                className={`text-xs ${getColorClass(comment.owner.role)}`}>
+                {comment.owner.role.toLowerCase()}
+              </Badge>
+            )}
+          </div>
+          <span className="text-sm text-muted-foreground">
+            {formatDate(createdAt)}
+          </span>
+        </div>
+
+        <p className="text-sm text-muted-foreground break-words w-52  lg:w-96">
+          {comment.content}
+        </p>
+      </div>
+    </div>
+  );
+}
