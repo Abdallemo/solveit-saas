@@ -12,7 +12,9 @@ import BridCarmComponent from "@/components/BridCarmComponent";
 import OnboardingForm from "@/components/dashboard/user-onboarding-lazyloaded";
 import WalletDropdownMenu from "@/components/dashboard/WalletDropdownMenu";
 import { Motion3DBackground } from "@/features/auth/components/feature-panel";
-import NotificationDropDown, { Message } from "@/features/notifications/components/notificationDropDown";
+import NotificationDropDown, {
+  Message,
+} from "@/features/notifications/components/notificationDropDown";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import { Session } from "next-auth";
 import { Suspense } from "react";
@@ -75,10 +77,12 @@ export function DashboardClientProviders({
                 <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                   <div className="flex items-center">
                     <SidebarTrigger className="mr-2" />
-                    <BridCarmComponent role={user.role}/>
+                    <BridCarmComponent userRole={user.role} />
                   </div>
                   <div className="flex gap-2 justify-center items-center">
-                    {user.role === "SOLVER" && <WalletDropdownMenu user={user} />}
+                    {user.role === "SOLVER" && (
+                      <WalletDropdownMenu user={user} />
+                    )}
                     <NotificationDropDown
                       initailAllNotifications={allNotifications}
                       user={user}
