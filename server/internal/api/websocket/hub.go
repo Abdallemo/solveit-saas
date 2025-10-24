@@ -5,7 +5,9 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"slices"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -14,6 +16,12 @@ var allowedHost = map[string]bool{
 	"http://localhost:3000":          true,
 	"https://solveit.up.railway.app": true,
 }
+
+const (
+	pongWait   = 60 * time.Second    // Time allowed to wait for the next pong from client
+	pingPeriod = (pongWait * 9) / 10 // Send pings every 54s (before the read deadline expires)
+	writeWait  = 30 * time.Second    // Time allowed to write a message to the client
+)
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1 << 10,
@@ -42,6 +50,12 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("failed to upgrade conn:", err)
 		return
 	}
+	conn.SetReadLimit(5 << 20)
+	conn.SetReadDeadline(time.Now().Add(pongWait))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(pongWait))
+		return nil
+	})
 	channelID := r.URL.Query().Get("channel")
 	if channelID == "" {
 		conn.Close()
@@ -52,6 +66,40 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 	h.mu.Unlock()
 
 	go h.cleanUp(conn, channelID)
+	go func() {
+		ticker := time.NewTicker(pingPeriod)
+		defer ticker.Stop()
+
+		for range ticker.C {
+			h.mu.RLock()
+			stillActive := slices.Contains(h.conns[channelID], conn)
+			h.mu.RUnlock()
+			if !stillActive {
+				return
+			}
+
+			conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+				log.Printf("Ping failed for %s: %v", channelID, err)
+				conn.Close()
+
+				// Ensure cleanup runs now
+				h.mu.Lock()
+				conns := h.conns[channelID]
+				active := conns[:0]
+				for _, c := range conns {
+					if c != conn {
+						active = append(active, c)
+					}
+				}
+				h.conns[channelID] = active
+				h.mu.Unlock()
+
+				return
+			}
+		}
+	}()
+
 	log.Println("New connection for channel:", channelID)
 
 }
