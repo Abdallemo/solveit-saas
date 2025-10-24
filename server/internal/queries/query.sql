@@ -41,3 +41,5 @@ SELECT *
 FROM task_drafts
 WHERE updated_at < $1
   AND json_array_length("uploadedFiles") > 0;
+-- name: RemoveFileFromTaskDraft :exec
+UPDATE task_drafts SET "uploadedFiles" = '[]' WHERE id = $1;
