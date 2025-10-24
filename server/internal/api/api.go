@@ -2,17 +2,14 @@ package api
 
 import (
 	"encoding/json"
-	"fmt"
 	"github/abdallemo/solveit-saas/internal/api/websocket"
 	"github/abdallemo/solveit-saas/internal/database"
 	"github/abdallemo/solveit-saas/internal/middleware"
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/sashabaranov/go-openai"
 )
@@ -105,14 +102,13 @@ func (s *Server) Run() error {
 	log.Printf("server running on port:%s", s.addr)
 	return http.ListenAndServe(s.addr, s.routes())
 }
-
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
-	taskDrafts, err := s.store.GetAllTaskDrafts(r.Context(), pgtype.Timestamptz{
-		Time:  time.Now().Add(time.Second),
-		Valid: true,
-	})
-	if err != nil {
-		log.Println(err)
-	}
-	fmt.Println(taskDrafts)
+	w.Header().Set("Content-Type", "application/json")
+
+	msg := struct {
+		Message string `json:"message"`
+	}{Message: "alive"}
+
+	json.NewEncoder(w).Encode(msg)
+
 }
