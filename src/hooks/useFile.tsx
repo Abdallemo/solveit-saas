@@ -90,12 +90,13 @@ export function useDeleteFileGeneric<
     },
     onSuccess: (_data, { filePath }) => {
       toast.success("File deleted successfully!", {
-        id: `delete-file-${filePath ?? "unknown"}`,
+        id: `delete-file-${filePath}`,
       });
+      
     },
     onError: (error: any, { filePath }) => {
       toast.error(`Failed to delete file: ${error.message}`, {
-        id: `delete-file-${filePath ?? "unknown"}`,
+        id: `delete-file-${filePath}`,
       });
     },
   });
