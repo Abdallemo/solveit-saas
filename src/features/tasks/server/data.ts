@@ -20,6 +20,7 @@ import type {
   dataOptions,
   FlatDispute,
   PosterTaskReturn,
+  SolverStats,
   SolverTaskReturn,
   Units,
 } from "@/features/tasks/server/task-types";
@@ -551,81 +552,89 @@ export async function getPosterStats(range: string = "7 days") {
     };
   });
 }
-export async function getSolverStats(range: string = "30 days") {
+export async function getSolverStats(
+  range = "30 days"
+): Promise<SolverStats[]> {
   const { user } = await isAuthorized(["SOLVER"]);
-  if (!user?.id) return [];
-
-  const taskStats = db
-    .select({
-      date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
-      allTasks: count(TaskTable.id).as("allTasks"),
-      solvedTasks: sql<number>`sum(
+  try {
+    const taskStats = db
+      .select({
+        date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
+          "date"
+        ),
+        allTasks: count(TaskTable.id).as("allTasks"),
+        solvedTasks: sql<number>`sum(
         case when ${TaskTable.status} = 'COMPLETED' then 1 else 0 end
       )`.as("solvedTasks"),
-      inProgressTasks: sql<number>`sum(
+        inProgressTasks: sql<number>`sum(
         case when ${TaskTable.status} = 'IN_PROGRESS' then 1 else 0 end
       )`.as("inProgressTasks"),
-      mentorSessions: sql<number>`0`.as("mentorSessions"),
-      earnings: sum(TaskTable.price).as("earnings"),
-    })
-    .from(TaskTable)
-    .where(
-      and(
-        eq(TaskTable.solverId, user.id),
-        sql`${TaskTable.createdAt} > current_date - interval '30 days'`
+        mentorSessions: sql<number>`0`.as("mentorSessions"),
+        earnings: sum(TaskTable.price).as("earnings"),
+      })
+      .from(TaskTable)
+      .where(
+        and(
+          eq(TaskTable.solverId, user.id),
+          sql`${TaskTable.createdAt} > current_date - interval '30 days'`
+        )
       )
-    )
-    .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
+      .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
 
-  const mentorStats = db
-    .select({
-      date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
-      allTasks: sql<number>`0`.as("allTasks"),
-      solvedTasks: sql<number>`0`.as("solvedTasks"),
-      inProgressTasks: sql<number>`0`.as("inProgressTasks"),
-      mentorSessions: count(MentorshipSessionTable.id).as("mentorSessions"),
-      earnings: sum(MentorshipBookingTable.price).as("earnings"),
-    })
-    .from(MentorshipBookingTable)
-    .leftJoin(
-      MentorshipSessionTable,
-      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
-    )
-    .where(
-      and(
-        eq(MentorshipBookingTable.solverId, user.id),
-        sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
+    const mentorStats = db
+      .select({
+        date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
+          "date"
+        ),
+        allTasks: sql<number>`0`.as("allTasks"),
+        solvedTasks: sql<number>`0`.as("solvedTasks"),
+        inProgressTasks: sql<number>`0`.as("inProgressTasks"),
+        mentorSessions: count(MentorshipSessionTable.id).as("mentorSessions"),
+        earnings: sum(MentorshipBookingTable.price).as("earnings"),
+      })
+      .from(MentorshipBookingTable)
+      .leftJoin(
+        MentorshipSessionTable,
+        eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
       )
-    )
-    .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
+      .where(
+        and(
+          eq(MentorshipBookingTable.solverId, user.id),
+          sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
+        )
+      )
+      .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
 
-  const merged = unionAll(taskStats, mentorStats).as("merged");
+    const merged = unionAll(taskStats, mentorStats).as("merged");
 
-  const result = await db
-    .select({
-      date: merged.date,
-      allTasks: sum(merged.allTasks).as("allTasks"),
-      solvedTasks: sum(merged.solvedTasks).as("solvedTasks"),
-      inProgressTasks: sum(merged.inProgressTasks).as("inProgressTasks"),
-      mentorSessions: sum(merged.mentorSessions).as("mentorSessions"),
-      earnings: sum(merged.earnings).as("earnings"),
-    })
-    .from(merged)
-    .groupBy(merged.date)
-    .orderBy(merged.date);
+    const result = await db
+      .select({
+        date: merged.date,
+        allTasks: sum(merged.allTasks).as("allTasks"),
+        solvedTasks: sum(merged.solvedTasks).as("solvedTasks"),
+        inProgressTasks: sum(merged.inProgressTasks).as("inProgressTasks"),
+        mentorSessions: sum(merged.mentorSessions).as("mentorSessions"),
+        earnings: sum(merged.earnings).as("earnings"),
+      })
+      .from(merged)
+      .groupBy(merged.date)
+      .orderBy(merged.date);
 
-  return result.map((res) => ({
-    ...res,
-    earnings: Number(res.earnings) || 0,
-    mentorSessions: Number(res.mentorSessions) || 0,
-    allTasks: Number(res.allTasks) || 0,
-    solvedTasks: Number(res.solvedTasks) || 0,
-    inProgressTasks: Number(res.inProgressTasks) || 0,
-  }));
+    return result.map((res) => ({
+      ...res,
+      earnings: Number(res.earnings) || 0,
+      mentorSessions: Number(res.mentorSessions) || 0,
+      allTasks: Number(res.allTasks) || 0,
+      solvedTasks: Number(res.solvedTasks) || 0,
+      inProgressTasks: Number(res.inProgressTasks) || 0,
+    }));
+  } catch (error) {
+    logger.error("unable to load solver stats", {
+      message: (error as Error).message,
+      cause: (error as Error).cause,
+    });
+    return [];
+  }
 }
 
 const tMap: Record<Units, string> = {
