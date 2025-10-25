@@ -10,7 +10,11 @@ import { env } from "@/env/client";
 import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useDeleteFile, useDownloadFile, useFileUpload } from "@/hooks/useFile";
+import {
+  useDeleteFileGeneric,
+  useDownloadFile,
+  useFileUpload,
+} from "@/hooks/useFile";
 import { cn } from "@/lib/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
@@ -44,7 +48,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
     mutateAsync: deleteFile,
     isPending: isDeleting,
     isError,
-  } = useDeleteFile();
+  } = useDeleteFileGeneric("solution_workspace");
   if (isLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
   const fileDisabled =
@@ -193,10 +197,8 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
                   file={file}
                   deleteAction={async () => {
                     try {
-                      toast.loading("deleting", { id: "file-delete" });
                       await deleteFile({
-                        fileId: file.id,
-                        filePath: file.storageLocation,
+                        filePath: file.filePath,
                       });
                       setUploadedFiles((prev) =>
                         prev.filter((f) => f.filePath !== file.filePath)
