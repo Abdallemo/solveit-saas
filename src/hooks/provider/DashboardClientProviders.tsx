@@ -62,7 +62,7 @@ export function DashboardClientProviders({
     <StripeSubscriptionProvider value={stripeData}>
       <SidebarProvider defaultOpen={defaultSidebarOpen} style={sidebarStyles}>
         {(user.role === "SOLVER" || user.role === "POSTER") &&
-        !user?.userDetails.onboardingCompleted ? (
+        !user.userDetails.onboardingCompleted ? (
           <div className="relative flex flex-col justify-center items-center h-screen w-full bg-gradient-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
             <Motion3DBackground />
             <OnboardingForm />
