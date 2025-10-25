@@ -19,6 +19,7 @@ import {
   AvailabilitySlot,
   BookingFormData,
   bookingSchema,
+  MentorChatSession,
   MentorListigWithAvailbelDates,
 } from "@/features/mentore/server/types";
 import { Notifier } from "@/features/notifications/server/notifier";
@@ -540,15 +541,23 @@ async function getSessionById(sessionId: string) {
     return null;
   }
 }
-export async function sendMentorMessages(values: {
+type MentorMessageValues = {
   sessionId: string;
   sentBy: string;
   message: string;
   uploadedFiles: UploadedFileMeta[];
-}) {
-  const { message, sessionId, sentBy, uploadedFiles } = values;
+  messageType?: "chat_message" | "chat_deleted";
+  messageId?: string;
+};
+export async function sendMentorMessages({
+  sessionId,
+  sentBy,
+  message,
+  uploadedFiles,
+  messageType = "chat_message",
+  messageId,
+}: MentorMessageValues) {
   if (!sessionId || !sentBy) return;
-
   const [{ user }, session] = await Promise.all([
     isAuthorized(["POSTER", "SOLVER"]),
     withCache({
@@ -581,11 +590,6 @@ export async function sendMentorMessages(values: {
           pending: false,
         })
         .returning();
-      await fetch(`${env.GO_API_URL}/send-messages`, {
-        method: "POST",
-        headers: GoHeaders,
-        body: JSON.stringify(values),
-      });
       if (uploadedFiles && uploadedFiles.length > 0) {
         console.warn("files ");
         await Promise.all(
@@ -618,17 +622,33 @@ export async function sendMentorMessages(values: {
         env.NEXTAUTH_URL
       }/dashboard/${user.role.toLocaleLowerCase()}/sessions/${sessionId}`
     );
+
     await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
       method: "POST",
       headers: GoHeaders,
-      body: JSON.stringify(result),
+      body: JSON.stringify({ ...result, messageType }),
     });
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
   }
 }
-
+export async function sendMentorDeleteMessages({
+  deletedMessage,
+  messageType = "chat_deleted",
+}: {
+  deletedMessage: MentorChatSession;
+  messageType?: "chat_message" | "chat_deleted";
+}) {
+  if (!deletedMessage || !deletedMessage.id) return;
+  if (messageType === "chat_deleted") {
+    await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
+      method: "POST",
+      headers: GoHeaders,
+      body: JSON.stringify({ ...deletedMessage, messageType }),
+    });
+  }
+}
 export async function sendSignalMessage(message: SignalMessage) {
   await fetch(`${env.GO_API_URL}/send-signal`, {
     method: "POST",
@@ -668,7 +688,7 @@ export async function deleteFileFromChatSessionDb(
             eq(MentorshipChatTable.sentBy, userId)
           )
         )
-        .returning({ sessionId: MentorshipChatTable.sessionId });
+        .returning();
       return updatedChat;
     });
 
