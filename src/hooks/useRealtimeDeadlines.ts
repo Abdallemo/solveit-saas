@@ -35,6 +35,7 @@ export default function useRealtimeDeadlines(
   );
   const [deadlineState, setDeadlineState] = useState(initialClientState);
   useEffect(() => {
+     if (typeof window === "undefined") return;
     const interval = setInterval(() => {
       setDeadlineState((prev) =>
         prev.map((task) => {
