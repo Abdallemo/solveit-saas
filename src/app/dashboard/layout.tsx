@@ -4,9 +4,7 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import { getAllNotification } from "@/features/notifications/server/action";
 import { getServerUserSubscriptionById } from "@/features/users/server/actions";
 import { DashboardClientProviders } from "@/hooks/provider/DashboardClientProviders";
-import {
-  StripeSubscriptionContextType
-} from "@/hooks/provider/stripe-subscription-provider";
+import { StripeSubscriptionContextType } from "@/hooks/provider/stripe-subscription-provider";
 import { cookies } from "next/headers";
 import DashboardSkeleton from "./loading";
 const dbFlags = {
@@ -44,19 +42,25 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
 
   if (user.role === "SOLVER") {
     subscriptionPromise = (async () => {
-      const subscription = await getServerUserSubscriptionById(user.id);
+      try {
+        const subscription = await getServerUserSubscriptionById(user.id);
 
-      if (subscription && subscription.stripeSubscriptionId) {
-        return {
-          cancelAt: subscription.cancelAt,
-          isCancelScheduled: subscription.isCancelScheduled,
-          status: subscription.status,
-          nextBilling: subscription.nextBilling,
-          subTier: subscription.tier,
-          price: subscription.price,
-        };
+        if (subscription && subscription.stripeSubscriptionId) {
+          return {
+            cancelAt: subscription.cancelAt,
+            isCancelScheduled: subscription.isCancelScheduled,
+            status: subscription.status,
+            nextBilling: subscription.nextBilling,
+            subTier: subscription.tier,
+            price: subscription.price,
+          } as StripeSubscriptionContextType;
+        }
+        return null;
+      } catch (e) {
+        console.error("Failed to fetch solver subscription data:", e);
+
+        return null;
       }
-      return null;
     })();
   }
 
