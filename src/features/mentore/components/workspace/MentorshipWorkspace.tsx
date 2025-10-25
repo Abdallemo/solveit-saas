@@ -15,7 +15,7 @@ import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
-  useDeleteFileChat,
+  useDeleteFileGeneric,
   useDownloadFile,
   useFileUpload,
 } from "@/hooks/useFile";
@@ -73,18 +73,12 @@ export default function MentorshipWorkspace({
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
-    useDeleteFileChat();
+    useDeleteFileGeneric("mentorship_chat");
   const handleFileDownload = async (key: string, fileName: string) => {
     toast.loading("preparing file downlad..", {
       id: `file-${fileName}-download`,
     });
     await downloadFile({ fileName, key });
-  };
-  const handleFiledelete = async (fileId: string, filePath: string) => {
-    toast.loading("deleting..", {
-      id: `delete-file-${fileId}`,
-    });
-    await deleteFile({ fileId, filePath });
   };
 
   const { mutate: sendMessage } = useMutation({
@@ -310,7 +304,7 @@ export default function MentorshipWorkspace({
                               );
                             }}
                             deleteAction={async (f) => {
-                              await handleFiledelete(file.id, f.filePath);
+                              await deleteFile({ filePath: f.filePath });
                             }}
                           />
                         ))}
@@ -482,7 +476,7 @@ export default function MentorshipWorkspace({
                           isPostSession || user?.id !== file.uploadedById,
                       }}
                       deleteAction={async (f) => {
-                        await handleFiledelete(file.id, f.filePath);
+                        await deleteFile({ filePath: f.filePath });
                       }}
                     />
                   </div>
