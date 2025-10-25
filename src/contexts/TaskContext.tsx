@@ -1,6 +1,6 @@
 "use client";
 import { NewtaskDraftType } from "@/features/tasks/server/task-types";
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, ReactNode, useContext, useState } from "react";
 
 type Draft = Partial<NewtaskDraftType>;
 const initialType = {
@@ -11,10 +11,9 @@ const initialType = {
   price: 10,
   title: "",
   description: "",
+  uploadedFiles: []
 };
 type TaskContextType = {
-  setSelectedFiles: (f: File[]) => void;
-  selectedFiles: File[];
   draft: NewtaskDraftType;
   updateDraft: (d: Draft) => void;
 };
@@ -28,7 +27,6 @@ export const NewTaskProvider = ({
   children,
   initialDraft,
 }: TaskPorvideProps) => {
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [draft, setDraft] = useState(initialDraft ?? initialType);
   const updateDraft = (updates: Draft) => {
     setDraft((prev) => ({ ...prev, ...updates }));
@@ -37,9 +35,8 @@ export const NewTaskProvider = ({
   return (
     <NewTaskContext.Provider
       value={{
-        setSelectedFiles,
         draft,
-        selectedFiles,
+
         updateDraft,
       }}>
       {children}
