@@ -18,6 +18,7 @@ import NotificationDropDown, {
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import { Session } from "next-auth";
 import { Suspense } from "react";
+import { useIsMounted } from "../useIsMounted";
 
 const dbFlags = {
   monacoEditor: false,
@@ -51,6 +52,7 @@ export function DashboardClientProviders({
   defaultSidebarOpen,
   serverProps,
 }: DashboardClientProvidersProps) {
+  const isMounted = useIsMounted();
   const { user, sessionUser, allNotifications } = serverProps;
 
   const sidebarStyles = {
