@@ -196,7 +196,7 @@ export default function TaskCreationPage({
             form="task-form"
             disabled={isDisabled || isPending || isAutoSeggesting}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            "Publish Task"
+            Publish Task
           </Button>
         </header>
         <FormProvider {...form}>
