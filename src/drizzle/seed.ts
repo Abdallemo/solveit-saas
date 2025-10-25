@@ -3,7 +3,8 @@ import bcrypt from "bcryptjs";
 import "dotenv/config";
 import db from "./db";
 import { PaymentTable, TaskTable } from "./schemas";
-const categoryId = "cf85eeac-b56e-40f9-bdbb-ce7e345b389b";
+const categoryId = "ebb10f9a-8e66-45da-acd6-80c61ff56b08";
+const userId = "49ccef0d-2bf0-4d08-a4ff-34e5dd966a68"
 const programmingTaskContents = [
   {
     title: "Arduino Debugging and Circuit Review",
@@ -299,7 +300,7 @@ async function main() {
     .insert(PaymentTable)
     .values(
       Array.from({ length: 10 }).map(() => ({
-        userId: "42859a56-0af6-45df-ad05-babea785622e",
+        userId,
         amount: faker.number.int({ min: 10, max: 200 }),
         status: faker.helpers.arrayElement([
           "HOLD",
@@ -326,7 +327,7 @@ async function main() {
           description: programmingTaskContents[idx].description,
           content: programmingTaskContents[idx].content,
           price: payment.amount,
-          posterId: "42859a56-0af6-45df-ad05-babea785622e",
+          posterId: userId,
           categoryId,
           paymentId: payment.id,
           deadline: "12h",
