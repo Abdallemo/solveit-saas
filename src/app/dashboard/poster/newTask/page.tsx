@@ -1,12 +1,12 @@
-import { AuthGate } from "@/components/GateComponents";
 import { NewTaskProvider } from "@/contexts/TaskContext";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  isAuthorized
+} from "@/features/auth/server/actions";
 import TaskCreationPage from "@/features/tasks/components/NewTaskPage";
 import { getDraftTaskWithDefualtVal } from "@/features/tasks/server/data";
 import { TaskSchema } from "@/features/tasks/server/task-types";
 export default async function Page() {
-  const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
+  const { user: currentUser, session } = await isAuthorized(["POSTER"]);
 
   const draft = await getDraftTaskWithDefualtVal(currentUser.id);
   const defaultValues: TaskSchema = {
@@ -20,7 +20,6 @@ export default async function Page() {
     uploadedFiles: draft?.uploadedFiles ?? [],
   };
 
-  // console.log("initial draft:\n", draft);
   return (
     <NewTaskProvider initialDraft={draft!}>
       <TaskCreationPage defaultValues={defaultValues} />
