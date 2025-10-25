@@ -5,10 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { env } from "@/env/client";
-import {
-  autoSaveDraftTask,
-  deleteDraftFile,
-} from "@/features/tasks/server/action";
+import { deleteDraftFile, saveDraftTask } from "@/features/tasks/server/action";
 import {
   useDeleteFileGeneric,
   useDownloadFile,
@@ -28,11 +25,9 @@ interface FileUploadUiProps {
 }
 
 export default function FileUploadUi({
-  maxFiles = 5,
   className,
 }: FileUploadUiProps) {
   const { updateDraft, draft } = NewuseTask();
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -62,7 +57,7 @@ export default function FileUploadUi({
     for (const file of fileArray) {
       try {
         toast.loading("Uploading...", { id: "file-upload" });
-        const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
+        const [uploadedMeta] = await uploadMutate({
           files: [file],
           scope: "task",
           url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
@@ -79,8 +74,7 @@ export default function FileUploadUi({
     const newUploadedFiles = [...(draft.uploadedFiles || []), ...uploadedMetas];
     updateDraft({ uploadedFiles: newUploadedFiles });
 
-    const uploadedFilesString = JSON.stringify(newUploadedFiles);
-    await autoSaveDraftTask(
+    await saveDraftTask(
       title,
       description,
       content,
@@ -89,38 +83,35 @@ export default function FileUploadUi({
       price,
       visibility,
       deadline,
-      uploadedFilesString
+      newUploadedFiles
     );
 
     inputRef.current!.value = "";
     setUploadingFiles([]);
   };
 
-  const handleFileDelete = async (meta: UploadedFileMeta) => {
+  const handleFileDelete = async (filePath: string) => {
     try {
-      toast.loading("Deleting...", { id: "file-delete" });
+      toast.loading("Deleting...", { id: `delete-file-${filePath}` });
       await deleteFile({
-        filePath: meta.storageLocation,
-        userId: userId,
+        filePath,
+        userId,
       });
       const filtered = (draft.uploadedFiles || []).filter(
-        (f) => f.filePath !== meta.filePath
+        (f) => f.filePath !== filePath
       );
       updateDraft({ uploadedFiles: filtered });
-
-      toast.dismiss("file-delete");
-      toast.success(`Deleted ${meta.fileName}`);
     } catch (err) {
       console.error(err);
       toast.error("Failed to delete file");
     }
   };
 
-  const handleFileDownload = async (file: UploadedFileMeta) => {
+  const handleFileDownload = async (fileName: string, key: string) => {
     toast.loading("Preparing download...", {
-      id: `file-${file.fileName}-download`,
+      id: `file-${fileName}-download`,
     });
-    await downloadFile({ fileName: file.fileName, key: file.filePath });
+    await downloadFile({ fileName, key });
   };
 
   return (
@@ -210,8 +201,12 @@ export default function FileUploadUi({
                       storageLocation: file.storageLocation,
                     })
                   }
-                  deleteAction={() => handleFileDelete(file)}
-                  downloadAction={() => handleFileDownload(file)}
+                  deleteAction={async (f) => {
+                    await handleFileDelete(f.filePath);
+                  }}
+                  downloadAction={async (f) =>
+                    await handleFileDownload(f.fileName, f.filePath)
+                  }
                 />
               </div>
             ))}
