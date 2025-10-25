@@ -120,6 +120,14 @@ export type workspaceFileType = {
   workspaceId: string;
   isDraft: boolean;
 };
+export type SolverStats = {
+  earnings: number;
+  mentorSessions: number;
+  allTasks: number;
+  solvedTasks: number;
+  inProgressTasks: number;
+  date: string;
+};
 export type SolutionReturnErrorType =
   | "Unable to locate the specified workspace. Please verify the ID and try again."
   | "Submission window has closed. You can no longer publish a solution for this task."
