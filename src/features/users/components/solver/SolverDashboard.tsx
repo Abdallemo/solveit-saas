@@ -1,5 +1,6 @@
 "use client";
 
+import SolverDashboardLoading from "@/app/dashboard/solver/loading";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,8 +18,12 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { upcomingTasks } from "@/features/tasks/server/data";
+import {
+  solverDashboardQuery,
+  upcomingTasksQuery,
+} from "@/features/tasks/client/queries";
 import useRealtimeDeadlines from "@/hooks/useRealtimeDeadlines";
+import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
   CalendarDays,
@@ -39,15 +44,26 @@ type SolverStats = {
   date: string;
 };
 
-export default function SolverDashboardLanding({
-  stats,
-  deadlines,
-}: {
-  stats: SolverStats[];
-  deadlines: upcomingTasks[];
-}) {
+export default function SolverDashboardLanding() { 
   const path = usePathname();
-  const deadlineState = useRealtimeDeadlines(deadlines);
+  const {
+    data: stats,
+    isLoading: statsIsLoading,
+    error: statsError,
+  } = useQuery(solverDashboardQuery());
+  const {
+    data: deadlines,
+    isLoading: deadlinesLoading,
+    error: deadlinesError,
+  } = useQuery(upcomingTasksQuery());
+
+  const deadlineState = useRealtimeDeadlines(deadlines ?? []);
+  if (statsError || deadlinesError) {
+    throw new Error("something went wrong");
+  }
+  if (statsIsLoading || !stats || deadlinesLoading || !deadlines) {
+    return <SolverDashboardLoading />;
+  }
 
   const tasksConfig = {
     allTasks: { label: "All Tasks", color: "#3b82f6" },
