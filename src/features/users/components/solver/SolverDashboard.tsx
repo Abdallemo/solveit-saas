@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
-  CardTitle
+  CardTitle,
 } from "@/components/ui/card";
 import {
   ChartConfig,
@@ -21,12 +22,14 @@ import {
   solverDashboardQuery,
   upcomingTasksQuery,
 } from "@/features/tasks/client/queries";
+import useRealtimeDeadlines from "@/hooks/useRealtimeDeadlines";
 import { useQuery } from "@tanstack/react-query";
 import {
   ArrowRight,
+  CalendarDays,
   CheckCircle,
   DollarSign,
-  Users
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -46,7 +49,7 @@ export default function SolverDashboardLanding() {
     error: deadlinesError,
   } = useQuery(upcomingTasksQuery());
 
-  // const deadlineState = useRealtimeDeadlines(deadlines ?? []);
+  const deadlineState = useRealtimeDeadlines(deadlines ?? []);
   if (statsError || deadlinesError) {
     throw new Error("something went wrong");
   }
@@ -242,7 +245,7 @@ export default function SolverDashboardLanding() {
         </Card>
       </section>
 
-      {/* <section className="mb-12">
+      <section className="mb-12">
         <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
           <CalendarDays className="w-6 h-6" /> Upcoming Deadlines
         </h2>
@@ -258,7 +261,7 @@ export default function SolverDashboardLanding() {
             </Card>
           ))}
         </div>
-      </section> */}
+      </section>
     </div>
   );
 }
