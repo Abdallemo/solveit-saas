@@ -363,7 +363,10 @@ export const TaskDraftTable = pgTable(
     })
       .notNull()
       .defaultNow(),
-    uploadedFiles: json("uploadedFiles").default("[]").notNull().$type<UploadedFileMeta[]>(),
+    uploadedFiles: json("uploadedFiles")
+      .default("[]")
+      .notNull()
+      .$type<UploadedFileMeta[]>(),
     visibility: TaskVisibility("visibility").default("public").notNull(),
     price: integer("price").default(10).notNull(),
   },
@@ -387,7 +390,10 @@ export const TaskFileTable = pgTable(
       withTimezone: true,
     }).defaultNow(),
   },
-  (taskFiles) => [index("task_files_taskId_idx").on(taskFiles.taskId)]
+  (taskFiles) => [
+    index("task_files_taskId_idx").on(taskFiles.taskId),
+    index("task_files_filePath_idx").on(taskFiles.filePath),
+  ]
 );
 
 export const TaskCategoryTable = pgTable("task_categories", {
@@ -524,6 +530,7 @@ export const WorkspaceFilesTable = pgTable(
     index("solution_workspace_files_uploadedById_idx").on(
       solutionWorkspaceFiles.uploadedById
     ),
+    index("solution_workspace_files_filePath_idx").on(solutionWorkspaceFiles.filePath),
   ]
 );
 
@@ -697,6 +704,7 @@ export const MentorshipChatFilesTable = pgTable(
   },
   (mentorshipChatFiles) => [
     index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId),
+    index("mentorship_chat_files_filePath_idx").on(mentorshipChatFiles.filePath),
   ]
 );
 
