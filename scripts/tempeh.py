@@ -1,0 +1,1 @@
+fixed file deleting issue by completly ditching server actions and using route handlers
