@@ -9,7 +9,6 @@ export default async function page() {
   await isAuthorized(["SOLVER"]);
   const data = await getSolverStats();
   const deadlines = await getSolverUpcomminDeadlines();
-  console.log(deadlines)
   return (
     <div className="w-full h-full">
       <SolverDashboard stats={data} deadlines={deadlines} />
