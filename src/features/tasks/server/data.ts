@@ -652,6 +652,7 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
   const tasks = await db.query.TaskTable.findMany({
     columns: { id: true, title: true, deadline: true },
     where: (tb, fn) => fn.eq(tb.solverId, user.id),
+    orderBy: (tb, fn) => fn.desc(tb.updatedAt),
   });
 
   const result = await Promise.all(
@@ -670,6 +671,7 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
           totalTime,
           timePassed,
           unit: "d",
+          deadlineDate: deadline,
         };
       }
       const due = formatDistance(deadline, now, { addSuffix: true });
