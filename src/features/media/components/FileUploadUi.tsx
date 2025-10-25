@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { env } from "@/env/client";
-import { deleteDraftFile, saveDraftTask } from "@/features/tasks/server/action";
+import { saveDraftTask } from "@/features/tasks/server/action";
 import {
   useDeleteFileGeneric,
   useDownloadFile,
@@ -24,9 +24,7 @@ interface FileUploadUiProps {
   className?: string;
 }
 
-export default function FileUploadUi({
-  className,
-}: FileUploadUiProps) {
+export default function FileUploadUi({ className }: FileUploadUiProps) {
   const { updateDraft, draft } = NewuseTask();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
@@ -45,7 +43,7 @@ export default function FileUploadUi({
 
   const { uploadMutate } = useFileUpload({});
 
-  const { mutateAsync: deleteFile } = useDeleteFileGeneric(deleteDraftFile);
+  const { mutateAsync: deleteFile } = useDeleteFileGeneric("draft_task");
   const { mutateAsync: downloadFile } = useDownloadFile();
 
   const handleFiles = async (newFiles: FileList | null) => {
@@ -92,10 +90,8 @@ export default function FileUploadUi({
 
   const handleFileDelete = async (filePath: string) => {
     try {
-      toast.loading("Deleting...", { id: `delete-file-${filePath}` });
       await deleteFile({
         filePath,
-        userId,
       });
       const filtered = (draft.uploadedFiles || []).filter(
         (f) => f.filePath !== filePath
