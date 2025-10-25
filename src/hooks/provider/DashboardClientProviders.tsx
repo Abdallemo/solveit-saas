@@ -82,7 +82,7 @@ export function DashboardClientProviders({
                     <BridCarmComponent userRole={user.role} />
                   </div>
                   <div className="flex gap-2 justify-center items-center">
-                    {user.role === "SOLVER" && (
+                    {user.role === "SOLVER" && isMounted && (
                       <WalletDropdownMenu user={user} />
                     )}
                     <NotificationDropDown
