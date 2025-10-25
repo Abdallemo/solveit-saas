@@ -159,6 +159,11 @@ export function useDownloadFile() {
 
       return { blob, fileName };
     },
+    onMutate: ({ fileName, key }) => {
+      toast.loading("preparing to downlad..", {
+        id: `file-${fileName}-download`,
+      });
+    },
 
     onSuccess: ({ blob, fileName }) => {
       toast.success("File ready to download", {
