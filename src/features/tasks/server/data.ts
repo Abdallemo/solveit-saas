@@ -417,20 +417,24 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
   });
-  if (!oldTask) return null;
-  return {
-    id: oldTask.id,
-    userId: oldTask.userId,
-    title: oldTask.title ?? "",
-    description: oldTask.description ?? "",
-    content: oldTask.content ?? "",
-    deadline: oldTask.deadline ?? "12h",
-    visibility: oldTask.visibility ?? "public",
-    category: oldTask.category ?? "",
-    price: oldTask.price ?? 10,
-    updatedAt: oldTask.updatedAt,
-    uploadedFiles:oldTask.uploadedFiles ?? []
-  };
+  // if (!oldTask) return null;
+  if (!oldTask) {
+    return null;
+  } else {
+    return {
+      id: oldTask.id,
+      userId: oldTask.userId,
+      title: oldTask.title ?? "",
+      description: oldTask.description ?? "",
+      content: oldTask.content ?? "",
+      deadline: oldTask.deadline ?? "12h",
+      visibility: oldTask.visibility ?? "public",
+      category: oldTask.category ?? "",
+      price: oldTask.price ?? 10,
+      updatedAt: oldTask.updatedAt,
+      uploadedFiles: oldTask.uploadedFiles ?? [],
+    };
+  }
 }
 export async function getDraftTask(userId: string, draftId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
@@ -639,7 +643,7 @@ export type upcomingTasks = {
   totalTime: number;
   timePassed: number;
   unit: Units;
-  deadlineDate:Date
+  deadlineDate: Date;
 };
 export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
   const { user } = await isAuthorized(["SOLVER"]);
@@ -679,7 +683,7 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
         totalTime,
         timePassed,
         unit: unit,
-        deadlineDate:deadline
+        deadlineDate: deadline,
       };
     })
   );
