@@ -74,30 +74,40 @@ export const MentorshipSessionProvider = ({
     mutationFn: revalidateMentorSessinoData,
   });
 
-  useWebSocket<MentorChatSession>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}`,
-    {
-      onMessage: (msg) => {
-        updateSession({
-          chats: [
-            ...(session?.chats || []),
-            { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
-          ],
-        });
-        if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
-          setUploadingFiles([]);
-        }
-        mentorSessoin.mutate({
-          role: "solver",
-          sessionId: msg.sessionId,
-        });
-        mentorSessoin.mutate({
-          role: "poster",
-          sessionId: msg.sessionId,
-        });
-      },
-    }
-  );
+  useWebSocket<
+    MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
+  >(`${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}`, {
+    onMessage: (msg) => {
+      switch (msg.messageType) {
+        case "chat_message":
+          updateSession({
+            chats: [
+              ...(session?.chats || []),
+              { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
+            ],
+          });
+          break;
+        case "chat_deleted":
+          updateSession({
+            chats: (session?.chats || []).map((c) =>
+              c.id === msg.id ? { ...c, isDeleted: true, chatFiles: [] } : c
+            ),
+          });
+          break;
+      }
+      if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
+        setUploadingFiles([]);
+      }
+      mentorSessoin.mutate({
+        role: "solver",
+        sessionId: msg.sessionId,
+      });
+      mentorSessoin.mutate({
+        role: "poster",
+        sessionId: msg.sessionId,
+      });
+    },
+  });
   if (isLoading || !session) return <Loading />;
 
   return (
