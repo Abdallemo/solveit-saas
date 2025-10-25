@@ -20,14 +20,15 @@ type ChatFile struct {
 }
 
 type Chat struct {
-	ID        string          `json:"id"`
-	SessionId string          `json:"sessionId"`
-	SentBy    string          `json:"sentBy"`
-	Message   string          `json:"message"`
-	CreatedAt string          `json:"createdAt"`
-	ReadAt    string          `json:"readAt"`
-	ChatFile  []ChatFile      `json:"chatFiles"`
-	ChatOwner user.PublicUser `json:"chatOwner"`
+	ID          string          `json:"id"`
+	SessionId   string          `json:"sessionId"`
+	SentBy      string          `json:"sentBy"`
+	Message     string          `json:"message"`
+	CreatedAt   string          `json:"createdAt"`
+	ReadAt      string          `json:"readAt"`
+	ChatFile    []ChatFile      `json:"chatFiles"`
+	ChatOwner   user.PublicUser `json:"chatOwner"`
+	MessageType string          `json:"messageType"`
 }
 type WsMentorChat struct {
 	hub   *WsHub
@@ -61,14 +62,15 @@ func (s *WsMentorChat) HandleSendMentorChats(w http.ResponseWriter, r *http.Requ
 	}
 
 	chat := Chat{
-		ID:        msg.ID,
-		SessionId: msg.SessionId,
-		SentBy:    msg.SentBy,
-		Message:   msg.Message,
-		CreatedAt: msg.CreatedAt,
-		ReadAt:    msg.ReadAt,
-		ChatFile:  msg.ChatFile,
-		ChatOwner: msg.ChatOwner,
+		ID:          msg.ID,
+		SessionId:   msg.SessionId,
+		SentBy:      msg.SentBy,
+		Message:     msg.Message,
+		CreatedAt:   msg.CreatedAt,
+		ReadAt:      msg.ReadAt,
+		ChatFile:    msg.ChatFile,
+		ChatOwner:   msg.ChatOwner,
+		MessageType: msg.MessageType,
 	}
 
 	s.sendToUser(msg.SessionId, chat)
