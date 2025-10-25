@@ -141,7 +141,7 @@ export default function MentorshipWorkspace({
       }
       if (files.length > 0) {
         setUploadingFiles(files);
-        const uploadedMeta: UploadedFileMeta[] = await uploadMutate({
+        const uploadedMeta = await uploadMutate({
           files,
           scope: "mentorship",
           url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
