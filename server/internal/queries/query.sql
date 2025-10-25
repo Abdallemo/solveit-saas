@@ -3,7 +3,7 @@ SELECT *
 from users;
 -- name: GetAIRules :many
 SELECT rule
-FROM ai_rules;
+FROM ai_rules WHERE is_active=TRUE;
 -- name: GetTaskCategories :many
 SELECT name
 FROM task_categories;

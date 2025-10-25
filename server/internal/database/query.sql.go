@@ -38,7 +38,7 @@ func (q *Queries) AddSolverToTaskBlockList(ctx context.Context, arg AddSolverToT
 
 const getAIRules = `-- name: GetAIRules :many
 SELECT rule
-FROM ai_rules
+FROM ai_rules WHERE is_active=TRUE
 `
 
 func (q *Queries) GetAIRules(ctx context.Context) ([]string, error) {
