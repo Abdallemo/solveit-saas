@@ -29,7 +29,7 @@ export default function TaskCreationPage({
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, updateDraft } = NewuseTask(); //new Migrations
+  const { draft, updateDraft,contentText } = NewuseTask(); //new Migrations
   const {
     category,
     content,
@@ -137,7 +137,7 @@ export default function TaskCreationPage({
   async function onSubmit(data: TaskSchema) {
     try {
       toast.loading("checking content againt our rules....", { id: "openai" });
-      const ruleRes = await validateContent(data.content);
+      const ruleRes = await validateContent(contentText);
       if (ruleRes.violatesRules) {
         toast.warning(
           <div className="flex flex-col gap-2">

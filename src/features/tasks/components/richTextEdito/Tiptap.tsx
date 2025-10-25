@@ -14,6 +14,7 @@ export default function TaskPostingEditor() {
   const {
     draft: { content },
     updateDraft,
+    setContentTextFormat
   } = NewuseTask();
 
   const lowlight = createLowlight(common);
@@ -45,6 +46,7 @@ export default function TaskPostingEditor() {
     ],
     onUpdate({ editor }) {
       updateDraft({ content: editor.getHTML() });
+     setContentTextFormat(editor.getText());
     },
     content: content,
     immediatelyRender: false,
