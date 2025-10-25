@@ -349,7 +349,7 @@ export async function validatePaymentIntent(piId: string) {
   const intent = await stripe.paymentIntents.retrieve(piId);
   return intent.status === "succeeded";
 }
-export async function autoSaveDraftTask(
+export async function saveDraftTask(
   title: string,
   description: string,
   content: string,
@@ -358,21 +358,11 @@ export async function autoSaveDraftTask(
   price: number,
   visibility: "public" | "private",
   deadline: string,
-  uploadedFiles?: string
+  uploadedFiles: UploadedFileMeta[] = []
 ) {
   const now = new Date();
   try {
-    let parsedFiles: UploadedFileMeta[] = [];
-    if (uploadedFiles) {
-      try {
-        const temp = JSON.parse(uploadedFiles);
-        if (Array.isArray(temp)) {
-          parsedFiles = temp as UploadedFileMeta[];
-        }
-      } catch {
-        parsedFiles = [];
-      }
-    }
+
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
     });
@@ -388,7 +378,7 @@ export async function autoSaveDraftTask(
           price,
           visibility,
           deadline,
-          uploadedFiles: parsedFiles,
+          uploadedFiles,
           updatedAt: now,
         })
         .where(eq(TaskDraftTable.userId, userId));
@@ -402,7 +392,7 @@ export async function autoSaveDraftTask(
         price,
         visibility,
         deadline,
-        uploadedFiles: parsedFiles,
+        uploadedFiles,
       });
     }
     return await db.query.TaskDraftTable.findFirst({
