@@ -1,7 +1,4 @@
-import { env } from "@/env/client";
 import { uploadFiles } from "@/features/media/server/action";
-import { deleteFileFromChatSession } from "@/features/mentore/server/action";
-import { deleteFileFromWorkspace } from "@/features/tasks/server/action";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 type FileUploadProps = {
@@ -37,62 +34,105 @@ export function useFileUpload({
 
   return { uploadMutate, isUploading, uploadedFilesData, uploadError };
 }
-export function useDeleteFile() {
-  return useMutation({
-    mutationFn: async ({
-      fileId,
-      filePath,
-    }: {
-      fileId: string;
-      filePath: string;
-    }) => {
-      return await deleteFileFromWorkspace(fileId);
-    },
-    onSuccess: () => {
-      toast.success("File deleted successfully!", { id: "file-delete" });
-    },
-    onError: (error: any) => {
-      toast.error(`Failed to delete file: ${error.message}`, {
-        id: "file-delete",
-      });
-    },
-  });
-}
-export function useDeleteFileChat() {
-  return useMutation({
-    mutationFn: async ({
-      fileId,
-      filePath,
-    }: {
-      fileId: string;
-      filePath: string;
-    }) => {
-      return await deleteFileFromChatSession(fileId);
-    },
-    onSuccess: ({ fileId }) => {
-      toast.success("File deleted successfully!", {
-        id: `delete-file-${fileId}`,
-      });
-    },
-    onError: (error: any, { fileId }) => {
-      toast.error(`Failed to delete file: ${error.message}`, {
-        id: `delete-file-${fileId}`,
-      });
-    },
-  });
-}
+//--deperected
+// export function useDeleteFile() {
+//   return useMutation({
+//     mutationFn: async ({
+//       fileId,
+//       filePath,
+//     }: {
+//       fileId: string;
+//       filePath: string;
+//     }) => {
+//       return await deleteFileFromWorkspace(fileId);
+//     },
+//     onSuccess: () => {
+//       toast.success("File deleted successfully!", { id: "file-delete" });
+//     },
+//     onError: (error: any) => {
+//       toast.error(`Failed to delete file: ${error.message}`, {
+//         id: "file-delete",
+//       });
+//     },
+//   });
+// }
+//--deperected
+// export function useDeleteFileChat() {
+//   return useMutation({
+//     mutationFn: async ({
+//       fileId,
+//       filePath,
+//     }: {
+//       fileId: string;
+//       filePath: string;
+//     }) => {
+//       return await deleteFileFromChatSessionDb(fileId);
+//     },
+//     onSuccess: () => {
+//       toast.success("File deleted successfully!", {
+//         id: `delete-file-${fileId}`,
+//       });
+//     },
+//     onError: (error: any, { fileId }) => {
+//       toast.error(`Failed to delete file: ${error.message}`, {
+//         id: `delete-file-${fileId}`,
+//       });
+//     },
+//   });
+// }
+type DeleteMediaEndpointScope =
+  | "draft_task"
+  | "task"
+  | "solution_workspace"
+  | "mentorship_chat";
 export function useDeleteFileGeneric<
-  Args extends Record<string, any> & { filePath: string }
->(deleteCallback: (args: Args) => Promise<any>) {
+  Args extends Record<string, any> & {
+    filePath: string;
+  }
+>(type: DeleteMediaEndpointScope) {
   return useMutation({
     mutationFn: async (args: Args) => {
-      return await deleteCallback(args);
+      switch (type) {
+        case "draft_task":
+          await fetch(
+            `/api/media/tasks/draft?key=${encodeURIComponent(args.filePath)}`,
+            {
+              method: "DELETE",
+            }
+          );
+          break;
+        case "mentorship_chat":
+          await fetch(
+            `/api/media/mentorship?key=${encodeURIComponent(args.filePath)}`,
+            {
+              method: "DELETE",
+            }
+          );
+          break;
+        case "solution_workspace":
+          await fetch(
+            `/api/media/solutions?key=${encodeURIComponent(args.filePath)}`,
+            {
+              method: "DELETE",
+            }
+          );
+          break;
+        case "task":
+          /**
+           * Not Yet Needed
+           */
+          break;
+      }
+    },
+    onMutate: ({ filePath }) => {
+      toast.loading("deleting..", {
+        id: `delete-file-${filePath}`,
+      });
     },
     onSuccess: (_data, { filePath }) => {
       toast.success("File deleted successfully!", {
         id: `delete-file-${filePath}`,
       });
-      
     },
     onError: (error: any, { filePath }) => {
       toast.error(`Failed to delete file: ${error.message}`, {
@@ -111,9 +151,7 @@ export function useDownloadFile() {
       fileName: string;
     }) => {
       const res = await fetch(
-        `${env.NEXT_PUBLIC_URL}/api/download-proxy?key=${encodeURIComponent(
-          key
-        )}`
+        `/api/media/download-proxy?key=${encodeURIComponent(key)}`
       );
       if (!res.ok) throw new Error("Failed to download file");
 
@@ -152,9 +190,9 @@ export function useFileStream(key: string | null) {
         throw new Error("Key is required for fetching file content.");
       }
 
-      const res = await fetch(
-        `${env.NEXT_PUBLIC_URL}/api/media-stream?key=${encodeURIComponent(key)}`
-      );
+      const res = await fetch(`/api/media?key=${encodeURIComponent(key)}`, {
+        method: "GET",
+      });
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(
