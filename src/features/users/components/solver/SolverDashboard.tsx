@@ -35,14 +35,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
 
-type SolverStats = {
-  earnings: number;
-  mentorSessions: number;
-  allTasks: number;
-  solvedTasks: number;
-  inProgressTasks: number;
-  date: string;
-};
 
 export default function SolverDashboardLanding() { 
   const path = usePathname();
