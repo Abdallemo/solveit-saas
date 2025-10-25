@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
       return "next-build-id-fallback";
     }
   },
+  productionBrowserSourceMaps: true,
+  webpack(config, { dev, isServer }) {
+    if (!dev) {
+      config.devtool = "source-map";
+    }
+    return config;
+  },
   images: {
     remotePatterns: [
       {
