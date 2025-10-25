@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """fixed null issue with draft task table & file deleting issue"""
+commit_message = """fixed file deleting issue by completly ditching server actions and using route handlers"""
 
 repo = Repo(repo_path)
 
