@@ -63,7 +63,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
       console.log("in the for loop");
       try {
         toast.loading("uploading..", { id: "file-upload" });
-        const [uploadedMeta]: UploadedFileMeta[] = await uploadMutate({
+        const [uploadedMeta] = await uploadMutate({
           files: [file],
           scope: "workspace",
           url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
