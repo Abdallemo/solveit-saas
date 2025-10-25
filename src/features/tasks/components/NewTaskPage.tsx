@@ -10,17 +10,16 @@ import {
 import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
 import TaskPostingEditor from "@/features/tasks/components/richTextEdito/Tiptap";
 import {
-  autoSaveDraftTask,
   createTaksPaymentCheckoutSession,
+  saveDraftTask,
 } from "@/features/tasks/server/action";
 import { TaskSchema, taskSchema } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useFileUpload } from "@/hooks/useFile";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { CircleAlert, Loader } from "lucide-react";
+import { CircleAlert } from "lucide-react";
 import { Suspense, useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -30,18 +29,25 @@ export default function TaskCreationPage({
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, selectedFiles, updateDraft } = NewuseTask(); //new Migrations
-  const { category, content, deadline, description, price, title, visibility,uploadedFiles } =
-    draft;
+  const { draft, updateDraft } = NewuseTask(); //new Migrations
+  const {
+    category,
+    content,
+    deadline,
+    description,
+    price,
+    title,
+    visibility,
+    uploadedFiles,
+  } = draft;
   const currentUser = useCurrentUser();
   const { user } = currentUser;
   const [isDisabled, setIsDisabled] = useState(true);
   const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-  const { uploadMutate, isUploading } = useFileUpload({});
-  const [ruleVailation, setRuleVailation] = useState(false);
+
   useAutoSave({
-    autoSaveFn: autoSaveDraftTask,
+    autoSaveFn: saveDraftTask,
     autoSaveArgs: [
       title,
       description,
@@ -51,7 +57,7 @@ export default function TaskCreationPage({
       price,
       visibility,
       deadline,
-      JSON.stringify(uploadedFiles),
+      uploadedFiles,
     ],
     delay: 700,
   });
@@ -59,7 +65,6 @@ export default function TaskCreationPage({
   const { mutateAsync: validateContent, isPending } = useMutation({
     mutationFn: validateContentWithAi,
     onSuccess: (d) => {
-      setRuleVailation(d.violatesRules);
       toast.success("valid content", {
         id: "openai",
       });
@@ -146,10 +151,10 @@ export default function TaskCreationPage({
 
           { id: "openai" }
         );
-        return; //todo will do in the server side too
+        return;
       }
-     
-      const lastUpdDraft = await autoSaveDraftTask(
+
+      const lastUpdDraft = await saveDraftTask(
         title,
         description,
         content,
@@ -158,7 +163,7 @@ export default function TaskCreationPage({
         price,
         visibility,
         deadline,
-        JSON.stringify(uploadedFiles),
+        uploadedFiles
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({
@@ -189,18 +194,9 @@ export default function TaskCreationPage({
           <Button
             type="submit"
             form="task-form"
-            disabled={
-              isDisabled || isUploading || isPending || isAutoSeggesting
-            }
+            disabled={isDisabled || isPending || isAutoSeggesting}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            {isUploading ? (
-              <>
-                <Loader className="animate-spin w-4 h-4" />
-                Uploading files...
-              </>
-            ) : (
-              "Publish Task"
-            )}
+            "Publish Task"
           </Button>
         </header>
         <FormProvider {...form}>
