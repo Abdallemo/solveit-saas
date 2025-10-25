@@ -95,7 +95,6 @@ export default function NotificationDropDown({
   );
 
   const handleNotificationClick = async (notificationId: string) => {
-    console.log("Notification clicked:", notificationId);
     toast.loading("loading..", { id: "mark-as-read" });
     setMessages((prev) =>
       prev.map((msg) =>
