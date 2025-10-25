@@ -9,6 +9,7 @@ type RealtimeTaskState = Omit<upcomingTasks, "deadlineDate"> & {
 };
 
 const calculateDue = (task: RealtimeTaskState) => {
+  console.log("[calculateDue]",task.deadlineDate)
   if (isPast(task.deadlineDate)) {
     return "Passed";
   }
