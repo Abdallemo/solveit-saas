@@ -3,6 +3,8 @@ import {
   getAllTasksByRolePaginated,
   getPosterTasksbyIdPaginated,
   getSolverAssignedTasksbyIdPaginated,
+  getSolverStats,
+  getSolverUpcomminDeadlines,
 } from "@/features/tasks/server/data";
 import { UserDbType } from "@/features/users/server/actions";
 import { queryOptions } from "@tanstack/react-query";
@@ -186,5 +188,19 @@ export const taskCategoriesQuery = (params: {
 
         return taskCategoryToSend;
       }
+    },
+  });
+export const solverDashboardQuery = () =>
+  queryOptions({
+    queryKey: ["SolverStats"],
+    queryFn: async () => {
+      return await getSolverStats();
+    },
+  });
+export  const upcomingTasksQuery = () =>
+  queryOptions({
+    queryKey: ["SolverStats"],
+    queryFn: async () => {
+      return await getSolverUpcomminDeadlines();
     },
   });
