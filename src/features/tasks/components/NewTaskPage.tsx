@@ -29,7 +29,7 @@ export default function TaskCreationPage({
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, updateDraft,contentText } = NewuseTask(); //new Migrations
+  const { draft, updateDraft } = NewuseTask(); //new Migrations
   const {
     category,
     content,
@@ -39,6 +39,7 @@ export default function TaskCreationPage({
     title,
     visibility,
     uploadedFiles,
+    contentText,
   } = draft;
   const currentUser = useCurrentUser();
   const { user } = currentUser;
@@ -52,6 +53,7 @@ export default function TaskCreationPage({
       title,
       description,
       content,
+      contentText,
       user?.id!,
       category,
       price,
@@ -64,6 +66,9 @@ export default function TaskCreationPage({
 
   const { mutateAsync: validateContent, isPending } = useMutation({
     mutationFn: validateContentWithAi,
+    onMutate: () => {
+      toast.loading("checking content againt our rules....", { id: "openai" });
+    },
     onSuccess: (d) => {
       toast.success("valid content", {
         id: "openai",
@@ -85,7 +90,7 @@ export default function TaskCreationPage({
   async function handleSugestions() {
     toast.loading("Ai Suggesting...", { id: "autosuggestion" });
     const res = await autoSuggest({
-      content: draft.content,
+      content: contentText,
     }).finally(() => {
       toast.dismiss("autosuggestion");
     });
@@ -136,8 +141,7 @@ export default function TaskCreationPage({
   if (isBlocked) return <AuthGate />;
   async function onSubmit(data: TaskSchema) {
     try {
-      toast.loading("checking content againt our rules....", { id: "openai" });
-      const ruleRes = await validateContent(contentText);
+      const ruleRes = await validateContent({ content: contentText,adminMode:false });
       if (ruleRes.violatesRules) {
         toast.warning(
           <div className="flex flex-col gap-2">
@@ -158,6 +162,8 @@ export default function TaskCreationPage({
         title,
         description,
         content,
+        contentText,
+
         user?.id!,
         category,
         price,
@@ -167,7 +173,7 @@ export default function TaskCreationPage({
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({
-        content,
+        content: contentText,
         price,
         userId: user?.id!,
         deadlineStr: deadline,
