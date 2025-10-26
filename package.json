@@ -16,6 +16,7 @@
     "db:seed": "tsx .\\src\\drizzle\\seed.ts  ",
     "stripe": "stripe listen --forward-to localhost:3000/api/webhooks/stripe"
   },
+
   "dependencies": {
     "@auth/drizzle-adapter": "^1.8.0",
     "@faker-js/faker": "^10.0.0",
