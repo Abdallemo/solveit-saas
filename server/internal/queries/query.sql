@@ -3,7 +3,9 @@ SELECT *
 from users;
 -- name: GetAIRules :many
 SELECT rule
-FROM ai_rules WHERE is_active=TRUE;
+FROM ai_rules
+WHERE is_active = TRUE
+ORDER BY updated_at DESC;
 -- name: GetTaskCategories :many
 SELECT name
 FROM task_categories;
@@ -42,4 +44,9 @@ FROM task_drafts
 WHERE updated_at < $1
   AND json_array_length("uploadedFiles") > 0;
 -- name: RemoveFileFromTaskDraft :exec
-UPDATE task_drafts SET "uploadedFiles" = '[]' WHERE id = $1;
+UPDATE task_drafts
+SET "uploadedFiles" = '[]'
+WHERE id = $1;
+-- name: AddAIFlags :exec
+INSERT INTO ai_flags (hashed_content, reason, confidence_score)
+VALUES ($1, $2, $3);
