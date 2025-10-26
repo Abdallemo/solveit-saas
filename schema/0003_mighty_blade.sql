@@ -1,0 +1,1 @@
+ALTER TABLE "task_drafts" ADD COLUMN "contentText" text DEFAULT '' NOT NULL;
