@@ -1,10 +1,13 @@
 "use server";
 
 import db from "@/drizzle/db";
-import { RulesTable } from "@/drizzle/schemas";
+import { AiTestSandboxTable, RulesTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
+import { DeleteKeysByPattern } from "@/lib/redis";
+import { runInBackground, serverCurrentTime } from "@/lib/utils";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
@@ -29,6 +32,10 @@ export async function addNewRule(values: {
     });
     revalidatePath("/dashboard/admin/ai");
     logger.info("Successfully added new Ai Rule By " + adminId);
+    runInBackground({
+      promise: DeleteKeysByPattern("openai:moderation:*"),
+      taskName: "Clear AI cache",
+    });
   } catch (error) {
     logger.error("Unable to add new Rule by " + adminId, {
       message: (error as Error).message,
@@ -51,10 +58,14 @@ export async function updateRule(values: {
   try {
     await db
       .update(RulesTable)
-      .set({ description, rule })
+      .set({ description, rule,updatedAt:new Date() })
       .where(eq(RulesTable.id, ruleId));
 
     revalidatePath("/dashboard/admin/ai");
+    runInBackground({
+      promise: DeleteKeysByPattern("openai:moderation:*"),
+      taskName: "Clear AI cache",
+    });
     logger.info("Successfully updated Ai Rule By " + adminId);
   } catch (error) {
     logger.error("Unable to update Rule by " + adminId, {
@@ -67,16 +78,21 @@ export async function updateRule(values: {
 export async function toggleRuleActivation(values: {
   state: boolean;
   ruleId: string;
-  adminId:string;
+  adminId: string;
 }) {
   const { state, adminId, ruleId } = values;
   try {
     await db
       .update(RulesTable)
-      .set({ isActive: state })
+      .set({ isActive: state,updatedAt:new Date() })
       .where(eq(RulesTable.id, ruleId));
 
     revalidatePath("/dashboard/admin/ai");
+    runInBackground({
+      promise: DeleteKeysByPattern("openai:moderation:*"),
+      taskName: "Clear AI cache",
+    });
+
     logger.info("Successfully updated Ai Rule Active State By " + adminId);
   } catch (error) {
     logger.error("Unable to update Rule by Active State" + adminId, {
@@ -87,28 +103,54 @@ export async function toggleRuleActivation(values: {
   }
 }
 
-export type AiRule = Awaited<ReturnType<typeof getAllAiRules>>[number];
+export type AiRule = Exclude<
+  Awaited<ReturnType<typeof getAllAiRules>>,
+  undefined
+>[number];
 export async function getAllAiRules() {
-  return await db.query.RulesTable.findMany({
-    orderBy: (tb, ty) => ty.desc(tb.createdAt),
-  });
+  try {
+    return await db.query.RulesTable.findMany({
+      orderBy: (tb, ty) => ty.desc(tb.createdAt),
+    });
+  } catch (error) {
+    logger.error("failed to fetch");
+  }
 }
-const openaiResSchema = z.object({
-  violatesRules: z.boolean(),
-});
 const autoSuggestResSchema = z.object({
   title: z.string(),
   description: z.string(),
   category: z.string(),
   price: z.number(),
 });
-export type openaiResType = z.infer<typeof openaiResSchema>;
-export async function validateContentWithAi(content: string) {
+const openaiResSchema = z.object({
+  violatesRules: z.boolean(),
+  reason: z.string(),
+  triggeredRules: z.array(z.string()).default([]),
+  confidenceScore: z.number(),
+});
+export type openaiResAdminType = z.infer<typeof openaiResSchema>;
+export type openaiResUserType = Pick<openaiResAdminType, "violatesRules">;
+
+export async function validateContentWithAi(fields: {
+  content: string;
+  adminMode: true;
+}): Promise<openaiResAdminType>;
+export async function validateContentWithAi(fields: {
+  content: string;
+  adminMode: false;
+}): Promise<openaiResUserType>;
+
+export async function validateContentWithAi(
+  fields:
+    | { content: string; adminMode: true }
+    | { content: string; adminMode: false }
+): Promise<openaiResAdminType | openaiResUserType> {
+  console.log("data :", JSON.stringify(fields));
   try {
     const res = await fetch(`${env.GO_API_URL}/openai?task=moderation`, {
       method: "POST",
-      headers: GoHeaders,
-      body: JSON.stringify({ content: content }),
+      headers: { ...GoHeaders },
+      body: JSON.stringify(fields),
     });
     if (!res.ok) {
       console.error(res.json());
@@ -120,17 +162,25 @@ export async function validateContentWithAi(content: string) {
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");
     }
-    return validatedData.data;
+    if (fields.adminMode) {
+      return validatedData.data;
+    } else {
+      const allowedResponse: openaiResUserType = {
+        violatesRules: validatedData.data.violatesRules,
+      };
+      return allowedResponse;
+    }
   } catch (error) {
     logger.error("failed to fetch goapi openai");
     throw error;
   }
 }
 export async function autoSuggestWithAi(fields: { content: string }) {
+  console.log("data :", JSON.stringify(fields));
   try {
     const res = await fetch(`${env.GO_API_URL}/openai?task=autosuggestion`, {
       method: "POST",
-      headers: GoHeaders,
+      headers: { ...GoHeaders },
       body: JSON.stringify(fields),
     });
     if (!res.ok) {
@@ -153,10 +203,70 @@ export async function autoSuggestWithAi(fields: { content: string }) {
 export async function deleteRule(id: string) {
   try {
     await db.delete(RulesTable).where(eq(RulesTable.id, id));
+    runInBackground({
+      promise: DeleteKeysByPattern("openai:moderation:*"),
+      taskName: "Clear AI cache",
+    });
   } catch (error) {
     logger.error(
       "unable to delete this rule, cause: " + (error as Error).message
     );
     throw new Error("unable to delete this rule");
   }
+}
+
+export async function saveAdminAiSandboxTests({
+  content,
+  autoSave = false,
+}: {
+  content: string;
+
+  autoSave?: boolean;
+}) {
+  try {
+    const {
+      user: { id: adminId },
+    } = await isAuthorized(["ADMIN"]);
+
+    const res = await db.query.AiTestSandboxTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.adminId, adminId),
+    });
+    if (res) {
+      if (autoSave) {
+        await db
+          .update(AiTestSandboxTable)
+          .set({
+            content: content,
+            updatedAt: serverCurrentTime,
+          })
+          .where(eq(AiTestSandboxTable.adminId, adminId));
+      } else {
+        await db
+          .update(AiTestSandboxTable)
+          .set({
+            content: content,
+            updatedAt: serverCurrentTime,
+            testAmount: res.testAmount + 1,
+          })
+          .where(eq(AiTestSandboxTable.adminId, adminId));
+      }
+    } else {
+      await db.insert(AiTestSandboxTable).values({
+        adminId,
+        content,
+      });
+    }
+  } catch (error) {
+    console.log(error);
+  }
+}
+export type AdminAiSandboxTestsType = Exclude<
+  Awaited<ReturnType<typeof getAdminAiSandboxTests>>,
+  undefined
+>;
+export async function getAdminAiSandboxTests() {
+  const { user } = await isAuthorized(["ADMIN"]);
+  return await db.query.AiTestSandboxTable.findFirst({
+    where: (tb, fn) => fn.eq(tb.adminId, user.id),
+  });
 }
