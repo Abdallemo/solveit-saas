@@ -1,5 +1,8 @@
 import { TaskStatusType } from "@/drizzle/schemas";
-import { getAdminAiSandboxTests, getAllAiRules } from "@/features/Ai/server/action";
+import {
+  getAdminAiSandboxTests,
+  getAllAiRules,
+} from "@/features/Ai/server/action";
 import {
   getAllTasksByRolePaginated,
   getPosterTasksbyIdPaginated,
@@ -101,6 +104,38 @@ export const userGrowthQuery = (params: {
       try {
         const res = await fetch(
           `/api/admin/reports/user_growth?from=${from}&to=${to}`,
+          {
+            method: "GET",
+          }
+        );
+        dataToSend = await res.json();
+
+        return dataToSend;
+      } catch (error) {
+        console.log(error);
+        return dataToSend;
+      }
+    },
+    enabled: params.enabled,
+  });
+
+type aiFlagsReturnType = {
+  date: string;
+  flags: number;
+}[];
+export const aiFlagsDataQuery = (params: {
+  from: string;
+  to: string;
+  enabled: boolean;
+}) =>
+  queryOptions({
+    queryKey: ["ai-flags", params.from, params.to],
+    queryFn: async () => {
+      let dataToSend: aiFlagsReturnType = [];
+      const { from, to } = params;
+      try {
+        const res = await fetch(
+          `/api/admin/reports/ai-flags?from=${from}&to=${to}`,
           {
             method: "GET",
           }
