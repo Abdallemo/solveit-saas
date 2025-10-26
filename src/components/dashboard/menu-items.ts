@@ -15,6 +15,7 @@ import {
   LucideClipboardPlus,
   LucideDollarSign,
   LucideFileQuestion,
+  LucideFlaskConical,
   LucideHandshake,
   LucideHistory,
   LucideIcon,
@@ -127,8 +128,14 @@ export const MenuItemsAdmin: MenuItem[] = [
       {
         type: "link",
         title: "Rules",
-        url: "/dashboard/admin/ai",
+        url: "/dashboard/admin/ai/rules",
         icon: LucideHistory,
+      },
+      {
+        type: "link",
+        title: "Rule Sandbox",
+        url: "/dashboard/admin/ai/rule-sandbox",
+        icon: LucideFlaskConical,
       },
     ],
   },
