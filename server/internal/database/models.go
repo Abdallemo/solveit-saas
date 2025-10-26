@@ -502,6 +502,14 @@ type Account struct {
 	SessionState      pgtype.Text
 }
 
+type AiFlag struct {
+	ID              pgtype.UUID
+	HashedContent   string
+	Reason          string
+	CreatedAt       pgtype.Timestamptz
+	ConfidenceScore int32
+}
+
 type AiRule struct {
 	ID         pgtype.UUID
 	Rule       string
@@ -509,6 +517,16 @@ type AiRule struct {
 	IsActive   bool
 	AdminID    pgtype.UUID
 	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
+}
+
+type AiTestSandbox struct {
+	ID         pgtype.UUID
+	Content    string
+	AdminID    pgtype.UUID
+	TestAmount int32
+	CreatedAt  pgtype.Timestamptz
+	UpdatedAt  pgtype.Timestamptz
 }
 
 type BlockedTask struct {
@@ -747,6 +765,7 @@ type TaskDraft struct {
 	UploadedFiles []byte
 	Visibility    Visibility
 	Price         int32
+	ContentText   string
 }
 
 type TaskFile struct {
