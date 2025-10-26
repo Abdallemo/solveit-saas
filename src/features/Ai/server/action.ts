@@ -1,14 +1,20 @@
 "use server";
 
 import db from "@/drizzle/db";
-import { AiTestSandboxTable, RulesTable } from "@/drizzle/schemas";
+import {
+  AiFlagsTable,
+  AiTestSandboxTable,
+  RulesTable,
+} from "@/drizzle/schemas";
+import { generateSqlYMDFormateDate } from "@/drizzle/utils";
 import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
-import { runInBackground, serverCurrentTime } from "@/lib/utils";
-import { eq } from "drizzle-orm";
+import { runInBackground, serverCurrentTime, toYMD } from "@/lib/utils";
+import { subDays } from "date-fns";
+import { count, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
@@ -58,7 +64,7 @@ export async function updateRule(values: {
   try {
     await db
       .update(RulesTable)
-      .set({ description, rule,updatedAt:new Date() })
+      .set({ description, rule, updatedAt: new Date() })
       .where(eq(RulesTable.id, ruleId));
 
     revalidatePath("/dashboard/admin/ai");
@@ -84,7 +90,7 @@ export async function toggleRuleActivation(values: {
   try {
     await db
       .update(RulesTable)
-      .set({ isActive: state,updatedAt:new Date() })
+      .set({ isActive: state, updatedAt: new Date() })
       .where(eq(RulesTable.id, ruleId));
 
     revalidatePath("/dashboard/admin/ai");
@@ -269,4 +275,26 @@ export async function getAdminAiSandboxTests() {
   return await db.query.AiTestSandboxTable.findFirst({
     where: (tb, fn) => fn.eq(tb.adminId, user.id),
   });
+}
+
+export async function getAIFlagsData(from: string, to: string) {
+  if (!from) {
+    from = toYMD(subDays(new Date(), 30));
+  }
+  if (!to) {
+    to = toYMD(new Date());
+  }
+  const res = await db
+    .select({
+      date: generateSqlYMDFormateDate(AiFlagsTable.createdAt),
+      flags: count(AiFlagsTable.id),
+    })
+    .from(AiFlagsTable).where(
+      sql`${generateSqlYMDFormateDate(
+        AiFlagsTable.createdAt
+      )} BETWEEN ${from} AND ${to}`
+    )
+    .groupBy(generateSqlYMDFormateDate(AiFlagsTable.createdAt));
+
+  return res;
 }
