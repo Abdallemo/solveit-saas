@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github/abdallemo/solveit-saas/internal/database"
 	"github/abdallemo/solveit-saas/internal/utils"
 	"log"
 	"net/http"
@@ -18,9 +19,23 @@ type ReqContent struct {
 	Content string `json:"content"`
 }
 
+// Rules are short and written by humans. Interpret them naturally and precisely.//=>my old one
+// Rules are absolute and written by humans. Your sole purpose is to check for explicit violation of these rules, not to interpret general intent.
 const (
-	SystemRule           = "You are an AI task assistant. Always output JSON. \n"
-	ModerationPrompt     = "Check the input against these rules:\n[%s]\nRespond with 'violatesRules': true/false"
+	SystemRule       = "You are an AI task assistant. Always output JSON. \n"
+	ModerationPrompt = `
+You are a strict but fair task moderator.
+Check if the user's content violates ANY of these rules:
+[%s]
+Rules are absolute and written by humans. Your sole purpose is to check for explicit violation of these rules, not to interpret general intent.
+**[CRITICAL EXCEPTION] Do NOT flag requests that seek technical review, debugging, troubleshooting, or collaboration, even if the work is for a graded component.**
+Respond only in JSON format:
+{
+"violatesRules": true/false,
+"reason": "<short reason>"
+"triggeredRules": ["<exact rule text>", ...] // Empty array if none
+"confidenceScore": <number type only, 0 to 10>
+}`
 	AutoSuggestionPrompt = `Given content and category list, output JSON with:
 - "title" ≤7 words
 - "description" ≤10 words
@@ -29,6 +44,12 @@ const (
 )
 
 type ResContnet struct {
+	ViolatesRules   bool     `json:"violatesRules"`
+	Reason          string   `json:"reason"`
+	TriggeredRules  []string `json:"triggeredRules"`
+	ConfidenceScore int      `json:"confidenceScore"`
+}
+type ClientModerationRes struct {
 	ViolatesRules bool `json:"violatesRules"`
 }
 type ResAutoSuggest struct {
@@ -86,6 +107,17 @@ func handleModeration(s *Server, ctx context.Context, w http.ResponseWriter, con
 	}
 
 	s.SetCachedValue(ctx, cacheKey, resJson, 24*time.Hour)
+	if resJson.ViolatesRules {
+		fmt.Println("rule Violation, reason:", resJson.Reason)
+		fmt.Println("triggeredRules:", resJson.TriggeredRules)
+		s.store.AddAIFlags(ctx, database.AddAIFlagsParams{
+			HashedContent:   cacheKey,
+			Reason:          resJson.Reason,
+			ConfidenceScore: int32(resJson.ConfidenceScore)})
+	}
+	// clientRes := ClientModerationRes{
+	// 	ViolatesRules: resJson.ViolatesRules,
+	// }
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resJson)
 
