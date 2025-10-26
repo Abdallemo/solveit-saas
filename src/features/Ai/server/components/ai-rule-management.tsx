@@ -28,7 +28,7 @@ const AiSchema = z.object({
   rule: z
     .string()
     .min(10, "A rule is required")
-    .max(90, "A rule must be less than 50 characters"),
+    .max(200, "A rule must be less than 200 characters"),
   description: z.string().min(1, "A description is required"),
 });
 type AiSchemaFormData = z.infer<typeof AiSchema>;
@@ -136,7 +136,7 @@ export function AIRuleManagement({
   if (isBlocked) return <AuthGate />;
 
   return (
-    <div className="w-4/5 ">
+    <div className="mx-auto max-w-8xl ">
       <Card>
         <CardContent>
           <div className="flex justify-between items-center mb-6">
