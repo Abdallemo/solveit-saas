@@ -11,6 +11,22 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const addAIFlags = `-- name: AddAIFlags :exec
+INSERT INTO ai_flags (hashed_content, reason, confidence_score)
+VALUES ($1, $2, $3)
+`
+
+type AddAIFlagsParams struct {
+	HashedContent   string
+	Reason          string
+	ConfidenceScore int32
+}
+
+func (q *Queries) AddAIFlags(ctx context.Context, arg AddAIFlagsParams) error {
+	_, err := q.db.Exec(ctx, addAIFlags, arg.HashedContent, arg.Reason, arg.ConfidenceScore)
+	return err
+}
+
 const addSolverToTaskBlockList = `-- name: AddSolverToTaskBlockList :one
 INSERT INTO blocked_tasks (user_id, task_id, reason)
 VALUES ($1, $2, $3) ON CONFLICT (user_id, task_id) DO NOTHING
@@ -38,7 +54,9 @@ func (q *Queries) AddSolverToTaskBlockList(ctx context.Context, arg AddSolverToT
 
 const getAIRules = `-- name: GetAIRules :many
 SELECT rule
-FROM ai_rules WHERE is_active=TRUE
+FROM ai_rules
+WHERE is_active = TRUE
+ORDER BY updated_at DESC
 `
 
 func (q *Queries) GetAIRules(ctx context.Context) ([]string, error) {
@@ -62,7 +80,7 @@ func (q *Queries) GetAIRules(ctx context.Context) ([]string, error) {
 }
 
 const getAllTaskDrafts = `-- name: GetAllTaskDrafts :many
-SELECT id, user_id, title, description, content, category, deadline, updated_at, "uploadedFiles", visibility, price
+SELECT id, user_id, title, description, content, category, deadline, updated_at, "uploadedFiles", visibility, price, "contentText"
 FROM task_drafts
 WHERE updated_at < $1
   AND json_array_length("uploadedFiles") > 0
@@ -89,6 +107,7 @@ func (q *Queries) GetAllTaskDrafts(ctx context.Context, updatedAt pgtype.Timesta
 			&i.UploadedFiles,
 			&i.Visibility,
 			&i.Price,
+			&i.ContentText,
 		); err != nil {
 			return nil, err
 		}
@@ -251,7 +270,9 @@ func (q *Queries) ProcessSystemNotification(ctx context.Context, arg ProcessSyst
 }
 
 const removeFileFromTaskDraft = `-- name: RemoveFileFromTaskDraft :exec
-UPDATE task_drafts SET "uploadedFiles" = '[]' WHERE id = $1
+UPDATE task_drafts
+SET "uploadedFiles" = '[]'
+WHERE id = $1
 `
 
 func (q *Queries) RemoveFileFromTaskDraft(ctx context.Context, id pgtype.UUID) error {
