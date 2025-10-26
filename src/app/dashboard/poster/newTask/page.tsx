@@ -13,6 +13,7 @@ export default async function Page() {
     title: draft?.title ?? "",
     description: draft?.description ?? "",
     content: draft?.content ?? "",
+    contentText: draft?.contentText ?? "",
     deadline: draft?.deadline ?? "12h",
     visibility: draft?.visibility ?? "public",
     category: draft?.category ?? "",
