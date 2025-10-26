@@ -1,4 +1,5 @@
 import { TaskStatusType } from "@/drizzle/schemas";
+import { getAdminAiSandboxTests, getAllAiRules } from "@/features/Ai/server/action";
 import {
   getAllTasksByRolePaginated,
   getPosterTasksbyIdPaginated,
@@ -90,17 +91,13 @@ type userGrowthReturnType = {
 export const userGrowthQuery = (params: {
   from: string;
   to: string;
-  enabled?: boolean;
+  enabled: boolean;
 }) =>
   queryOptions({
     queryKey: ["user-growth", params.from, params.to],
     queryFn: async () => {
       let dataToSend: userGrowthReturnType = [];
       const { from, to } = params;
-      // const { from, to } = params;
-      // console.log("userGrowth key", ["user-growth", from, to]);
-      // const res = await getUserGrowthData(from, to); server action version
-      // console.log("got response", res);
       try {
         const res = await fetch(
           `/api/admin/reports/user_growth?from=${from}&to=${to}`,
@@ -116,6 +113,7 @@ export const userGrowthQuery = (params: {
         return dataToSend;
       }
     },
+    enabled: params.enabled,
   });
 
 type revenueReturnType = {
@@ -125,18 +123,13 @@ type revenueReturnType = {
 export const revenueQuery = (params: {
   from: string;
   to: string;
-  enabled?: boolean;
+  enabled: boolean;
 }) =>
   queryOptions({
     queryKey: ["revenue", params.from, params.to],
     queryFn: async () => {
       const { from, to } = params;
       let revenueToSend: revenueReturnType = [];
-
-      // const { from, to } = params;
-      // console.log("getRevenueData key", ["revenue", from, to]);
-      // const res = await getRevenueData(from, to);//server action version
-      // console.log("got response", res);
       try {
         const res = await fetch(
           `/api/admin/reports/revenue?from=${from}&to=${to}`,
@@ -153,6 +146,7 @@ export const revenueQuery = (params: {
         return revenueToSend;
       }
     },
+    enabled: params.enabled,
   });
 type taskCategoriesReturnType = {
   date: string;
@@ -162,18 +156,13 @@ type taskCategoriesReturnType = {
 export const taskCategoriesQuery = (params: {
   from: string;
   to: string;
-  enabled?: boolean;
+  enabled: boolean;
 }) =>
   queryOptions({
     queryKey: ["task-categories", params.from, params.to],
     queryFn: async () => {
       const { from, to } = params;
       let taskCategoryToSend: taskCategoriesReturnType = [];
-
-      // const { from, to } = params;
-      // console.log("taskCategoriesQuery key", ["task-categories", from, to]);
-      // const res = await getTaskCategoriesData(from, to);//server action verison
-      // console.log("got response", res);
       try {
         const res = await fetch(
           `/api/admin/reports/task_categories?from=${from}&to=${to}`,
@@ -189,6 +178,7 @@ export const taskCategoriesQuery = (params: {
         return taskCategoryToSend;
       }
     },
+    enabled: params.enabled,
   });
 export const solverDashboardQuery = () =>
   queryOptions({
@@ -197,10 +187,24 @@ export const solverDashboardQuery = () =>
       return await getSolverStats();
     },
   });
-export  const upcomingTasksQuery = () =>
+export const upcomingTasksQuery = () =>
   queryOptions({
     queryKey: ["SolverStats"],
     queryFn: async () => {
       return await getSolverUpcomminDeadlines();
+    },
+  });
+export const getAllAiRulesQuery = () =>
+  queryOptions({
+    queryKey: ["AllAiRules"],
+    queryFn: async () => {
+      return await getAllAiRules();
+    },
+  });
+export const getAdminAiSandboxTestsQuery = () =>
+  queryOptions({
+    queryKey: ["AdminAiSandboxTests"],
+    queryFn: async () => {
+      return await getAdminAiSandboxTests();
     },
   });
