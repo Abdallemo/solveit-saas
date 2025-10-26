@@ -2,7 +2,10 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """fixed file deleting issue by completly ditching server actions and using route handlers"""
+commit_message = """Fix: Prevent false moderation flags on technical review
+Feat: Add critical exception to moderation prompt
+Refactor(AI): Tune moderation logic and clean up API
+"""
 
 repo = Repo(repo_path)
 
