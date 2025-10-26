@@ -934,7 +934,7 @@ export async function getUserGrowthData(from: string, to: string) {
         UserTable.createdAt
       )} BETWEEN ${from} AND ${to}`
     )
-    .groupBy(UserTable.createdAt);
+    .groupBy(generateSqlYMDFormateDate(UserTable.createdAt));
   return d;
 }
 
@@ -963,7 +963,7 @@ export async function getRevenueData(from: string, to: string) {
         eq(PaymentTable.status, "HOLD")
       )
     )
-    .groupBy(PaymentTable.createdAt);
+    .groupBy(generateSqlYMDFormateDate(PaymentTable.createdAt));
 
   return d;
 }
