@@ -12,9 +12,11 @@ import {
   json,
   numeric,
   pgEnum,
+  pgSequence,
   pgTable,
   primaryKey,
   real,
+  serial,
   text,
   timestamp,
   uniqueIndex,
@@ -84,6 +86,10 @@ export type RefundStatusEnumType = (typeof RefundStatusEnum.enumValues)[number];
 export type PaymentPorposeEnumType =
   (typeof PaymentPorposeEnum.enumValues)[number];
 
+export const AiTestAmountSequence = pgSequence("ai_test_amount_sequence", {
+  startWith: 1,
+  increment: 1,
+});
 export const UserTable = pgTable(
   "users",
   {
@@ -355,6 +361,7 @@ export const TaskDraftTable = pgTable(
     title: text("title").default("").notNull(),
     description: text("description").default("").notNull(),
     content: text("content").default("").notNull(),
+    contentText: text("contentText").default("").notNull(),
     category: text("category").default("").notNull(),
     deadline: text("deadline").default("12h").notNull(),
     updatedAt: timestamp("updated_at", {
@@ -530,7 +537,9 @@ export const WorkspaceFilesTable = pgTable(
     index("solution_workspace_files_uploadedById_idx").on(
       solutionWorkspaceFiles.uploadedById
     ),
-    index("solution_workspace_files_filePath_idx").on(solutionWorkspaceFiles.filePath),
+    index("solution_workspace_files_filePath_idx").on(
+      solutionWorkspaceFiles.filePath
+    ),
   ]
 );
 
@@ -704,7 +713,9 @@ export const MentorshipChatFilesTable = pgTable(
   },
   (mentorshipChatFiles) => [
     index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId),
-    index("mentorship_chat_files_filePath_idx").on(mentorshipChatFiles.filePath),
+    index("mentorship_chat_files_filePath_idx").on(
+      mentorshipChatFiles.filePath
+    ),
   ]
 );
 
@@ -719,7 +730,45 @@ export const RulesTable = pgTable("ai_rules", {
   createdAt: timestamp("created_at", { mode: "date", withTimezone: true })
     .defaultNow()
     .notNull(),
+  updatedAt: timestamp("updated_at", { mode: "date", withTimezone: true })
+    .defaultNow()
+    .notNull(),
 });
+
+export const AiFlagsTable = pgTable("ai_flags", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  hashedContent: text("hashed_content").notNull(),
+  reason: text("reason").notNull(),
+  confidenceScore: integer("confidence_score").notNull(),
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+});
+export const AiTestSandboxTable = pgTable("ai_test_sandbox", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  content: text("content").notNull().default(""),
+  adminId: uuid("admin_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  testAmount: serial("test_amount").notNull(),
+  // .$onUpdateFn(()=>{
+  //   return sql<number>`nextval('${sql.raw(AiTestAmountSequence.seqName!)}')`
+  // }).def,
+  createdAt: timestamp("created_at", {
+    mode: "date",
+    withTimezone: true,
+  })
+    .defaultNow()
+    .notNull(),
+  updatedAt: timestamp("updated_at", {
+    mode: "date",
+    withTimezone: true,
+  }).defaultNow(),
+});
+
 export const notifications = pgTable("notifications", {
   id: uuid("id").defaultRandom().primaryKey(),
   senderId: text("sender_id").notNull(),
