@@ -2,9 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """Fix: Prevent false moderation flags on technical review
-Feat: Add critical exception to moderation prompt
-Refactor(AI): Tune moderation logic and clean up API
+commit_message = """added flag query to the system report module
 """
 
 repo = Repo(repo_path)
