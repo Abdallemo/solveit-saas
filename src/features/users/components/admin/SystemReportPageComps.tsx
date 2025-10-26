@@ -51,6 +51,9 @@ import {
   ChevronDownIcon,
   ClipboardList,
   DollarSign,
+  Download,
+  FileSpreadsheet,
+  FileText,
   Flag,
   // Assuming Loader2 is available from lucide-react as you mentioned
   Loader2,
@@ -194,16 +197,20 @@ export default function SystemReportsPage({
   // const [stateTo, setStateTo] = useState(toYMD(today));
 
   const { data: userGrowthData, isLoading: isUserGrowthLoading } = useQuery(
-    userGrowthQuery({ from: from, to: to })
+    userGrowthQuery({ from: from, to: to, enabled: shouldShowUsers })
   );
   const {
     data: revenueData,
     isLoading: isRevenueLoading,
     status,
     error,
-  } = useQuery(revenueQuery({ from: from, to: to }));
+  } = useQuery(
+    revenueQuery({ from: from, to: to, enabled: shouldShowRevenue })
+  );
   const { data: taskCategoriesData, isLoading: isTaskCategoriesLoading } =
-    useQuery(taskCategoriesQuery({ from: from, to: to }));
+    useQuery(
+      taskCategoriesQuery({ from: from, to: to, enabled: shouldShowTasks })
+    );
 
   const aggregatedTaskData = taskCategoriesData
     ? Object.values(
@@ -249,9 +256,28 @@ export default function SystemReportsPage({
 
   return (
     <div className="w-full h-full p-6 space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"></div>
-      <span>from:={from}</span>
-      <span>to:={to}</span>
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">System Reports</h1>
+          <p className="text-muted-foreground mt-1">
+            Generate and export analytical reports across the SolveIt platform.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button onClick={handleGenerateReport}>
+            <FileText className="mr-2 h-4 w-4" />
+            Generate Report
+          </Button>
+          <Button onClick={handleExportPDF} variant="outline">
+            <Download className="mr-2 h-4 w-4" />
+            Export PDF
+          </Button>
+          <Button onClick={handleExportExcel} variant="outline">
+            <FileSpreadsheet className="mr-2 h-4 w-4" />
+            Export Excel
+          </Button>
+        </div>
+      </div>
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row md:items-center">
@@ -610,7 +636,6 @@ function Calendar22({
           dateRange.from
         )} to=${toYMD(dateRange.to)}`
       );
-     
     }
   }, [isRangeComplete, dateRange, setFrom, setTo]);
 
