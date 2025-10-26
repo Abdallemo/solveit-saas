@@ -271,7 +271,11 @@ export async function createTaksPaymentCheckoutSession(values: {
   const { price, userId, deadlineStr, draftTaskId, content } = values;
   const referer = await getServerReturnUrl();
   try {
-    const res = await validateContentWithAi(content);
+    const res = await validateContentWithAi({
+      content: content,
+      adminMode: false,
+    });
+
     if (res.violatesRules) return;
     const currentUser = await getServerUserSession();
     if (!currentUser?.id) redirect("/login");
@@ -353,6 +357,7 @@ export async function saveDraftTask(
   title: string,
   description: string,
   content: string,
+  contentText: string,
   userId: string,
   category: string,
   price: number,
@@ -362,7 +367,6 @@ export async function saveDraftTask(
 ) {
   const now = new Date();
   try {
-
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
     });
@@ -380,6 +384,7 @@ export async function saveDraftTask(
           deadline,
           uploadedFiles,
           updatedAt: now,
+          contentText,
         })
         .where(eq(TaskDraftTable.userId, userId));
     } else {
@@ -393,6 +398,7 @@ export async function saveDraftTask(
         visibility,
         deadline,
         uploadedFiles,
+        contentText,
       });
     }
     return await db.query.TaskDraftTable.findFirst({
