@@ -1,0 +1,1 @@
+ALTER TABLE "ai_rules" ADD COLUMN "updated_at" timestamp with time zone DEFAULT now() NOT NULL;
