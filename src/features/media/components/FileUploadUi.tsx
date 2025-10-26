@@ -39,6 +39,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
     title,
     visibility,
     userId,
+    contentText,
   } = draft;
 
   const { uploadMutate } = useFileUpload({});
@@ -76,6 +77,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
       title,
       description,
       content,
+      contentText,
       userId,
       category,
       price,
