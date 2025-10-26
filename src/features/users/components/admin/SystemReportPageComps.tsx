@@ -39,6 +39,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  aiFlagsDataQuery,
   revenueQuery,
   taskCategoriesQuery,
   userGrowthQuery,
@@ -163,7 +164,6 @@ const LoadingChartContent = () => (
 
 export default function SystemReportsPage({
   reportsData,
-  aiFlagsData,
 }: {
   reportsData: reportDataType[];
   aiFlagsData: aiFlagsDataType[];
@@ -211,6 +211,9 @@ export default function SystemReportsPage({
     useQuery(
       taskCategoriesQuery({ from: from, to: to, enabled: shouldShowTasks })
     );
+  const { data: aiFlagsData, isLoading: isAiFlagsDataLoading } = useQuery(
+    aiFlagsDataQuery({ from: from, to: to, enabled: shouldShowTasks })
+  );
 
   const aggregatedTaskData = taskCategoriesData
     ? Object.values(
@@ -253,6 +256,31 @@ export default function SystemReportsPage({
   const handleExportExcel = () => {};
   const handleSearchChange = (value: string) => {};
   const handleViewReport = (reportId: string) => {};
+  const totoalReven = revenueData
+    ? revenueData.reduce(
+        (accumulator, currentObject) =>
+          accumulator + currentObject.totalRevenue,
+        0
+      )
+    : 0;
+  const totoalTask = taskCategoriesData
+    ? taskCategoriesData.reduce(
+        (accumulator, currentObject) => accumulator + currentObject.taskCount,
+        0
+      )
+    : 0;
+  const totoalUser = userGrowthData
+    ? userGrowthData.reduce(
+        (accumulator, currentObject) => accumulator + currentObject.users,
+        0
+      )
+    : 0;
+  const totoalAiFlags = aiFlagsData
+    ? aiFlagsData.reduce(
+        (accumulator, currentObject) => accumulator + currentObject.flags,
+        0
+      )
+    : 0;
 
   return (
     <div className="w-full h-full p-6 space-y-6">
@@ -319,7 +347,7 @@ export default function SystemReportsPage({
             ) : (
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {userGrowthData ? "520" : "N/A"}
+                  {userGrowthData ? totoalUser : "N/A"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   +12% from last month
@@ -340,7 +368,7 @@ export default function SystemReportsPage({
             ) : (
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {taskCategoriesData ? "1,284" : "N/A"}
+                  {taskCategoriesData ? totoalTask : "N/A"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   +8% from last month
@@ -363,7 +391,7 @@ export default function SystemReportsPage({
             ) : (
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {revenueData ? "RM 9,900" : "N/A"}
+                  {revenueData ? "RM" + totoalReven : "N/A"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
                   +21% from last month
@@ -380,7 +408,7 @@ export default function SystemReportsPage({
               <Flag className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">100</div>
+              <div className="text-2xl font-bold">{totoalAiFlags}</div>
               <p className="text-xs text-muted-foreground mt-1">
                 -5% from last month
               </p>
@@ -467,10 +495,13 @@ export default function SystemReportsPage({
                     />
                     <YAxis tickLine={false} axisLine={false} tickMargin={8} />
                     <ChartTooltip content={<ChartTooltipContent />} />
-                    <ChartLegend content={<ChartLegendContent />} />
+                    <ChartLegend
+                      content={<ChartLegendContent nameKey="revenue" />}
+                    />
                     <Bar
                       dataKey="totalRevenue"
                       fill="var(--color-revenue)"
+                      name={"Revenue"}
                       radius={4}
                     />
                   </BarChart>
