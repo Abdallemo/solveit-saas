@@ -430,3 +430,16 @@ export const sessionTimeUtils = {
     return isAfter(now, end);
   },
 };
+
+export function runInBackground({promise,taskName}:{promise: Promise<unknown>, taskName?: string}) {
+  void (async () => {
+    try {
+      await promise;
+      if (taskName) console.info(`[BG] ${taskName} completed`);
+    } catch (err) {
+      console.error(`[BG] ${taskName ?? "Background task"} failed:`, err);
+    }
+  })();
+}
+
+export const serverCurrentTime = new Date() 
