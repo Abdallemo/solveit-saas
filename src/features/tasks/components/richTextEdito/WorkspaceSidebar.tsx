@@ -20,13 +20,10 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
-import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { env } from "@/env/client";
+import { commentType, useWorkspace } from "@/contexts/WorkspaceContext";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
-import { publicUserType } from "@/features/users/server/user-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import useWebSocket from "@/hooks/useWebSocket";
 import { getColorClass } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
@@ -84,43 +81,19 @@ export default function WorkspaceSidebar({
   );
 }
 
-export type commentType = {
-  id: string;
-  content: string;
-  createdAt: Date | null;
-  userId: string;
-  taskId: string;
-  owner: publicUserType;
-};
-
 function SideBarForm() {
   const { user } = useCurrentUser();
   const router = useRouter();
   const pathName = usePathname();
   const [comment, setComment] = useState("");
-  const { currentWorkspace } = useWorkspace();
+  const { currentWorkspace,comments, } = useWorkspace();
   const { monacoEditor } = useFeatureFlags();
   const latestCommentRef = useRef<HTMLDivElement>(null);
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
     onSuccess: () => {},
   });
-  const [comments, setComments] = useState<commentType[]>(
-    [...(currentWorkspace?.task.taskComments ?? [])].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
-    })
-  );
-  //on progress
-  useWebSocket<commentType>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/comments?task_id=${currentWorkspace?.taskId}`,
-    {
-      onMessage: (comment) => {
-        setComments((prev) => [...prev, comment]);
-      },
-    }
-  );
+
   useEffect(() => {
     if (latestCommentRef.current) {
       latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
