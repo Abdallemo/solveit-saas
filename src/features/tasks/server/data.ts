@@ -661,7 +661,8 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
 
   const tasks = await db.query.TaskTable.findMany({
     columns: { id: true, title: true, deadline: true },
-    where: (tb, fn) => fn.eq(tb.solverId, user.id),
+    where: (tb, fn) =>
+      fn.and(fn.eq(tb.solverId, user.id), fn.isNotNull(tb.assignedAt)),
     orderBy: (tb, fn) => fn.desc(tb.updatedAt),
   });
 
