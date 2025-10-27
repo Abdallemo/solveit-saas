@@ -15,10 +15,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
+import { commentType } from "@/contexts/WorkspaceContext";
 import { env } from "@/env/client";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { SolutionPreview } from "@/features/tasks/components/richTextEdito/TaskPreview";
-import { CommentCard, commentType } from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
+import { CommentCard } from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
 import GetStatusBadge from "@/features/tasks/components/taskStatusBadge";
 import {
   acceptSolution,
