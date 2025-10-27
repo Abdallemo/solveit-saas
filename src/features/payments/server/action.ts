@@ -35,7 +35,7 @@ import {
 } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { toYMD } from "@/lib/utils";
+import { getCurrentServerTime, toYMD } from "@/lib/utils";
 import { subYears } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
@@ -263,6 +263,7 @@ export async function refundFunds(paymentId: string) {
           .update(PaymentTable)
           .set({ status: "REFUNDED" })
           .where(eq(PaymentTable.id, paymentId));
+        await dx.delete(TaskTable).where(eq(TaskTable.paymentId,paymentId))
       });
     } else {
       throw new Error("Stripe refund failed with status: " + st.status);
@@ -408,7 +409,8 @@ export async function approveRefund(refundId: string) {
         .update(RefundTable)
         .set({
           refundStatus: "PENDING_POSTER_ACTION",
-          updatedAt: new Date(),
+          updatedAt:getCurrentServerTime(),
+          refundedAt: getCurrentServerTime(),
         })
         .where(eq(RefundTable.paymentId, refund.paymentId));
 
