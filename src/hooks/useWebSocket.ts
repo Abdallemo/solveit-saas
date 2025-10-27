@@ -73,7 +73,7 @@ export default function useWebSocket<MsgType extends object>(
         onClose?.();
 
         if (autoReconnect && attempts.current < maxRetries) {
-          const delay = reconnectIntervalInMs * Math.pow(2, attempts.current);
+          const delay = reconnectIntervalInMs * Math.pow(1.5, attempts.current);
           console.log(`Reconnecting in ${delay / 1000}s...`);
           attempts.current++;
           reconnectTimeout.current = setTimeout(connect, delay);
@@ -101,6 +101,15 @@ export default function useWebSocket<MsgType extends object>(
     onClose,
     onError,
   ]);
+  useEffect(() => {
+    const onFocus = () => {
+      if (connectionState === "disconnected") {
+        wsRef.current?.close();
+      }
+    };
+    window.addEventListener("visibilitychange", onFocus);
+    return () => window.removeEventListener("visibilitychange", onFocus);
+  }, [connectionState]);
 
   return { connectionState, ws: wsRef };
 }

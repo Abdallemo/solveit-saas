@@ -11,20 +11,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { env } from "@/env/client";
 import { cn } from "@/lib/utils";
 import { AlertCircle, Bell, Mail, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import { useNotification } from "@/contexts/NotificationContext";
 import { userSessionType } from "@/features/users/server/user-types";
 import {
   useNotificationDelete,
   useNotificationMarkAllAsRead,
   useNotificationRead,
 } from "@/hooks/useNotification";
-import useWebSocket from "@/hooks/useWebSocket";
 export function getNotificationIcon(method: "SYSTEM" | "EMAIL") {
   switch (method) {
     case "EMAIL":
@@ -63,15 +62,14 @@ export type Message = {
   read: boolean;
 };
 export default function NotificationDropDown({
-  initailAllNotifications,
   user,
 }: {
-  initailAllNotifications: Message[];
   user: userSessionType;
 }) {
-  const [messages, setMessages] = useState<Message[]>(
-    (initailAllNotifications ?? []).slice(0, 3)
-  );
+  // const [messages, setMessages] = useState<Message[]>(
+  //   (initailAllNotifications ?? []).slice(0, 3)
+  // );
+  const { messages, setMessages } = useNotification();
   const [isOpen, setIsOpen] = useState(false);
   const userId = user?.id;
   const unreadCount = messages.filter((msg) => !msg.read).length;
@@ -79,20 +77,6 @@ export default function NotificationDropDown({
   const { deleteNotificationMuta } = useNotificationDelete();
   const { ReadMuta } = useNotificationRead();
   const { markAllAsReadMuta } = useNotificationMarkAllAsRead();
-
-  useWebSocket<Message>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/notification?user_id=${userId}`,
-    {
-      onMessage: (msg) => {
-        setMessages((prev) => {
-          if (prev.some((m) => m.id === msg.id)) {
-            return prev;
-          }
-          return [msg, ...prev].slice(0, 3);
-        });
-      },
-    }
-  );
 
   const handleNotificationClick = async (notificationId: string) => {
     toast.loading("loading..", { id: "mark-as-read" });
