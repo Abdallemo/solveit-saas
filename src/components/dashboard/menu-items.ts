@@ -81,6 +81,12 @@ export const MenuItemsModerator: MenuItem[] = [
         url: "/dashboard/moderator/disputes",
         icon: LucideAlertTriangle,
       },
+       {
+        type: "link",
+        title: "My Assigned Disputes",
+        url: "/dashboard/moderator/my-disputes",
+        icon: LucideClipboardCheck,
+      },
     ],
   },
 
