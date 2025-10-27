@@ -442,4 +442,4 @@ export function runInBackground({promise,taskName}:{promise: Promise<unknown>, t
   })();
 }
 
-export const serverCurrentTime = new Date() 
+export const getCurrentServerTime = () => new Date() 
