@@ -79,23 +79,27 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 			}
 
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
-			if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-				log.Printf("Ping failed for %s: %v", channelID, err)
-				conn.Close()
+			// if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
+			// 	log.Printf("Ping failed for %s: %v", channelID, err)
+			// 	conn.Close()
 
-				// Ensure cleanup runs now
-				h.mu.Lock()
-				conns := h.conns[channelID]
-				active := conns[:0]
-				for _, c := range conns {
-					if c != conn {
-						active = append(active, c)
-					}
-				}
-				h.conns[channelID] = active
-				h.mu.Unlock()
+			// 	// Ensure cleanup runs now
+			// 	h.mu.Lock()
+			// 	conns := h.conns[channelID]
+			// 	active := conns[:0]
+			// 	for _, c := range conns {
+			// 		if c != conn {
+			// 			active = append(active, c)
+			// 		}
+			// 	}
+			// 	h.conns[channelID] = active
+			// 	h.mu.Unlock()
 
-				return
+			// 	return
+			// }
+			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait)); err != nil {
+				log.Printf("Ping failed for %s: %v (will retry next tick)", channelID, err)
+				continue //
 			}
 		}
 	}()
