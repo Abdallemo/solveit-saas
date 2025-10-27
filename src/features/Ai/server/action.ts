@@ -12,7 +12,7 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
-import { runInBackground, serverCurrentTime, toYMD } from "@/lib/utils";
+import { getCurrentServerTime, runInBackground, toYMD } from "@/lib/utils";
 import { subDays } from "date-fns";
 import { count, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -243,7 +243,7 @@ export async function saveAdminAiSandboxTests({
           .update(AiTestSandboxTable)
           .set({
             content: content,
-            updatedAt: serverCurrentTime,
+            updatedAt: getCurrentServerTime(),
           })
           .where(eq(AiTestSandboxTable.adminId, adminId));
       } else {
@@ -251,7 +251,7 @@ export async function saveAdminAiSandboxTests({
           .update(AiTestSandboxTable)
           .set({
             content: content,
-            updatedAt: serverCurrentTime,
+            updatedAt: getCurrentServerTime(),
             testAmount: res.testAmount + 1,
           })
           .where(eq(AiTestSandboxTable.adminId, adminId));
