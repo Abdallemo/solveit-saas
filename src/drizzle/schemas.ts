@@ -483,7 +483,7 @@ export const WorkspaceTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     taskId: uuid("task_id")
       .notNull()
-      .references(() => TaskTable.id, { onDelete: "cascade" }),
+      .references(() => TaskTable.id, { onDelete: "no action" }),
     solverId: uuid("solver_id")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
