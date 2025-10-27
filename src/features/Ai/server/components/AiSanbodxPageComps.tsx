@@ -36,7 +36,7 @@ export default function AIRuleSandboxPage({
 }) {
   const { isLoading: isAuthLoading, isBlocked } = useAuthGate();
   const [sampleMessage, setSampleMessage] = useState(
-    adminAiSandboxTests.content
+    adminAiSandboxTests ? adminAiSandboxTests.content : ""
   );
   const [result, setResult] = useState<openaiResAdminType | null>(null);
   const {
@@ -283,3 +283,4 @@ export default function AIRuleSandboxPage({
     </div>
   );
 }
+
