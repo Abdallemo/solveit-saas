@@ -2,7 +2,8 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """some chnages
+commit_message = """Fix(websocket): Stabilize background connections
+Prevents disconnections and duplicate messages using controlled client-side reconnect on tab focus.
 """
 
 repo = Repo(repo_path)
