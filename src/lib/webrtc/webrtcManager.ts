@@ -248,6 +248,9 @@ class CameraShare extends WebRTCPeer {
 
   public async init() {
     if (!this.pc) await this.createPeerConnection();
+  }
+  public async startCameraCall() {
+    if (!this.pc) await this.createPeerConnection();
     await this.initLocalStream();
   }
 
@@ -359,7 +362,9 @@ class ScreenShare extends WebRTCPeer {
     super(userId, sessionId, "screen", signaling, notifyManager, notifyError);
   }
 
-  public async init() {}
+  public async init() {
+    if (!this.pc) await this.createPeerConnection();
+  }
 
   public getLocalStream(): MediaStream | null {
     return this.localScreenShare;
@@ -556,6 +561,10 @@ export class WebRTCManager implements SignalHandler {
     this.currentError = null;
   }
 
+  public preloadPeers = async () => {
+    await Promise.all([this.cameraWorker.init(), this.screenWorker.init()]);
+  };
+
   public async handle(msg: SignalMessage) {
     if (
       msg.from === this.userId ||
@@ -625,7 +634,7 @@ export class WebRTCManager implements SignalHandler {
     if (this.callStarted) return;
     this.callStarted = true;
     try {
-      await this.cameraWorker.init();
+      await this.cameraWorker.startCameraCall();
       this.signaling.connect();
     } catch (error) {
       console.error("Manager initialization error:", error);
