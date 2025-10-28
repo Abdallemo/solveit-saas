@@ -58,9 +58,6 @@ export const MentorshipSessionProvider = ({
   } = useQuery({
     queryKey: [sessionId, userId],
     queryFn: async () => await getMentorSession(sessionId),
-    refetchOnWindowFocus: false,
-    staleTime: Infinity,
-    gcTime: Infinity,
   });
 
   if (error) throw new SessionNotFoundError();
