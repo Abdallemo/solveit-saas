@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseWebSocketOptions<MsgType extends object> {
   onMessage: (msg: MsgType) => void;
@@ -7,9 +7,7 @@ interface UseWebSocketOptions<MsgType extends object> {
   onClose?: () => void;
   onError?: (err: Event) => void;
   autoReconnect?: boolean;
-  /** base ms for backoff (default: 2000)*/
   reconnectIntervalInMs?: number;
-  /**max reconnect attempts (default: 5)*/
   maxRetries?: number;
 }
 
@@ -32,6 +30,7 @@ export default function useWebSocket<MsgType extends object>(
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeout = useRef<NodeJS.Timeout | null>(null);
+  const isIntentionallyClosing = useRef(false);
   const attempts = useRef(0);
   const onMessageRef = useRef(onMessage);
 
@@ -39,58 +38,51 @@ export default function useWebSocket<MsgType extends object>(
     onMessageRef.current = onMessage;
   }, [onMessage]);
 
-  useEffect(() => {
-    let stopped = false;
+  const connect = useCallback(() => {
+    const ws = new WebSocket(url);
+    wsRef.current = ws;
+    setConnectionState("connecting");
 
-    const connect = () => {
-      if (stopped) return;
-      const ws = new WebSocket(url);
-      wsRef.current = ws;
-      setConnectionState("connecting");
-
-      ws.onopen = () => {
-        setConnectionState("connected");
-        attempts.current = 0;
-        onOpen?.();
-      };
-
-      ws.onmessage = (event) => {
-        try {
-          const msg: MsgType = JSON.parse(event.data);
-          onMessageRef.current(msg);
-        } catch (error) {
-          console.error("Invalid WS message:", event.data, error);
-        }
-      };
-
-      ws.onerror = (event) => {
-        setConnectionState("disconnected");
-        onError?.(event);
-      };
-
-      ws.onclose = () => {
-        setConnectionState("disconnected");
-        onClose?.();
-
-        if (autoReconnect && attempts.current < maxRetries) {
-          const delay = reconnectIntervalInMs * Math.pow(1.5, attempts.current);
-          console.log(`Reconnecting in ${delay / 1000}s...`);
-          attempts.current++;
-          reconnectTimeout.current = setTimeout(connect, delay);
-        } else {
-          console.warn(
-            "Max reconnect attempts reached or autoReconnect disabled."
-          );
-        }
-      };
+    ws.onopen = () => {
+      setConnectionState("connected");
+      attempts.current = 0;
+      onOpen?.();
     };
 
-    connect();
+    ws.onmessage = (event) => {
+      try {
+        const msg: MsgType = JSON.parse(event.data);
+        onMessageRef.current(msg);
+      } catch (error) {
+        console.error("Invalid WS message:", event.data, error);
+      }
+    };
 
-    return () => {
-      stopped = true;
-      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
-      if (wsRef.current) wsRef.current.close();
+    ws.onerror = (event) => {
+      setConnectionState("disconnected");
+      onError?.(event);
+    };
+
+    ws.onclose = () => {
+      setConnectionState("disconnected");
+      onClose?.();
+
+      if (
+        autoReconnect &&
+        !isIntentionallyClosing.current &&
+        attempts.current < maxRetries
+      ) {
+        const delay = reconnectIntervalInMs * Math.pow(1.5, attempts.current);
+        console.log(`Reconnecting in ${delay / 1000}s...`);
+        attempts.current++;
+        reconnectTimeout.current = setTimeout(connect, delay);
+      } else if (isIntentionallyClosing.current) {
+        isIntentionallyClosing.current = false;
+      } else {
+        console.warn(
+          "Max reconnect attempts reached or autoReconnect disabled."
+        );
+      }
     };
   }, [
     url,
@@ -101,14 +93,51 @@ export default function useWebSocket<MsgType extends object>(
     onClose,
     onError,
   ]);
+
   useEffect(() => {
-    const onFocus = () => {
-      if (connectionState === "disconnected") {
-        wsRef.current?.close();
+    connect();
+    return () => {
+      if (reconnectTimeout.current) clearTimeout(reconnectTimeout.current);
+      wsRef.current?.close(1000, "Component unmounted");
+    };
+  }, [connect]);
+
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible") {
+        const ws = wsRef.current;
+
+        if (
+          !ws ||
+          ws.readyState === WebSocket.CLOSED ||
+          ws.readyState === WebSocket.OPEN
+        ) {
+          if (ws && ws.readyState === WebSocket.OPEN) {
+            console.log(
+              "Forcing close and reconnect on tab focus to clear stale state."
+            );
+            isIntentionallyClosing.current = true;
+            ws.close(1000, "Forced Reconnect on Visibility");
+          }
+          setTimeout(connect, 500);
+        }
       }
     };
-    window.addEventListener("visibilitychange", onFocus);
-    return () => window.removeEventListener("visibilitychange", onFocus);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () =>
+      document.removeEventListener("visibilitychange", handleVisibility);
+  }, [connect]);
+
+  useEffect(() => {
+    if (connectionState === "connected") {
+      const clientPingInterval = setInterval(() => {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.send(JSON.stringify({ type: "CLIENT_PING" }));
+        }
+      }, 20000);
+
+      return () => clearInterval(clientPingInterval);
+    }
   }, [connectionState]);
 
   return { connectionState, ws: wsRef };
