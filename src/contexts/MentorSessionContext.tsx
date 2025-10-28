@@ -9,10 +9,9 @@ import {
   MentorChatSession,
   MentorSession,
 } from "@/features/mentore/server/types";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import useWebSocket from "@/hooks/useWebSocket";
 import { SessionNotFoundError } from "@/lib/Errors";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   createContext,
   Dispatch,
@@ -20,54 +19,70 @@ import {
   SetStateAction,
   useContext,
   useEffect,
+  useMemo,
   useState,
 } from "react";
+
 type PartialMentorSession = Partial<MentorSession>;
 type MentorshipSessionContextType = {
   mentorshipSession: MentorSession;
+  chats: MentorChatSession[];
   updateSession: (updates: PartialMentorSession) => void;
+  setChats: Dispatch<SetStateAction<MentorChatSession[]>>;
   uploadingFiles: File[];
   setUploadingFiles: Dispatch<SetStateAction<File[]>>;
+  sentTo: string | null;
 };
 
 const MentorshipSessionContext = createContext<
   MentorshipSessionContextType | undefined
 >(undefined);
-type MentorshipSessionPorviderProps = {
+
+type MentorshipSessionProviderProps = {
   children: ReactNode;
   sessionId: string;
+  userId: string;
 };
+
 export const MentorshipSessionProvider = ({
   children,
   sessionId,
-}: MentorshipSessionPorviderProps) => {
+  userId,
+}: MentorshipSessionProviderProps) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
-  const { user } = useCurrentUser();
-  const queryClient = useQueryClient();
+
   const {
-    data: session,
+    data: sessionData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: [sessionId, user?.id!],
-    queryFn: async () => {
-      return await getMentorSession(sessionId);
-    },
+    queryKey: [sessionId, userId],
+    queryFn: async () => await getMentorSession(sessionId),
+    refetchOnWindowFocus: false,
+    staleTime: Infinity,
+    gcTime: Infinity,
   });
+
   if (error) throw new SessionNotFoundError();
 
+  const [session, setSession] = useState<MentorSession | null>(null);
+  const [chats, setChats] = useState<MentorChatSession[]>([]);
+
   useEffect(() => {
-    if (!isLoading && !session) throw new SessionNotFoundError();
-  }, [isLoading, session]);
+    if (!isLoading && sessionData) {
+      setSession(sessionData);
+      setChats(sessionData.chats || []);
+    }
+  }, [isLoading, sessionData]);
+  const sentTo = useMemo(() => {
+    if (!session?.bookedSessions || !userId) return null;
+    return userId === session.bookedSessions.posterId
+      ? session.bookedSessions.solverId
+      : session.bookedSessions.posterId;
+  }, [userId, session?.bookedSessions]);
 
   const updateSession = (updates: PartialMentorSession) => {
-    queryClient.setQueryData<MentorSession>(
-      [sessionId, user?.id!],
-      (oldSession) => {
-        if (!oldSession) return oldSession;
-        return { ...oldSession, ...updates };
-      }
-    );
+    setSession((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
   const mentorSessoin = useMutation({
@@ -76,47 +91,44 @@ export const MentorshipSessionProvider = ({
 
   useWebSocket<
     MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
-  >(`${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}`, {
-    onMessage: (msg) => {
-      switch (msg.messageType) {
-        case "chat_message":
-          updateSession({
-            chats: [
-              ...(session?.chats || []),
-              { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
-            ],
-          });
-          break;
-        case "chat_deleted":
-          updateSession({
-            chats: (session?.chats || []).map((c) =>
-              c.id === msg.id ? { ...c, isDeleted: true, chatFiles: [] } : c
-            ),
-          });
-          break;
-      }
-      if (msg.chatFiles?.length > 0 && msg.sentBy === user?.id) {
-        setUploadingFiles([]);
-      }
-      mentorSessoin.mutate({
-        role: "solver",
-        sessionId: msg.sessionId,
-      });
-      mentorSessoin.mutate({
-        role: "poster",
-        sessionId: msg.sessionId,
-      });
-    },
-  });
+  >(
+    `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}:${userId}`,
+    {
+      onMessage: (msg) => {
+        setChats((old) => {
+          switch (msg.messageType) {
+            case "chat_message":
+              return [
+                ...old,
+                { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
+              ];
+            case "chat_deleted":
+              return old.map((c) =>
+                c.id === msg.id ? { ...c, isDeleted: true, chatFiles: [] } : c
+              );
+            default:
+              return old;
+          }
+        });
+
+        mentorSessoin.mutate({ role: "solver", sessionId: msg.sessionId });
+        mentorSessoin.mutate({ role: "poster", sessionId: msg.sessionId });
+      },
+    }
+  );
+
   if (isLoading || !session) return <Loading />;
 
   return (
     <MentorshipSessionContext.Provider
       value={{
         mentorshipSession: session,
+        chats,
         updateSession,
+        setChats,
         uploadingFiles,
         setUploadingFiles,
+        sentTo,
       }}>
       {children}
     </MentorshipSessionContext.Provider>
@@ -126,6 +138,6 @@ export const MentorshipSessionProvider = ({
 export const useMentorshipSession = () => {
   const context = useContext(MentorshipSessionContext);
   if (!context)
-    throw new Error("useMentorship must be used within a MentorshipPorvider");
+    throw new Error("useMentorship must be used within a MentorshipProvider");
   return context;
 };
