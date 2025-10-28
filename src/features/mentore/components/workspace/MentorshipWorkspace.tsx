@@ -4,21 +4,15 @@ import { env } from "@/env/client";
 import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import {
-  useFileUpload
-} from "@/hooks/useFile";
+import { useFileUpload } from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
 import { sessionTimeUtils } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
-import {
-  User
-} from "lucide-react";
+import { User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import {
-  sendMentorMessages
-} from "@/features/mentore/server/action";
+import { sendMentorMessages } from "@/features/mentore/server/action";
 import { FloatingVideo } from "../floating-video";
 import ChatInput from "./ChatInput";
 import ChatSideBar from "./ChatSideBar";
@@ -32,8 +26,13 @@ export default function MentorshipWorkspace({
   sidebar: boolean;
   controlled: boolean;
 }) {
-  const { mentorshipSession: session, setUploadingFiles } =
-    useMentorshipSession();
+  const {
+    mentorshipSession: session,
+    setUploadingFiles,
+    chats,
+    sentTo,
+    setChats,
+  } = useMentorshipSession();
   const [messageInput, setMessageInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
@@ -56,13 +55,16 @@ export default function MentorshipWorkspace({
     onError: (e) => {
       toast.error(e.message);
     },
+    onSuccess: (data) => {
+      if (data) {
+        setChats((prev) => [...prev, data]);
+      }
+    },
   });
 
   const allFiles = useMemo(() => {
-    return session
-      ? session.chats?.flatMap((chat) => chat.chatFiles) || []
-      : [];
-  }, [session]);
+    return chats.flatMap((chat) => chat.chatFiles);
+  }, [chats]);
 
   if (!session) {
     return (
@@ -95,6 +97,7 @@ export default function MentorshipWorkspace({
           message: text,
           sessionId: session.id,
           sentBy: user?.id!,
+          sentTo: sentTo!,
           uploadedFiles: [],
         });
       }
@@ -109,6 +112,7 @@ export default function MentorshipWorkspace({
           message: "",
           sessionId: session.id,
           sentBy: user?.id!,
+          sentTo: sentTo!,
           uploadedFiles: uploadedMeta,
         });
         setUploadingFiles([]);
@@ -141,7 +145,7 @@ export default function MentorshipWorkspace({
       </div>
       <ChatSideBar
         allFiles={allFiles}
-        chat={session.chats}
+        chat={chats}
         filePreview={filePreview}
         isPostSession={isPostSession}
         setFilePreview={setFilePreview}
