@@ -483,7 +483,7 @@ export const WorkspaceTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     taskId: uuid("task_id")
       .notNull()
-      .references(() => TaskTable.id, { onDelete: "no action" }),
+      .references(() => TaskTable.id, { onDelete: "cascade" }),
     solverId: uuid("solver_id")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
@@ -678,6 +678,9 @@ export const MentorshipChatTable = pgTable(
     sentBy: uuid("sent_by")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
+    sentTo: uuid("sent_to")
+      .notNull()
+      .references(() => UserTable.id, { onDelete: "no action" }),
     readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
     pending: boolean("pending"),
     isDeleted: boolean("is_deleted").default(false),
