@@ -544,18 +544,19 @@ async function getSessionById(sessionId: string) {
 type MentorMessageValues = {
   sessionId: string;
   sentBy: string;
+  sentTo: string;
   message: string;
   uploadedFiles: UploadedFileMeta[];
   messageType?: "chat_message" | "chat_deleted";
-  messageId?: string;
 };
 export async function sendMentorMessages({
   sessionId,
   sentBy,
+  sentTo,
   message,
   uploadedFiles,
   messageType = "chat_message",
-  messageId,
+
 }: MentorMessageValues) {
   if (!sessionId || !sentBy) return;
   const [{ user }, session] = await Promise.all([
@@ -588,6 +589,7 @@ export async function sendMentorMessages({
           sentBy: sentBy,
           message,
           pending: false,
+          sentTo
         })
         .returning();
       if (uploadedFiles && uploadedFiles.length > 0) {
@@ -628,6 +630,7 @@ export async function sendMentorMessages({
       headers: GoHeaders,
       body: JSON.stringify({ ...result, messageType }),
     });
+    return result
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
