@@ -2,6 +2,7 @@ package websocket
 
 import (
 	"encoding/json"
+	"fmt"
 	"github/abdallemo/solveit-saas/internal/user"
 	"net/http"
 )
@@ -23,6 +24,7 @@ type Chat struct {
 	ID          string          `json:"id"`
 	SessionId   string          `json:"sessionId"`
 	SentBy      string          `json:"sentBy"`
+	SentTo      string          `json:"sentTo"`
 	Message     string          `json:"message"`
 	CreatedAt   string          `json:"createdAt"`
 	ReadAt      string          `json:"readAt"`
@@ -65,6 +67,7 @@ func (s *WsMentorChat) HandleSendMentorChats(w http.ResponseWriter, r *http.Requ
 		ID:          msg.ID,
 		SessionId:   msg.SessionId,
 		SentBy:      msg.SentBy,
+		SentTo:      msg.SentTo,
 		Message:     msg.Message,
 		CreatedAt:   msg.CreatedAt,
 		ReadAt:      msg.ReadAt,
@@ -73,12 +76,13 @@ func (s *WsMentorChat) HandleSendMentorChats(w http.ResponseWriter, r *http.Requ
 		MessageType: msg.MessageType,
 	}
 
-	s.sendToUser(msg.SessionId, chat)
+	s.sendToUser(msg.SessionId, msg.SentTo, chat)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Notification sent"))
 }
 
-func (s *WsMentorChat) sendToUser(sessionId string, msg Chat) {
-	s.hub.sendToChannel("chat:"+sessionId, msg)
+func (s *WsMentorChat) sendToUser(sessionId, sentTo string, msg Chat) {
+	s.hub.sendToChannel(fmt.Sprintf("chat:%s:%s", sessionId, sentTo), msg)
+
 }
