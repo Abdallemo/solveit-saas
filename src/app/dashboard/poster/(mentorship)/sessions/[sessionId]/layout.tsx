@@ -14,7 +14,7 @@ export default async function WorkspaceLayout({
   const { sessionId } = await params;
 
   return (
-    <MentorshipSessionProvider sessionId={sessionId}>
+    <MentorshipSessionProvider sessionId={sessionId} userId={user.id}>
       {children}
     </MentorshipSessionProvider>
   );
