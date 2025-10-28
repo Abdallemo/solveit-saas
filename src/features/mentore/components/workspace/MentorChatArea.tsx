@@ -27,7 +27,7 @@ export function MentorChatArea({
 
   isPostSession: boolean;
 }) {
-  const { mentorshipSession: session, uploadingFiles } = useMentorshipSession();
+  const { uploadingFiles,chats } = useMentorshipSession();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const observerInstance = useRef<IntersectionObserver | null>(null);
   const messageRefs = useRef(new Map<string, HTMLElement>());
@@ -43,7 +43,8 @@ export function MentorChatArea({
         const id = entry.target.getAttribute("data-id");
         if (!id || seenRef.current.has(id)) return;
 
-        const chat = session?.chats?.find((c) => c.id === id);
+        // const chat = session?.chats?.find((c) => c.id === id);
+        const chat = chats.find((c) => c.id === id);
         if (!chat) return;
 
        
@@ -54,11 +55,11 @@ export function MentorChatArea({
         }
       });
     },
-    [session?.chats, user?.id]
+    [chats, user?.id]
   );
 
   useEffect(() => {
-    if (!session?.chats?.length) return;
+    if (!chats.length) return;
     observerInstance.current = new IntersectionObserver(onIntersect, {
       threshold: 0.3,
     });
@@ -66,7 +67,7 @@ export function MentorChatArea({
     messageRefs.current.forEach((el) => observerInstance.current?.observe(el));
 
     return () => observerInstance.current?.disconnect();
-  }, [onIntersect, session?.chats.length]);
+  }, [onIntersect, chats.length]);
 
   useEffect(() => {
     if (!scrollContainerRef.current) return;
@@ -96,18 +97,18 @@ export function MentorChatArea({
     if (isNearBottom) {
       messageRef.current?.scrollIntoView({ behavior: "smooth" });
     }
-  }, [session?.chats, isNearBottom]);
+  }, [chats, isNearBottom]);
 
   return (
     <ScrollArea
       className="flex-1 h-[500px] p-5 bg relative "
       ref={scrollContainerRef}>
       <div className="p-6 space-y-6 max-h-[500px]">
-        {session && session.chats && session.chats.length > 0 ? (
+        {chats && chats.length > 0 ? (
           <>
-            {session.chats.map((chat, index) => {
+            {chats.map((chat, index) => {
               const isCurrentUser = chat.chatOwner.id === user?.id;
-              const isLastBuble = index === session.chats.length - 1;
+              const isLastBuble = index === chats.length - 1;
 
               return (
                 <MentorChatBuble
