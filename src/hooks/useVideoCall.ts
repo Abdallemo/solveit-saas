@@ -3,7 +3,6 @@ import { useEffect, useRef } from "react";
 
 export function useMentorshipCall(userId: string, sessionId: string) {
   const {
-    initManager,
     localStream,
     remoteStream,
     localScreenStream,
@@ -15,10 +14,6 @@ export function useMentorshipCall(userId: string, sessionId: string) {
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const localScreenShare = useRef<HTMLVideoElement>(null);
   const remoteScreenShare = useRef<HTMLVideoElement>(null);
-  
-  useEffect(() => {
-    initManager(userId, sessionId);
-  }, [userId, sessionId, initManager]);
 
   useEffect(() => {
     if (localVideo.current && localStream)

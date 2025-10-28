@@ -9,7 +9,8 @@ import {
   MentorChatSession,
   MentorSession,
 } from "@/features/mentore/server/types";
-import useWebSocket from "@/hooks/useWebSocket";
+import { useMentorshipCall } from "@/hooks/useVideoCall";
+import { useWebSocket } from "@/hooks/useWebSocket-new";
 import { SessionNotFoundError } from "@/lib/Errors";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -50,6 +51,7 @@ export const MentorshipSessionProvider = ({
   userId,
 }: MentorshipSessionProviderProps) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
+  const { initManager } = useMentorshipCall(userId, sessionId);
 
   const {
     data: sessionData,
@@ -64,6 +66,10 @@ export const MentorshipSessionProvider = ({
 
   const [session, setSession] = useState<MentorSession | null>(null);
   const [chats, setChats] = useState<MentorChatSession[]>([]);
+
+  useEffect(() => {
+    initManager(userId, sessionId);
+  }, [userId, sessionId, initManager]);
 
   useEffect(() => {
     if (!isLoading && sessionData) {

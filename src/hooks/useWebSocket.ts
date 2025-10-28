@@ -134,7 +134,7 @@ export default function useWebSocket<MsgType extends object>(
         if (wsRef.current?.readyState === WebSocket.OPEN) {
           wsRef.current.send(JSON.stringify({ type: "CLIENT_PING" }));
         }
-      }, 20000);
+      }, 10000);
 
       return () => clearInterval(clientPingInterval);
     }
