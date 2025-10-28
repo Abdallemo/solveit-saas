@@ -385,6 +385,9 @@ class ScreenShare extends WebRTCPeer {
     this.notifyManager();
   }
   public async startScreenShare() {
+    if (!this.pc) {
+      await this.createPeerConnection();
+    }
     const screenStream = await navigator.mediaDevices.getDisplayMedia({
       video: { frameRate: 30 },
       audio: false,
@@ -394,9 +397,6 @@ class ScreenShare extends WebRTCPeer {
     videoTrack.contentHint = "text";
     this.localScreenShare = new MediaStream([videoTrack]);
 
-    if (!this.pc) {
-      await this.createPeerConnection();
-    }
 
     const existingSender = this.getTrackSender("video");
 
