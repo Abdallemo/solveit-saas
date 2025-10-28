@@ -18,10 +18,14 @@ var allowedHost = map[string]bool{
 }
 
 const (
-	pongWait   = 60 * time.Second    // Time allowed to wait for the next pong from client
-	pingPeriod = (pongWait * 9) / 10 // Send pings every 54s (before the read deadline expires)
-	writeWait  = 30 * time.Second    // Time allowed to write a message to the client
+	pongWait   = 30 * time.Second    // Time allowed to wait for the next pong from client
+	pingPeriod = (pongWait * 9) / 10 // Send pings every 27s (before the read deadline expires)
+	writeWait  = 10 * time.Second    // Time allowed to write a message to the client
 )
+
+type IncomingMessage struct {
+	Type string `json:"type"`
+}
 
 var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1 << 10,
@@ -79,24 +83,7 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 			}
 
 			conn.SetWriteDeadline(time.Now().Add(writeWait))
-			// if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(writeWait)); err != nil {
-			// 	log.Printf("Ping failed for %s: %v", channelID, err)
-			// 	conn.Close()
 
-			// 	// Ensure cleanup runs now
-			// 	h.mu.Lock()
-			// 	conns := h.conns[channelID]
-			// 	active := conns[:0]
-			// 	for _, c := range conns {
-			// 		if c != conn {
-			// 			active = append(active, c)
-			// 		}
-			// 	}
-			// 	h.conns[channelID] = active
-			// 	h.mu.Unlock()
-
-			// 	return
-			// }
 			if err := conn.WriteControl(websocket.PingMessage, nil, time.Now().Add(writeWait)); err != nil {
 				log.Printf("Ping failed for %s: %v (will retry next tick)", channelID, err)
 				continue //
@@ -110,8 +97,13 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string) {
 	defer conn.Close()
 	for {
-		_, _, err := conn.ReadMessage()
+
+		var msg IncomingMessage
+		err := conn.ReadJSON(&msg)
+
 		if err != nil {
+
+			log.Printf("Read error on channel %s: %v", channelID, err)
 			h.mu.Lock()
 			conns := h.conns[channelID]
 			active := conns[:0]
@@ -122,7 +114,13 @@ func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string) {
 			}
 			h.conns[channelID] = active
 			h.mu.Unlock()
+
 			break
+		}
+		switch msg.Type {
+		case "CLIENT_PING":
+		default:
+			log.Printf("Received unknown message type: %s on channel %s", msg.Type, channelID)
 		}
 	}
 }
