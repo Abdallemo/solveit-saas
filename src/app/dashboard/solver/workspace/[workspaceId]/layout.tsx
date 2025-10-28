@@ -3,6 +3,7 @@ import {
   isAuthorized
 } from "@/features/auth/server/actions";
 import { getWorkspaceById } from "@/features/tasks/server/data";
+import { getCurrentServerTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
 
 import { ReactNode } from "react";
@@ -23,12 +24,11 @@ export default async function WorkspaceLayout({
   if (currentWorkspace.solverId !== user?.id) {
     redirect("/dashboard/");
   }
-  const serverCurrentTime = new Date().toISOString();
 
   return (
     <WorkspaceProvider
       workspace={currentWorkspace}
-      serverCurrentTime={serverCurrentTime}>
+      serverCurrentTime={getCurrentServerTime().toISOString()}>
       {children}
     </WorkspaceProvider>
   );
