@@ -57,6 +57,13 @@
       "when": 1761496642696,
       "tag": "0007_vengeful_gressill",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1761611794173,
+      "tag": "0008_late_fantastic_four",
+      "breakpoints": true
     }
   ]
 }
