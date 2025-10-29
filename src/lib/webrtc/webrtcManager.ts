@@ -67,7 +67,10 @@ abstract class WebRTCPeer {
       console.warn("TURN fetch failed for worker:", this.connectionType);
     }
 
-    this.pc = new RTCPeerConnection({ iceServers ,iceTransportPolicy: "relay"});
+    this.pc = new RTCPeerConnection({
+      iceServers,
+      iceTransportPolicy: "relay",
+    });
 
     this.pc.ontrack = (e) => this.handleRemoteTrack(e);
 
@@ -518,6 +521,7 @@ export class WebRTCManager implements SignalHandler {
     this.sessionId = sessionId;
 
     this.signaling = new SignalingService(sessionId, this);
+    this.signaling.connect();
 
     this.cameraWorker = new CameraShare(
       userId,
@@ -561,7 +565,10 @@ export class WebRTCManager implements SignalHandler {
   }
 
   public preloadPeers = async () => {
-    await Promise.all([/*this.cameraWorker.init()*/, this.screenWorker.init()]);
+    await Promise.all([
+      ,
+      /*this.cameraWorker.init()*/ this.screenWorker.init(),
+    ]);
   };
 
   public async handle(msg: SignalMessage) {
@@ -634,7 +641,6 @@ export class WebRTCManager implements SignalHandler {
     this.callStarted = true;
     try {
       await this.cameraWorker.startCameraCall();
-      this.signaling.connect();
     } catch (error) {
       console.error("Manager initialization error:", error);
     }
