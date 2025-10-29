@@ -33,7 +33,7 @@ export default function MentorChatBuble({
 }) {
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
-  const { send } = useMentorshipSession();
+  const { send, setChats } = useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
 
@@ -137,9 +137,16 @@ export default function MentorChatBuble({
             deleteAction={async (f) => {
               try {
                 await deleteFile({ filePath: f.filePath });
+                setChats((old) => {
+                  return old.map((c) =>
+                    c.id === chat.id
+                      ? { ...c, isDeleted: true, chatFiles: [] }
+                      : c
+                  );
+                });
                 send({ ...chat, messageType: "chat_deleted" });
               } catch (error) {
-                console.log("failed to delte")
+                console.log("failed to delte");
               }
             }}
           />

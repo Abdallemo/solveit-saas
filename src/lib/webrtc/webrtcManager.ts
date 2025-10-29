@@ -67,7 +67,7 @@ abstract class WebRTCPeer {
       console.warn("TURN fetch failed for worker:", this.connectionType);
     }
 
-    this.pc = new RTCPeerConnection({ iceServers });
+    this.pc = new RTCPeerConnection({ iceServers ,iceTransportPolicy: "relay"});
 
     this.pc.ontrack = (e) => this.handleRemoteTrack(e);
 
