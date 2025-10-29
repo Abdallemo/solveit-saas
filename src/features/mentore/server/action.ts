@@ -625,11 +625,11 @@ export async function sendMentorMessages({
       }/dashboard/${user.role.toLocaleLowerCase()}/sessions/${sessionId}`
     );
 
-    await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
-      method: "POST",
-      headers: GoHeaders,
-      body: JSON.stringify({ ...result, messageType }),
-    });
+    // await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
+    //   method: "POST",
+    //   headers: GoHeaders,
+    //   body: JSON.stringify({ ...result, messageType }),
+    // });
     return result
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
