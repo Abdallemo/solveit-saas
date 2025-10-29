@@ -8,14 +8,17 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 const Static_TURN = [
   {
-    urls: ["stun:stun.cloudflare.com:3478"],
+    urls: [
+      "stun:stun.cloudflare.com:3478",
+      "stun:stun.l.google.com:19302",
+      "stun:stun1.l.google.com:19302",
+    ],
   },
+
   {
     urls: [
       "turn:turn.cloudflare.com:3478?transport=udp",
       "turn:turn.cloudflare.com:3478?transport=tcp",
-      "turns:turn.cloudflare.com:5349?transport=tcp",
-      "turns:turn.cloudflare.com:443?transport=tcp",
     ],
   },
 ];
