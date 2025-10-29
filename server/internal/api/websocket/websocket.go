@@ -3,6 +3,7 @@ package websocket
 import (
 	"encoding/json"
 	"github/abdallemo/solveit-saas/internal/user"
+	"log"
 	"net/http"
 )
 
@@ -35,25 +36,31 @@ type SignalMessage struct {
 }
 
 type WsNotification struct {
-	hub      *WsHub
-	messages []Message
+	hub                 *WsHub
+	messages            []Message
+	notificationChannel chan IncomingMessage
 }
 type WsSignalling struct {
-	hub    *WsHub
-	signal []SignalMessage
+	hub               *WsHub
+	signal            []SignalMessage
+	signallingChannel chan IncomingMessage
 }
 
 func NewWsNotification(hub *WsHub) *WsNotification {
 	return &WsNotification{
-		hub:      hub,
-		messages: make([]Message, 0, 1<<10),
+		hub:                 hub,
+		messages:            make([]Message, 0, 1<<10),
+		notificationChannel: make(chan IncomingMessage, 100),
 	}
 }
 func NewWsWsSignalling(hub *WsHub) *WsSignalling {
-	return &WsSignalling{
-		hub:    hub,
-		signal: make([]SignalMessage, 0, 1<<10),
+	s := &WsSignalling{
+		hub:               hub,
+		signal:            make([]SignalMessage, 0, 1<<10),
+		signallingChannel: make(chan IncomingMessage, 100),
 	}
+	go s.listenForMessages()
+	return s
 }
 
 func (s *WsNotification) HandleNotification(w http.ResponseWriter, r *http.Request) {
@@ -67,7 +74,7 @@ func (s *WsNotification) HandleNotification(w http.ResponseWriter, r *http.Reque
 	q.Set("channel", "notif:"+userID)
 	r.URL.RawQuery = q.Encode()
 
-	s.hub.handleWS(w, r)
+	s.hub.handleWS(w, r, s.notificationChannel)
 }
 
 func (s *WsNotification) HandleSendNotification(w http.ResponseWriter, r *http.Request) {
@@ -102,17 +109,35 @@ func (s *WsNotification) SendToUser(userID string, msg Message) {
 // -------------------- Comments WS --------------------
 
 type WsComments struct {
-	hub     *WsHub
-	comment []Comment
+	hub             *WsHub
+	comment         []Comment
+	commentsChannel chan IncomingMessage
 }
 
 func NewWsComments(hub *WsHub) *WsComments {
-	return &WsComments{
-		hub:     hub,
-		comment: make([]Comment, 0, 1<<10),
+	s := &WsComments{
+		hub:             hub,
+		comment:         make([]Comment, 0, 1<<10),
+		commentsChannel: make(chan IncomingMessage, 100),
 	}
+	go s.listenForMessages()
+	return s
 }
 
+func (s *WsComments) listenForMessages() {
+
+	for incMsg := range s.commentsChannel {
+
+		comment := Comment{}
+
+		if err := json.Unmarshal(incMsg.Payload, &comment); err != nil {
+			log.Printf("Chat Unmarshal Failed: %v", err)
+			continue
+		}
+
+		s.sendToTask(comment.TaskId, comment)
+	}
+}
 func (s *WsComments) HandleComments(w http.ResponseWriter, r *http.Request) {
 	taskID := r.URL.Query().Get("task_id")
 	if taskID == "" {
@@ -124,7 +149,7 @@ func (s *WsComments) HandleComments(w http.ResponseWriter, r *http.Request) {
 	q.Set("channel", "comments:"+taskID)
 	r.URL.RawQuery = q.Encode()
 
-	s.hub.handleWS(w, r)
+	s.hub.handleWS(w, r, s.commentsChannel)
 }
 
 func (s *WsComments) HandleSendComments(w http.ResponseWriter, r *http.Request) {
@@ -145,6 +170,20 @@ func (s *WsComments) sendToTask(taskID string, comment Comment) {
 }
 
 // -------------------- WebRTC Signalling WS --------------------
+func (s *WsSignalling) listenForMessages() {
+
+	for incMsg := range s.signallingChannel {
+
+		msg := SignalMessage{}
+
+		if err := json.Unmarshal(incMsg.Payload, &msg); err != nil {
+			log.Printf("Chat Unmarshal Failed: %v", err)
+			continue
+		}
+
+		s.sendToSignalSession(msg.SessionId, msg)
+	}
+}
 func (s *WsSignalling) HandleSignaling(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.URL.Query().Get("session_id")
 	if sessionID == "" {
@@ -156,7 +195,7 @@ func (s *WsSignalling) HandleSignaling(w http.ResponseWriter, r *http.Request) {
 	q.Set("channel", "signaling:"+sessionID)
 	r.URL.RawQuery = q.Encode()
 
-	s.hub.handleWS(w, r)
+	s.hub.handleWS(w, r, s.signallingChannel)
 }
 func (s *WsSignalling) HandleSendSignalingMessage(w http.ResponseWriter, r *http.Request) {
 	var msg SignalMessage
