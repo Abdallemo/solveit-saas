@@ -1,6 +1,7 @@
 package websocket
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -18,13 +19,14 @@ var allowedHost = map[string]bool{
 }
 
 const (
-	pongWait   = 30 * time.Second    // Time allowed to wait for the next pong from client
-	pingPeriod = (pongWait * 9) / 10 // Send pings every 27s (before the read deadline expires)
+	pongWait   = 90 * time.Second    // Time allowed to wait for the next pong from client
+	pingPeriod = (pongWait * 9) / 10 // Send pings every 81 (before the read deadline expires)
 	writeWait  = 10 * time.Second    // Time allowed to write a message to the client
 )
 
 type IncomingMessage struct {
-	Type string `json:"type"`
+	Type    string          `json:"type"`
+	Payload json.RawMessage `json:"payload"`
 }
 
 var upgrader = websocket.Upgrader{
@@ -40,6 +42,7 @@ var upgrader = websocket.Upgrader{
 type WsHub struct {
 	conns map[string][]*websocket.Conn
 	mu    sync.RWMutex
+	// messageChan chan any
 }
 
 func NewHub() *WsHub {
@@ -48,7 +51,7 @@ func NewHub() *WsHub {
 	}
 }
 
-func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
+func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request, appChan chan IncomingMessage) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		fmt.Println("failed to upgrade conn:", err)
@@ -69,7 +72,7 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 	h.conns[channelID] = append(h.conns[channelID], conn)
 	h.mu.Unlock()
 
-	go h.cleanUp(conn, channelID)
+	go h.cleanUp(conn, channelID, appChan)
 	go func() {
 		ticker := time.NewTicker(pingPeriod)
 		defer ticker.Stop()
@@ -94,7 +97,7 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request) {
 	log.Println("New connection for channel:", channelID)
 
 }
-func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string) {
+func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string, appChan chan IncomingMessage) {
 	defer conn.Close()
 	for {
 
@@ -118,7 +121,16 @@ func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string) {
 			break
 		}
 		switch msg.Type {
-		case "CLIENT_PING":
+		case "PING":
+			log.Println("PONG")
+			continue
+		case "MESSAGE":
+			select {
+			case appChan <- msg:
+			default:
+				log.Println("WARN: Feature channel full, dropping message on channel:", channelID)
+			}
+
 		default:
 			log.Printf("Received unknown message type: %s on channel %s", msg.Type, channelID)
 		}
@@ -132,8 +144,10 @@ func (h *WsHub) sendToChannel(channelID string, payload any) {
 	conns := h.conns[channelID]
 	active := conns[:0]
 	for _, conn := range conns {
+		conn.SetWriteDeadline(time.Now().Add(writeWait))
 		if err := conn.WriteJSON(payload); err != nil {
-			log.Println("Write error:", err)
+			log.Printf("Write error to %s: %v (Closing connection)", channelID, err)
+			conn.Close()
 			continue
 		}
 		active = append(active, conn)
