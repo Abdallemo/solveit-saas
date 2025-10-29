@@ -12,7 +12,7 @@ export default function MentorChatHeader({
   session,
   sideBar,
 }: {
-  session: Exclude<MentorSession, undefined>;
+  session: Exclude<MentorSession, undefined|null>;
   sideBar: boolean;
 }) {
   const { sessionDate, timeSlot, sessionStart, sessionEnd } = session;
