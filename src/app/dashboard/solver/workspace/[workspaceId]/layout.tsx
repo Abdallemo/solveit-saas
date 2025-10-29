@@ -1,7 +1,6 @@
+import { CommentProvider } from "@/contexts/TaskCommentProvider";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
-import {
-  isAuthorized
-} from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { getWorkspaceById } from "@/features/tasks/server/data";
 import { getCurrentServerTime } from "@/lib/utils";
 import { redirect } from "next/navigation";
@@ -26,10 +25,16 @@ export default async function WorkspaceLayout({
   }
 
   return (
-    <WorkspaceProvider
-      workspace={currentWorkspace}
-      serverCurrentTime={getCurrentServerTime().toISOString()}>
-      {children}
-    </WorkspaceProvider>
+    <CommentProvider
+      taskComments={currentWorkspace.task.taskComments}
+      taskId={currentWorkspace.taskId}
+      userId={user.id}>
+      <WorkspaceProvider
+        workspace={currentWorkspace}
+        serverCurrentTime={getCurrentServerTime().toISOString()}
+        userId={user.id}>
+        {children}
+      </WorkspaceProvider>
+    </CommentProvider>
   );
 }
