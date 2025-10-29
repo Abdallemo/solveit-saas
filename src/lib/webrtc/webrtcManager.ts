@@ -57,10 +57,7 @@ abstract class WebRTCPeer {
   public abstract init(): Promise<void>;
 
   protected async createPeerConnection() {
-    let iceServers: RTCIceServer[] = [
-      { urls: "stun:stun.l.google.com:19302" },
-      { urls: "stun:stun1.l.google.com:19302" },
-    ];
+    let iceServers: RTCIceServer[] = [];
     try {
       const creds = await getTurnCredentials();
       if (creds?.turn.length > 0) {
@@ -564,7 +561,7 @@ export class WebRTCManager implements SignalHandler {
   }
 
   public preloadPeers = async () => {
-    await Promise.all([this.cameraWorker.init(), this.screenWorker.init()]);
+    await Promise.all([/*this.cameraWorker.init()*/, this.screenWorker.init()]);
   };
 
   public async handle(msg: SignalMessage) {
