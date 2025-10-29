@@ -69,7 +69,6 @@ abstract class WebRTCPeer {
 
     this.pc = new RTCPeerConnection({
       iceServers,
-      iceTransportPolicy: "relay",
     });
 
     this.pc.ontrack = (e) => this.handleRemoteTrack(e);
