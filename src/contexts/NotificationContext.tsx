@@ -1,7 +1,8 @@
 "use client";
 import { env } from "@/env/client";
 import { userSessionType } from "@/features/users/server/user-types";
-import useWebSocket from "@/hooks/useWebSocket";
+import { useWebSocket } from "@/hooks/useWebSocketClass";
+
 import {
   createContext,
   Dispatch,
