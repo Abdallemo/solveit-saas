@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { approveRefund, rejectRefund } from "@/features/payments/server/action";
@@ -282,7 +283,7 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
+              <ScrollArea className="space-y-4 h-100 p-4">
                 {task.taskComments.map((comment, index) => {
                   const isFromPoster = comment.userId === task.posterId;
                   const isFromSolver = comment.userId === task.solverId;
@@ -330,7 +331,7 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                     </div>
                   );
                 })}
-              </div>
+              </ScrollArea>
             </CardContent>
           </Card>
 
@@ -400,7 +401,7 @@ function ApproveRefundDialog({
   setConfirmInput,
   handleTaskRefund,
 }: {
-  dispute: Exclude<Dispute,null>;
+  dispute: Exclude<Dispute, null>;
 
   confirmInput: string;
   isRefunding: boolean;
@@ -476,7 +477,7 @@ function RejectRefundDialog({
   setConfirmInput,
   handleTaskReject,
 }: {
-  dispute: Exclude<Dispute,null>;
+  dispute: Exclude<Dispute, null>;
 
   confirmInput: string;
   isRejecting: boolean;
