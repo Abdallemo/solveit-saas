@@ -1,9 +1,7 @@
 "use client";
-import { env } from "@/env/client";
 import { WorkspaceUploadedFileMeta } from "@/features/media/server/media-types";
 import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
 import { publicUserType } from "@/features/users/server/user-types";
-import { useWebSocket } from "@/hooks/useWebSocketClass";
 
 import {
   createContext,
@@ -13,6 +11,7 @@ import {
   useContext,
   useState,
 } from "react";
+import { useComments } from "./TaskCommentProvider";
 export type commentType = {
   id: string;
   content: string;
@@ -36,6 +35,7 @@ type WorkspaceContextType = {
   >;
   comments: commentType[];
   setComments: Dispatch<SetStateAction<commentType[]>>;
+  send: (data: commentType) => void;
 };
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
@@ -45,12 +45,14 @@ type WorkspacePorviderProps = {
   children: ReactNode;
   workspace: WorkpaceSchemReturnedType;
   serverCurrentTime: string;
+  userId: string;
 };
 
 export const WorkspaceProvider = ({
   children,
   workspace,
   serverCurrentTime,
+  userId,
 }: WorkspacePorviderProps) => {
   const [content, setContent] = useState(workspace?.content ?? "");
   const [serverTime] = useState(serverCurrentTime);
@@ -58,22 +60,8 @@ export const WorkspaceProvider = ({
     WorkspaceUploadedFileMeta[]
   >(workspace?.workspaceFiles ?? []);
   const [currentWorkspace, setCurrentWorkspace] = useState(workspace);
-  const [comments, setComments] = useState<commentType[]>(
-    [...(workspace?.task.taskComments ?? [])].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
-    })
-  );
 
-  useWebSocket<commentType>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/comments?task_id=${currentWorkspace?.taskId}`,
-    {
-      onMessage: (comment) => {
-        setComments((prev) => [...prev, comment]);
-      },
-    }
-  );
+
   return (
     <WorkspaceContext.Provider
       value={{
@@ -84,8 +72,7 @@ export const WorkspaceProvider = ({
         setUploadedFiles,
         currentWorkspace,
         setCurrentWorkspace,
-        comments,
-        setComments,
+        ...useComments()
       }}>
       {children}
     </WorkspaceContext.Provider>
