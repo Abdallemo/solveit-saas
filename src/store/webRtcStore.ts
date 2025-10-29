@@ -61,7 +61,9 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
 
     initManager: (userId, sessionId) => {
       const manager = getWebRTCManager(userId, sessionId);
-      manager.preloadPeers();
+      if (manager){
+        void manager.preloadPeers();
+      }
       manager.subscribe((state) => {
         set({
           localStream: state.localStream,
