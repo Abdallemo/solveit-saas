@@ -15,8 +15,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Textarea } from "@/components/ui/textarea";
-import { commentType } from "@/contexts/WorkspaceContext";
-import { env } from "@/env/client";
+import { useComments } from "@/contexts/TaskCommentProvider";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { SolutionPreview } from "@/features/tasks/components/richTextEdito/TaskPreview";
 import { CommentCard } from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
@@ -32,7 +31,6 @@ import {
   taskRefundSchemaType,
 } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { useWebSocket } from "@/hooks/useWebSocketClass";
 import { formatDateAndTimeNUTC } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -199,6 +197,7 @@ export default function SolutionPageComps({
   solution: SolutionById;
 }) {
   const { user } = useCurrentUser();
+  const {comments,setComments,send} = useComments()
   const [comment, setComment] = useState("");
   const latestCommentRef = useRef<HTMLDivElement>(null);
   const files = solution.solutionFiles.map((f) => {
@@ -221,21 +220,6 @@ export default function SolutionPageComps({
       uploadedAt,
     };
   });
-  const [comments, setComments] = useState<commentType[]>(
-    [...(solution?.taskSolution.taskComments ?? [])].sort((a, b) => {
-      const dateA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
-      const dateB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-      return dateA - dateB;
-    })
-  );
-  useWebSocket<commentType>(
-    `${env.NEXT_PUBLIC_GO_API_WS_URL}/comments?task_id=${solution?.taskId}`,
-    {
-      onMessage: (comment) => {
-        setComments((prev) => [...prev, comment]);
-      },
-    }
-  );
   useEffect(() => {
     if (latestCommentRef.current) {
       latestCommentRef.current.scrollIntoView({ behavior: "smooth" });
@@ -250,7 +234,12 @@ export default function SolutionPageComps({
 
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      if (data){
+        setComments(prev=>[...prev,data])
+        send(data)
+      }
+    },
   });
   async function handleSendComment() {
     if (!comment.trim()) return;
