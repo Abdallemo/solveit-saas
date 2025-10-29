@@ -2,37 +2,56 @@ import { useWebRTCStore } from "@/store/webRtcStore";
 import { useEffect, useRef } from "react";
 
 export function useMentorshipCall(userId: string, sessionId: string) {
-  const {
-    localStream,
-    remoteStream,
-    localScreenStream,
-    remoteScreenStream,
-
-  } = useWebRTCStore();
+  const { localStream, remoteStream, localScreenStream, remoteScreenStream ,initManager} =
+    useWebRTCStore();
 
   const localVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const localScreenShare = useRef<HTMLVideoElement>(null);
   const remoteScreenShare = useRef<HTMLVideoElement>(null);
+    
+  useEffect(() => {
+    initManager(userId, sessionId);
+  }, [userId, sessionId, initManager]);
 
   useEffect(() => {
-    if (localVideo.current && localStream)
+    if (!localVideo.current) return;
+
+    if (localStream) {
       localVideo.current.srcObject = localStream;
+    } else {
+      localVideo.current.srcObject = null;
+    }
   }, [localStream]);
 
   useEffect(() => {
-    if (remoteVideo.current && remoteStream)
+    if (!remoteVideo.current) return;
+
+    if (remoteStream) {
       remoteVideo.current.srcObject = remoteStream;
+    } else {
+      remoteVideo.current.srcObject = null;
+    }
   }, [remoteStream]);
 
   useEffect(() => {
-    if (localScreenShare.current && localScreenStream)
+    if (!localScreenShare.current) return;
+
+    if (localScreenStream) {
       localScreenShare.current.srcObject = localScreenStream;
+    } else {
+      localScreenShare.current.srcObject = null;
+    }
   }, [localScreenStream]);
 
   useEffect(() => {
-    if (remoteScreenShare.current && remoteScreenStream)
+    if (!remoteScreenShare.current) return;
+
+    if (remoteScreenStream) {
       remoteScreenShare.current.srcObject = remoteScreenStream;
+    } else {
+      remoteScreenShare.current.srcObject = null;
+    }
   }, [remoteScreenStream]);
 
   return {
@@ -40,6 +59,6 @@ export function useMentorshipCall(userId: string, sessionId: string) {
     remoteVideo,
     localScreenShare,
     remoteScreenShare,
-    ...useWebRTCStore()
+    ...useWebRTCStore(),
   };
 }
