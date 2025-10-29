@@ -32,6 +32,7 @@ export default function MentorshipWorkspace({
     chats,
     sentTo,
     setChats,
+    send
   } = useMentorshipSession();
   const [messageInput, setMessageInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -58,7 +59,9 @@ export default function MentorshipWorkspace({
     onSuccess: (data) => {
       if (data) {
         setChats((prev) => [...prev, data]);
+        send({...data,messageType:"chat_message"})
       }
+
     },
   });
 
