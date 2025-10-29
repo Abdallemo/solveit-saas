@@ -564,7 +564,7 @@ export class WebRTCManager implements SignalHandler {
   }
 
   public preloadPeers = async () => {
-    await Promise.all([this.cameraWorker.init(), this.screenWorker.init()]);
+    await Promise.all([/*this.cameraWorker.init(),*/ this.screenWorker.init()]);
   };
 
   public async handle(msg: SignalMessage) {
