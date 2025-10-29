@@ -2,8 +2,8 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """Fix(websocket): Stabilize background connections
-Prevents disconnections and duplicate messages using controlled client-side reconnect on tab focus.
+commit_message = """Fully decouple WebSocket message handling via feature channels
+Moves Chat, Comments, and Signaling from HTTP POST triggers to direct client-to-server WebSocket messaging using dedicated Go channels. This significantly improves real-time performance and reliability.
 """
 
 repo = Repo(repo_path)
