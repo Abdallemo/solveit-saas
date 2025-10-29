@@ -52,7 +52,6 @@ import {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
-import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { isError, truncateText } from "@/lib/utils";
@@ -939,18 +938,19 @@ export async function createTaskComment(values: {
         },
       },
     });
-    if (result || result !== undefined) {
-      try {
-        await fetch(`${env.GO_API_URL}/send-comment`, {
-          method: "POST",
-          headers: GoHeaders,
-          body: JSON.stringify(result),
-        });
-      } catch (error) {
-        logger.error("unable to send comment ", error);
-      }
-    }
+    // if (result || result !== undefined) {
+    //   try {
+    //     await fetch(`${env.GO_API_URL}/send-comment`, {
+    //       method: "POST",
+    //       headers: GoHeaders,
+    //       body: JSON.stringify(result),
+    //     });
+    //   } catch (error) {
+    //     logger.error("unable to send comment ", error);
+    //   }
+    // }
     revalidatePath(`/`);
+    return result
   } catch (error) {
     logger.error("unable to create comment", {
       message: (error as Error)?.message,
