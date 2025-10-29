@@ -1,6 +1,7 @@
+import { wait } from "@/lib/utils";
+import { SignalHandler, SignalingService } from "@/lib/webrtc/signaling-new";
+import { connType, SignalMessage } from "@/lib/webrtc/types";
 import { getTurnCredentials } from "../cloudflare";
-import { SignalHandler, SignalingService } from "./signaling";
-import { connType, SignalMessage } from "./types";
 
 type WebRTCState = {
   localStream: MediaStream | null;
@@ -397,7 +398,6 @@ class ScreenShare extends WebRTCPeer {
     videoTrack.contentHint = "text";
     this.localScreenShare = new MediaStream([videoTrack]);
 
-
     const existingSender = this.getTrackSender("video");
 
     if (existingSender) {
@@ -417,12 +417,12 @@ class ScreenShare extends WebRTCPeer {
 
   public override async handleSignal(msg: SignalMessage) {
     if (msg.type === "stopScreen") {
-      this.remoteScreenShare = null;
+      if (this.remoteScreenShare) {
+        this.remoteScreenShare.getTracks().forEach((t) => t.stop());
+        this.remoteScreenShare = null;
+      }
       this.notifyManager();
       return;
-    }
-    if (!this.pc && (msg.type === "offer" || msg.type === "candidate")) {
-      await this.createPeerConnection();
     }
 
     return super.handleSignal(msg);
@@ -458,7 +458,9 @@ class ScreenShare extends WebRTCPeer {
     }
 
     if (this.pc && this.screenSender) {
-      this.pc.removeTrack(this.screenSender);
+      try {
+        this.pc.removeTrack(this.screenSender);
+      } catch {}
     }
     this.screenSender = null;
   }
@@ -477,7 +479,7 @@ class ScreenShare extends WebRTCPeer {
 
   public override async close() {
     this.localCleanup();
-
+    await wait(100);
     this.notifyManager();
 
     await super.close();
