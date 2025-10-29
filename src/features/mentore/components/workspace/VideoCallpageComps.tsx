@@ -75,7 +75,7 @@ export function VideoCallPageComps({
       const stillExists =
         (expandedVideo === "local" && localStream) ||
         (expandedVideo === "remote" && remoteStream) ||
-        (expandedVideo === "localScreen" && localScreenShare) ||
+        (expandedVideo === "localScreen" && localScreenStream) ||
         (expandedVideo === "remoteScreen" && remoteScreenStream);
 
       if (!stillExists) {
@@ -87,7 +87,7 @@ export function VideoCallPageComps({
     expandedVideo,
     localStream,
     remoteStream,
-    localScreenShare,
+    localScreenStream,
     remoteScreenStream,
   ]);
 
@@ -124,7 +124,7 @@ export function VideoCallPageComps({
       label: "Your Screen",
       type: "screen",
     },
-    remoteScreenShare && {
+    remoteScreenStream && {
       ref: remoteScreenShare,
       label: "Peer's Screen",
       type: "screen",
