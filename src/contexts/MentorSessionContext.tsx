@@ -9,8 +9,7 @@ import {
   MentorChatSession,
   MentorSession,
 } from "@/features/mentore/server/types";
-import { useMentorshipCall } from "@/hooks/useVideoCall";
-import { useWebSocket } from "@/hooks/useWebSocket-new";
+import { useWebSocket } from "@/hooks/useWebSocketClass";
 import { SessionNotFoundError } from "@/lib/Errors";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
@@ -33,6 +32,7 @@ type MentorshipSessionContextType = {
   uploadingFiles: File[];
   setUploadingFiles: Dispatch<SetStateAction<File[]>>;
   sentTo: string | null;
+  send:(msg:MentorChatSession & { messageType: "chat_message" | "chat_deleted" })=>void
 };
 
 const MentorshipSessionContext = createContext<
@@ -51,7 +51,6 @@ export const MentorshipSessionProvider = ({
   userId,
 }: MentorshipSessionProviderProps) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
-  const { initManager } = useMentorshipCall(userId, sessionId);
 
   const {
     data: sessionData,
@@ -66,10 +65,6 @@ export const MentorshipSessionProvider = ({
 
   const [session, setSession] = useState<MentorSession | null>(null);
   const [chats, setChats] = useState<MentorChatSession[]>([]);
-
-  useEffect(() => {
-    initManager(userId, sessionId);
-  }, [userId, sessionId, initManager]);
 
   useEffect(() => {
     if (!isLoading && sessionData) {
@@ -92,7 +87,7 @@ export const MentorshipSessionProvider = ({
     mutationFn: revalidateMentorSessinoData,
   });
 
-  useWebSocket<
+  const { send } = useWebSocket<
     MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
   >(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}:${userId}`,
@@ -132,6 +127,7 @@ export const MentorshipSessionProvider = ({
         uploadingFiles,
         setUploadingFiles,
         sentTo,
+        send
       }}>
       {children}
     </MentorshipSessionContext.Provider>
