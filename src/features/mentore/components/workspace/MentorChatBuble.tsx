@@ -1,22 +1,11 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  FileChatCardComps
-} from "@/features/media/components/FileHelpers";
+import { FileChatCardComps } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import {
-  useDeleteFileGeneric,
-  useDownloadFile
-} from "@/hooks/useFile";
-import { useMutation } from "@tanstack/react-query";
-import {
-  CheckCheck,
-  User2
-} from "lucide-react";
+import { useDeleteFileGeneric, useDownloadFile } from "@/hooks/useFile";
+import { CheckCheck, User2 } from "lucide-react";
 import type React from "react";
 
-import {
-  sendMentorDeleteMessages
-} from "@/features/mentore/server/action";
+import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { userSessionType } from "@/features/users/server/user-types";
 import { MentorChatSession } from "../../server/types";
 
@@ -44,14 +33,10 @@ export default function MentorChatBuble({
 }) {
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
+  const { send } = useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
-  const { mutate: sendDeleteMessage } = useMutation({
-    mutationFn: sendMentorDeleteMessages,
-    onError: (e) => {
-      console.log(e);
-    },
-  });
+
   return (
     <div
       ref={(el) => {
@@ -150,10 +135,12 @@ export default function MentorChatBuble({
               await downloadFile({ fileName: f.fileName, key: f.filePath });
             }}
             deleteAction={async (f) => {
-              await deleteFile({ filePath: f.filePath });
-              sendDeleteMessage({
-                deletedMessage: chat,
-              });
+              try {
+                await deleteFile({ filePath: f.filePath });
+                send({ ...chat, messageType: "chat_deleted" });
+              } catch (error) {
+                console.log("failed to delte")
+              }
             }}
           />
         ))}
