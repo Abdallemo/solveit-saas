@@ -54,7 +54,6 @@ export async function getBlockedSolver(solverId: string, taskId: string) {
     where: (table, fn) =>
       fn.and(fn.eq(table.userId, solverId), fn.eq(table.taskId, taskId)),
   });
-  console.log(`[found] ${result}`);
   return [result][0];
 }
 export async function getAllTaskCatagories(
