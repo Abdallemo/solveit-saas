@@ -32,7 +32,7 @@ import {
   taskRefundSchemaType,
 } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import useWebSocket from "@/hooks/useWebSocket";
+import { useWebSocket } from "@/hooks/useWebSocketClass";
 import { formatDateAndTimeNUTC } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
