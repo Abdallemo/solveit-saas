@@ -31,7 +31,11 @@ import {
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
-import { MentorError, SubscriptionError } from "@/lib/Errors";
+import {
+  MentorError,
+  SessionNotFoundError,
+  SubscriptionError,
+} from "@/lib/Errors";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
@@ -507,27 +511,38 @@ export async function getMentorBookingSessions() {
 export async function getMentorSession(sessionId: string) {
   if (!sessionId) return;
   try {
-    const session = await db.query.MentorshipSessionTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.id, sessionId),
-      with: {
-        chats: {
-          with: {
-            chatFiles: true,
-            chatOwner: {
-              columns: publicUserColumns,
+    const [session, chats] = await Promise.all([
+      db.query.MentorshipSessionTable.findFirst({
+        where: (tb, fn) => fn.eq(tb.id, sessionId),
+        with: {
+          bookedSessions: {
+            with: {
+              poster: { columns: publicUserColumns },
+              solver: true,
             },
           },
         },
-        bookedSessions: { with: { poster: true, solver: true } },
-      },
-    });
-    return session;
+      }),
+      db.query.MentorshipChatTable.findMany({
+        where: (tb, fn) => fn.eq(tb.sessionId, sessionId),
+        with: {
+          chatFiles: true,
+          chatOwner: {
+            columns: publicUserColumns,
+          },
+        },
+        orderBy: (tb, fn) => fn.asc(tb.createdAt),
+      }),
+    ]);
+
+    return { session: session ?? null, chats };
   } catch (error) {
     logger.error("unable to fetch the session info", {
       message: (error as Error).message,
       cause: (error as Error).cause,
       stack: (error as Error).stack,
     });
+    throw new SessionNotFoundError();
   }
 }
 async function getSessionById(sessionId: string) {
@@ -556,7 +571,6 @@ export async function sendMentorMessages({
   message,
   uploadedFiles,
   messageType = "chat_message",
-
 }: MentorMessageValues) {
   if (!sessionId || !sentBy) return;
   const [{ user }, session] = await Promise.all([
@@ -589,11 +603,10 @@ export async function sendMentorMessages({
           sentBy: sentBy,
           message,
           pending: false,
-          sentTo
+          sentTo,
         })
         .returning();
       if (uploadedFiles && uploadedFiles.length > 0) {
-        console.warn("files ");
         await Promise.all(
           uploadedFiles.map((file) =>
             dx.insert(MentorshipChatFilesTable).values({
@@ -630,7 +643,7 @@ export async function sendMentorMessages({
     //   headers: GoHeaders,
     //   body: JSON.stringify({ ...result, messageType }),
     // });
-    return result
+    return result;
   } catch (error) {
     logger.error("unable to send message. cause:" + (error as Error).message);
     throw new Error("unable to send message");
