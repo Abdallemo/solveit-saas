@@ -2,8 +2,12 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """Fully decouple WebSocket message handling via feature channels
-Moves Chat, Comments, and Signaling from HTTP POST triggers to direct client-to-server WebSocket messaging using dedicated Go channels. This significantly improves real-time performance and reliability.
+commit_message = """stabilize screen share init and optimize preload flow
+
+Preloaded peers now initialize without causing camera instability.
+Screen worker is preloaded for faster ICE setup, while camera init 
+remains on-demand to avoid early track issues. Improves join-time 
+stability and eliminates first-screen drop.
 """
 
 repo = Repo(repo_path)
