@@ -2,14 +2,19 @@ import { useWebRTCStore } from "@/store/webRtcStore";
 import { useEffect, useRef } from "react";
 
 export function useMentorshipCall(userId: string, sessionId: string) {
-  const { localStream, remoteStream, localScreenStream, remoteScreenStream ,initManager} =
-    useWebRTCStore();
+  const {
+    localStream,
+    remoteStream,
+    localScreenStream,
+    remoteScreenStream,
+    initManager,
+  } = useWebRTCStore();
 
   const localVideo = useRef<HTMLVideoElement>(null);
   const remoteVideo = useRef<HTMLVideoElement>(null);
   const localScreenShare = useRef<HTMLVideoElement>(null);
   const remoteScreenShare = useRef<HTMLVideoElement>(null);
-    
+
   useEffect(() => {
     initManager(userId, sessionId);
   }, [userId, sessionId, initManager]);
@@ -46,13 +51,8 @@ export function useMentorshipCall(userId: string, sessionId: string) {
 
   useEffect(() => {
     if (!remoteScreenShare.current) return;
-
-    if (remoteScreenStream) {
-      remoteScreenShare.current.srcObject = remoteScreenStream;
-    } else {
-      remoteScreenShare.current.srcObject = null;
-    }
-  }, [remoteScreenStream]);
+    remoteScreenShare.current.srcObject = remoteScreenStream ?? null;
+  }, [remoteScreenShare, remoteScreenStream]);
 
   return {
     localVideo,
