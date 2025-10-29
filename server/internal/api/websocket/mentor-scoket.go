@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github/abdallemo/solveit-saas/internal/user"
+	"log"
 	"net/http"
 )
 
@@ -33,14 +34,30 @@ type Chat struct {
 	MessageType string          `json:"messageType"`
 }
 type WsMentorChat struct {
-	hub   *WsHub
-	chats []Chat
+	hub               *WsHub
+	chats             []Chat
+	mentorChatChannel chan IncomingMessage
 }
 
 func NewMentorChat(hub *WsHub) *WsMentorChat {
-	return &WsMentorChat{
-		hub:   hub,
-		chats: make([]Chat, 0, 1<<10),
+	s := &WsMentorChat{
+		hub:               hub,
+		chats:             make([]Chat, 0, 1<<10),
+		mentorChatChannel: make(chan IncomingMessage, 100),
+	}
+	go s.listenForMessages()
+	return s
+}
+func (s *WsMentorChat) listenForMessages() {
+
+	for incMsg := range s.mentorChatChannel {
+
+		var chat Chat
+		if err := json.Unmarshal(incMsg.Payload, &chat); err != nil {
+			log.Printf("Chat Unmarshal Failed: %v", err)
+			continue
+		}
+		s.sendToUser(chat.SessionId, chat.SentTo, chat)
 	}
 }
 func (s *WsMentorChat) HandleMentorChats(w http.ResponseWriter, r *http.Request) {
@@ -53,7 +70,7 @@ func (s *WsMentorChat) HandleMentorChats(w http.ResponseWriter, r *http.Request)
 	q.Set("channel", "chat:"+sessionId)
 	r.URL.RawQuery = q.Encode()
 
-	s.hub.handleWS(w, r)
+	s.hub.handleWS(w, r, s.mentorChatChannel)
 }
 func (s *WsMentorChat) HandleSendMentorChats(w http.ResponseWriter, r *http.Request) {
 
