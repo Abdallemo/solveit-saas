@@ -1,8 +1,6 @@
 "use client";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { env } from "@/env/client";
-import MediaPreviewer from "@/features/media/components/MediaPreviewer";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
@@ -32,14 +30,15 @@ export default function MentorshipWorkspace({
     chats,
     sentTo,
     setChats,
-    send
+    send,
+    filePreview,
+    setFilePreview,
   } = useMentorshipSession();
   const [messageInput, setMessageInput] = useState("");
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const { uploadMutate, isUploading } = useFileUpload({ successMsg: false });
   const { user } = useCurrentUser();
 
-  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const {
     remoteStream,
     remoteVideo,
@@ -59,9 +58,8 @@ export default function MentorshipWorkspace({
     onSuccess: (data) => {
       if (data) {
         setChats((prev) => [...prev, data]);
-        send({...data,messageType:"chat_message"})
+        send({ ...data, messageType: "chat_message" });
       }
-
     },
   });
 
@@ -169,17 +167,6 @@ export default function MentorshipWorkspace({
           }}
         />
       )}
-
-      <MediaPreviewer
-        fileRecords={allFiles}
-        filePreview={filePreview}
-        onClose={() => {
-          setFilePreview(null);
-        }}
-        onDownload={() => {
-          setFilePreview(null);
-        }}
-      />
     </main>
   );
 }
