@@ -86,12 +86,17 @@ function SideBarForm() {
   const router = useRouter();
   const pathName = usePathname();
   const [comment, setComment] = useState("");
-  const { currentWorkspace,comments, } = useWorkspace();
+  const { currentWorkspace, comments, send, setComments } = useWorkspace();
   const { monacoEditor } = useFeatureFlags();
   const latestCommentRef = useRef<HTMLDivElement>(null);
   const { mutateAsync: createTaskCommentMuta, isPending } = useMutation({
     mutationFn: createTaskComment,
-    onSuccess: () => {},
+    onSuccess: (data) => {
+      if (data) {
+        setComments((prev) => [...prev, data]);
+        send(data);
+      }
+    },
   });
 
   useEffect(() => {
