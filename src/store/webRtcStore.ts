@@ -49,7 +49,7 @@ const initialState: PersistentCallState = {
   setToggleScreenShare: () => {},
   switchCamera: async () => {},
   switchMic: async () => {},
-  endCall: async() => {},
+  endCall: async () => {},
   startCall: async () => {},
 
   manager: null,
@@ -61,9 +61,9 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
 
     initManager: (userId, sessionId) => {
       const manager = getWebRTCManager(userId, sessionId);
-      if (manager){
-        void manager.preloadPeers();
-      }
+
+      // manager.preloadPeers();
+
       manager.subscribe((state) => {
         set({
           localStream: state.localStream,
@@ -121,7 +121,7 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
         startCall: manager.startCall,
         endCall: manager.leaveCall,
       });
-      return manager
+      return manager;
     },
 
     updateState: (state) => set((s) => ({ ...s, ...state })),
