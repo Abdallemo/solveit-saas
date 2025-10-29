@@ -6,11 +6,25 @@ import {
   TurnServerType,
 } from "@/lib/redis";
 import { NextRequest, NextResponse } from "next/server";
+const Static_TURN = [
+  {
+    urls: ["stun:stun.cloudflare.com:3478"],
+  },
+  {
+    urls: [
+      "turn:turn.cloudflare.com:3478?transport=udp",
+      "turn:turn.cloudflare.com:3478?transport=tcp",
+      "turns:turn.cloudflare.com:5349?transport=tcp",
+      "turns:turn.cloudflare.com:443?transport=tcp",
+    ],
+  },
+];
 const defualtRes: TurnServerType = {
   createdAt: new Date(),
   ttl: TTL,
-  turn: [],
+  turn: [Static_TURN[0]],
 };
+
 export async function GET(req: NextRequest) {
   try {
     const cached = await GetCachedValue("TURN_CACHE");
@@ -34,14 +48,33 @@ export async function GET(req: NextRequest) {
     if (!res.ok) throw new Error("Cloudflare TURN failed");
 
     const turn: { iceServers: RTCIceServer[] } = await res.json();
+    const credentialedTurnEntry = turn.iceServers.find(
+      (server) => server.username
+    );
+
+    if (!credentialedTurnEntry) {
+      throw new Error("Cloudflare response missing expected TURN credentials.");
+    }
+    const tranformedTurn: RTCIceServer[] = [
+      { urls: Static_TURN[0].urls },
+      {
+        urls: Static_TURN[1].urls,
+        username: turn.iceServers[1].username,
+        credential: turn.iceServers[1].credential,
+      },
+    ];
     const data: TurnServerType = {
       createdAt: new Date(),
       ttl: TTL,
-      turn: turn.iceServers,
+      turn: tranformedTurn,
     };
+
     await SetCachedValue("TURN_CACHE", data);
     return NextResponse.json(data);
   } catch (err) {
+    console.error(
+      `[turn generation process failed]:",${(err as Error).message},\n,${err}`
+    );
     return NextResponse.json(defualtRes);
   }
 }
