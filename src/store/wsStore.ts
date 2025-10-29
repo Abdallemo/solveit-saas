@@ -2,7 +2,7 @@ import { subscribeWithSelector } from "zustand/middleware";
 import { createStore } from "zustand/vanilla";
 
 type ConnectionState = "connecting" | "connected" | "disconnected";
-const MaxPingIns= 10000
+const MaxPingIns = 10000;
 export interface WebSocketOptions<MsgType extends object> {
   onMessage: (msg: MsgType) => void;
   onOpen?: () => void;
@@ -156,20 +156,36 @@ export const wsManager = createStore(
         };
       };
 
+      // const handleVisibility = () => {
+      //   if (document.visibilityState === "visible") {
+      //     const ws = conn.socket;
+      //     if (
+      //       !ws ||
+      //       ws.readyState === WebSocket.CLOSED ||
+      //       ws.readyState === WebSocket.OPEN
+      //     ) {
+      //       if (ws && ws.readyState === WebSocket.OPEN) {
+      //         console.log("[WS] Forcing close and reconnect on tab focus.");
+      //         conn.isIntentionallyClosing = true;
+      //         ws.close(1000, "Forced Reconnect on Visibility");
+      //       }
+      //       setTimeout(connectSocket, 500);
+      //     }
+      //   }
+      // };
+      let lastReconnect = 0;
       const handleVisibility = () => {
         if (document.visibilityState === "visible") {
+          const now = Date.now();
+          if (now - lastReconnect < 2000) return; // prevent spam reconnects
+          lastReconnect = now;
+
           const ws = conn.socket;
-          if (
-            !ws ||
-            ws.readyState === WebSocket.CLOSED ||
-            ws.readyState === WebSocket.OPEN
-          ) {
-            if (ws && ws.readyState === WebSocket.OPEN) {
-              console.log("[WS] Forcing close and reconnect on tab focus.");
-              conn.isIntentionallyClosing = true;
-              ws.close(1000, "Forced Reconnect on Visibility");
-            }
-            setTimeout(connectSocket, 500);
+          if (!ws || ws.readyState === WebSocket.CLOSED) {
+            console.log(
+              "[WS] Reconnecting because socket was closed while hidden."
+            );
+            setTimeout(connectSocket, 1500);
           }
         }
       };
