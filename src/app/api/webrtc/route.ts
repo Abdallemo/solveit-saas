@@ -8,17 +8,14 @@ import {
 import { NextRequest, NextResponse } from "next/server";
 const Static_TURN = [
   {
-    urls: [
-      "stun:stun.cloudflare.com:3478",
-      "stun:stun.l.google.com:19302",
-      "stun:stun1.l.google.com:19302",
-    ],
+    urls: ["stun:stun.cloudflare.com:3478"],
   },
-
   {
     urls: [
       "turn:turn.cloudflare.com:3478?transport=udp",
       "turn:turn.cloudflare.com:3478?transport=tcp",
+      "turns:turn.cloudflare.com:5349?transport=tcp",
+      "turns:turn.cloudflare.com:443?transport=tcp",
     ],
   },
 ];
@@ -59,11 +56,16 @@ export async function GET(req: NextRequest) {
       throw new Error("Cloudflare response missing expected TURN credentials.");
     }
     const tranformedTurn: RTCIceServer[] = [
-      { urls: Static_TURN[0].urls },
       {
-        urls: Static_TURN[1].urls,
-        username: turn.iceServers[1].username,
-        credential: turn.iceServers[1].credential,
+        urls: ["stun:stun.cloudflare.com:3478"],
+      },
+      {
+        urls: [
+          "turn:turn.cloudflare.com:3478?transport=udp",
+          "turns:turn.cloudflare.com:5349?transport=tcp",
+        ],
+        username: credentialedTurnEntry.username,
+        credential: credentialedTurnEntry.credential,
       },
     ];
     const data: TurnServerType = {
