@@ -13,7 +13,7 @@ interface UseWebSocketOptions<MsgType extends object> {
 
 type ConnectionState = "connecting" | "connected" | "disconnected";
 
-export default function useWebSocket<MsgType extends object>(
+export  function useWebSocket<MsgType extends object>(
   url: string,
   {
     onMessage,
