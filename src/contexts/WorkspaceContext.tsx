@@ -3,7 +3,8 @@ import { env } from "@/env/client";
 import { WorkspaceUploadedFileMeta } from "@/features/media/server/media-types";
 import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
 import { publicUserType } from "@/features/users/server/user-types";
-import useWebSocket from "@/hooks/useWebSocket";
+import { useWebSocket } from "@/hooks/useWebSocketClass";
+
 import {
   createContext,
   Dispatch,
