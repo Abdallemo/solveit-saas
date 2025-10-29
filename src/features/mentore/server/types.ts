@@ -25,7 +25,7 @@ export type MentorListigWithAvailbelDatesV2 = Awaited<
 export type MentorBookingSessions = Awaited<
   ReturnType<typeof getMentorBookingSessions>
 >;
-export type MentorSession = Awaited<ReturnType<typeof getMentorSession>>;
+export type MentorSession = Exclude<Awaited<ReturnType<typeof getMentorSession>>,undefined>['session'];
 export type MentorChatSession = Exclude<
   Awaited<ReturnType<typeof getMentorSession>>,
   undefined
