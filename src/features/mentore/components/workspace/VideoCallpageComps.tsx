@@ -59,6 +59,7 @@ export function VideoCallPageComps({
     remoteStream,
     remoteScreenStream,
     clearState,
+    localScreenStream,
   } = useMentorshipCall(userId, sessionId);
 
   const router = useRouter();
@@ -294,7 +295,7 @@ export function VideoCallPageComps({
             )}
           </div>
 
-          {isScreenSharing && (
+          {isScreenSharing && localScreenStream && (
             <div
               className={cn(
                 "relative rounded-2xl overflow-hidden bg-black shadow-lg border border-primary transition-all duration-300 hover:scale-[1.01]",
