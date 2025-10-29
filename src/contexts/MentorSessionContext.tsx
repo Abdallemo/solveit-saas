@@ -1,6 +1,8 @@
 "use client";
 import Loading from "@/app/dashboard/poster/(mentorship)/sessions/[sessionId]/loading";
 import { env } from "@/env/client";
+import MediaPreviewer from "@/features/media/components/MediaPreviewer";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 import {
   getMentorSession,
   revalidateMentorSessinoData,
@@ -32,7 +34,11 @@ type MentorshipSessionContextType = {
   uploadingFiles: File[];
   setUploadingFiles: Dispatch<SetStateAction<File[]>>;
   sentTo: string | null;
-  send:(msg:MentorChatSession & { messageType: "chat_message" | "chat_deleted" })=>void
+  send: (
+    msg: MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
+  ) => void;
+  filePreview: UploadedFileMeta | null
+  setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>
 };
 
 const MentorshipSessionContext = createContext<
@@ -86,6 +92,10 @@ export const MentorshipSessionProvider = ({
   const mentorSessoin = useMutation({
     mutationFn: revalidateMentorSessinoData,
   });
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
+  const allFiles = useMemo(() => {
+    return chats.flatMap((chat) => chat.chatFiles);
+  }, [chats]);
 
   const { send } = useWebSocket<
     MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
@@ -127,9 +137,21 @@ export const MentorshipSessionProvider = ({
         uploadingFiles,
         setUploadingFiles,
         sentTo,
-        send
+        send,
+        filePreview,
+        setFilePreview
       }}>
       {children}
+      <MediaPreviewer
+        fileRecords={allFiles}
+        filePreview={filePreview}
+        onClose={() => {
+          setFilePreview(null);
+        }}
+        onDownload={() => {
+          setFilePreview(null);
+        }}
+      />
     </MentorshipSessionContext.Provider>
   );
 };
