@@ -73,8 +73,8 @@ export const MentorshipSessionProvider = ({
   const [chats, setChats] = useState<MentorChatSession[]>([]);
 
   useEffect(() => {
-    if (!isLoading && sessionData) {
-      setSession(sessionData);
+    if (!isLoading && sessionData?.session) {
+      setSession(sessionData.session);
       setChats(sessionData.chats || []);
     }
   }, [isLoading, sessionData]);
