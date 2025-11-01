@@ -797,7 +797,7 @@ async function AllDisputes() {
 }
 export async function getAllDisputes(
   options: dataOptions = { useCache: true }
-): Promise<FlatDispute[]> {
+) {
   const allDisputes = await withCache({
     callback: () => AllDisputes(),
     tag: "dispute-data-cache",
@@ -811,17 +811,17 @@ export async function getAllDisputes(
     paymentId: dispute.paymentId ?? null,
     taskId: dispute.taskId ?? null,
     refundStatus: dispute.refundStatus,
-    assignedAt: dispute.taskRefund.assignedAt ?? null,
-    taskPaymentId: dispute.taskRefund.paymentId ?? null,
-    taskTitle: dispute.taskRefund.title ?? null,
-    taskPrice: dispute.taskRefund.price ?? null,
+    assignedAt: dispute.taskRefund?.assignedAt ?? null,
+    taskPaymentId: dispute.taskRefund?.paymentId ?? null,
+    taskTitle: dispute.taskRefund?.title ?? null,
+    taskPrice: dispute.taskRefund?.price ?? null,
     moderatorName: dispute.refundModerator?.name ?? null,
     moderatorEmail: dispute.refundModerator?.email ?? null,
-    posterName: dispute.taskRefund.poster.name ?? null,
-    posterEmail: dispute.taskRefund.poster.email ?? null,
-    solverName: dispute.taskRefund.solver?.name ?? null,
-    solverEmail: dispute.taskRefund.solver?.email ?? null,
-    solutionContent: dispute.taskRefund.taskSolution.content,
+    posterName: dispute.taskRefund?.poster.name ?? null,
+    posterEmail: dispute.taskRefund?.poster.email ?? null,
+    solverName: dispute.taskRefund?.solver?.name ?? null,
+    solverEmail: dispute.taskRefund?.solver?.email ?? null,
+    solutionContent: dispute.taskRefund?.taskSolution.content,
   }));
 }
 export async function getSolutionById(solutionId: string) {

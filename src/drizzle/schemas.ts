@@ -430,12 +430,14 @@ export const RefundTable = pgTable(
     paymentId: uuid("payment_id")
       .notNull()
       .references(() => PaymentTable.id),
-    taskId: uuid("task_id")
-      .notNull()
-      .references(() => TaskTable.id, { onDelete: "no action" }),
+    taskId: uuid("task_id").references(() => TaskTable.id, {
+      onDelete: "set null",
+    }),
     refundReason: text("refund_reason"),
     refundStatus: RefundStatusEnum().default("PENDING"),
-    moderatorId: uuid("moderatorId").references(() => UserTable.id,{onDelete:"no action"}),
+    moderatorId: uuid("moderatorId").references(() => UserTable.id, {
+      onDelete: "no action",
+    }),
     refundedAt: timestamp("refunded_at", { mode: "date", withTimezone: true }),
     stripeRefundId: text("stripe_refund_id"),
     createdAt: timestamp("created_at", {

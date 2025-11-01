@@ -39,6 +39,7 @@ import { AllPreview } from "../richTextEdito/TaskPreview";
 export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
   if (!dispute) throw new DisputeNotFoundError();
   const task = dispute.taskRefund;
+  if (!task) throw new DisputeNotFoundError();
   const { user } = useCurrentUser();
   const isResponsible = dispute.moderatorId === user?.id;
   const canDecide =
@@ -81,6 +82,9 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
     await RejectRefundMutation(dispute!.id);
     setIsRejectDialogOpen((prev) => !prev);
     setConfirmInput("");
+  }
+  if(!task){
+    
   }
   return (
     <div className="h-full w-full bg-background">
@@ -436,7 +440,7 @@ function ApproveRefundDialog({
                 to{" "}
                 <span className="font-semibold text-foreground">
                   {" "}
-                  {dispute.taskRefund.poster.name?.toLocaleLowerCase()}
+                  {dispute.taskRefund!.poster.name?.toLocaleLowerCase()}
                 </span>
                 . This action is irreversible.
               </p>
@@ -508,7 +512,7 @@ function RejectRefundDialog({
                 below, you authorize the release th payment of the task to{" "}
                 <span className="font-semibold text-foreground">
                   {" "}
-                  {dispute.taskRefund.solver?.name?.toLocaleLowerCase()}
+                  {dispute.taskRefund!.solver?.name?.toLocaleLowerCase()}
                 </span>
                 . This action is irreversible.
               </p>
