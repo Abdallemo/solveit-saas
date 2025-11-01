@@ -2,11 +2,11 @@
 
 import db from "@/drizzle/db";
 import {
-  AiFlagsTable,
-  AiTestSandboxTable,
-  RulesTable,
+    AiFlagsTable,
+    AiTestSandboxTable,
+    RulesTable,
 } from "@/drizzle/schemas";
-import { generateSqlYMDFormateDate } from "@/drizzle/utils";
+import { pgFormatDateYMD } from "@/drizzle/utils";
 import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
@@ -286,15 +286,15 @@ export async function getAIFlagsData(from: string, to: string) {
   }
   const res = await db
     .select({
-      date: generateSqlYMDFormateDate(AiFlagsTable.createdAt),
+      date: pgFormatDateYMD(AiFlagsTable.createdAt),
       flags: count(AiFlagsTable.id),
     })
     .from(AiFlagsTable).where(
-      sql`${generateSqlYMDFormateDate(
+      sql`${pgFormatDateYMD(
         AiFlagsTable.createdAt
       )} BETWEEN ${from} AND ${to}`
     )
-    .groupBy(generateSqlYMDFormateDate(AiFlagsTable.createdAt));
+    .groupBy(pgFormatDateYMD(AiFlagsTable.createdAt));
 
   return res;
 }

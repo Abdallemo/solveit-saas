@@ -27,7 +27,24 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
-
+const tasksConfig = {
+  users: {
+    label: "Tasks",
+    color: "var(--chart-1)",
+  },
+} satisfies ChartConfig;
+const reportedTasksConfig = {
+  users: {
+    label: "Users",
+    color: "var(--chart-2)",
+  },
+} satisfies ChartConfig;
+const resolvedTasksConfig = {
+  users: {
+    label: "Users",
+    color: "var(--chart-3)",
+  },
+} satisfies ChartConfig;
 export default function ModeratorDashboard() {
   const path = usePathname();
 
@@ -131,7 +148,7 @@ export default function ModeratorDashboard() {
             </p>
             <div className="w-full h-40">
               <ChartContainer
-                config={{ tasks: chartConfigs.tasks }}
+                config={tasksConfig}
                 className="w-full h-full">
                 <BarChart accessibilityLayer data={statsData}>
                   <XAxis dataKey="name" tickLine={false} axisLine={false} />

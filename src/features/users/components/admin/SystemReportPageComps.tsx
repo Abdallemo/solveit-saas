@@ -77,23 +77,6 @@ import {
   YAxis,
 } from "recharts";
 
-// --- Type Definitions (Kept as is) ---
-type aiFlagsDataType = {
-  date: string;
-  flags: number;
-};
-type taskCategoriesDataType = {
-  name: string;
-  value: number;
-};
-type userGrowthDataTyoe = {
-  month: string;
-  users: number;
-};
-type revenueDataType = {
-  month: string;
-  revenue: number;
-};
 
 const userGrowthConfig = {
   users: {
@@ -166,7 +149,6 @@ export default function SystemReportsPage({
   reportsData,
 }: {
   reportsData: reportDataType[];
-  aiFlagsData: aiFlagsDataType[];
 }) {
   const today = new Date();
   const [searchQuery, setSearchQuery] = useState("");
@@ -555,6 +537,9 @@ export default function SystemReportsPage({
               <CardTitle>AI Flags Trend</CardTitle>
               <CardDescription>Daily AI moderation flags</CardDescription>
             </CardHeader>
+             {isAiFlagsDataLoading ? (
+              <LoadingChartContent />
+            ) : (
             <CardContent>
               <ChartContainer
                 config={aiFlagsConfig}
@@ -587,6 +572,7 @@ export default function SystemReportsPage({
                 </AreaChart>
               </ChartContainer>
             </CardContent>
+            )}
           </Card>
         )}
       </div>
