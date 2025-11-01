@@ -5,6 +5,9 @@ import {
 } from "@/features/Ai/server/action";
 import {
   getAllTasksByRolePaginated,
+  getModeratorReportedTaskStats,
+  getModeratorResolvedTaskStats,
+  getModeratorTaskStats,
   getPosterTasksbyIdPaginated,
   getSolverAssignedTasksbyIdPaginated,
   getSolverStats,
@@ -241,5 +244,27 @@ export const getAdminAiSandboxTestsQuery = () =>
     queryKey: ["AdminAiSandboxTests"],
     queryFn: async () => {
       return await getAdminAiSandboxTests();
+    },
+  });
+
+export const moderatorTaskStatsQuery = () =>
+  queryOptions({
+    queryKey: ["moderatorTaskStats"],
+    queryFn: async () => {
+      return await getModeratorTaskStats();
+    },
+  });
+export const moderatorReportedTaskStatsQuery = () =>
+  queryOptions({
+    queryKey: ["moderatorReportedTaskStats"],
+    queryFn: async () => {
+      return await getModeratorReportedTaskStats();
+    },
+  });
+export const moderatorResolvedTaskStatsQuery = () =>
+  queryOptions({
+    queryKey: ["moderatorResolvedTaskStats"],
+    queryFn: async () => {
+      return await getModeratorResolvedTaskStats();
     },
   });
