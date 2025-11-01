@@ -18,79 +18,64 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import {
+  moderatorReportedTaskStatsQuery,
+  moderatorResolvedTaskStatsQuery,
+  moderatorTaskStatsQuery,
+} from "@/features/tasks/client/queries";
+import { useQuery } from "@tanstack/react-query";
+import {
   ArrowRight,
   CalendarDays,
   CheckCircle,
   CheckSquare,
+  Loader2,
   Shield,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
+
 const tasksConfig = {
-  users: {
+  tasks: {
     label: "Tasks",
     color: "var(--chart-1)",
   },
 } satisfies ChartConfig;
+
 const reportedTasksConfig = {
-  users: {
-    label: "Users",
-    color: "var(--chart-2)",
-  },
-} satisfies ChartConfig;
-const resolvedTasksConfig = {
-  users: {
-    label: "Users",
+  reportedTasks: {
+    label: "Reported Tasks",
     color: "var(--chart-3)",
   },
 } satisfies ChartConfig;
+
+const resolvedTasksConfig = {
+  resolvedReports: {
+    label: "Resolved Reports",
+    color: "var(--chart-2)",
+  },
+} satisfies ChartConfig;
+
 export default function ModeratorDashboard() {
   const path = usePathname();
 
-  const statsData = [
-    {
-      name: "Mon",
-      reportedTasks: 2,
-      resolvedReports: 1,
-      tasks: 20,
-      disputes: 1,
-    },
-    {
-      name: "Tue",
-      reportedTasks: 3,
-      resolvedReports: 2,
-      tasks: 10,
-      disputes: 3,
-    },
-    {
-      name: "Wed",
-      reportedTasks: 1,
-      resolvedReports: 2,
-      tasks: 50,
-      disputes: 0,
-    },
-    {
-      name: "Thu",
-      reportedTasks: 4,
-      resolvedReports: 3,
-      tasks: 60,
-      disputes: 5,
-    },
-    {
-      name: "Fri",
-      reportedTasks: 2,
-      resolvedReports: 4,
-      tasks: 10,
-      disputes: 4,
-    },
-  ];
+  const {
+    data: moderatorTaskStats,
+    isLoading: isModeratorTaskStatsLoading,
+    error: moderatorTaskStatsError,
+  } = useQuery(moderatorTaskStatsQuery());
 
-  const chartConfigs = {
-    tasks: { label: "Tasks", color: "#10b981" },
-    reportedTasks: { label: "Reported Tasks", color: "#ef4444" },
-    resolvedReports: { label: "Resolved Reports", color: "#3b82f6" },
-  } satisfies ChartConfig;
+  const {
+    data: moderatorReportedTaskStats,
+    isLoading: isModeratorReportedTaskStatsLoading,
+    error: moderatorReportedTaskStatsError,
+  } = useQuery(moderatorReportedTaskStatsQuery());
+
+  const {
+    data: moderatorResolvedTaskStats,
+    isLoading: isModeratorResolvedTaskStatsLoading,
+    error: moderatorResolvedTaskStatsError,
+  } = useQuery(moderatorResolvedTaskStatsQuery());
 
   const quickActions = [
     { name: "Review Reports", href: `${path}/reports` },
@@ -99,8 +84,31 @@ export default function ModeratorDashboard() {
     { name: "View Logs", href: `${path}/logs` },
   ];
 
+  const renderChart = (
+    isLoading: boolean,
+    data: any[] | undefined,
+    chart: React.ReactNode
+  ) => {
+    if (isLoading) {
+      return (
+        <div className="flex justify-center items-center h-40">
+          <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+        </div>
+      );
+    }
+    if (!data || data.length === 0) {
+      return (
+        <div className="flex justify-center items-center h-40 text-muted-foreground text-sm">
+          No data available for this period
+        </div>
+      );
+    }
+    return chart;
+  };
+  console.log(moderatorResolvedTaskStats);
+
   return (
-    <div className="w-full h-full px-5 bg-background">
+    <div className="w-full h-full px-5 ">
       <header className="flex justify-between items-center mb-9 pt-4">
         <div>
           <h1 className="text-4xl font-bold">Moderator Dashboard</h1>
@@ -131,7 +139,8 @@ export default function ModeratorDashboard() {
         </div>
       </header>
 
-      <section className="grid md:grid-cols-3 gap-8 mb-12">
+      <section className="grid lg:grid-cols-3 gap-4 mb-12">
+        {/* Tasks Card */}
         <Card>
           <CardHeader className="flex justify-between items-center">
             <CardTitle className="font-semibold text-lg">Tasks</CardTitle>
@@ -141,63 +150,83 @@ export default function ModeratorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">
-              {statsData.reduce((sum, d) => sum + d.tasks, 0)}
+              {isModeratorTaskStatsLoading
+                ? "..."
+                : moderatorTaskStats?.reduce((sum, d) => sum + d.count, 0) ?? 0}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Tasks created this week
             </p>
-            <div className="w-full h-40">
-              <ChartContainer
-                config={tasksConfig}
-                className="w-full h-full">
-                <BarChart accessibilityLayer data={statsData}>
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+            {renderChart(
+              isModeratorTaskStatsLoading,
+              moderatorTaskStats,
+              <ChartContainer config={tasksConfig} className="w-full h-40">
+                <BarChart accessibilityLayer data={moderatorTaskStats}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    tickMargin={8}
+                    tickFormatter={(value) => value.slice(5)}
+                  />
                   <CartesianGrid vertical={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
-                  <Bar dataKey="tasks" fill="var(--chart-1)" radius={4} />
+                  <Bar dataKey="count" fill="var(--chart-1)" radius={4} />
                 </BarChart>
               </ChartContainer>
-            </div>
+            )}
           </CardContent>
         </Card>
+
+        {/* Reported Tasks Card */}
         <Card>
           <CardHeader className="flex justify-between items-center ">
             <CardTitle className="font-semibold text-lg">
               Reported Tasks
             </CardTitle>
             <CardDescription>
-              {" "}
               <Shield className="text-red-500 w-6 h-6" />
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {" "}
             <div className="text-3xl font-bold mb-2">
-              {statsData.reduce((sum, d) => sum + d.reportedTasks, 0)}
+              {isModeratorReportedTaskStatsLoading
+                ? "..."
+                : moderatorReportedTaskStats?.reduce(
+                    (sum, d) => sum + d.count,
+                    0
+                  ) ?? 0}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Total reported tasks this week
             </p>
-            <div className="w-full h-40">
+            {renderChart(
+              isModeratorReportedTaskStatsLoading,
+              moderatorReportedTaskStats,
               <ChartContainer
-                config={{ reportedTasks: chartConfigs.reportedTasks }}
-                className="w-full h-full">
-                <BarChart accessibilityLayer data={statsData}>
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                config={reportedTasksConfig}
+                className="w-full h-40">
+                <BarChart accessibilityLayer data={moderatorReportedTaskStats}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    tickMargin={8}
+                    tickFormatter={(value) => value.slice(5)}
+                  />
                   <CartesianGrid vertical={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
-                  <Bar
-                    dataKey="reportedTasks"
-                    fill="var(--chart-3)"
-                    radius={4}
-                  />
+                  <Bar dataKey="count" fill="var(--chart-3)" radius={4} />
                 </BarChart>
               </ChartContainer>
-            </div>
+            )}
           </CardContent>
         </Card>
+
         <Card>
           <CardHeader className="flex justify-between items-center">
             <CardTitle className="font-semibold text-lg">
@@ -209,29 +238,47 @@ export default function ModeratorDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold mb-2">
-              {statsData.reduce((sum, d) => sum + d.resolvedReports, 0)}
+              {isModeratorResolvedTaskStatsLoading
+                ? "..."
+                : moderatorResolvedTaskStats?.reduce(
+                    (sum, d) => sum + d.count,
+                    0
+                  ) ?? 0}
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm text-muted-foreground mb-4">
               Reports resolved this week
             </p>
-            <div className="w-full h-40">
+            {renderChart(
+              isModeratorResolvedTaskStatsLoading,
+              moderatorResolvedTaskStats,
               <ChartContainer
-                config={{ resolvedReports: chartConfigs.resolvedReports }}
-                className="w-full h-full">
-                <LineChart accessibilityLayer data={statsData}>
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} />
+                config={resolvedTasksConfig}
+                className="w-full h-40">
+                <LineChart
+                  accessibilityLayer
+                  data={moderatorResolvedTaskStats}
+                  margin={{ left: 0, right: 0 }}>
+                  <XAxis
+                    dataKey="date"
+                    tickLine={false}
+                    axisLine={false}
+                    interval={0}
+                    tickMargin={8}
+                    tickFormatter={(value) => value.slice(5)}
+                  />
                   <CartesianGrid vertical={false} />
                   <ChartTooltip content={<ChartTooltipContent />} />
                   <ChartLegend content={<ChartLegendContent />} />
                   <Line
-                    dataKey="resolvedReports"
+                    dataKey="count"
                     stroke="var(--chart-2)"
                     strokeWidth={3}
-                    dot={false}
+                    dot={{ r: 4 }} 
+                    activeDot={{ r: 6 }}
                   />
                 </LineChart>
               </ChartContainer>
-            </div>
+            )}
           </CardContent>
         </Card>
       </section>
