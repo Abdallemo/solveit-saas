@@ -1,9 +1,8 @@
 // app/features/tasks/task-form-schema.ts
 import {
   BlockedSolverType,
-  RefundStatusEnumType,
   taskFileType,
-  TaskType,
+  TaskType
 } from "@/drizzle/schemas";
 import { publicUserType } from "@/features/users/server/user-types";
 import { z } from "zod";
@@ -72,26 +71,26 @@ export type DeadlineType = Exclude<
   Awaited<ReturnType<typeof getAllTaskDeadlines>>[number],
   null
 >;
-export type FlatDispute = {
-  id: string;
-  refundReason: string | null;
-  refundedAt: Date | null;
-  createdAt: Date | null;
-  paymentId: string;
-  taskId: string;
-  refundStatus: RefundStatusEnumType | null;
-  assignedAt: Date | null;
-  taskPaymentId: string | null;
-  moderatorName: string | null;
-  moderatorEmail: string | null;
-  taskTitle: string;
-  taskPrice: number | null;
-  posterName: string | null;
-  posterEmail: string | null;
-  solverName: string | null;
-  solverEmail: string | null;
-  solutionContent: string | null;
-};
+export type FlatDispute = Awaited<ReturnType<typeof getAllDisputes>>
+//   id: string | null;
+//   refundReason: string | null;
+//   refundedAt: Date | null;
+//   createdAt: Date | null;
+//   paymentId: string | null;
+//   taskId: string | null;
+//   refundStatus: RefundStatusEnumType | null;
+//   assignedAt: Date | null;
+//   taskPaymentId: string | null;
+//   moderatorName: string | null;
+//   moderatorEmail: string | null;
+//   taskTitle: string | null;
+//   taskPrice: number | null;
+//   posterName: string | null;
+//   posterEmail: string | null;
+//   solverName: string | null;
+//   solverEmail: string | null;
+//   solutionContent: string | null;
+// };
 export type TaskReturnType = Awaited<ReturnType<typeof getTasksbyId>>;
 export type assignTaskReturnType = {
   error?:
