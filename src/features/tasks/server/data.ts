@@ -16,18 +16,20 @@ import {
 } from "@/drizzle/schemas";
 import {
   pgBetweenDates,
+  pgCountWithFilter,
   pgCountWithinRange,
+  pgFormatDateExpr,
   pgFormatDateYMD,
+  pgGenerateSeries,
   pgInterveralRange,
 } from "@/drizzle/utils";
 import { isAuthorized } from "@/features/auth/server/actions";
 import type {
   dataOptions,
-  FlatDispute,
   PosterTaskReturn,
   SolverStats,
   SolverTaskReturn,
-  Units,
+  Units
 } from "@/features/tasks/server/task-types";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
@@ -45,6 +47,7 @@ import {
   inArray,
   not,
   notExists,
+  notInArray,
   or,
   sql,
   sum,
@@ -54,13 +57,13 @@ import isUUID from "validator/es/lib/isUUID";
 import { calculateTaskProgressV2 } from "./action";
 
 export async function getBlockedSolver(solverId: string, taskId: string) {
-  console.log(`[getBlockedSolver]: solverId=${solverId},TaskId=${taskId}`);
   const result = db.query.BlockedTasksTable.findFirst({
     where: (table, fn) =>
       fn.and(fn.eq(table.userId, solverId), fn.eq(table.taskId, taskId)),
   });
   return [result][0];
 }
+
 export async function getAllTaskCatagories(
   options: dataOptions = { useCache: true }
 ) {
@@ -82,6 +85,7 @@ export async function getAllTaskCatagories(
     enabled: options.useCache,
   })();
 }
+
 export async function getAllTaskDeadlines(
   options: dataOptions = { useCache: true }
 ) {
@@ -111,11 +115,13 @@ export async function getTaskCatagoryId(name: string) {
   });
   return catagoryId;
 }
+
 export async function getAllCategoryMap(): Promise<Record<string, string>> {
   const categories = await getAllTaskCatagories();
 
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
+
 export async function getWalletInfo(solverId: string) {
   if (!solverId) {
     throw new Error("error! user id is empty");
@@ -157,6 +163,7 @@ export async function getWalletInfo(solverId: string) {
 
   return { pending, available };
 }
+
 export async function getUserTasksbyId(userId: string) {
   const userTasks = await db.query.TaskTable.findMany({
     where: (table, fn) => fn.eq(table.posterId, userId),
@@ -164,6 +171,7 @@ export async function getUserTasksbyId(userId: string) {
   });
   return userTasks;
 }
+
 export async function getTasksbyId(id: string) {
   if (!isUUID(id, "4")) {
     return null;
@@ -184,8 +192,6 @@ export async function getTasksbyId(id: string) {
   }
 }
 
-type SpecificRole = Exclude<UserRoleType, "ADMIN" | "MODERATOR">;
-
 export async function getTasksbyIdWithFiles(
   id: string,
   role: "POSTER"
@@ -198,7 +204,7 @@ export async function getTasksbyIdWithFiles(
 
 export async function getTasksbyIdWithFiles(
   id: string,
-  role: SpecificRole
+  role: Exclude<UserRoleType, "ADMIN" | "MODERATOR">
 ): Promise<PosterTaskReturn | SolverTaskReturn | null> {
   if (!isUUID(id, "4")) {
     return null;
@@ -248,6 +254,7 @@ export async function getAllTasks() {
   });
   return allTasksFiltred;
 }
+
 export async function getPosterTasksbyIdPaginated(
   userId: string,
   {
@@ -290,6 +297,7 @@ export async function getPosterTasksbyIdPaginated(
 
   return { tasks, totalCount };
 }
+
 export async function getSolverAssignedTasksbyIdPaginated(
   userId: string,
   {
@@ -337,6 +345,7 @@ export async function getSolverAssignedTasksbyIdPaginated(
 
   return { tasks, totalCount };
 }
+
 export async function getAllTasksByRolePaginated(
   userId: string,
   role: UserRoleType,
@@ -412,12 +421,14 @@ export async function getAllTasksByRolePaginated(
 
   return { tasks, totalCount };
 }
+
 export async function getTaskFilesById(taskId: string) {
   const files = await db.query.TaskFileTable.findMany({
     where: (table, fn) => fn.eq(table.taskId, taskId),
   });
   return files;
 }
+
 export async function getDraftTaskWithDefualtVal(userId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) => fn.eq(table.userId, userId),
@@ -442,6 +453,7 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
     };
   }
 }
+
 export async function getDraftTask(userId: string, draftId: string) {
   const oldTask = await db.query.TaskDraftTable.findFirst({
     where: (table, fn) =>
@@ -454,6 +466,7 @@ export async function getDraftTask(userId: string, draftId: string) {
     ...oldTask,
   };
 }
+
 export async function deleteDraftTask(userId: string) {
   const res = await db
     .delete(TaskDraftTable)
@@ -461,6 +474,7 @@ export async function deleteDraftTask(userId: string) {
     .returning();
   logger.info("deleted task draft from user: " + userId, { result: res });
 }
+
 export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
     where: (table, fn) =>
@@ -472,6 +486,7 @@ export async function getWorkspaceByTaskId(taskId: string, solverId: string) {
   });
   return workspace;
 }
+
 export async function getWorkspaceById(workspaceId: string, solverId: string) {
   const workspace = await db.query.WorkspaceTable.findFirst({
     where: (table, fn) =>
@@ -496,14 +511,11 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
   });
   return workspace;
 }
-export async function getPosterStats(range: string = "7 days") {
-  const { user } = await isAuthorized(["POSTER"]);
-  if (!user?.id) return [];
-  const taskStats = db
+
+function getPosterTaskStatus(range: string, userId: string) {
+  return db
     .select({
-      date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: pgFormatDateYMD(TaskTable.createdAt).as("date"),
       postedTasks: count(TaskTable.id).as("postedTasks"),
       mentorSessions: sql<number>`0`.as("mentorSessions"),
       expenses: sum(TaskTable.price).as("expenses"),
@@ -511,17 +523,17 @@ export async function getPosterStats(range: string = "7 days") {
     .from(TaskTable)
     .where(
       and(
-        eq(TaskTable.posterId, user.id),
-        sql`${TaskTable.createdAt} > current_date - interval '7 days'`
+        eq(TaskTable.posterId, userId),
+        pgInterveralRange(TaskTable.createdAt, range)
       )
     )
-    .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
+    .groupBy(pgFormatDateYMD(TaskTable.createdAt));
+}
 
-  const mentorStats = db
+function getPosterMentorshipStatus(range: string, userId: string) {
+  return db
     .select({
-      date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: pgFormatDateYMD(MentorshipBookingTable.createdAt).as("date"),
       postedTasks: sql<number>`0`.as("postedTasks"),
       mentorSessions: count(MentorshipBookingTable.id).as("mentorSessions"),
       expenses: sum(MentorshipBookingTable.price).as("expenses"),
@@ -529,110 +541,112 @@ export async function getPosterStats(range: string = "7 days") {
     .from(MentorshipBookingTable)
     .where(
       and(
-        eq(MentorshipBookingTable.posterId, user.id),
-        sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
+        eq(MentorshipBookingTable.posterId, userId),
+        pgInterveralRange(MentorshipBookingTable.createdAt, range)
       )
     )
-    .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
+    .groupBy(pgFormatDateYMD(MentorshipBookingTable.createdAt));
+}
 
-  const merged = unionAll(taskStats, mentorStats).as("merged");
+export async function getPosterStats(range: string = "7 days") {
+  const { user } = await isAuthorized(["POSTER"]);
+  if (!user?.id) return [];
+
+  const merged = unionAll(
+    getPosterTaskStatus(range, user.id),
+    getPosterMentorshipStatus(range, user.id)
+  ).as("merged");
 
   const result = await db
     .select({
       date: merged.date,
-      postedTasks: sum(merged.postedTasks),
-      mentorSessions: sum(merged.mentorSessions),
-      expenses: sum(merged.expenses),
+      postedTasks: sum(merged.postedTasks).mapWith(Number),
+      mentorSessions: sum(merged.mentorSessions).mapWith(Number),
+      expenses: sum(merged.expenses).mapWith(Number),
     })
     .from(merged)
     .groupBy(merged.date)
     .orderBy(merged.date);
 
-  return result.map((res) => {
-    return {
-      ...res,
-      expenses: Number(res.expenses),
-      mentorSessions: Number(res.mentorSessions),
-      postedTasks: Number(res.postedTasks),
-    };
-  });
+  return result;
 }
+
+function getSolverTaskStats(range: string, userId: string) {
+  return db
+    .select({
+      date: pgFormatDateYMD(TaskTable.createdAt).as("date"),
+      allTasks: count(TaskTable.id).as("allTasks"),
+      solvedTasks: pgCountWithFilter(TaskTable.status, "COMPLETED").as(
+        "solvedTasks"
+      ),
+      inProgressTasks: pgCountWithFilter(TaskTable.status, "IN_PROGRESS").as(
+        "inProgressTasks"
+      ),
+      mentorSessions: sql<number>`0`.as("mentorSessions"),
+      earnings: sum(TaskTable.price).as("earnings"),
+    })
+    .from(TaskTable)
+    .where(
+      and(
+        eq(TaskTable.solverId, userId),
+        pgInterveralRange(TaskTable.createdAt, range)
+      )
+    )
+    .groupBy(pgFormatDateYMD(TaskTable.createdAt));
+}
+
+function getSolverMentorStasts(userId: string) {
+  return db
+    .select({
+      date: pgFormatDateYMD(MentorshipBookingTable.createdAt).as("date"),
+      allTasks: sql<number>`0`.as("allTasks"),
+      solvedTasks: sql<number>`0`.as("solvedTasks"),
+      inProgressTasks: sql<number>`0`.as("inProgressTasks"),
+      mentorSessions: count(MentorshipSessionTable.id).as("mentorSessions"),
+      earnings: sum(MentorshipBookingTable.price).as("earnings"),
+    })
+    .from(MentorshipBookingTable)
+    .leftJoin(
+      MentorshipSessionTable,
+      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
+    )
+    .where(
+      and(
+        eq(MentorshipBookingTable.solverId, userId),
+        pgInterveralRange(MentorshipBookingTable.createdAt, "7 days")
+      )
+    )
+    .groupBy(pgFormatDateYMD(MentorshipBookingTable.createdAt));
+}
+
 export async function getSolverStats(
   range = "30 days"
 ): Promise<SolverStats[]> {
   const { user } = await isAuthorized(["SOLVER"]);
   try {
-    const taskStats = db
-      .select({
-        date: sql<string>`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`.as(
-          "date"
-        ),
-        allTasks: count(TaskTable.id).as("allTasks"),
-        solvedTasks: sql<number>`sum(
-        case when ${TaskTable.status} = 'COMPLETED' then 1 else 0 end
-      )`.as("solvedTasks"),
-        inProgressTasks: sql<number>`sum(
-        case when ${TaskTable.status} = 'IN_PROGRESS' then 1 else 0 end
-      )`.as("inProgressTasks"),
-        mentorSessions: sql<number>`0`.as("mentorSessions"),
-        earnings: sum(TaskTable.price).as("earnings"),
-      })
-      .from(TaskTable)
-      .where(
-        and(
-          eq(TaskTable.solverId, user.id),
-          sql`${TaskTable.createdAt} > current_date - interval '30 days'`
-        )
-      )
-      .groupBy(sql`to_char(${TaskTable.createdAt}, 'YYYY-MM-DD')`);
-
-    const mentorStats = db
-      .select({
-        date: sql<string>`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`.as(
-          "date"
-        ),
-        allTasks: sql<number>`0`.as("allTasks"),
-        solvedTasks: sql<number>`0`.as("solvedTasks"),
-        inProgressTasks: sql<number>`0`.as("inProgressTasks"),
-        mentorSessions: count(MentorshipSessionTable.id).as("mentorSessions"),
-        earnings: sum(MentorshipBookingTable.price).as("earnings"),
-      })
-      .from(MentorshipBookingTable)
-      .leftJoin(
-        MentorshipSessionTable,
-        eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
-      )
-      .where(
-        and(
-          eq(MentorshipBookingTable.solverId, user.id),
-          sql`${MentorshipBookingTable.createdAt} > current_date - interval '7 days'`
-        )
-      )
-      .groupBy(sql`to_char(${MentorshipBookingTable.createdAt}, 'YYYY-MM-DD')`);
-
-    const merged = unionAll(taskStats, mentorStats).as("merged");
+    const merged = unionAll(
+      getSolverTaskStats(range, user.id),
+      getSolverMentorStasts(user.id)
+    ).as("merged");
 
     const result = await db
       .select({
         date: merged.date,
-        allTasks: sum(merged.allTasks).as("allTasks"),
-        solvedTasks: sum(merged.solvedTasks).as("solvedTasks"),
-        inProgressTasks: sum(merged.inProgressTasks).as("inProgressTasks"),
-        mentorSessions: sum(merged.mentorSessions).as("mentorSessions"),
-        earnings: sum(merged.earnings).as("earnings"),
+        allTasks: sum(merged.allTasks).mapWith(Number).as("allTasks"),
+        solvedTasks: sum(merged.solvedTasks).mapWith(Number).as("solvedTasks"),
+        inProgressTasks: sum(merged.inProgressTasks)
+          .mapWith(Number)
+          .as("inProgressTasks"),
+        mentorSessions: sum(merged.mentorSessions)
+          .mapWith(Number)
+          .as("mentorSessions"),
+        earnings: sum(merged.earnings).mapWith(Number).as("earnings"),
       })
       .from(merged)
       .groupBy(merged.date)
       .orderBy(merged.date);
 
-    return result.map((res) => ({
-      ...res,
-      earnings: Number(res.earnings) || 0,
-      mentorSessions: Number(res.mentorSessions) || 0,
-      allTasks: Number(res.allTasks) || 0,
-      solvedTasks: Number(res.solvedTasks) || 0,
-      inProgressTasks: Number(res.inProgressTasks) || 0,
-    }));
+    return result;
   } catch (error) {
     logger.error("unable to load solver stats", {
       message: (error as Error).message,
@@ -641,14 +655,6 @@ export async function getSolverStats(
     return [];
   }
 }
-
-const tMap: Record<Units, string> = {
-  d: "day",
-  h: "hours",
-  m: "months",
-  w: "weeks",
-  y: "years",
-};
 
 export type upcomingTasks = {
   id: string;
@@ -993,4 +999,51 @@ export async function getTaskCategoriesData(from: string, to: string) {
     .groupBy(TaskCategoryTable.id);
 
   return res;
+}
+
+export async function getModeratorTaskStats(range = "6 days") {
+  const { days, date } = pgGenerateSeries(range);
+
+  return await db
+    .select({
+      date: pgFormatDateExpr(date).as("date"),
+      count: count(TaskTable.id),
+    })
+    .from(days)
+    .leftJoin(TaskTable, sql`${TaskTable.createdAt}::date = days.date`)
+    .groupBy(date)
+    .orderBy(date);
+}
+
+export async function getModeratorReportedTaskStats(range = "6 days") {
+  const { days, date } = pgGenerateSeries(range);
+  return await db
+    .select({
+      date: pgFormatDateExpr(date).as("date"),
+      count: count(RefundTable.id),
+    })
+    .from(days)
+    .leftJoin(RefundTable, sql`${RefundTable.createdAt}::date = days.date`)
+    .groupBy(date)
+    .orderBy(date);
+}
+
+export async function getModeratorResolvedTaskStats(range = "6 days") {
+  const { days, date } = pgGenerateSeries(range);
+
+  return await db
+    .select({
+      date: pgFormatDateExpr(date).as("date"),
+      count: count(RefundTable.id),
+    })
+    .from(days)
+    .leftJoin(
+      RefundTable,
+      and(
+        sql`${RefundTable.createdAt}::date = days.date`,
+        notInArray(RefundTable.refundStatus, ["PENDING", "PROCESSING"])
+      )
+    )
+    .groupBy(date)
+    .orderBy(date);
 }
