@@ -2,12 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """stabilize screen share init and optimize preload flow
-
-Preloaded peers now initialize without causing camera instability.
-Screen worker is preloaded for faster ICE setup, while camera init 
-remains on-demand to avoid early track issues. Improves join-time 
-stability and eliminates first-screen drop.
+commit_message = """Enhaced Query Stats .
 """
 
 repo = Repo(repo_path)
