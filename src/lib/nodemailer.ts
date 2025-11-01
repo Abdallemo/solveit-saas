@@ -10,7 +10,7 @@ export const sendVerificationEmail = async (
   const verificationUrl = `${env.NEXTAUTH_URL}/login/verify?token=${verificationToken}`;
 
   const mailOptions = {
-    from: `"SolveIt Team 👨‍💻" <learn3038it@gmail.com>`,
+    from: `"SolveIt Team " <solveit@org.com>`,
     to: email,
     subject: "Please verify your email address",
     text: `Click the following link to verify your email address: ${verificationUrl}`,
