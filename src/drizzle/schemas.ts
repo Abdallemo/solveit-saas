@@ -227,7 +227,7 @@ export const PaymentTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => UserTable.id, { onDelete: "cascade" }),
+      .references(() => UserTable.id, { onDelete: "no action" }),
     amount: integer("amount").notNull(),
     status: PaymentStatus("status").default("HOLD"),
     stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
@@ -432,10 +432,10 @@ export const RefundTable = pgTable(
       .references(() => PaymentTable.id),
     taskId: uuid("task_id")
       .notNull()
-      .references(() => TaskTable.id, { onDelete: "cascade" }),
+      .references(() => TaskTable.id, { onDelete: "no action" }),
     refundReason: text("refund_reason"),
     refundStatus: RefundStatusEnum().default("PENDING"),
-    moderatorId: uuid("moderatorId").references(() => UserTable.id),
+    moderatorId: uuid("moderatorId").references(() => UserTable.id,{onDelete:"no action"}),
     refundedAt: timestamp("refunded_at", { mode: "date", withTimezone: true }),
     stripeRefundId: text("stripe_refund_id"),
     createdAt: timestamp("created_at", {
