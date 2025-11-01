@@ -874,6 +874,22 @@ export async function getUserDisputes() {
 
   return userTasksWithRefund;
 }
+export async function getModeratorAssignedDisputes() {
+  const { user } = await isAuthorized(["MODERATOR"]);
+
+  try {
+    const dispute = await db.query.RefundTable.findMany({
+      where: (tb, fn) => fn.eq(tb.moderatorId, user.id),
+    });
+    if (!dispute) {
+      return null;
+    }
+
+    return dispute;
+  } catch (error) {
+    return null;
+  }
+}
 export async function getModeratorDisputes(disputeId: string) {
   const { user } = await isAuthorized(["MODERATOR"]);
   try {
