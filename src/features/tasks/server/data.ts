@@ -14,7 +14,12 @@ import {
   UserSubscriptionTable,
   UserTable,
 } from "@/drizzle/schemas";
-import { generateSqlYMDFormateDate } from "@/drizzle/utils";
+import {
+  pgBetweenDates,
+  pgCountWithinRange,
+  pgFormatDateYMD,
+  pgInterveralRange,
+} from "@/drizzle/utils";
 import { isAuthorized } from "@/features/auth/server/actions";
 import type {
   dataOptions,
@@ -702,47 +707,39 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
 
   return result.filter((t): t is upcomingTasks => t !== null);
 }
-
-export async function getAdminStats(range: string = "30 days") {
-  const { user } = await isAuthorized(["ADMIN"]);
-  if (!user?.id) return [];
-
-  const users = db
+function getUserStats(range: string) {
+  return db
     .select({
-      date: sql<string>`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: pgFormatDateYMD(UserTable.createdAt).as("date"),
       users: count(UserTable.id).mapWith(Number).as("users"),
-      newUsers:
-        sql<number>`sum(case when ${UserTable.createdAt} > current_date - interval '7 days' then 1 else 0 end)`.as(
-          "newUsers"
-        ),
+      newUsers: pgCountWithinRange(UserTable.createdAt, "7 days").as(
+        "newUsers"
+      ),
       revenue: sql<number>`0`.as("revenue"),
       subscriptions: sql<number>`0`.as("subscriptions"),
     })
     .from(UserTable)
-    .where(sql`${UserTable.createdAt} > current_date - interval '30 days'`)
-    .groupBy(sql`to_char(${UserTable.createdAt}, 'YYYY-MM-DD')`);
-
-  const revenue = db
+    .where(pgInterveralRange(UserTable.createdAt, range))
+    .groupBy(pgFormatDateYMD(UserTable.createdAt));
+}
+function getRevenueStats(range: string) {
+  return db
     .select({
-      date: sql<string>`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: pgFormatDateYMD(PaymentTable.createdAt).as("date"),
       users: sql<number>`0`.as("users"),
       newUsers: sql<number>`0`.as("newUsers"),
       revenue: sum(PaymentTable.amount).mapWith(Number).as("revenue"),
       subscriptions: sql<number>`0`.as("subscriptions"),
     })
     .from(PaymentTable)
-    .where(sql`${PaymentTable.createdAt} > current_date - interval '30 days'`)
-    .groupBy(sql`to_char(${PaymentTable.createdAt}, 'YYYY-MM-DD')`);
+    .where(pgInterveralRange(PaymentTable.createdAt, range))
+    .groupBy(pgFormatDateYMD(PaymentTable.createdAt));
+}
 
-  const subs = db
+function getSubscriptionStats(range: string) {
+  return db
     .select({
-      date: sql<string>`to_char(${UserSubscriptionTable.createdAt}, 'YYYY-MM-DD')`.as(
-        "date"
-      ),
+      date: pgFormatDateYMD(UserSubscriptionTable.createdAt).as("date"),
       users: sql<number>`0`.as("users"),
       newUsers: sql<number>`0`.as("newUsers"),
       revenue: sql<number>`0`.as("revenue"),
@@ -753,33 +750,36 @@ export async function getAdminStats(range: string = "30 days") {
         .as("subscriptions"),
     })
     .from(UserSubscriptionTable)
-    .where(
-      sql`${UserSubscriptionTable.createdAt} > current_date - interval '30 days'`
-    )
-    .groupBy(sql`to_char(${UserSubscriptionTable.createdAt}, 'YYYY-MM-DD')`);
+    .where(pgInterveralRange(UserSubscriptionTable.createdAt, range))
+    .groupBy(pgFormatDateYMD(UserSubscriptionTable.createdAt));
+}
+export async function getAdminStats(range: string = "30 days") {
+  const { user } = await isAuthorized(["ADMIN"]);
+  if (!user?.id) return [];
 
-  const merged = unionAll(users, revenue, subs).as("merged");
+  const merged = unionAll(
+    getUserStats(range),
+    getRevenueStats(range),
+    getSubscriptionStats(range)
+  ).as("merged");
 
   const result = await db
     .select({
       date: merged.date,
-      users: sum(merged.users).as("users"),
-      newUsers: sum(merged.newUsers).as("newUsers"),
-      revenue: sum(merged.revenue).as("revenue"),
-      subscriptions: sum(merged.subscriptions).as("subscriptions"),
+      users: sum(merged.users).mapWith(Number).as("users"),
+      newUsers: sum(merged.newUsers).mapWith(Number).as("newUsers"),
+      revenue: sum(merged.revenue).mapWith(Number).as("revenue"),
+      subscriptions: sum(merged.subscriptions)
+        .mapWith(Number)
+        .as("subscriptions"),
     })
     .from(merged)
     .groupBy(merged.date)
     .orderBy(merged.date);
 
-  return result.map((res) => ({
-    date: res.date,
-    users: Number(res.users) || 0,
-    newUsers: Number(res.newUsers) || 0,
-    revenue: Number(res.revenue) || 0,
-    subscriptions: Number(res.subscriptions) || 0,
-  }));
+  return result;
 }
+
 async function AllDisputes() {
   return await db.query.RefundTable.findMany({
     with: {
@@ -937,20 +937,14 @@ export async function getUserGrowthData(from: string, to: string) {
   if (!to) {
     to = toYMD(new Date());
   }
-  console.info("fetching from getUserGrowthData");
-  // await isAuthorized(["ADMIN"]);
   const d = await db
     .select({
-      date: generateSqlYMDFormateDate(UserTable.createdAt),
+      date: pgFormatDateYMD(UserTable.createdAt),
       users: count(UserTable.id).mapWith(Number).as("users"),
     })
     .from(UserTable)
-    .where(
-      sql`${generateSqlYMDFormateDate(
-        UserTable.createdAt
-      )} BETWEEN ${from} AND ${to}`
-    )
-    .groupBy(generateSqlYMDFormateDate(UserTable.createdAt));
+    .where(pgBetweenDates(UserTable.createdAt, { from, to }))
+    .groupBy(pgFormatDateYMD(UserTable.createdAt));
   return d;
 }
 
@@ -963,23 +957,19 @@ export async function getRevenueData(from: string, to: string) {
   }
   console.info("fetching from getUserGrowthData");
 
-  // await isAuthorized(["ADMIN"]);
-
   const d = await db
     .select({
-      date: generateSqlYMDFormateDate(PaymentTable.createdAt),
+      date: pgFormatDateYMD(PaymentTable.createdAt),
       totalRevenue: sum(PaymentTable.amount).mapWith(Number).as("totalRevenue"),
     })
     .from(PaymentTable)
     .where(
       and(
-        sql`${generateSqlYMDFormateDate(
-          PaymentTable.createdAt
-        )} BETWEEN ${from} AND ${to}`,
+        pgBetweenDates(PaymentTable.createdAt, { from, to }),
         eq(PaymentTable.status, "HOLD")
       )
     )
-    .groupBy(generateSqlYMDFormateDate(PaymentTable.createdAt));
+    .groupBy(pgFormatDateYMD(PaymentTable.createdAt));
 
   return d;
 }
@@ -993,17 +983,13 @@ export async function getTaskCategoriesData(from: string, to: string) {
   }
   const res = await db
     .select({
-      date: generateSqlYMDFormateDate(TaskCategoryTable.createdAt),
+      date: pgFormatDateYMD(TaskCategoryTable.createdAt),
       name: TaskCategoryTable.name,
       taskCount: count(TaskTable.id),
     })
     .from(TaskCategoryTable)
     .leftJoin(TaskTable, eq(TaskTable.categoryId, TaskCategoryTable.id))
-    .where(
-      sql`${generateSqlYMDFormateDate(
-        TaskCategoryTable.createdAt
-      )} BETWEEN ${from} AND ${to}`
-    )
+    .where(pgBetweenDates(TaskCategoryTable.createdAt, { from, to }))
     .groupBy(TaskCategoryTable.id);
 
   return res;
