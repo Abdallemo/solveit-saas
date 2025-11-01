@@ -61,7 +61,7 @@ export async function sendNotificationByEmail({
   const transporter = await createTransporter();
 
   const mailOptions = {
-    from: `SolveIt Team 👨‍💻 <solveit@org.com>`,
+    from: `SolveIt Team  <solveit@org.com>`,
     to: receiverEmail,
     subject: body.subject,
     html: `
@@ -74,7 +74,7 @@ export async function sendNotificationByEmail({
                             <tr>
                                 <td style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 40px; text-align: center;">
                                     <div style="display: inline-flex; align-items: center; gap: 8px; color: white; font-size: 24px; font-weight: bold;">
-                                        <span style="font-size: 28px;">👨‍💻</span>
+                                        <span style="font-size: 28px;"></span>
                                         SolveIt Team
                                     </div>
                                 </td>
