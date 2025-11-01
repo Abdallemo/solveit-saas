@@ -69,7 +69,7 @@ export default async function page() {
               <div className="space-y-1">
                 <CardTitle>Dispute #{dispute.id.slice(0, 8)}</CardTitle>
                 <CardDescription>
-                  Task ID: {dispute.taskId.slice(0, 8)} • Payment ID:{" "}
+                  Task ID: {dispute.taskId?.slice(0, 8)} • Payment ID:{" "}
                   {dispute.paymentId.slice(0, 8)}
                 </CardDescription>
               </div>

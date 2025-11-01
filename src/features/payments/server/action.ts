@@ -249,7 +249,7 @@ export async function refundFunds(paymentId: string) {
       charge: payment.stripeChargeId,
     });
 
-    if (st.status === "succeeded") {
+    if (st.status ==="succeeded") {
       await db.transaction(async (dx) => {
         await dx
           .update(RefundTable)
@@ -295,16 +295,16 @@ export async function completeRefund(refundId: string) {
 
     Notifier()
       .system({
-        receiverId: refund.taskRefund.posterId,
+        receiverId: refund.taskRefund?.posterId!,
         subject: "Refund Processed",
         content: `Your refund for the dispute with ID ${refund.id} has been successfully processed. 
-      The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       })
       .email({
-        receiverEmail: refund.taskRefund.poster.email!,
+        receiverEmail: refund.taskRefund?.poster.email!,
         subject: "Refund Processed",
         content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>. 
-      The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+      The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       });
   } catch (error) {
     logger.error("Failed to complete refund.", {
@@ -334,7 +334,7 @@ export async function reopenTask(refundId: string) {
     if (
       !refund ||
       refund.refundStatus !== "PENDING_POSTER_ACTION" ||
-      refund.taskRefund.poster.id !== user.id
+      refund.taskRefund?.poster.id !== user.id
     ) {
       throw new Error("Invalid request to re-open task.");
     }
@@ -356,20 +356,20 @@ export async function reopenTask(refundId: string) {
           status: "OPEN",
           updatedAt: new Date(),
         })
-        .where(eq(TaskTable.id, refund.taskRefund.id));
+        .where(eq(TaskTable.id, refund.taskRefund?.id!));
     });
 
     withRevalidateTag("dispute-data-cache");
 
     Notifier()
       .system({
-        receiverId: refund.taskRefund.posterId!,
-        content: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
+        receiverId: refund.taskRefund?.posterId!,
+        content: `You have chosen to re-open task ID ${refund.taskRefund?.id}. The task is now available for other solvers to apply.`,
         subject: "Task Re-opened",
       })
       .email({
-        receiverEmail: refund.taskRefund.poster.email!,
-        content: `You have chosen to re-open task ID ${refund.taskRefund.id}. The task is now available for other solvers to apply.`,
+        receiverEmail: refund.taskRefund?.poster.email!,
+        content: `You have chosen to re-open task ID ${refund.taskRefund?.id}. The task is now available for other solvers to apply.`,
         subject: "Task Re-opened",
       });
   } catch (error) {
@@ -424,27 +424,27 @@ export async function approveRefund(refundId: string) {
     Notifier()
       .system({
         subject: "Refund Accepted",
-        receiverId: refund.taskRefund.posterId,
-        content: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+        receiverId: refund.taskRefund?.posterId!,
+        content: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       })
       .email({
         subject: "Refund Accepted",
-        receiverEmail: refund.taskRefund.poster.email!,
+        receiverEmail: refund.taskRefund?.poster.email!,
         content: `<h3>Your refund for the dispute with ID ${refund.id} has been Accepted.</h3>
-        Please Take action with in 7days or The amount of ${refund.taskRefund.price} will be returned to your original payment method.`,
+        Please Take action with in 7days or The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       });
 
     Notifier()
       .system({
         subject: "Dispute Resolved",
-        receiverId: refund.taskRefund.solverId!,
-        content: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
+        receiverId: refund.taskRefund?.solverId!,
+        content: `The dispute for task ID ${refund.taskRefund?.id} has been resolved in the poster's favor.
           The held payment has been refunded to them and will not be disbursed to you.`,
       })
       .email({
         subject: "Dispute Resolved",
-        receiverEmail: refund.taskRefund.solver?.email!,
-        content: `The dispute for task ID ${refund.taskRefund.id} has been resolved in the poster's favor.
+        receiverEmail: refund.taskRefund?.solver?.email!,
+        content: `The dispute for task ID ${refund.taskRefund?.id} has been resolved in the poster's favor.
           The held payment has been refunded to them and will not be disbursed to you.`,
       });
   } catch (error) {
@@ -489,7 +489,7 @@ export async function rejectRefund(refundId: string) {
     ) {
       throw new DisputeRefundedError();
     }
-    if (!refund.taskRefund.solver?.stripeAccountId) {
+    if (!refund.taskRefund?.solver?.stripeAccountId) {
       throw new UnauthorizedError();
     }
     if (!refund.taskRefund.solver?.stripeAccountLinked) {
@@ -518,14 +518,14 @@ export async function rejectRefund(refundId: string) {
         .delete(BlockedTasksTable)
         .where(
           and(
-            eq(BlockedTasksTable.taskId, refund.taskId),
-            eq(BlockedTasksTable.userId, refund.taskRefund.solverId!)
+            eq(BlockedTasksTable.taskId, refund.taskId!),
+            eq(BlockedTasksTable.userId, refund.taskRefund?.solverId!)
           )
         );
       await dx
         .update(TaskTable)
         .set({ updatedAt: new Date(), status: "COMPLETED" })
-        .where(eq(TaskTable.solverId, refund.taskRefund.solverId!));
+        .where(eq(TaskTable.solverId, refund.taskRefund?.solverId!));
     });
 
     Notifier()
