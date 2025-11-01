@@ -878,7 +878,6 @@ export async function requestRefund(values: {
     const refund = await db.insert(RefundTable).values({
       paymentId: task.paymentId!,
       taskId: task.id,
-      refundedAt: new Date(),
       refundReason: reason,
     });
 
