@@ -95,11 +95,21 @@ abstract class WebRTCPeer {
     };
   }
 
-  protected async handleNegotiation() {
+  protected async handleNegotiation(
+    options: { forceIceRestart: boolean } = { forceIceRestart: false }
+  ) {
     try {
-      if (!this.pc) return;
+      if (!this.pc || this.makingOffer) return;
+
       this.makingOffer = true;
-      const offer = await this.pc.createOffer();
+
+      if (this.pc.signalingState !== "stable") {
+        await this.pc.setLocalDescription({ type: "rollback" });
+      }
+
+      const offer = await this.pc.createOffer({
+        iceRestart: options.forceIceRestart,
+      });
       await this.pc.setLocalDescription(offer);
 
       await this.signaling.send({
@@ -120,7 +130,13 @@ abstract class WebRTCPeer {
       this.makingOffer = false;
     }
   }
+  public triggerNegotiation = async (forceIceRestart: boolean) => {
+    console.log(
+      `[${this.connectionType}] Manager requested sync. Triggering negotiation.`
+    );
 
+    await this.handleNegotiation({ forceIceRestart });
+  };
   public async handleSignal(msg: SignalMessage) {
     switch (msg.type) {
       case "offer":
@@ -201,7 +217,16 @@ abstract class WebRTCPeer {
         this.pendingCandidates.push(candidate);
       }
     } catch (err) {
-      console.error(`Candidate error for ${this.connectionType}:`, err);
+      if (
+        err instanceof DOMException &&
+        err.message.includes("Unknown ufrag")
+      ) {
+        console.warn(
+          `[${this.connectionType}] Ignored stale ICE candidate. This is harmless.`
+        );
+      } else {
+        console.error(`Candidate error for ${this.connectionType}:`, err);
+      }
     }
   }
 
@@ -333,7 +358,7 @@ class CameraShare extends WebRTCPeer {
       return;
     }
 
-    return super.handleSignal(msg);
+    return await super.handleSignal(msg);
   }
   private localCleanup() {
     if (this.localCameraShare) {
@@ -415,7 +440,7 @@ class ScreenShare extends WebRTCPeer {
   }
 
   public override async handleSignal(msg: SignalMessage) {
-    if (msg.type === "stopScreen") {
+    if (msg.type === "stopScreen" || msg.type === "leave") {
       if (this.remoteScreenShare) {
         this.remoteScreenShare.getTracks().forEach((t) => t.stop());
         this.remoteScreenShare = null;
@@ -423,8 +448,15 @@ class ScreenShare extends WebRTCPeer {
       this.notifyManager();
       return;
     }
+    if (msg.type === "syncScreen") {
+      if (this.getLocalStream()) {
+        await this.triggerNegotiation(true);
+        this.notifyManager();
+      }
+      return;
+    }
 
-    return super.handleSignal(msg);
+    return await super.handleSignal(msg);
   }
 
   private async configureTransceiver(sender: RTCRtpSender) {
@@ -564,7 +596,7 @@ export class WebRTCManager implements SignalHandler {
   }
 
   public preloadPeers = async () => {
-    await Promise.all([/*this.cameraWorker.init(),*/ this.screenWorker.init()]);
+    // await Promise.all([/*this.cameraWorker.init(),*/ this.screenWorker.init()]);
   };
 
   public async handle(msg: SignalMessage) {
@@ -574,7 +606,7 @@ export class WebRTCManager implements SignalHandler {
     )
       return;
 
-    const connectionType = msg.connectionType || "camera";
+    const connectionType = msg.connectionType;
 
     if (connectionType === "camera") {
       await this.cameraWorker.handleSignal(msg);
@@ -635,12 +667,51 @@ export class WebRTCManager implements SignalHandler {
     if (typeof window === "undefined") return;
     if (this.callStarted) return;
     this.callStarted = true;
+    this.cameraOn = true;
+    this.micOn = true;
+    if (!this.signaling.isConnected()) {
+      this.signaling.connect();
+    }
     try {
       await this.cameraWorker.startCameraCall();
+      await this.screenWorker.init();
+      this.notify();
+      await this.signaling.send({
+        from: this.userId,
+        to: "broadcast",
+        type: "syncScreen",
+        payload: null,
+        sessionId: this.sessionId,
+        connectionType: "screen",
+      });
     } catch (error) {
       console.error("Manager initialization error:", error);
+      this.callStarted = false;
+      this.cameraOn = false;
+      this.micOn = false;
+      this.notify();
     }
   };
+  private async senLeaveSignals() {
+    await Promise.all([
+      this.signaling.send({
+        from: this.userId,
+        to: "broadcast",
+        type: "leave",
+        payload: null,
+        sessionId: this.sessionId,
+        connectionType: "camera",
+      }),
+      this.signaling.send({
+        from: this.userId,
+        to: "broadcast",
+        type: "leave",
+        payload: null,
+        sessionId: this.sessionId,
+        connectionType: "screen",
+      }),
+    ]);
+  }
   public leaveCall = async () => {
     if (!this.callStarted) return;
     this.callStarted = false;
@@ -648,26 +719,20 @@ export class WebRTCManager implements SignalHandler {
       if (this.screenWorker.getLocalStream()) {
         await this.screenWorker.stopScreenShare();
       }
-      await this.signaling.send({
-        from: this.userId,
-        to: "broadcast",
-        type: "leave",
-        payload: null,
-        sessionId: this.sessionId,
-      });
+      await this.senLeaveSignals();
     } catch (err) {
       console.error("Error sending leave signal:", err);
     }
 
     await this.cameraWorker.close();
     await this.screenWorker.close();
-    this.signaling.close();
+    // this.signaling.close();
 
     this.cameraOn = false;
     this.micOn = false;
     this.notify();
 
-    const key = `${this.userId}_${this.sessionId}`;
-    delete managers[key];
+    // const key = `${this.userId}_${this.sessionId}`;
+    // delete managers[key];
   };
 }
