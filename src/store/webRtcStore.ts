@@ -75,14 +75,15 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
           isScreenSharing: state.isScreenSharing,
         });
       });
-
-      manager.listDevices().then((devices) => {
-        set({
-          devices,
-          selectedCamera: devices.cameras[0]?.deviceId || null,
-          selectedMic: devices.microphones[0]?.deviceId || null,
+      const initDeviceList = async () => {
+        manager.listDevices().then((devices) => {
+          set({
+            devices,
+            selectedCamera: devices.cameras[0]?.deviceId || null,
+            selectedMic: devices.microphones[0]?.deviceId || null,
+          });
         });
-      });
+      };
 
       navigator.mediaDevices.ondevicechange = async () => {
         const list = await manager.listDevices();
@@ -118,7 +119,10 @@ export const useWebRTCStore = create<PersistentCallState & CallActions>(
           await manager.switchMic(deviceId);
           set({ selectedMic: deviceId });
         },
-        startCall: manager.startCall,
+        startCall: async () => {
+          await manager.startCall();
+          await initDeviceList();
+        },
         endCall: manager.leaveCall,
       });
       return manager;

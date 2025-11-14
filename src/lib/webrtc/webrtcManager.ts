@@ -1,7 +1,7 @@
+import { getTurnCredentials } from "@/lib/cloudflare";
 import { wait } from "@/lib/utils";
 import { SignalHandler, SignalingService } from "@/lib/webrtc/signaling-new";
 import { connType, SignalMessage } from "@/lib/webrtc/types";
-import { getTurnCredentials } from "../cloudflare";
 
 type WebRTCState = {
   localStream: MediaStream | null;
@@ -517,21 +517,21 @@ class ScreenShare extends WebRTCPeer {
   }
 }
 
-const managers: Record<string, WebRTCManager> = {};
+const managers = new Map<string, WebRTCManager>();
 
 export function getWebRTCManager(userId: string, sessionId: string) {
   const key = `${userId}_${sessionId}`;
-  for (const existingKey in managers) {
+  for (const existingKey of managers.keys()) {
     if (existingKey !== key) {
       console.log(`[WebRTCManager] Cleaning up old manager: ${existingKey}`);
-      managers[existingKey].leaveCall();
-      delete managers[existingKey];
+      managers.get(existingKey)?.leaveCall();
+      managers.delete(existingKey); 
     }
   }
-  if (!managers[key]) {
-    managers[key] = new WebRTCManager({ userId, sessionId });
+  if (!managers.has(key)) { 
+    managers.set(key, new WebRTCManager({ userId, sessionId }));
   }
-  return managers[key];
+  return managers.get(key)!; 
 }
 export class WebRTCManager implements SignalHandler {
   private readonly userId: string;
