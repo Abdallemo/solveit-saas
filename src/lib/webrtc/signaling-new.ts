@@ -14,7 +14,7 @@ export class SignalingService {
     private readonly handler: SignalHandler
   ) {}
 
-  public connect() {
+  public connect = () => {
     if (typeof window === "undefined") return;
 
     this.ws = new ReliableWebSocket<SignalMessage>(
@@ -30,8 +30,10 @@ export class SignalingService {
     );
 
     this.ws.connect();
-  }
-
+  };
+  public isConnected = () => {
+    return this.ws?.getState() === "connected";
+  };
   public async send(msg: SignalMessage) {
     try {
       const messageToSend = {
@@ -39,9 +41,8 @@ export class SignalingService {
         connectionType: msg.connectionType || "camera",
       };
       // await sendSignalMessage(messageToSend);
-      if (this.ws?.getState()==="connected"){
-        this.ws?.send(messageToSend)
-
+      if (this.ws?.getState() === "connected") {
+        this.ws?.send(messageToSend);
       }
     } catch (err) {
       console.error("Signal send error:", err);
