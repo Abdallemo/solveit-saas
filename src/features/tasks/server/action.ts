@@ -1,28 +1,28 @@
 "use server";
 import db, { DBTransaction } from "@/drizzle/db";
 import {
-  BlockedTasksTable,
-  PaymentPorposeEnumType,
-  PaymentPorposeType,
-  PaymentStatusType,
-  PaymentTable,
-  RefundTable,
-  SolutionFilesTable,
-  SolutionTable,
-  TaskCategoryTable,
-  TaskCommentTable,
-  TaskDeadlineTable,
-  TaskDraftTable,
-  TaskFileTable,
-  TaskTable,
-  WorkspaceFilesTable,
-  WorkspaceTable,
+    BlockedTasksTable,
+    PaymentPorposeEnumType,
+    PaymentPorposeType,
+    PaymentStatusType,
+    PaymentTable,
+    RefundTable,
+    SolutionFilesTable,
+    SolutionTable,
+    TaskCategoryTable,
+    TaskCommentTable,
+    TaskDeadlineTable,
+    TaskDraftTable,
+    TaskFileTable,
+    TaskTable,
+    WorkspaceFilesTable,
+    WorkspaceTable,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { validateContentWithAi } from "@/features/Ai/server/action";
 import {
-  getServerUserSession,
-  isAuthorized,
+    getServerUserSession,
+    isAuthorized,
 } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
@@ -30,24 +30,24 @@ import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
-  getBlockedSolver,
-  getTaskCatagoryId,
-  getWorkspaceById,
-  getWorkspaceByTaskId,
+    getBlockedSolver,
+    getTaskCatagoryId,
+    getWorkspaceById,
+    getWorkspaceByTaskId,
 } from "@/features/tasks/server/data";
 import type {
-  SolutionById,
-  Units,
-  WorkpaceWithRelationType,
+    SolutionById,
+    Units,
+    WorkpaceWithRelationType,
 } from "@/features/tasks/server/task-types";
 import {
-  taskRefundSchema,
-  workspaceFileType,
+    taskRefundSchema,
+    workspaceFileType,
 } from "@/features/tasks/server/task-types";
 import {
-  getServerUserSubscriptionById,
-  getUserById,
-  UpdateUserField,
+    getServerUserSubscriptionById,
+    getUserById,
+    UpdateUserField,
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
@@ -56,15 +56,15 @@ import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { isError, truncateText } from "@/lib/utils";
 import {
-  addDays,
-  addHours,
-  addMonths,
-  addWeeks,
-  addYears,
-  differenceInMilliseconds,
-  isAfter,
-  isBefore,
-  isPast,
+    addDays,
+    addHours,
+    addMonths,
+    addWeeks,
+    addYears,
+    differenceInMilliseconds,
+    isAfter,
+    isBefore,
+    isPast,
 } from "date-fns";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -334,8 +334,8 @@ export async function createTaksPaymentCheckoutSession(values: {
         type: "Task Payment" as PaymentPorposeEnumType,
         draftTaskId: draftTaskId,
       },
-      cancel_url: `${env.NEXTAUTH_URL}/dashboard/poster/newTask?cancel=true`,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/yourTasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
+      cancel_url: `${env.NEXTAUTH_URL}/dashboard/poster/new-task?cancel=true`,
+      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/your-tasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
         payment_method_save: "enabled",
@@ -474,7 +474,7 @@ export async function assignTaskToSolverById(values: {
         content: `you Task titled "${result?.title}" is picked by ${result?.solver?.name}\n you will reciev your solution on ${deadline}`,
       });
 
-    revalidatePath(`/yourTasks/${taskId}`);
+    revalidatePath(`/your-tasks/${taskId}`);
     return {
       success: "Task successfully assigned to you!",
     };
