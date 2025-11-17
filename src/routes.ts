@@ -4,11 +4,9 @@
  */
 export const publicRoutes = [
   "/",
-  "/about",
-  "/contact",
+  "/about-us",
+  "/contact-us",
   "/blog",
-  "/resources",
-  "/faq",
 ];
 /**
  * an array of routes that used for authentication
