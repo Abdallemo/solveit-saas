@@ -6,10 +6,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
 } from "./ui/breadcrumb";
 
 function formatBreadcrumbText(text: string) {
@@ -84,7 +84,7 @@ export default function BridCarmComponent({
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
                           : pathSegment === "workspace"
-                          ? currentPath.replace("/workspace", "/assignedTasks")
+                          ? currentPath.replace("/workspace", "/assigned-tasks")
                           : currentPath
                       }>
                       {pathSegment === "dashboard"
