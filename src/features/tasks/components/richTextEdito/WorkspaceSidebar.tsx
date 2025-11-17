@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
+    Sheet,
+    SheetContent,
+    SheetHeader,
+    SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 import { commentType, useWorkspace } from "@/contexts/WorkspaceContext";
@@ -27,12 +27,12 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { getColorClass } from "@/lib/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
-  Code2,
-  FileText,
-  Lock,
-  MessageCircle,
-  Send,
-  User2,
+    Code2,
+    FileText,
+    Lock,
+    MessageCircle,
+    Send,
+    User2,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Ref, useEffect, useRef, useState } from "react";
@@ -154,7 +154,7 @@ function SideBarForm() {
             {monacoEditor ? (
               <Button
                 type="button"
-                onClick={() => router.push(`${pathName}/codeEditor`)}
+                onClick={() => router.push(`${pathName}/code-editor`)}
                 className="cursor-pointer">
                 Open Code Editor <Code2 />{" "}
               </Button>
