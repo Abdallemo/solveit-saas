@@ -94,6 +94,7 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         pressed={editor.isActive("heading", { level: 3 })}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 3 }).run();
+          
         }}
         size="sm"
         className="h-8 w-8">
