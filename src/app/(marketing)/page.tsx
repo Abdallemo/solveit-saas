@@ -1,16 +1,15 @@
 import CTA from "@/components/marketing/cta";
 import DemoSection from "@/components/marketing/DemoSection";
+import FAQ from "@/components/marketing/faq";
 import Features from "@/components/marketing/features";
 import Footer from "@/components/marketing/footer";
 import Hero from "@/components/marketing/hero";
 import MouseMoveEffect from "@/components/marketing/mouse-move-effect";
-import Navbar from "@/components/marketing/navbar";
 import Pricing from "@/components/marketing/pricing";
-
 
 export default function Home() {
   return (
-    <div className="min-h-screen w-full flex flex-col items-center scroll-smooth">
+    <div className="w-full flex flex-col items-center">
       <MouseMoveEffect />
 
       <div className="pointer-events-none fixed inset-0">
@@ -19,16 +18,15 @@ export default function Home() {
         <div className="absolute bottom-0 left-0 h-[500px] w-[500px]  blur-[100px]" />
       </div>
 
-      <div className="z-10 w-full max-w-7xl px-4 ">
-        <Navbar />
+      <div className="w-full">
         <Hero />
-        <DemoSection/>
+        <DemoSection />
         <Features />
         <CTA />
         <Pricing />
+        <FAQ />
         <Footer />
       </div>
-      
     </div>
   );
 }
