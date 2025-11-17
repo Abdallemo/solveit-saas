@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import {
-  assignTaskToSolverById,
+    assignTaskToSolverById,
 } from "@/features/tasks/server/action";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
@@ -25,7 +25,7 @@ export function AssignTaskButton({
   async function handleClick()  {
     toast.loading("Assigning..",{id:"assign-task"})
    await AssignTaskMutation({solverId:userId,taskId})
-   router.push("/dashboard/solver/assignedTasks")
+   router.push("/dashboard/solver/assigned-tasks")
   };
 
   return (
