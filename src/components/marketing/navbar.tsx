@@ -93,10 +93,7 @@ export default function Navbar() {
                   <ListItem href="/blog" title="Blog">
                     Latest articles and updates.
                   </ListItem>
-                  <ListItem href="/resources" title="Resources">
-                    Guides, whitepapers, and case studies.
-                  </ListItem>
-                  <ListItem href="/faq" title="FAQ">
+                  <ListItem href="#faq" title="FAQ">
                     Frequently asked questions.
                   </ListItem>
                 </ul>
@@ -106,7 +103,7 @@ export default function Navbar() {
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
                 asChild>
-                <Link href="/about">About Us</Link>
+                <Link href="/about-us">About Us</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
           </NavigationMenuList>
@@ -119,7 +116,7 @@ export default function Navbar() {
         </button>
 
         <div className="hidden md:flex items-center space-x-4 ml-auto">
-          <Link href="/contact">
+          <Link href="/contact-us">
             <Button variant="ghost" size="sm">
               Contact Us
             </Button>
@@ -202,7 +199,7 @@ export default function Navbar() {
             <div className="font-medium mb-1">Resources</div>
             <div className="pl-4 space-y-2">
               <Link
-                href="/blog"
+                href="/blogs"
                 className="block py-1 text-sm rounded hover:bg-accent">
                 Blog
               </Link>
