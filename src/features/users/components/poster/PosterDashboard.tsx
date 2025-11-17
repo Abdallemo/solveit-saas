@@ -3,12 +3,12 @@
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  ChartConfig,
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
+    ChartConfig,
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartTooltip,
+    ChartTooltipContent,
 } from "@/components/ui/chart";
 import { ArrowRight, BookOpen, CheckCircle, Wallet } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, Line, LineChart, XAxis } from "recharts";
@@ -17,8 +17,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  PosterActivityOverview,
-  statsDataType,
+    PosterActivityOverview,
+    statsDataType,
 } from "./PosterActivityOverview";
 
 export default function PosterDashboard({
@@ -35,7 +35,7 @@ export default function PosterDashboard({
   } satisfies ChartConfig;
 
   const quickActions = [
-    { name: "Create New Task", href: `${path}/newTask` },
+    { name: "Create New Task", href: `${path}/new-task` },
     { name: "View Posted Tasks", href: `${path}/tasks` },
     { name: "Book Mentor", href: `${path}/bookings` },
     { name: "Expense History", href: `${path}/expenses` },
