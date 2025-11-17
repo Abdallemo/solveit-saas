@@ -34,52 +34,7 @@ export function useFileUpload({
 
   return { uploadMutate, isUploading, uploadedFilesData, uploadError };
 }
-//--deperected
-// export function useDeleteFile() {
-//   return useMutation({
-//     mutationFn: async ({
-//       fileId,
-//       filePath,
-//     }: {
-//       fileId: string;
-//       filePath: string;
-//     }) => {
-//       return await deleteFileFromWorkspace(fileId);
-//     },
-//     onSuccess: () => {
-//       toast.success("File deleted successfully!", { id: "file-delete" });
-//     },
-//     onError: (error: any) => {
-//       toast.error(`Failed to delete file: ${error.message}`, {
-//         id: "file-delete",
-//       });
-//     },
-//   });
-// }
-//--deperected
-// export function useDeleteFileChat() {
-//   return useMutation({
-//     mutationFn: async ({
-//       fileId,
-//       filePath,
-//     }: {
-//       fileId: string;
-//       filePath: string;
-//     }) => {
-//       return await deleteFileFromChatSessionDb(fileId);
-//     },
-//     onSuccess: () => {
-//       toast.success("File deleted successfully!", {
-//         id: `delete-file-${fileId}`,
-//       });
-//     },
-//     onError: (error: any, { fileId }) => {
-//       toast.error(`Failed to delete file: ${error.message}`, {
-//         id: `delete-file-${fileId}`,
-//       });
-//     },
-//   });
-// }
+
 type DeleteMediaEndpointScope =
   | "draft_task"
   | "task"
