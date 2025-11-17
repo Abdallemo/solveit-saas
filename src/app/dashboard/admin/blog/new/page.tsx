@@ -135,9 +135,9 @@ export default function NewBlogPostPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <div className="flex-1 overflow-hidden border-r flex flex-col">
-          <div className="flex-1 overflow-y-auto">
-            <div className="px-6 py-6">
+        <div className="flex-1 border-r flex flex-col min-w-0">
+          <div className="flex-1 overflow-y-auto overflow-x-auto">
+            <div className="px-6 py-6 min-w-fit">
               <Form {...form}>
                 <form>
                   <FormField
