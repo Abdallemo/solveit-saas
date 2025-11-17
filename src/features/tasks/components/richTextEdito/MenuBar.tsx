@@ -56,10 +56,15 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file || !editor) return;
 
-    const url = URL.createObjectURL(file);
-    editor!.chain().focus().setImage({ src: url }).run();
+    editor
+      .chain()
+      .focus()
+      .setImage({ src: file as any })
+      .run();
+
+  
     e.target.value = "";
   };
 
@@ -94,7 +99,6 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         pressed={editor.isActive("heading", { level: 3 })}
         onPressedChange={() => {
           editor.chain().focus().toggleHeading({ level: 3 }).run();
-          
         }}
         size="sm"
         className="h-8 w-8">
@@ -171,8 +175,7 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         variant="ghost"
         size="icon"
         className="h-8 w-8"
-        onClick={handleImageUpload}
-        disabled>
+        onClick={handleImageUpload}>
         <ImageIcon className="h-4 w-4" />
       </Button>
 
