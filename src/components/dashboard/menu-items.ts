@@ -1,4 +1,5 @@
 import {
+  BadgePlus,
   BookCheck,
   Bug,
   CalendarClockIcon,
@@ -31,6 +32,7 @@ import {
   LucideUserPlus,
   LucideUsers,
   PackageOpen,
+  Rss,
   Send,
   SquareDashedMousePointerIcon,
   Users,
@@ -166,6 +168,26 @@ export const MenuItemsAdmin: MenuItem[] = [
     ],
   },
   {
+    type: "category",
+    title: "Blog Management",
+    url: "/dashboard/admin/blog",
+    icon: Rss,
+    child: [
+      {
+        type: "link",
+        title: "Blog",
+        url: "/dashboard/admin/blog",
+        icon: Rss,
+      },
+      {
+        type: "link",
+        title: "New Blog",
+        url: "/dashboard/admin/blog/new",
+        icon: BadgePlus,
+      },
+    ],
+  },
+  {
     type: "link",
     title: "System Reports",
     url: "/dashboard/admin/reports",
@@ -201,13 +223,13 @@ export const MenuItemsPoster: MenuItem[] = [
       {
         type: "link",
         title: "New Task/Job",
-        url: "/dashboard/poster/newTask",
+        url: "/dashboard/poster/new-task",
         icon: LucideClipboardPlus,
       },
       {
         type: "link",
         title: "Your Tasks/Jobs",
-        url: "/dashboard/poster/yourTasks",
+        url: "/dashboard/poster/your-tasks",
         icon: LucideListChecks,
       },
       {
@@ -280,7 +302,7 @@ export const MenuItemsSolver: MenuItem[] = [
       {
         type: "link",
         title: "Assigned Tasks",
-        url: "/dashboard/solver/assignedTasks",
+        url: "/dashboard/solver/assigned-tasks",
         icon: LucideClipboardCheck,
       },
       {
