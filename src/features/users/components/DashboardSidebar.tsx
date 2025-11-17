@@ -179,7 +179,7 @@ function MenuRenderer({
                       onClick={closeMobileSidebar}
                       href={cld.url}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
-                        isActive(cld.url)
+                        isActive(cld.url,true)
                           ? "bg-primary text-sidebar-primary-foreground"
                           : ""
                       }`}>
