@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """Enhaced Query Stats .
+commit_message = """added static pages .
 """
 
 repo = Repo(repo_path)
