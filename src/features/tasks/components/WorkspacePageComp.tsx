@@ -3,12 +3,17 @@ import Loading from "@/app/dashboard/solver/loading";
 import { AuthGate } from "@/components/GateComponents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage,
+} from "@/components/ui/form";
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { DeadlineProgress } from "@/features/tasks/components/DeadlineProgress";
 import WorkspaceSidebar from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
-import WorkspaceEditor from "@/features/tasks/components/richTextEdito/workspace/Tiptap";
 import {
   autoSaveDraftWorkspace,
   publishSolution,
@@ -27,10 +32,12 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import PostingEditor from "./richTextEdito/BlogTiptap";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
-  const { content, currentWorkspace, setCurrentWorkspace } = useWorkspace();
+  const { content, currentWorkspace, setCurrentWorkspace, setContent } =
+    useWorkspace();
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const {
@@ -40,8 +47,8 @@ export default function WorkspacePageComp() {
   } = DeadlineProgress();
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
-    currentWorkspace?.task.status == "COMPLETED" 
-    // ||currentWorkspace?.task.status == "OPEN";
+    currentWorkspace?.task.status == "COMPLETED" ||
+    currentWorkspace?.task.status == "OPEN";
 
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
@@ -114,7 +121,7 @@ export default function WorkspacePageComp() {
     }
   }
   function onError(errors: FieldErrors<WorkpaceSchemType>) {
-    console.warn("Validation errors ❌", errors);
+    console.warn("Validation errors ", errors);
     setIsSheetOpen(true);
 
     const firstErrorField = Object.keys(errors)[0];
@@ -122,107 +129,130 @@ export default function WorkspacePageComp() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   return (
-    <div className="flex h-full bg-background">
-      <div className="flex flex-col h-full w-full">
-        <header className="border-b p-4 flex items-center justify-between">
-          <div className="flex gap-6 items-center">
-            <h1 className="text-2xl font-semibold">Solution Workspace</h1>
-            <Badge
-              className={cn(
-                getColorClass(currentWorkspace?.task.category.name!),
-                "h-6"
-              )}>
-              {currentWorkspace?.task.category.name}
-            </Badge>
-            
-          </div>
+    <div className="h-full bg-background flex flex-col">
+      <header className="border-b p-4 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex gap-6 items-center">
+          <h1 className="text-2xl font-semibold">Solution Workspace</h1>
+          <Badge
+            className={cn(
+              getColorClass(currentWorkspace?.task.category.name!),
+              "h-6"
+            )}>
+            {currentWorkspace?.task.category.name}
+          </Badge>
+        </div>
 
-          <div className="flex gap-3 items-center">
-            {isDeadlineLoading ? (
-              <Skeleton className="w-65 h-5" />
-            ) : (
-              <span className="flex items-center gap-2">
-                <span className="font-semibold">
-                  {progress >= 100 || alreadySubmitedSolution
-                    ? "Ended on"
-                    : "Ends on"}
-                </span>
-                <Clock className="size-4" />
-                {deadline}
+        <div className="flex gap-3 items-center">
+          {isDeadlineLoading ? (
+            <Skeleton className="w-65 h-5" />
+          ) : (
+            <span className="flex items-center gap-2">
+              <span className="font-semibold">
+                {progress >= 100 || alreadySubmitedSolution
+                  ? "Ended on"
+                  : "Ends on"}
               </span>
-            )}
+              <Clock className="size-4" />
+              {deadline}
+            </span>
+          )}
 
-            <Button
-              form="solution-form"
-              disabled={
-                isDisabled ||
-                isPending ||
-                progress >= 100 ||
-                alreadySubmitedSolution
-              }
-              className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-              {isPending ? (
-                <>
-                  <Loader className="animate-spin w-4 h-4" />
-                  Uploading files...
-                </>
-              ) : progress >= 100 ? (
-                "Submission Closed"
-              ) : alreadySubmitedSolution ? (
-                " Already Submited"
-              ) : (
-                "Publish Solution"
-              )}
-            </Button>
-          </div>
-        </header>
-        <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit, onError)}
-            id="solution-form"
-            className="flex flex-1 min-h-0">
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="p-4 pb-2  flex justify-between items-center">
-                <div className="mt-4  w-full">
-                  <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
-                    <Link
-                      className="underline text-lg"
-                      target="_blank"
-                      href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}>
-                      {currentWorkspace?.task.title}
-                    </Link>
-                    {isDeadlineLoading ? (
-                      <Skeleton className="w-30 h-5" />
-                    ) : (
-                      <span>
-                        {currentWorkspace?.task.status === "SUBMITTED" ||
-                        currentWorkspace?.task.status === "COMPLETED"
-                          ? 100
-                          : progress.toFixed()}
-                        % Complete
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex flex-col w-full items-end">
-                    <Progress
-                      value={alreadySubmitedSolution ? 100 : progress}
-                      className="h-2 w-full"
-                    />
-                  </div>
-                </div>
+          <Button
+            form="solution-form"
+            disabled={
+              isDisabled ||
+              isPending ||
+              progress >= 100 ||
+              alreadySubmitedSolution
+            }
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+            {isPending ? (
+              <>
+                <Loader className="animate-spin w-4 h-4" />
+                Uploading files...
+              </>
+            ) : progress >= 100 ? (
+              "Submission Closed"
+            ) : alreadySubmitedSolution ? (
+              " Already Submited"
+            ) : (
+              "Publish Solution"
+            )}
+          </Button>
+        </div>
+      </header>
+
+      <FormProvider {...form}>
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          id="solution-form"
+          className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-4 pb-2  flex justify-between items-center">
+            <div className="mt-4  w-full">
+              <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
+                <Link
+                  className="underline text-lg"
+                  target="_blank"
+                  href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}>
+                  {currentWorkspace?.task.title}
+                </Link>
+                {isDeadlineLoading ? (
+                  <Skeleton className="w-30 h-5" />
+                ) : (
+                  <span>
+                    {currentWorkspace?.task.status === "SUBMITTED" ||
+                    currentWorkspace?.task.status === "COMPLETED"
+                      ? 100
+                      : progress.toFixed()}
+                    % Complete
+                  </span>
+                )}
               </div>
-              <div className="flex-1 min-h-0 overflow-auto px-3 pt-0">
-                <Suspense>
-                  <WorkspaceEditor
-                    editorOptions={{ editable: !alreadySubmitedSolution }}
-                  />
-                </Suspense>
+              <div className="flex flex-col w-full items-end">
+                <Progress
+                  value={alreadySubmitedSolution ? 100 : progress}
+                  className="h-2 w-full"
+                />
               </div>
             </div>
+          </div>
+
+          <div className="flex flex-1 overflow-hidden">
+            <div className="flex-1 border-r flex flex-col min-w-0">
+              <div className="flex-1 overflow-y-auto overflow-x-auto">
+                <div className="px-6 py-6 min-w-fit">
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Suspense>
+                            <PostingEditor
+                              content={field.value}
+                              onChange={({ editor }) => {
+                                const html = editor.getHTML();
+                                field.onChange(html);
+                                setContent(html);
+                              }}
+                              editorOptions={{
+                                editable: !alreadySubmitedSolution,
+                              }}
+                            />
+                          </Suspense>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </div>
+            </div>
+
             <WorkspaceSidebar open={isSheetOpen} setOpen={setIsSheetOpen} />
-          </form>
-        </FormProvider>
-      </div>
+          </div>
+        </form>
+      </FormProvider>
     </div>
   );
 }
