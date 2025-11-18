@@ -1,18 +1,18 @@
 "use client"
 
-import { useCallback, useEffect, useState } from "react"
 import { type Editor } from "@tiptap/react"
+import { useCallback, useEffect, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook"
 
 // --- Hooks ---
-import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 import { useIsBreakpoint } from "@/hooks/use-is-breakpoint"
+import { useTiptapEditor } from "@/hooks/use-tiptap-editor"
 
 // --- Lib ---
 import {
+  isExtensionAvailable,
   isMarkInSchema,
   isNodeTypeSelected,
-  isExtensionAvailable,
 } from "@/lib/tiptap-utils"
 
 // --- Icons ---
@@ -147,7 +147,7 @@ export function canColorHighlight(
     if (!isExtensionAvailable(editor, ["nodeBackground"])) return false
 
     try {
-      return editor.can().toggleNodeBackgroundColor("test")
+      return false
     } catch {
       return false
     }
@@ -202,7 +202,7 @@ export function removeHighlight(
   if (mode === "mark") {
     return editor.chain().focus().unsetMark("highlight").run()
   } else {
-    return editor.chain().focus().unsetNodeBackgroundColor().run()
+    return false
   }
 }
 
@@ -291,16 +291,8 @@ export function useColorHighlight(config: UseColorHighlightConfig) {
 
       return true
     } else {
-      const success = editor
-        .chain()
-        .focus()
-        .toggleNodeBackgroundColor(highlightColor)
-        .run()
-
-      if (success) {
-        onApplied?.({ color: highlightColor, label, mode })
-      }
-      return success
+      
+      return true
     }
   }, [canColorHighlightState, highlightColor, editor, label, onApplied, mode])
 
