@@ -2,7 +2,9 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """added static pages .
+commit_message = """Major update added image uploading on the editor and more editor options
+applied to different part of the app successfully
+.
 """
 
 repo = Repo(repo_path)
