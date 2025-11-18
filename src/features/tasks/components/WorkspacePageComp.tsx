@@ -229,7 +229,7 @@ export default function WorkspacePageComp() {
                         <FormControl>
                           <Suspense>
                             <PostingEditor
-                              content={field.value}
+                              content={content}
                               onChange={({ editor }) => {
                                 const html = editor.getHTML();
                                 field.onChange(html);
