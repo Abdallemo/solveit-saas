@@ -2,13 +2,18 @@
 import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading";
 import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormMessage
+} from "@/components/ui/form";
 import { NewuseTask } from "@/contexts/TaskContext";
 import {
   autoSuggestWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
 import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
-import TaskPostingEditor from "@/features/tasks/components/richTextEdito/Tiptap";
 import {
   createTaksPaymentCheckoutSession,
   saveDraftTask,
@@ -20,9 +25,10 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { CircleAlert } from "lucide-react";
-import { Suspense, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import PostingEditor from "./richTextEdito/BlogTiptap";
 
 export default function TaskCreationPage({
   defaultValues,
@@ -141,7 +147,10 @@ export default function TaskCreationPage({
   if (isBlocked) return <AuthGate />;
   async function onSubmit(data: TaskSchema) {
     try {
-      const ruleRes = await validateContent({ content: contentText,adminMode:false });
+      const ruleRes = await validateContent({
+        content: contentText,
+        adminMode: false,
+      });
       if (ruleRes.violatesRules) {
         toast.warning(
           <div className="flex flex-col gap-2">
@@ -193,36 +202,62 @@ export default function TaskCreationPage({
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   return (
-    <div className="flex h-full bg-background overflow-auto">
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="border-b p-4 flex items-center justify-between">
-          <h1 className="text-2xl font-semibold">Post a Task</h1>
-          <Button
-            type="submit"
-            form="task-form"
-            disabled={isDisabled || isPending || isAutoSeggesting}
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
-            Publish Task
-          </Button>
-        </header>
-        <FormProvider {...form}>
-          <form
-            onSubmit={form.handleSubmit(onSubmit, onError)}
-            id="task-form"
-            className="flex-1 flex overflow-hidden">
-            <div className="flex-1 flex flex-col overflow-hidden">
-              <div className="p-4 pb-2">
-                <p className="text-sm text-muted-foreground">
-                  Describe the task clearly so students can understand and solve
-                  it effectively.
-                </p>
-              </div>
-              <div className="px-5 overflow-auto break-all">
-                <Suspense>
-                  <TaskPostingEditor />
-                </Suspense>
+    <div className="h-full bg-background flex flex-col">
+      <header className="border-b p-4 flex items-center justify-between">
+        <h1 className="text-2xl font-semibold">Post a Task</h1>
+        <Button
+          type="submit"
+          form="task-form" 
+          disabled={isDisabled || isPending || isAutoSeggesting}
+          className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+          Publish Task
+        </Button>
+      </header>
+
+      <FormProvider {...form}>
+
+        <form
+          onSubmit={form.handleSubmit(onSubmit, onError)}
+          id="task-form"
+          className="flex flex-col flex-1 overflow-hidden">
+          <div className="p-4 pb-2">
+            <p className="text-sm text-muted-foreground">
+              Describe the task clearly so students can understand and solve it
+              effectively.
+            </p>
+          </div>
+
+          <div className="flex flex-1 overflow-hidden">
+
+            <div className="flex-1 border-r flex flex-col min-w-0">
+              <div className="flex-1 overflow-y-auto overflow-x-auto">
+                <div className="px-6 py-6 min-w-fit">
+
+                  <FormField
+                    control={form.control}
+                    name="content"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <PostingEditor
+                            content={content}
+                            onChange={({ editor }) => {
+                              field.onChange(editor.getHTML());
+                              updateDraft({
+                                content: editor.getHTML(),
+                                contentText: editor.getText(),
+                              });
+                            }}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
               </div>
             </div>
+
             <NewTaskSidebar
               isDisabled={isDisabled}
               open={isSheetOpen}
@@ -230,9 +265,9 @@ export default function TaskCreationPage({
               handleSugestions={handleSugestions}
               isAutoSeggesting={isAutoSeggesting}
             />
-          </form>
-        </FormProvider>
-      </div>
+          </div>
+        </form>
+      </FormProvider>
     </div>
   );
 }
