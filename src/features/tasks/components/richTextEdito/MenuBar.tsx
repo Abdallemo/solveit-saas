@@ -1,4 +1,8 @@
 "use client";
+import { BlockquoteButton } from "@/components/tiptap-ui/blockquote-button";
+import { ColorHighlightPopover } from "@/components/tiptap-ui/color-highlight-popover";
+import { LinkPopover } from "@/components/tiptap-ui/link-popover";
+import { UndoRedoButton } from "@/components/tiptap-ui/undo-redo-button";
 import { Button } from "@/components/ui/button";
 import { Toggle } from "@/components/ui/toggle";
 import type { Editor } from "@tiptap/react";
@@ -15,10 +19,12 @@ import {
   Italic,
   List,
   ListOrdered,
+  Table,
   Underline,
 } from "lucide-react";
 import type React from "react";
 import { FormEvent, useRef } from "react";
+import TableBubbleMenu from "./TableBubbleMenu";
 
 function toggleMergedCodeBlock(editor: Editor) {
   const { state, commands } = editor;
@@ -64,7 +70,6 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
       .setImage({ src: file as any })
       .run();
 
-  
     e.target.value = "";
   };
 
@@ -74,6 +79,20 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
 
   return (
     <div className="border-b p-2 flex items-center gap-0.5 flex-wrap">
+      <UndoRedoButton
+        editor={editor}
+        action="undo"
+        disabled={disabled}
+        hideWhenUnavailable={true}
+      />
+      <UndoRedoButton
+        editor={editor}
+        action="redo"
+        disabled={disabled}
+        hideWhenUnavailable={true}
+      />
+      <div className="h-6 w-px bg-border mx-1" />
+
       <Toggle
         disabled={disabled}
         pressed={editor.isActive("heading", { level: 1 })}
@@ -135,6 +154,13 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         <Underline className="h-4 w-4" />
       </Toggle>
 
+      <LinkPopover
+        disabled={disabled}
+        editor={editor}
+        hideWhenUnavailable={true}
+        autoOpenOnLinkActive={true}
+      />
+
       <div className="h-6 w-px bg-border mx-1" />
 
       <Toggle
@@ -157,6 +183,16 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         className="h-8 w-8">
         <ListOrdered className="h-4 w-4" />
       </Toggle>
+      <BlockquoteButton
+        editor={editor}
+        hideWhenUnavailable={true}
+        disabled={disabled}
+      />
+      <ColorHighlightPopover
+        editor={editor}
+        hideWhenUnavailable={true}
+        disabled={disabled}
+      />
 
       <div className="h-6 w-px bg-border mx-1" />
 
@@ -172,6 +208,7 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
       </Toggle>
 
       <Button
+        disabled={disabled}
         variant="ghost"
         size="icon"
         className="h-8 w-8"
@@ -211,8 +248,26 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         className="h-8 w-8">
         <AlignRight className="h-4 w-4" />
       </Toggle>
+      <div className="h-6 w-px bg-border mx-1" />
+
+      <Button
+        disabled={disabled}
+        variant="ghost"
+        size="icon"
+        type="button"
+        className="h-8 w-8"
+        onClick={() => {
+          editor
+            .chain()
+            .focus()
+            .insertTable({ rows: 3, cols: 3, withHeaderRow: true })
+            .run();
+        }}>
+        <Table className="h-4 w-4" />
+      </Button>
 
       <input
+        disabled={disabled}
         type="file"
         accept="image/*"
         ref={fileInputRef}
@@ -220,6 +275,7 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         hidden
         alt="input"
       />
+      <TableBubbleMenu editor={editor}  />
     </div>
   );
 }
