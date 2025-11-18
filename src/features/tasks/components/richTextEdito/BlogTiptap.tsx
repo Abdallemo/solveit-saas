@@ -1,103 +1,75 @@
 "use client";
-import { CustomImageExtension } from "@/components/editors/tiptap/custome-node/CustomImageExtension";
+import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
+import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
+import { env } from "@/env/client";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import Highlight from "@tiptap/extension-highlight";
-import TextAlign from "@tiptap/extension-text-align";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
+import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
+import { Transaction } from "@tiptap/pm/state";
+import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import { common, createLowlight } from "lowlight";
-import { ResizableImage } from "tiptap-extension-resizable-image";
+import { createBlogExtensions } from "./extention-settings";
 import MenuBar from "./MenuBar";
 type TiptapEditorProps = {
   content: string;
-  onChange: (content: string) => void;
   className?: string;
+  onChange?:
+    | ((props: { editor: Editor; transaction: Transaction }) => void)
+    | undefined;
+  showMenuBar?: boolean;
+  editorOptions?: EditorOptions;
 };
-export default function BlogPostingEditor({
+export type EditorOptions = {
+  editable: boolean;
+};
+
+export default function PostingEditor({
   content,
   onChange,
   className,
+  showMenuBar = true,
+  editorOptions = { editable: true },
 }: TiptapEditorProps) {
-  const myMediaUploadFunction = (file: File): Promise<UploadedFileMeta> => {
-    return new Promise((resolve) => {
-      console.log(`Uploading ${file.name}...`);
-      setTimeout(() => {
-        resolve({
-          fileName: "test",
-          filePath:
-            "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
-          fileSize: 1,
-          fileType: "image",
-          storageLocation:
-            "https://hatrabbits.com/wp-content/uploads/2017/01/random.jpg",
-        });
-      }, 1500);
+  const { uploadMutate } = useFileUpload({});
+  const { mutateAsync: deleteFile } = useDeleteFileGeneric("generic");
+  const myMediaUploadFunction = async (
+    file: File
+  ): Promise<UploadedFileMeta> => {
+    const res = await uploadMutate({
+      files: [file],
+      scope: "editor-images",
+      url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
     });
+    return res[0];
   };
-  const myMediaCleanupFunction = (resourceId: string): Promise<void> => {
-    return new Promise((resolve) => {
-      console.warn(
-        `[CLEANUP] Firing DELETE request for resource ID: ${resourceId}`
-      );
-
-      setTimeout(() => {
-        console.warn(
-          `[CLEANUP] Successfully removed resource ID: ${resourceId} from server.`
-        );
-        resolve();
-      }, 500);
-    });
+  const myMediaCleanupFunction = async (resourceId: string): Promise<void> => {
+    return await deleteFile({ filePath: resourceId });
   };
   const lowlight = createLowlight(common);
+  const extensions = createBlogExtensions({
+    uploadMedia: myMediaUploadFunction,
+    cleanupMedia: myMediaCleanupFunction,
+    lowlight: lowlight,
+  });
   const editor = useEditor({
-    extensions: [
-      StarterKit.configure({
-        codeBlock: false,
-        bulletList: {
-          HTMLAttributes: {
-            class: "list-disc ml-3",
-          },
-        },
-        orderedList: {
-          HTMLAttributes: {
-            class: "list-decimal ml-3",
-          },
-        },
-      }),
-      ResizableImage.configure({
-        defaultWidth: 200,
-        defaultHeight: 200,
-      }),
-      TextAlign.configure({
-        types: ["heading", "paragraph"],
-      }),
-      Highlight,
-      CodeBlockLowlight.configure({
-        lowlight,
-        HTMLAttributes: {
-          class: "tiptap-codeblock",
-        },
-      }),
-      CustomImageExtension(myMediaUploadFunction, myMediaCleanupFunction),
-    ],
-    onUpdate: ({ editor }) => onChange(editor.getHTML()),
+    extensions: extensions,
+    onUpdate: onChange,
     content: content,
     immediatelyRender: false,
+   ...editorOptions,
     editorProps: {
       attributes: {
-        class: "w-full h-full p-14 focus:outline-none break-all overflow-x-auto",
+        class:
+          "w-full h-full p-14 focus:outline-none break-all overflow-x-auto",
       },
     },
   });
   return (
     <div className="border rounded-md flex flex-col h-[600px] md:h-[800px] lg:h-[800px] overflow-auto">
-      <MenuBar editor={editor} />
+      {showMenuBar && <MenuBar editor={editor} disabled={!editorOptions.editable} />}
       <div className="flex-1 overflow-hidden">
         <EditorContent
           editor={editor}
           className="h-full overflow-y-auto break-all overflow-x-auto"
-          
         />
       </div>
     </div>
