@@ -39,7 +39,8 @@ type DeleteMediaEndpointScope =
   | "draft_task"
   | "task"
   | "solution_workspace"
-  | "mentorship_chat";
+  | "mentorship_chat"
+  | "generic";
 export function useDeleteFileGeneric<
   Args extends Record<string, any> & {
     filePath: string;
@@ -76,6 +77,11 @@ export function useDeleteFileGeneric<
           /**
            * Not Yet Needed
            */
+          break;
+        case "generic":
+          await fetch(`/api/media?key=${encodeURIComponent(args.filePath)}`, {
+            method: "DELETE",
+          });
           break;
       }
     },
