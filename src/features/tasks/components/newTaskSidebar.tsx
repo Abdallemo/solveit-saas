@@ -116,7 +116,7 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
   });
   const form = useFormContext<TaskSchema>();
   return (
-    <div className="px-5 py-3 mb-3 flex flex-col gap-2 overflow-x-auto">
+    <div className="px-5 py-3 mb-3 flex flex-col gap-2 ">
       <FormField
         control={form.control}
         name="title"
