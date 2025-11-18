@@ -1,11 +1,11 @@
-// CustomImageExtension.ts
-
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import TiptapImage from "@tiptap/extension-image";
-
+import { Node } from "@tiptap/pm/model"; // Added for correct typing
 import { Plugin } from "@tiptap/pm/state";
+
 type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
+
 export const CustomImageExtension = (
   uploadMedia: UploadFunction,
   cleanupMedia: CleanupFunction
@@ -56,7 +56,7 @@ export const CustomImageExtension = (
                           src: publicUrl,
                           "data-temp-id": null,
                           "data-id": filePath,
-                          "data-keep-ratio":true,
+                          "data-keep-ratio": true,
                           alt: fileName || "",
                         })
                       );
@@ -95,29 +95,35 @@ export const CustomImageExtension = (
               return null;
             }
 
-            transactions.forEach((transaction) => {
-              oldState.doc.descendants((node, pos) => {
-                if (node.type === ImageNodeType) {
-                  const resourceId = node.attrs["data-id"];
-                  if (!resourceId) return;
-
-                  const newPos = transaction.mapping.map(pos);
-                  const newNode = newState.doc.nodeAt(newPos);
-
-                  if (
-                    !newNode ||
-                    newNode.type.name !== "image" ||
-                    newNode.attrs["data-id"] !== resourceId
-                  ) {
-                    cleanupMedia(resourceId).catch((error) =>
-                      console.error(
-                        `Cleanup failed for ID: ${resourceId}`,
-                        error
-                      )
-                    );
-                  }
+            const oldImageIds = new Set<string>();
+            oldState.doc.descendants((node: Node) => {
+              if (node.type === ImageNodeType) {
+                const resourceId = node.attrs["data-id"];
+                if (resourceId) {
+                  oldImageIds.add(resourceId);
                 }
-              });
+              }
+            });
+
+            const newImageIds = new Set<string>();
+            newState.doc.descendants((node: Node) => {
+              if (node.type === ImageNodeType) {
+                const resourceId = node.attrs["data-id"];
+                if (resourceId) {
+                  newImageIds.add(resourceId);
+                }
+              }
+            });
+
+            oldImageIds.forEach((resourceId) => {
+              if (!newImageIds.has(resourceId)) {
+                cleanupMedia(resourceId).catch((error) =>
+                  console.error(
+                    `Cleanup failed for ID: ${resourceId} (True Deletion)`,
+                    error
+                  )
+                );
+              }
             });
 
             return null;
