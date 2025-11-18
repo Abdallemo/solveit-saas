@@ -1,7 +1,8 @@
 @import "tailwindcss";
 @import "highlight.js/styles/atom-one-dark.css";
 @import 'tiptap-extension-resizable-image/styles.css';
-
+@import '../styles/_variables.scss';
+@import '../styles/_keyframe-animations.scss';
 
 @custom-variant dark (&:is(.dark *));
 
@@ -190,6 +191,39 @@
   .tiptap-codeblock br {
     @apply inline;
   }
+
+.ProseMirror table {
+    @apply w-full border-collapse my-4 table-fixed relative;
+  }
+
+  .ProseMirror th,
+  .ProseMirror td {
+    @apply border p-2;
+    border-color: var(--border); 
+    min-width: 1em;
+  }
+
+  .ProseMirror th {
+    @apply font-bold text-left;
+    background-color: var(--muted);
+  }
+
+ 
+  .ProseMirror .column-resize-handle {
+    @apply bg-blue-500;
+  }
+  .ProseMirror :is(th, td).selectedCell {
+    @apply relative;
+  
+    background-color: oklch(from var(--ring) l c h / 0.15);
+  }
+  .ProseMirror :is(th, td).selectedCell::after {
+    @apply content-[''] absolute inset-0 z-10;
+   
+    border: 2px solid var(--ring);
+    pointer-events: none;
+  }
+  
 
 }
 
