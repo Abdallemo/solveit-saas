@@ -1,10 +1,9 @@
 // app/features/tasks/task-form-schema.ts
-import {
-  BlockedSolverType,
-  taskFileType,
-  TaskType
-} from "@/drizzle/schemas";
+import { BlockedSolverType, taskFileType, TaskType } from "@/drizzle/schemas";
 import { publicUserType } from "@/features/users/server/user-types";
+import { JSONContent } from "@tiptap/react";
+
+import { calculateEditorTextLength } from "@/lib/utils";
 import { z } from "zod";
 import {
   getAllDisputes,
@@ -71,7 +70,7 @@ export type DeadlineType = Exclude<
   Awaited<ReturnType<typeof getAllTaskDeadlines>>[number],
   null
 >;
-export type FlatDispute = Awaited<ReturnType<typeof getAllDisputes>>
+export type FlatDispute = Awaited<ReturnType<typeof getAllDisputes>>;
 //   id: string | null;
 //   refundReason: string | null;
 //   refundedAt: Date | null;
@@ -147,24 +146,40 @@ export const TaskFormSchema = z.object({
   price: z.string().min(1, "Please enter price"),
   deadline: z.string().min(1, "Please select a deadline"),
 });
+export const MIN_CONTENT_LENGTH = 40;
 export const taskRefundSchema = z.object({
   reason: z.string().min(10, "please enter a valid reason!"),
 });
+const content = z
+  .unknown()
+  .refine(
+    (val) => {
+      const content = val as JSONContent;
+      const textLength = calculateEditorTextLength(content);
+      return textLength >= MIN_CONTENT_LENGTH;
+    },
+    {
+      message: `Task content is too short. Please provide at least ${MIN_CONTENT_LENGTH} characters.`,
+    }
+  )
+  .transform((val) => val as JSONContent);
 export const taskSchema = z
   .object({
     deadline: z.string().nonempty("Deadline is required").default("12h"),
     visibility: z.enum(["public", "private"]).default("public"),
     category: z.string().nonempty("Category is required").default(""),
     price: z.coerce.number().min(10, "Minimum price is 10").default(10),
-    content: z.string().min(4, "Content is too short").default(""),
+    content: content,
     title: z.string().min(4, "title is too short").default(""),
     description: z.string().min(4, "description is too short").default(""),
   })
   .passthrough();
 export const WorkpaceSchem = z.object({
-  content: z.string().min(10, "Content is too short"),
+  content: content,
 });
 export type Units = "h" | "d" | "w" | "m" | "y";
 export type dataOptions = {
   useCache?: boolean;
 };
+
+
