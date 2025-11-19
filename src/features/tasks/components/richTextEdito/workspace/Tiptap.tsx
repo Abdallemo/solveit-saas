@@ -48,7 +48,7 @@ export default function WorkspaceEditor({
       Image,
     ],
     onUpdate({ editor }) {
-      setContent(editor.getHTML());
+      setContent(editor.getJSON());
     },
     content: content,
     immediatelyRender: false,
