@@ -79,6 +79,54 @@ func (q *Queries) GetAIRules(ctx context.Context) ([]string, error) {
 	return items, nil
 }
 
+const getAllChatFilePaths = `-- name: GetAllChatFilePaths :many
+SELECT file_path FROM mentorship_chat_files
+`
+
+func (q *Queries) GetAllChatFilePaths(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllChatFilePaths)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var file_path string
+		if err := rows.Scan(&file_path); err != nil {
+			return nil, err
+		}
+		items = append(items, file_path)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllMediaFilePaths = `-- name: GetAllMediaFilePaths :many
+SELECT file_path FROM global_media_files
+`
+
+func (q *Queries) GetAllMediaFilePaths(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllMediaFilePaths)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var file_path string
+		if err := rows.Scan(&file_path); err != nil {
+			return nil, err
+		}
+		items = append(items, file_path)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getAllTaskDrafts = `-- name: GetAllTaskDrafts :many
 SELECT id, user_id, title, description, content, category, deadline, updated_at, "uploadedFiles", visibility, price, "contentText"
 FROM task_drafts
@@ -112,6 +160,54 @@ func (q *Queries) GetAllTaskDrafts(ctx context.Context, updatedAt pgtype.Timesta
 			return nil, err
 		}
 		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllTaskFilePaths = `-- name: GetAllTaskFilePaths :many
+SELECT file_path FROM task_files
+`
+
+func (q *Queries) GetAllTaskFilePaths(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllTaskFilePaths)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var file_path string
+		if err := rows.Scan(&file_path); err != nil {
+			return nil, err
+		}
+		items = append(items, file_path)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getAllWorkspaceFilePaths = `-- name: GetAllWorkspaceFilePaths :many
+SELECT file_path FROM solution_workspace_files
+`
+
+func (q *Queries) GetAllWorkspaceFilePaths(ctx context.Context) ([]string, error) {
+	rows, err := q.db.Query(ctx, getAllWorkspaceFilePaths)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []string
+	for rows.Next() {
+		var file_path string
+		if err := rows.Scan(&file_path); err != nil {
+			return nil, err
+		}
+		items = append(items, file_path)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
@@ -269,6 +365,15 @@ func (q *Queries) ProcessSystemNotification(ctx context.Context, arg ProcessSyst
 	return i, err
 }
 
+const removeChatFile = `-- name: RemoveChatFile :exec
+DELETE FROM mentorship_chat_files WHERE file_path = $1
+`
+
+func (q *Queries) RemoveChatFile(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, removeChatFile, filePath)
+	return err
+}
+
 const removeFileFromTaskDraft = `-- name: RemoveFileFromTaskDraft :exec
 UPDATE task_drafts
 SET "uploadedFiles" = '[]'
@@ -277,6 +382,33 @@ WHERE id = $1
 
 func (q *Queries) RemoveFileFromTaskDraft(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, removeFileFromTaskDraft, id)
+	return err
+}
+
+const removeMediaFile = `-- name: RemoveMediaFile :exec
+DELETE FROM global_media_files WHERE file_path = $1
+`
+
+func (q *Queries) RemoveMediaFile(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, removeMediaFile, filePath)
+	return err
+}
+
+const removeTaskFile = `-- name: RemoveTaskFile :exec
+DELETE FROM task_files WHERE file_path = $1
+`
+
+func (q *Queries) RemoveTaskFile(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, removeTaskFile, filePath)
+	return err
+}
+
+const removeWorkspaceFile = `-- name: RemoveWorkspaceFile :exec
+DELETE FROM solution_workspace_files WHERE file_path = $1
+`
+
+func (q *Queries) RemoveWorkspaceFile(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, removeWorkspaceFile, filePath)
 	return err
 }
 
