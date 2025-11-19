@@ -58,10 +58,23 @@ export default function PostingEditor({
     cleanupMedia: myMediaCleanupFunction,
     lowlight: lowlight,
   });
+  const initialContent = (() => {
+  if (!content) return '';
+  try {
+    const parsedContent = JSON.parse(content);
+    if (typeof parsedContent === 'object' && parsedContent !== null) {
+      return parsedContent;
+    }
+  } catch (e) {
+    console.warn("Content is not valid JSON, treating as raw content (HTML/Text).", e);
+  }
+
+  return content; 
+})();
   const editor = useEditor({
     extensions: extensions,
     onUpdate: onChange,
-    content: content,
+    content: initialContent,
     immediatelyRender: false,
     ...editorOptions,
     editorProps: {
