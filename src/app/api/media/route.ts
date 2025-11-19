@@ -1,5 +1,6 @@
 import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
+import { deleteMediaFileFromDb } from "@/features/media/server/action";
 import { GoHeaders } from "@/lib/go-config";
 import { NextRequest } from "next/server";
 
@@ -65,7 +66,7 @@ export async function DELETE(req: NextRequest) {
     if (!res.ok || !res.body) {
       return new Response("Failed to delete file", { status: res.status });
     }
-
+    await deleteMediaFileFromDb(key);
     return new Response("Successfully Deleted", { status: res.status });
   } catch (error) {
     return new Response("Failed to delete file", { status: 500 });
