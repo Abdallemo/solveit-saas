@@ -2,7 +2,7 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """Implement concurrent job safety and R2 listing fix
+commit_message = """breaking changes - fixed editor issue and migrated to json for editor content
 .
 """
 
