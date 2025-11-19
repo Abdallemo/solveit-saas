@@ -1,8 +1,11 @@
 "use server";
 
+import db from "@/drizzle/db";
+import { GlobalMediaFiles } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
+import { eq } from "drizzle-orm";
 import { UploadedFileMeta } from "./media-types";
 
 export async function deleteFileFromR2(filePath: string) {
@@ -54,8 +57,8 @@ type UploadOptions = {
 export async function uploadFiles({ files, scope, url }: UploadOptions) {
   const formData = new FormData();
   files.forEach((file) => {
-    if(file.size >= 50<<20){
-      throw new Error("file Exceeded Limit")
+    if (file.size >= 50 << 20) {
+      throw new Error("file Exceeded Limit");
     }
     formData.append("files", file);
   });
@@ -76,10 +79,30 @@ export async function uploadFiles({ files, scope, url }: UploadOptions) {
         errorData.message || `HTTP error! status: ${response.status}`
       );
     }
-    const data:UploadedFileMeta[] = await response.json();
+    const data: UploadedFileMeta[] = await response.json();
     return data;
   } catch (error) {
     logger.error("Error in uploadFiles:", { error: error });
     throw error;
+  }
+}
+export async function saveMediaFileToDb(media: UploadedFileMeta) {
+  try {
+    await db.insert(GlobalMediaFiles).values(media);
+  } catch (error) {
+    logger.error("failed to save media to global media table", {
+      message: (error as Error).message,
+      cause: (error as Error).cause,
+    });
+  }
+}
+export async function deleteMediaFileFromDb(key: string) {
+  try {
+    await db.delete(GlobalMediaFiles).where(eq(GlobalMediaFiles.filePath, key));
+  } catch (error) {
+    logger.error("failed to delete media from global media table", {
+      message: (error as Error).message,
+      cause: (error as Error).cause,
+    });
   }
 }
