@@ -5,7 +5,7 @@ import { getLogs } from "@/lib/logging/action";
 export type StastType = Awaited<ReturnType<typeof getSummaryStats>>;
 
 export default async function page() {
-  const serverLogs = await getLogs();
+  const serverLogs = await getLogs({limit:20,cursor:undefined});
   const data = await getAdminStats();
   return <AdminDashboard serverLogs={serverLogs} statsData={data} />;
 }

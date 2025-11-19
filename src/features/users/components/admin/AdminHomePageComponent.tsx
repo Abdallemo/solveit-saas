@@ -18,8 +18,9 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LogsTyep } from "@/lib/logging/action";
+import { getLogs, PaginatedLogs } from "@/lib/logging/action";
 import { formatDateAndTimeNUTC } from "@/lib/utils";
+import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
   AlertTriangle,
@@ -75,7 +76,7 @@ export default function AdminDashboard({
   serverLogs,
   statsData,
 }: {
-  serverLogs: LogsTyep;
+  serverLogs: PaginatedLogs;
   statsData: statsDataType[];
 }) {
   return (
@@ -269,7 +270,27 @@ export default function AdminDashboard({
   );
 }
 
-export function ServerLogs({ serverLogs }: { serverLogs: LogsTyep }) {
+export function ServerLogs({ serverLogs }: { serverLogs: PaginatedLogs }) {
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useInfiniteQuery<PaginatedLogs>({
+      queryKey: ["serverLogs"],
+
+      queryFn: ({ pageParam }) =>
+        getLogs({ limit: 20, cursor: pageParam as string | undefined }),
+
+      initialData: {
+        pages: [serverLogs],
+        pageParams: [undefined],
+      },
+
+      initialPageParam: serverLogs.nextCursor,
+
+      getNextPageParam: (lastPage) => lastPage.nextCursor,
+      staleTime: Infinity,
+    });
+
+  const allLogs = data?.pages.flatMap((page) => page.logs) ?? [];
+
   return (
     <Card className="lg:col-span-1">
       <CardHeader>
@@ -281,7 +302,7 @@ export function ServerLogs({ serverLogs }: { serverLogs: LogsTyep }) {
       </CardHeader>
       <CardContent className="h-60">
         <div className="space-y-3 max-h-60 overflow-y-auto">
-          {serverLogs.map((log) => (
+          {allLogs.map((log) => (
             <div
               key={log.id}
               className="flex items-center space-x-3 p-3 rounded-lg border bg-card ">
@@ -302,6 +323,22 @@ export function ServerLogs({ serverLogs }: { serverLogs: LogsTyep }) {
               </div>
             </div>
           ))}
+
+          <div className="p-3 pt-4 border-t flex justify-center bg-card">
+            {isFetchingNextPage ? (
+              <p className="text-sm text-muted-foreground">Loading more...</p>
+            ) : hasNextPage ? (
+              <Button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+                className="w-full"
+                variant="outline">
+                Load More Logs
+              </Button>
+            ) : (
+              <p className="text-sm text-muted-foreground">End of logs</p>
+            )}
+          </div>
         </div>
       </CardContent>
     </Card>
