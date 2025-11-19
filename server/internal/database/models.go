@@ -96,6 +96,50 @@ func (ns NullFeedbackCategory) Value() (driver.Value, error) {
 	return string(ns.FeedbackCategory), nil
 }
 
+type FileStatus string
+
+const (
+	FileStatusPENDING    FileStatus = "PENDING"
+	FileStatusPROCESSING FileStatus = "PROCESSING"
+	FileStatusCOMPLETED  FileStatus = "COMPLETED"
+	FileStatusFAILED     FileStatus = "FAILED"
+)
+
+func (e *FileStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = FileStatus(s)
+	case string:
+		*e = FileStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for FileStatus: %T", src)
+	}
+	return nil
+}
+
+type NullFileStatus struct {
+	FileStatus FileStatus
+	Valid      bool // Valid is true if FileStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullFileStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.FileStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.FileStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullFileStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.FileStatus), nil
+}
+
 type Method string
 
 const (
@@ -549,6 +593,16 @@ type Feedback struct {
 	CreatedAt       pgtype.Timestamptz
 }
 
+type GlobalMediaFile struct {
+	ID           pgtype.UUID
+	FileName     string
+	FileType     string
+	FileSize     int32
+	FileLocation string
+	FilePath     string
+	UploadedAt   pgtype.Timestamptz
+}
+
 type Log struct {
 	ID        pgtype.UUID
 	CreatedAt pgtype.Timestamptz
@@ -587,6 +641,7 @@ type MentorshipChat struct {
 	Pending   pgtype.Bool
 	IsDeleted pgtype.Bool
 	CreatedAt pgtype.Timestamptz
+	SentTo    pgtype.UUID
 }
 
 type MentorshipChatFile struct {
@@ -688,6 +743,7 @@ type SolutionWorkspaceFile struct {
 	IsDraft      pgtype.Bool
 	UploadedAt   pgtype.Timestamptz
 	UpdatedAt    pgtype.Timestamptz
+	Status       NullFileStatus
 }
 
 type SolverProfile struct {
