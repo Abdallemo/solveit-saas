@@ -79,18 +79,8 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
 
   return (
     <div className="border-b p-2 flex items-center gap-0.5 flex-wrap">
-      <UndoRedoButton
-        editor={editor}
-        action="undo"
-        disabled={disabled}
-        hideWhenUnavailable={true}
-      />
-      <UndoRedoButton
-        editor={editor}
-        action="redo"
-        disabled={disabled}
-        hideWhenUnavailable={true}
-      />
+      <UndoRedoButton editor={editor} action="undo" disabled={disabled} />
+      <UndoRedoButton editor={editor} action="redo" disabled={disabled} />
       <div className="h-6 w-px bg-border mx-1" />
 
       <Toggle
@@ -275,7 +265,7 @@ export default function MenuBar({ editor, disabled = false }: menuBarProp) {
         hidden
         alt="input"
       />
-      <TableBubbleMenu editor={editor}  />
+      <TableBubbleMenu editor={editor} />
     </div>
   );
 }
