@@ -45,7 +45,7 @@ import {
   userGrowthQuery,
 } from "@/features/tasks/client/queries";
 import useQueryParam from "@/hooks/useQueryParms";
-import { toYMD } from "@/lib/utils";
+import { browserFileDownload, toYMD } from "@/lib/utils";
 import { useQuery } from "@tanstack/react-query";
 import { subDays } from "date-fns";
 import {
@@ -144,7 +144,17 @@ const LoadingChartContent = () => (
     </div>
   </CardContent>
 );
+async function downloadPDF() {
+  const res = await fetch("/api/admin/reports/export/pdf", { method: "GET" });
+  const blob = await res.blob();
+  browserFileDownload({ fileName: "solveit-report.pdf", blob });
+}
 
+async function downloadExcel() {
+  const res = await fetch("/api/admin/reports/export/excel", { method: "POST" });
+  const blob = await res.blob();
+  browserFileDownload({ fileName: "solveit-report.xlsx", blob });
+}
 export default function SystemReportsPage({
   reportsData,
 }: {
@@ -234,8 +244,13 @@ export default function SystemReportsPage({
       : "grid gap-4 md:grid-cols-2";
 
   const handleGenerateReport = () => {};
-  const handleExportPDF = () => {};
-  const handleExportExcel = () => {};
+  const handleExportPDF = async() => {
+    await downloadPDF()
+    
+  };
+  const handleExportExcel = async() => {
+    await downloadExcel()
+  };
   const handleSearchChange = (value: string) => {};
   const handleViewReport = (reportId: string) => {};
   const totoalReven = revenueData
