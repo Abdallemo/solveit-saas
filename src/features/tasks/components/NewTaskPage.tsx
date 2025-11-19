@@ -18,14 +18,21 @@ import {
   createTaksPaymentCheckoutSession,
   saveDraftTask,
 } from "@/features/tasks/server/action";
-import { TaskSchema, taskSchema } from "@/features/tasks/server/task-types";
+import {
+  MIN_CONTENT_LENGTH,
+  TaskSchema,
+  taskSchema,
+} from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { calculateEditorTextLength } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { Editor } from "@tiptap/react";
+import { debounce } from "lodash";
 import { CircleAlert } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import PostingEditor from "./richTextEdito/BlogTiptap";
@@ -53,23 +60,6 @@ export default function TaskCreationPage({
   const [isDisabled, setIsDisabled] = useState(true);
   const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
-
-  useAutoSave({
-    autoSaveFn: saveDraftTask,
-    autoSaveArgs: [
-      title,
-      description,
-      content,
-      contentText,
-      user?.id!,
-      category,
-      price,
-      visibility,
-      deadline,
-      uploadedFiles,
-    ],
-    delay: 700,
-  });
 
   const { mutateAsync: validateContent, isPending } = useMutation({
     mutationFn: validateContentWithAi,
@@ -112,10 +102,8 @@ export default function TaskCreationPage({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    const doc = new DOMParser().parseFromString(content, "text/html");
-    const text = doc.body.textContent?.trim() || "";
-
-    setIsDisabled(text.length < 40);
+    const textLength = calculateEditorTextLength(content);
+    setIsDisabled(textLength <= MIN_CONTENT_LENGTH);
   }, [content]);
 
   const form = useForm({
@@ -143,6 +131,51 @@ export default function TaskCreationPage({
     category,
     price,
   ]);
+  useAutoSave({
+    autoSaveFn: saveDraftTask,
+    autoSaveArgs: [
+      title,
+      description,
+      JSON.stringify(content),
+      contentText,
+      user?.id!,
+      category,
+      price,
+      visibility,
+      deadline,
+      uploadedFiles,
+    ],
+    delay: 700,
+  });
+
+  const handleEditorChange = useMemo(
+    () =>
+      debounce((editor: Editor) => {
+        if (!editor) return;
+        const jsonContent = editor.getJSON();
+        const textContent = editor.getText({
+          textSerializers: CustomeTextSerializersForAi,
+        });
+
+        form.setValue("content", jsonContent, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+        updateDraft({
+          content: jsonContent,
+          contentText: textContent,
+        });
+
+        console.log("Debounced Update Triggered");
+      }, 500),
+    [updateDraft, form]
+  );
+  useEffect(() => {
+    return () => {
+      handleEditorChange.cancel();
+    };
+  }, [handleEditorChange]);
 
   if (authLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
@@ -171,7 +204,7 @@ export default function TaskCreationPage({
       const lastUpdDraft = await saveDraftTask(
         title,
         description,
-        content,
+        JSON.stringify(content),
         contentText,
 
         user?.id!,
@@ -240,13 +273,7 @@ export default function TaskCreationPage({
                           <PostingEditor
                             content={content}
                             onChange={({ editor }) => {
-                              field.onChange(editor.getJSON());
-                              updateDraft({
-                                content: JSON.stringify(editor.getJSON()),
-                                contentText: editor.getText({
-                                  textSerializers:CustomeTextSerializersForAi,
-                                }),
-                              });
+                              handleEditorChange(editor);
                             }}
                           />
                         </FormControl>
