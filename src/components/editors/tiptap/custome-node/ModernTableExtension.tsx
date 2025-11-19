@@ -1,22 +1,13 @@
-// components/editors/tippap/ModernTableExtension.tsx
-
 "use client";
 
 import { Table, TableOptions } from "@tiptap/extension-table";
-import {
-  EditorState,
-  Plugin,
-  PluginKey,
-  Transaction,
-} from "@tiptap/pm/state";
-import {
-  Decoration,
-  DecorationSet,
-  EditorView
-} from "@tiptap/pm/view";
+import { EditorState, Plugin, PluginKey } from "@tiptap/pm/state";
+import { Decoration, DecorationSet } from "@tiptap/pm/view";
 import { Editor, isNodeSelection } from "@tiptap/react";
-import { GripVertical, Plus } from "lucide-react";
+import { Plus } from "lucide-react";
 import { createRoot } from "react-dom/client";
+
+export const tableUIKey = new PluginKey("modern-table-ui");
 
 function findActiveTable(state: EditorState) {
   const { selection } = state;
@@ -34,36 +25,34 @@ function findActiveTable(state: EditorState) {
   return null;
 }
 
-function createDragHandle() {
-  const widget = document.createElement("div");
-  widget.className =
-    "absolute -left-6 top-2 z-50 text-muted-foreground hover:text-foreground cursor-grab";
-  widget.setAttribute("contenteditable", "false");
-  widget.setAttribute("data-drag-handle", "true");
-
-  const root = createRoot(widget);
-  root.render(<GripVertical className="h-4 w-4" />);
-  return widget;
-}
-
 function createAddButton(
   type: "col" | "row",
   editor: Editor,
   pos: number,
-  leaveTimer: { id: NodeJS.Timeout | null } 
+  width: number,
+  height: number
 ) {
-  const widget = document.createElement("button");
-  
-  widget.className = `absolute z-50 w-5 h-5 flex items-center justify-center 
-    bg-popover text-popover-foreground border border-border 
-    rounded-full shadow-lg ${
-    type === "col"
-      ? "top-1/2 -translate-y-1/2 -right-2.5" 
-      : "left-1/2 -translate-x-1/2 -bottom-2.5" 
-  }`;
-  widget.setAttribute("contenteditable", "false");
+  const wrapper = document.createElement("div");
+  wrapper.style.cssText =
+    "position: absolute; width: 0; height: 0; overflow: visible; z-index: 50; pointer-events: none;";
 
-  widget.onclick = (e) => {
+  const widget = document.createElement("button");
+
+  const xOffset = type === "col" ? width - 10 : width / 2 - 10;
+  const yOffset = type === "col" ? height / 2 - 10 : height - 10;
+
+  widget.className = `absolute flex items-center justify-center w-5 h-5 
+    bg-popover text-popover-foreground border border-border 
+    rounded-full shadow-lg cursor-pointer hover:bg-accent pointer-events-auto`;
+
+  widget.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
+  if (type === "col") widget.style.right = "-12px";
+  if (type === "row") widget.style.bottom = "-12px";
+
+  widget.setAttribute("contenteditable", "false");
+  widget.type = "button";
+
+  widget.onmousedown = (e) => {
     e.preventDefault();
     if (type === "col") {
       editor.chain().focus().addColumnAfter().run();
@@ -71,111 +60,148 @@ function createAddButton(
       editor.chain().focus().addRowAfter().run();
     }
   };
-  
-  widget.onmouseenter = () => {
-    if (leaveTimer.id) {
-      clearTimeout(leaveTimer.id);
-      leaveTimer.id = null;
-    }
-  };
+
+  wrapper.appendChild(widget);
 
   const root = createRoot(widget);
-  root.render(<Plus className="h-4 w-4" />);
-  return widget;
+  root.render(<Plus className="h-3 w-3" />);
+
+  return wrapper;
 }
 
-
 function tableUIPlugin(editor: Editor): Plugin {
-
   const leaveTimer: { id: NodeJS.Timeout | null } = { id: null };
-  let hoveredCellPos: number | null = null; 
 
   return new Plugin({
-    key: new PluginKey("modern-table-ui"),
+    key: tableUIKey,
 
     state: {
-      init: (): { decorationSet: DecorationSet } => ({
+      init: () => ({
         decorationSet: DecorationSet.empty,
+        hoveredCell: null as {
+          pos: number;
+          width: number;
+          height: number;
+        } | null,
       }),
-      apply(
-        tr: Transaction,
-        value: { decorationSet: DecorationSet },
-        oldState: EditorState,
-        newState: EditorState
-      ): { decorationSet: DecorationSet } {
-        const table = findActiveTable(newState);
-        if (!table) {
-          hoveredCellPos = null;
-          return { decorationSet: DecorationSet.empty };
+      apply(tr, value, oldState, newState) {
+        const { decorationSet, hoveredCell } = value;
+
+        const newHover = tr.getMeta(tableUIKey);
+
+        if (tr.docChanged && newHover === undefined) {
+          return {
+            decorationSet: decorationSet.map(tr.mapping, newState.doc),
+            hoveredCell: hoveredCell
+              ? { ...hoveredCell, pos: tr.mapping.map(hoveredCell.pos) }
+              : null,
+          };
         }
 
-        if (!tr.docChanged && !tr.selectionSet && !tr.getMeta("pointer")) {
+        const currentHover = newHover !== undefined ? newHover : hoveredCell;
+
+        if (!tr.docChanged && !tr.selectionSet && newHover === undefined) {
           return value;
+        }
+
+        const table = findActiveTable(newState);
+        if (!table) {
+          return { decorationSet: DecorationSet.empty, hoveredCell: null };
         }
 
         const decorations: Decoration[] = [];
 
-        decorations.push(
-          Decoration.widget(table.pos + 1, createDragHandle(), {
-            side: -1,
-          })
-        );
 
-        if (hoveredCellPos !== null) {
-          decorations.push(
-            Decoration.widget(
-              hoveredCellPos,
-              createAddButton("col", editor, hoveredCellPos, leaveTimer),
-              { side: 1 } 
-            )
-          );
-          decorations.push(
-            Decoration.widget(
-              hoveredCellPos,
-              createAddButton("row", editor, hoveredCellPos, leaveTimer),
-              { side: 1 }
-            )
-          );
+
+        if (currentHover !== null) {
+          if (currentHover.pos <= newState.doc.content.size) {
+            decorations.push(
+              Decoration.widget(
+                currentHover.pos,
+                createAddButton(
+                  "col",
+                  editor,
+                  currentHover.pos,
+                  currentHover.width,
+                  currentHover.height
+                ),
+                { side: 1, key: "col-btn" }
+              )
+            );
+            decorations.push(
+              Decoration.widget(
+                currentHover.pos,
+                createAddButton(
+                  "row",
+                  editor,
+                  currentHover.pos,
+                  currentHover.width,
+                  currentHover.height
+                ),
+                { side: 1, key: "row-btn" }
+              )
+            );
+          }
         }
 
         return {
           decorationSet: DecorationSet.create(newState.doc, decorations),
+          hoveredCell: currentHover,
         };
       },
     },
 
     props: {
-      decorations(this: Plugin, state: EditorState): DecorationSet | undefined {
+      decorations(state) {
         return this.getState(state)?.decorationSet;
       },
 
       handleDOMEvents: {
-        mousemove: (view: EditorView, event: MouseEvent): boolean => {
-        
+        mousemove: (view, event) => {
           if (leaveTimer.id) {
             clearTimeout(leaveTimer.id);
             leaveTimer.id = null;
           }
-          
+
           const target = event.target as HTMLElement;
           const cell = target.closest("td, th");
 
-          if (!cell) return false; 
+          if (!cell) return false;
 
+          // Get Dimensions for positioning
+          const rect = cell.getBoundingClientRect();
           const cellPos = view.posAtDOM(cell, 0);
-          if (cellPos === hoveredCellPos) return false;
 
-          hoveredCellPos = cellPos;
-          view.dispatch(view.state.tr.setMeta("pointer", true));
+          const currentState = tableUIKey.getState(view.state);
+
+          // Recursion Fix: Only update if pos changes OR dimensions change significantly (>1px)
+          // This prevents the infinite loop from sub-pixel rendering shifts
+          const prev = currentState?.hoveredCell;
+          const isSamePos = prev && prev.pos === cellPos;
+          const isSameSize =
+            prev &&
+            Math.abs(prev.width - rect.width) < 2 &&
+            Math.abs(prev.height - rect.height) < 2;
+
+          if (!isSamePos || !isSameSize) {
+            view.dispatch(
+              view.state.tr.setMeta(tableUIKey, {
+                pos: cellPos,
+                width: rect.width,
+                height: rect.height,
+              })
+            );
+          }
+
           return false;
         },
-        mouseleave: (view: EditorView, event: MouseEvent): boolean => {
-         
-          if (hoveredCellPos !== null) {
+        mouseleave: (view, event) => {
+          const currentState = tableUIKey.getState(view.state);
+
+          if (currentState?.hoveredCell !== null) {
             if (leaveTimer.id) clearTimeout(leaveTimer.id);
             leaveTimer.id = setTimeout(() => {
-              hoveredCellPos = null;
-              view.dispatch(view.state.tr.setMeta("pointer", true));
+              view.dispatch(view.state.tr.setMeta(tableUIKey, null));
             }, 100);
           }
           return false;
@@ -185,15 +211,9 @@ function tableUIPlugin(editor: Editor): Plugin {
   });
 }
 
-
 export const ModernTableExtension = Table.extend<TableOptions>({
   addProseMirrorPlugins() {
-
     const parentPlugins = this.parent?.() || [];
-    
-    return [
-      tableUIPlugin(this.editor as Editor),
-      ...parentPlugins 
-    ];
+    return [tableUIPlugin(this.editor as Editor), ...parentPlugins];
   },
 });
