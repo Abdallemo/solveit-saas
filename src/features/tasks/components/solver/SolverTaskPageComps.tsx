@@ -1,12 +1,12 @@
 "use client";
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
-import TaskPreview from "@/features/tasks/components/richTextEdito/TaskPreview";
 import { SolverTaskReturn } from "@/features/tasks/server/task-types";
 import { userSessionType } from "@/features/users/server/user-types";
 import { TaskNotFoundError } from "@/lib/Errors";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
+import PostingEditor from "../richTextEdito/BlogTiptap";
 
 export default function SolverTaskPageComps({
   task,
@@ -25,7 +25,11 @@ export default function SolverTaskPageComps({
           <AssignTaskButton taskId={task.id} userId={currentUser.id!} />
         )}
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
-          <TaskPreview content={task?.content} />
+          <PostingEditor
+            content={task?.content}
+            editorOptions={{ editable: false }}
+            showMenuBar={false}
+          />
         </Suspense>
       </div>
       <div className="w-full flex flex-col items-center">
