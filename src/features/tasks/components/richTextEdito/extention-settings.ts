@@ -22,7 +22,6 @@ interface CustomExtensionDependencies {
 
 /**
  * Creates a configured array of Tiptap extensions for the blog editor.
- * This is the single exported piece you will use in your components.
  */
 export const createBlogExtensions = ({
   uploadMedia,
