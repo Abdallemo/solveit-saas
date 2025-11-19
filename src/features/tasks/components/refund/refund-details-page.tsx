@@ -34,7 +34,7 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
-import { AllPreview } from "../richTextEdito/TaskPreview";
+import PostingEditor from "../richTextEdito/BlogTiptap";
 
 export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
   if (!dispute) throw new DisputeNotFoundError();
@@ -83,8 +83,7 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
     setIsRejectDialogOpen((prev) => !prev);
     setConfirmInput("");
   }
-  if(!task){
-    
+  if (!task) {
   }
   return (
     <div className="h-full w-full bg-background">
@@ -222,7 +221,12 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                     <FileTextIcon className="h-4 w-4" />
                     Task Content
                   </h4>
-                  <AllPreview content={task.content} />
+
+                  <PostingEditor
+                    content={task.content!}
+                    editorOptions={{ editable: false }}
+                    showMenuBar={false}
+                  />
                 </div>
               )}
             </CardContent>
@@ -261,7 +265,11 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
               {task.taskSolution.content && (
                 <div className="border rounded-lg p-4">
                   <h4 className="font-medium mb-2">Solution Description</h4>
-                  <AllPreview content={task.taskSolution.content} />
+                  <PostingEditor
+                    content={task.taskSolution.content}
+                    editorOptions={{ editable: false }}
+                    showMenuBar={false}
+                  />
                 </div>
               )}
 
@@ -305,7 +313,7 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                   return (
                     <div key={comment.id}>
                       <div className="flex gap-3">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
                           <span className="text-muted-foreground text-sm font-medium">
                             {userName?.charAt(0).toUpperCase()}
                           </span>
