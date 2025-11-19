@@ -2,6 +2,7 @@
 import { WorkspaceUploadedFileMeta } from "@/features/media/server/media-types";
 import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
 import { publicUserType } from "@/features/users/server/user-types";
+import { JSONContent } from "@tiptap/react";
 
 import {
   createContext,
@@ -23,8 +24,10 @@ export type commentType = {
 
 type WorkspaceContextType = {
   serverTime: string;
-  content: string;
-  setContent: (c: string) => void;
+  content: JSONContent;
+  setContent: (c: JSONContent) => void;
+  contentText: string;
+  setContentText: (c: string) => void;
   setCurrentWorkspace: React.Dispatch<
     React.SetStateAction<WorkpaceSchemReturnedType>
   >;
@@ -54,7 +57,8 @@ export const WorkspaceProvider = ({
   serverCurrentTime,
   userId,
 }: WorkspacePorviderProps) => {
-  const [content, setContent] = useState(workspace?.content ?? "");
+  const [content, setContent] = useState(workspace?.content ?? {});
+  const [contentText, setContentText] = useState(workspace?.contentText ?? "");
   const [serverTime] = useState(serverCurrentTime);
   const [uploadedFiles, setUploadedFiles] = useState<
     WorkspaceUploadedFileMeta[]
@@ -67,6 +71,8 @@ export const WorkspaceProvider = ({
       value={{
         serverTime,
         content,
+        contentText,
+        setContentText,
         setContent,
         uploadedFiles,
         setUploadedFiles,
