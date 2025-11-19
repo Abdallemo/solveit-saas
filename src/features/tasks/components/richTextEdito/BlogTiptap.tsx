@@ -7,12 +7,13 @@ import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
 import { useMutation } from "@tanstack/react-query";
 import { Transaction } from "@tiptap/pm/state";
-import { Editor, EditorContent, useEditor } from "@tiptap/react";
+import { Editor, EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import { common, createLowlight } from "lowlight";
 import { createBlogExtensions } from "./extention-settings";
 import MenuBar from "./MenuBar";
+
 type TiptapEditorProps = {
-  content: string;
+  content: JSONContent;
   className?: string;
   onChange?:
     | ((props: { editor: Editor; transaction: Transaction }) => void)
@@ -58,23 +59,11 @@ export default function PostingEditor({
     cleanupMedia: myMediaCleanupFunction,
     lowlight: lowlight,
   });
-  const initialContent = (() => {
-  if (!content) return '';
-  try {
-    const parsedContent = JSON.parse(content);
-    if (typeof parsedContent === 'object' && parsedContent !== null) {
-      return parsedContent;
-    }
-  } catch (e) {
-    console.warn("Content is not valid JSON, treating as raw content (HTML/Text).", e);
-  }
 
-  return content; 
-})();
   const editor = useEditor({
     extensions: extensions,
     onUpdate: onChange,
-    content: initialContent,
+    content: content,
     immediatelyRender: false,
     ...editorOptions,
     editorProps: {
