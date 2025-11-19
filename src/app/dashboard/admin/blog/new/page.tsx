@@ -1,4 +1,5 @@
 "use client";
+import { JSONContent } from "@tiptap/react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -12,6 +13,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PostingEditor from "@/features/tasks/components/richTextEdito/BlogTiptap";
+import { MIN_CONTENT_LENGTH } from "@/features/tasks/server/task-types";
+import { calculateEditorTextLength } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Send } from "lucide-react";
 import Link from "next/link";
@@ -34,7 +37,19 @@ const blogPostSchema = z.object({
     .string()
     .min(1, "Excerpt is required")
     .max(500, "Excerpt is too long"),
-  content: z.string().min(1, "Content is required"),
+  content: z
+    .unknown()
+    .refine(
+      (val) => {
+        const content = val as JSONContent;
+        const textLength = calculateEditorTextLength(content);
+        return textLength >= MIN_CONTENT_LENGTH;
+      },
+      {
+        message: `Task content is too short. Please provide at least ${MIN_CONTENT_LENGTH} characters.`,
+      }
+    )
+    .transform((val) => val as JSONContent),
   category: z.string().min(1, "Category is required"),
   authorName: z.string().min(1, "Author name is required"),
   authorRole: z.string().min(1, "Author role is required"),
@@ -49,13 +64,13 @@ export default function NewBlogPostPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
 
-  const form = useForm<BlogPostFormData>({
+  const form = useForm({
     resolver: zodResolver(blogPostSchema),
     defaultValues: {
       title: "",
       slug: "",
       excerpt: "",
-      content: "",
+      content: {},
       category: "",
       authorName: "",
       authorRole: "",
@@ -111,7 +126,7 @@ export default function NewBlogPostPage() {
 
   return (
     <div className="h-full bg-background flex flex-col">
-      <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+      <header className="border-b bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60">
         <div className="flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="icon" asChild>
@@ -154,9 +169,9 @@ export default function NewBlogPostPage() {
                       <FormItem>
                         <FormControl>
                           <PostingEditor
-                            content={field.value}
+                            content={field.value as JSONContent}
                             onChange={({ editor }) => {
-                              field.onChange(editor.getHTML());
+                              field.onChange(editor.getJSON());
                             }}
                           />
                         </FormControl>
