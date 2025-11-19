@@ -23,6 +23,9 @@ type FileMeta struct {
 	FilePath        string  `json:"filePath"`
 	StorageLocation string  `json:"storageLocation"`
 }
+
+const PublicS3Location = "https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev"
+
 type DeleteKey struct {
 	Key string `json:"key"`
 }
@@ -100,7 +103,7 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 
-		publicURL := fmt.Sprintf("https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev/solveit/%s", key)
+		publicURL := fmt.Sprintf("%s/%s", PublicS3Location, key)
 
 		uploadedFiles = append(uploadedFiles, FileMeta{
 			FileName:        fileHeader.Filename,
