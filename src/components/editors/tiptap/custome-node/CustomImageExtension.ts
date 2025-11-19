@@ -1,7 +1,7 @@
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import TiptapImage from "@tiptap/extension-image";
 import { Node } from "@tiptap/pm/model"; // Added for correct typing
 import { Plugin } from "@tiptap/pm/state";
+import { ResizableImage } from "tiptap-extension-resizable-image";
 
 type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
@@ -10,17 +10,28 @@ export const CustomImageExtension = (
   uploadMedia: UploadFunction,
   cleanupMedia: CleanupFunction
 ) =>
-  TiptapImage.extend({
+  ResizableImage.extend({
     addAttributes() {
       return {
-        ...this.parent?.(),
+      src: { default: null },
+        alt: { default: null },
+        title: { default: null },
+        width: { default: "100%" }, // Required for ResizableImage
+        height: { default: "auto" }, // Required for ResizableImage,
         "data-temp-id": {
           default: null,
         },
         "data-id": { default: null },
       };
     },
+    
 
+    addOptions() {
+      const parentDefuat = this.parent?.() || {};
+      parentDefuat.defaultHeight = 200;
+      parentDefuat.defaultWidth = 200;
+      return parentDefuat;
+    },
     addCommands() {
       const parentCommands = this.parent?.() || {};
 
