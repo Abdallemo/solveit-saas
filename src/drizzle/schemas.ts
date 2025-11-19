@@ -49,6 +49,12 @@ export const TaskStatusEnum = pgEnum("task_status", [
   "COMPLETED",
   "SUBMITTED",
 ]);
+export const fileUploadStatusEnum = pgEnum("file_status", [
+  "PENDING",
+  "PROCESSING",
+  "COMPLETED",
+  "FAILED"
+]);
 export const RefundStatusEnum = pgEnum("refund_status", [
   "PENDING",
   "PROCESSING",
@@ -78,6 +84,7 @@ export type TaskType = typeof TaskTable.$inferSelect;
 export type taskFileType = typeof TaskFileTable.$inferSelect;
 export type BlockedSolverType = typeof BlockedTasksTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
+export type FileUploadStatusType = (typeof fileUploadStatusEnum.enumValues)[number];
 export type MentorChatStatusType = (typeof MentorChatStatus.enumValues)[number];
 export type MentorChatFileStatusType =
   (typeof MentorChatFileStatus.enumValues)[number];
@@ -402,6 +409,24 @@ export const TaskFileTable = pgTable(
     index("task_files_filePath_idx").on(taskFiles.filePath),
   ]
 );
+export const GlobalMediaFiles = pgTable(
+  "global_media_files",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    fileName: text("file_name").notNull(),
+    fileType: text("file_type").notNull(),
+    fileSize: integer("file_size").notNull(),
+    storageLocation: text("file_location").notNull(),
+    filePath: text("file_path").notNull(),
+    uploadedAt: timestamp("uploaded_at", {
+      mode: "date",
+      withTimezone: true,
+    }).defaultNow(),
+  },
+  (mediaFiles) => [
+    index("media_files_filePath_idx").on(mediaFiles.filePath),
+  ]
+);
 
 export const TaskCategoryTable = pgTable("task_categories", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -525,6 +550,7 @@ export const WorkspaceFilesTable = pgTable(
     })
       .notNull()
       .defaultNow(),
+    status:fileUploadStatusEnum().default("PENDING"),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
