@@ -442,7 +442,7 @@ export async function getDraftTaskWithDefualtVal(userId: string) {
       userId: oldTask.userId,
       title: oldTask.title ?? "",
       description: oldTask.description ?? "",
-      content: oldTask.content ?? "",
+      content: oldTask.content ?? {},
       contentText: oldTask.contentText ?? "",
       deadline: oldTask.deadline ?? "12h",
       visibility: oldTask.visibility ?? "public",
