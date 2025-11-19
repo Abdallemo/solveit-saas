@@ -12,7 +12,7 @@ export default async function Page() {
   const defaultValues: TaskSchema = {
     title: draft?.title ?? "",
     description: draft?.description ?? "",
-    content: draft?.content ?? "",
+    content: draft?.content ?? {},
     contentText: draft?.contentText ?? "",
     deadline: draft?.deadline ?? "12h",
     visibility: draft?.visibility ?? "public",
