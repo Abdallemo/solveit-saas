@@ -76,7 +76,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
     await saveDraftTask(
       title,
       description,
-      content,
+      JSON.stringify(content),
       contentText,
       userId,
       category,
