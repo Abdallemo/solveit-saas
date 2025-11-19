@@ -44,7 +44,7 @@ export default function TaskPostingEditor() {
       Image,
     ],
     onUpdate({ editor }) {
-      updateDraft({ content: editor.getHTML(), contentText: editor.getText() });
+      updateDraft({ content: editor.getJSON(), contentText: editor.getText() });
     },
     content: content,
     immediatelyRender: false,
