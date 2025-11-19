@@ -6,7 +6,7 @@ import {
   FormControl,
   FormField,
   FormItem,
-  FormMessage
+  FormMessage,
 } from "@/components/ui/form";
 import { NewuseTask } from "@/contexts/TaskContext";
 import {
@@ -29,6 +29,7 @@ import { useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import PostingEditor from "./richTextEdito/BlogTiptap";
+import { CustomeTextSerializersForAi } from "./richTextEdito/tiptap-ai-content-selized";
 
 export default function TaskCreationPage({
   defaultValues,
@@ -207,7 +208,7 @@ export default function TaskCreationPage({
         <h1 className="text-2xl font-semibold">Post a Task</h1>
         <Button
           type="submit"
-          form="task-form" 
+          form="task-form"
           disabled={isDisabled || isPending || isAutoSeggesting}
           className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
           Publish Task
@@ -215,7 +216,6 @@ export default function TaskCreationPage({
       </header>
 
       <FormProvider {...form}>
-
         <form
           onSubmit={form.handleSubmit(onSubmit, onError)}
           id="task-form"
@@ -228,11 +228,9 @@ export default function TaskCreationPage({
           </div>
 
           <div className="flex flex-1 overflow-hidden">
-
             <div className="flex-1 border-r flex flex-col min-w-0">
               <div className="flex-1 overflow-y-auto overflow-x-auto">
                 <div className="px-6 py-6 min-w-fit">
-
                   <FormField
                     control={form.control}
                     name="content"
@@ -242,10 +240,12 @@ export default function TaskCreationPage({
                           <PostingEditor
                             content={content}
                             onChange={({ editor }) => {
-                              field.onChange(editor.getHTML());
+                              field.onChange(editor.getJSON());
                               updateDraft({
-                                content: editor.getHTML(),
-                                contentText: editor.getText(),
+                                content: JSON.stringify(editor.getJSON()),
+                                contentText: editor.getText({
+                                  textSerializers:CustomeTextSerializersForAi,
+                                }),
                               });
                             }}
                           />
