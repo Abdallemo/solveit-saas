@@ -1,6 +1,8 @@
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Units } from "@/features/tasks/server/task-types";
+import { JSONContent } from "@tiptap/react";
 import { clsx, type ClassValue } from "clsx";
+
 import {
   addDays,
   addHours,
@@ -443,3 +445,23 @@ export function runInBackground({promise,taskName}:{promise: Promise<unknown>, t
 }
 
 export const getCurrentServerTime = () => new Date() 
+
+export const calculateEditorTextLength = (content: JSONContent): number => {
+  let length = 0;
+  if (!content || !content.content) {
+    return length;
+  }
+  const traverse = (nodes: JSONContent[]) => {
+    for (const node of nodes) {
+      if (node.type === "text" && node.text) {
+        length += node.text.length;
+      }
+      if (node.content) {
+        traverse(node.content);
+      }
+    }
+  };
+
+  traverse(content.content);
+  return length;
+};
