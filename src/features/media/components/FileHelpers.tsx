@@ -6,7 +6,7 @@ import {
   supportedExtentionTypes,
   truncateText,
 } from "@/lib/utils";
-import { Download, Loader2, X } from "lucide-react";
+import { Download, Loader2, X } from 'lucide-react';
 import { SVGProps } from "react";
 import { UploadedFileMeta } from "../server/media-types";
 
@@ -41,51 +41,49 @@ export function FileChatCardComps({
   disabled?: boolean;
 }) {
   return (
-    // <Tooltip >
-    //   <TooltipTrigger >
-    <div className="relative flex items-center gap-3 px-4 py-3 rounded-xl border border-slate-200 dark:border-slate-600 bg-white dark:bg-slate-700 shadow-sm hover:shadow-md transition-all cursor-pointer group">
+    <div className="relative flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card hover:bg-muted transition-all duration-200 cursor-pointer group">
       <div
         onClick={disabled == true ? () => {} : action}
-        className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-900/20 flex items-center justify-center group-hover:bg-blue-100 dark:group-hover:bg-blue-900/30 transition-colors">
+        className="relative w-10 h-10 rounded-md bg-primary/10 dark:bg-primary/5 flex items-center justify-center group-hover:bg-primary/15 dark:group-hover:bg-primary/10 transition-colors duration-150">
         {loading && (
-          <Loader2 className="animate-spin absolute w-8 h-8 text-blue-600/30 dark:text-blue-400/30" />
+          <Loader2 className="animate-spin absolute w-5 h-5 text-primary/40" />
         )}
         <FileIconComponent
           extension={fileExtention(file.fileName)}
-          className="h-5 w-5 text-blue-600 dark:text-blue-400"
+          className="h-5 w-5 text-primary"
         />
       </div>
       <div
         className="flex-1 min-w-0"
         onClick={disabled == true ? () => {} : action}>
-        <p className="text-sm font-medium text-slate-900 dark:text-slate-100 truncate">
+        <p className="text-sm font-medium text-foreground truncate">
           {truncateText(removeFileExtension(file.fileName!), 6)}.
           {file.fileName?.split(".").at(-1)}
         </p>
-        <p className="text-xs text-slate-500 dark:text-slate-400">
+        <p className="text-xs text-muted-foreground">
           {(file.fileSize / 1024).toFixed(1)} KB
         </p>
       </div>
-      <div className="flex ">
+      <div className="flex gap-1">
         <Button
           type="button"
           variant={"ghost"}
           size={"sm"}
-          className="p-0"
+          className="h-8 w-8 p-0 hover:bg-muted text-foreground/60 hover:text-foreground transition-colors"
           onClick={async () => {
             if (disabled == true) return;
             if (downloadAction) {
               await downloadAction(file);
             }
           }}>
-          <Download />
+          <Download className="h-4 w-4" />
         </Button>
         {!deleteDisable && (
           <Button
             type="button"
             variant={"ghost"}
             size={"sm"}
-            className="p-0"
+            className="h-8 w-8 p-0 hover:bg-destructive/10 text-foreground/60 hover:text-destructive transition-colors"
             disabled={deleteDisable}
             onClick={async () => {
               if (disabled == true) return;
@@ -93,13 +91,10 @@ export function FileChatCardComps({
                 await deleteAction(file);
               }
             }}>
-            <X />
+            <X className="h-4 w-4" />
           </Button>
         )}
       </div>
     </div>
-    // {/* </TooltipTrigger> */}
-    // {/* {opt && <TooltipContent align="end">{opt}</TooltipContent>} */}
-    // {/* </Tooltip> */}
   );
 }
