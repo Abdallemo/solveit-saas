@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github/abdallemo/solveit-saas/internal/api"
+	"github/abdallemo/solveit-saas/internal/worker"
 
 	"github/abdallemo/solveit-saas/internal/database"
 
@@ -69,8 +70,10 @@ func main() {
 	openaiClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
 	server := api.NewServer(":3030", s3Client, openaiClient, database.New(db), redisClient, db)
 
-	go server.StartDeadlineEnforcerJob(context.Background(), 10, time.Minute)
-	go server.StartDraftMediaCleanupJob(context.Background(), time.Hour)
+	worker := worker.NewWorker(database.New(db), s3Client, redisClient, server.WsNotif, db)
+	go worker.StartDeadlineEnforcerJob(ctx, 10, time.Minute)
+	go worker.StartDraftMediaCleanupJob(ctx, time.Hour)
+	go worker.StartFileGarbageCollectorJob(ctx, time.Hour*24)
 
 	log.Fatal(server.Run())
 }
