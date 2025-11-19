@@ -9,7 +9,6 @@ import { TableCell, TableHeader, TableRow } from "@tiptap/extension-table";
 import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
 import { createLowlight } from "lowlight";
-import { ResizableImage } from "tiptap-extension-resizable-image";
 
 type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
@@ -44,10 +43,6 @@ export const createBlogExtensions = ({
     TableRow,
     BubbleMenu,
 
-    ResizableImage.configure({
-      defaultWidth: 200,
-      defaultHeight: 200,
-    }),
 
     TextAlign.configure({
       types: ["heading", "paragraph"],
