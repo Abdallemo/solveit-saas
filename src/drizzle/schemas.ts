@@ -2,6 +2,7 @@ import { relations } from "@/drizzle/relations";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Address, Business } from "@/features/users/server/user-types";
+import { JSONContent } from "@tiptap/react";
 import { sql } from "drizzle-orm";
 import {
   boolean,
@@ -53,7 +54,7 @@ export const fileUploadStatusEnum = pgEnum("file_status", [
   "PENDING",
   "PROCESSING",
   "COMPLETED",
-  "FAILED"
+  "FAILED",
 ]);
 export const RefundStatusEnum = pgEnum("refund_status", [
   "PENDING",
@@ -84,7 +85,8 @@ export type TaskType = typeof TaskTable.$inferSelect;
 export type taskFileType = typeof TaskFileTable.$inferSelect;
 export type BlockedSolverType = typeof BlockedTasksTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
-export type FileUploadStatusType = (typeof fileUploadStatusEnum.enumValues)[number];
+export type FileUploadStatusType =
+  (typeof fileUploadStatusEnum.enumValues)[number];
 export type MentorChatStatusType = (typeof MentorChatStatus.enumValues)[number];
 export type MentorChatFileStatusType =
   (typeof MentorChatFileStatus.enumValues)[number];
@@ -294,7 +296,7 @@ export const TaskTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    content: text("content").notNull(),
+    content: json("content").notNull().$type<JSONContent>(),
     price: integer("price").notNull(),
     posterId: uuid("poster_id")
       .references(() => UserTable.id, { onDelete: "cascade" })
@@ -367,7 +369,7 @@ export const TaskDraftTable = pgTable(
       .unique(),
     title: text("title").default("").notNull(),
     description: text("description").default("").notNull(),
-    content: text("content").default("").notNull(),
+    content: json("content").default("{}").notNull().$type<JSONContent>(),
     contentText: text("contentText").default("").notNull(),
     category: text("category").default("").notNull(),
     deadline: text("deadline").default("12h").notNull(),
@@ -423,9 +425,7 @@ export const GlobalMediaFiles = pgTable(
       withTimezone: true,
     }).defaultNow(),
   },
-  (mediaFiles) => [
-    index("media_files_filePath_idx").on(mediaFiles.filePath),
-  ]
+  (mediaFiles) => [index("media_files_filePath_idx").on(mediaFiles.filePath)]
 );
 
 export const TaskCategoryTable = pgTable("task_categories", {
@@ -514,7 +514,8 @@ export const WorkspaceTable = pgTable(
     solverId: uuid("solver_id")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
-    content: text("content"),
+    content: json("content").default("{}").$type<JSONContent>(),
+    contentText: text("contentText").default("").notNull(),
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
@@ -550,7 +551,7 @@ export const WorkspaceFilesTable = pgTable(
     })
       .notNull()
       .defaultNow(),
-    status:fileUploadStatusEnum().default("PENDING"),
+    status: fileUploadStatusEnum().default("PENDING"),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
@@ -581,7 +582,7 @@ export const SolutionTable = pgTable(
     taskId: uuid("task_id")
       .notNull()
       .references(() => TaskTable.id, { onDelete: "cascade" }),
-    content: text("content"),
+    content: json("content").$type<JSONContent>(),
     fileUrl: text("file_url"),
     isFinal: boolean("is_final").default(false),
     createdAt: timestamp("created_at", {
