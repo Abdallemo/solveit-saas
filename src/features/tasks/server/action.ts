@@ -1,28 +1,28 @@
 "use server";
 import db, { DBTransaction } from "@/drizzle/db";
 import {
-    BlockedTasksTable,
-    PaymentPorposeEnumType,
-    PaymentPorposeType,
-    PaymentStatusType,
-    PaymentTable,
-    RefundTable,
-    SolutionFilesTable,
-    SolutionTable,
-    TaskCategoryTable,
-    TaskCommentTable,
-    TaskDeadlineTable,
-    TaskDraftTable,
-    TaskFileTable,
-    TaskTable,
-    WorkspaceFilesTable,
-    WorkspaceTable,
+  BlockedTasksTable,
+  PaymentPorposeEnumType,
+  PaymentPorposeType,
+  PaymentStatusType,
+  PaymentTable,
+  RefundTable,
+  SolutionFilesTable,
+  SolutionTable,
+  TaskCategoryTable,
+  TaskCommentTable,
+  TaskDeadlineTable,
+  TaskDraftTable,
+  TaskFileTable,
+  TaskTable,
+  WorkspaceFilesTable,
+  WorkspaceTable,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { validateContentWithAi } from "@/features/Ai/server/action";
 import {
-    getServerUserSession,
-    isAuthorized,
+  getServerUserSession,
+  isAuthorized,
 } from "@/features/auth/server/actions";
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
@@ -30,24 +30,24 @@ import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
-    getBlockedSolver,
-    getTaskCatagoryId,
-    getWorkspaceById,
-    getWorkspaceByTaskId,
+  getBlockedSolver,
+  getTaskCatagoryId,
+  getWorkspaceById,
+  getWorkspaceByTaskId,
 } from "@/features/tasks/server/data";
 import type {
-    SolutionById,
-    Units,
-    WorkpaceWithRelationType,
+  SolutionById,
+  Units,
+  WorkpaceWithRelationType,
 } from "@/features/tasks/server/task-types";
 import {
-    taskRefundSchema,
-    workspaceFileType,
+  taskRefundSchema,
+  workspaceFileType,
 } from "@/features/tasks/server/task-types";
 import {
-    getServerUserSubscriptionById,
-    getUserById,
-    UpdateUserField,
+  getServerUserSubscriptionById,
+  getUserById,
+  UpdateUserField,
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
@@ -55,16 +55,17 @@ import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { isError, truncateText } from "@/lib/utils";
+import { JSONContent } from "@tiptap/react";
 import {
-    addDays,
-    addHours,
-    addMonths,
-    addWeeks,
-    addYears,
-    differenceInMilliseconds,
-    isAfter,
-    isBefore,
-    isPast,
+  addDays,
+  addHours,
+  addMonths,
+  addWeeks,
+  addYears,
+  differenceInMilliseconds,
+  isAfter,
+  isBefore,
+  isPast,
 } from "date-fns";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -179,7 +180,7 @@ export async function createTaskAction(
   title: string,
   description: string,
   category: string,
-  content: string,
+  content: JSONContent,
   visibility: string,
   deadline: string,
   price: number,
@@ -369,14 +370,14 @@ export async function saveDraftTask(
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
     });
-
+    const transform:JSONContent = JSON.parse(content)
     if (oldTask) {
       await db
         .update(TaskDraftTable)
         .set({
           title,
           description,
-          content,
+          content:transform,
           category,
           price,
           visibility,
@@ -391,7 +392,7 @@ export async function saveDraftTask(
         title,
         description,
         userId,
-        content,
+        content:transform,
         category,
         price,
         visibility,
@@ -554,17 +555,17 @@ export async function autoSaveDraftWorkspace(
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
     });
-
+    const transform:JSONContent = JSON.parse(content)
     if (oldTask) {
       await db
         .update(WorkspaceTable)
         .set({
-          content,
+          content:transform,
         })
         .where(eq(WorkspaceTable.taskId, taskId));
     } else {
       await db.insert(WorkspaceTable).values({
-        content,
+        content:transform,
         solverId,
         taskId,
       });
@@ -625,7 +626,7 @@ export async function saveFileToWorkspaceDB({
 }
 export async function publishSolution(values: {
   workspaceId: string;
-  content: string;
+  content: JSONContent;
   solverId: string;
 }) {
   const { content, solverId, workspaceId } = values;
