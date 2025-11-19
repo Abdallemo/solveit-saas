@@ -3,6 +3,8 @@ import Loading from "@/app/dashboard/solver/loading";
 import { AuthGate } from "@/components/GateComponents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Editor } from "@tiptap/react";
+
 import {
   FormControl,
   FormField,
@@ -19,17 +21,19 @@ import {
   publishSolution,
 } from "@/features/tasks/server/action";
 import {
+  MIN_CONTENT_LENGTH,
   WorkpaceSchem,
   WorkpaceSchemType,
 } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { cn, getColorClass } from "@/lib/utils";
+import { calculateEditorTextLength, cn, getColorClass } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
+import { debounce } from "lodash";
 import { Clock, Loader } from "lucide-react";
 import Link from "next/link";
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import PostingEditor from "./richTextEdito/BlogTiptap";
@@ -50,16 +54,6 @@ export default function WorkspacePageComp() {
     currentWorkspace?.task.status == "COMPLETED" ||
     currentWorkspace?.task.status == "OPEN";
 
-  useAutoSave({
-    autoSaveFn: autoSaveDraftWorkspace,
-    autoSaveArgs: [
-      content,
-      currentWorkspace?.task.solverId!,
-      currentWorkspace?.taskId!,
-    ],
-    delay: 700,
-    disabled: alreadySubmitedSolution,
-  });
   const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
     mutationFn: publishSolution,
     onSuccess: (data) => {
@@ -72,15 +66,49 @@ export default function WorkspacePageComp() {
   });
   useEffect(() => {
     if (typeof window === "undefined") return;
+    const textLength = calculateEditorTextLength(content);
 
-    const doc = new DOMParser().parseFromString(content!, "text/html");
-    const text = doc.body.textContent?.trim() || "";
-
-    setIsDisabled(text.length < 35);
+    setIsDisabled(textLength <= MIN_CONTENT_LENGTH);
   }, [content]);
 
-  const form = useForm<WorkpaceSchemType>({
+  const form = useForm({
     resolver: zodResolver(WorkpaceSchem),
+  });
+
+  const handleEditorChange = useMemo(
+    () =>
+      debounce((editor: Editor) => {
+        if (!editor) return;
+
+        const jsonContent = editor.getJSON();
+
+        form.setValue("content", jsonContent, {
+          shouldDirty: true,
+          shouldTouch: true,
+          shouldValidate: true,
+        });
+
+        setContent(jsonContent);
+
+        console.log("Debounced Update Triggered");
+      }, 500),
+    [setContent, form]
+  );
+  useEffect(() => {
+    return () => {
+      handleEditorChange.cancel();
+    };
+  }, [handleEditorChange]);
+
+  useAutoSave({
+    autoSaveFn: autoSaveDraftWorkspace,
+    autoSaveArgs: [
+      JSON.stringify(content),
+      currentWorkspace?.task.solverId!,
+      currentWorkspace?.taskId!,
+    ],
+    delay: 700,
+    disabled: alreadySubmitedSolution,
   });
 
   useEffect(() => {
@@ -231,9 +259,7 @@ export default function WorkspacePageComp() {
                             <PostingEditor
                               content={content}
                               onChange={({ editor }) => {
-                                const html = editor.getHTML();
-                                field.onChange(html);
-                                setContent(html);
+                                handleEditorChange(editor);
                               }}
                               editorOptions={{
                                 editable: !alreadySubmitedSolution,
