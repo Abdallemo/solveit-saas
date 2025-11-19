@@ -71,6 +71,20 @@
       "when": 1761973470123,
       "tag": "0009_flashy_ogun",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1763544559988,
+      "tag": "0010_curved_vin_gonzales",
+      "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1763545201213,
+      "tag": "0011_gray_random",
+      "breakpoints": true
     }
   ]
 }
