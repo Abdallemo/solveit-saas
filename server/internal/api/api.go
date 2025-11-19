@@ -17,7 +17,7 @@ import (
 type Server struct {
 	addr         string
 	hub          *websocket.WsHub
-	wsNotif      *websocket.WsNotification
+	WsNotif      *websocket.WsNotification
 	wsComm       *websocket.WsComments
 	wsSig        *websocket.WsSignalling
 	wsChat       *websocket.WsMentorChat
@@ -41,7 +41,7 @@ func NewServer(
 	return &Server{
 		addr:         addr,
 		hub:          hub,
-		wsNotif:      websocket.NewWsNotification(hub),
+		WsNotif:      websocket.NewWsNotification(hub),
 		wsComm:       websocket.NewWsComments(hub),
 		wsChat:       websocket.NewMentorChat(hub),
 		wsSig:        websocket.NewWsWsSignalling(hub),
@@ -79,7 +79,7 @@ func sendHttpResp(w http.ResponseWriter, payload any, statusCode int) {
 	json.NewEncoder(w).Encode(payload)
 }
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /notification", s.wsNotif.HandleNotification)
+	mux.HandleFunc("GET /notification", s.WsNotif.HandleNotification)
 	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
 	mux.HandleFunc("GET /mentorship", s.wsChat.HandleMentorChats)
 	mux.HandleFunc("GET /signaling", s.wsSig.HandleSignaling)
@@ -87,7 +87,7 @@ func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /send-notification", s.wsNotif.HandleSendNotification)
+	mux.HandleFunc("POST /send-notification", s.WsNotif.HandleSendNotification)
 	mux.HandleFunc("POST /send-comment", s.wsComm.HandleSendComments)
 	mux.HandleFunc("POST /send-mentorshipChats", s.wsChat.HandleSendMentorChats)
 	mux.HandleFunc("POST /send-signal", s.wsSig.HandleSendSignalingMessage)
