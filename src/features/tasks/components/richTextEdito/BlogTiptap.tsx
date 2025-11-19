@@ -2,8 +2,10 @@
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
 import { env } from "@/env/client";
+import { saveMediaFileToDb } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
+import { useMutation } from "@tanstack/react-query";
 import { Transaction } from "@tiptap/pm/state";
 import { Editor, EditorContent, useEditor } from "@tiptap/react";
 import { common, createLowlight } from "lowlight";
@@ -30,6 +32,9 @@ export default function PostingEditor({
   editorOptions = { editable: true },
 }: TiptapEditorProps) {
   const { uploadMutate } = useFileUpload({});
+  const { mutateAsync: saveMedia } = useMutation({
+    mutationFn: saveMediaFileToDb,
+  });
   const { mutateAsync: deleteFile } = useDeleteFileGeneric("generic");
   const myMediaUploadFunction = async (
     file: File
@@ -39,6 +44,9 @@ export default function PostingEditor({
       scope: "editor-images",
       url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
     });
+    if (res.length > 0) {
+      await saveMedia(res[0]);
+    }
     return res[0];
   };
   const myMediaCleanupFunction = async (resourceId: string): Promise<void> => {
@@ -55,7 +63,7 @@ export default function PostingEditor({
     onUpdate: onChange,
     content: content,
     immediatelyRender: false,
-   ...editorOptions,
+    ...editorOptions,
     editorProps: {
       attributes: {
         class:
@@ -65,7 +73,9 @@ export default function PostingEditor({
   });
   return (
     <div className="border rounded-md flex flex-col h-[600px] md:h-[800px] lg:h-[800px] overflow-auto">
-      {showMenuBar && <MenuBar editor={editor} disabled={!editorOptions.editable} />}
+      {showMenuBar && (
+        <MenuBar editor={editor} disabled={!editorOptions.editable} />
+      )}
       <div className="flex-1 overflow-hidden">
         <EditorContent
           editor={editor}
