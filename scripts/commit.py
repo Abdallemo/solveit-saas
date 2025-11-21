@@ -4,11 +4,7 @@ import os
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
 
 COMMIT_PER_FILE = True 
-commit_message = """Refactor utils.ts: cleanup, reordering, and strict extension typing
-- Grouped functions into regions for better readability.
-- Fixed 'getFileExtension' logic and added type safety.
-- Kept legacy aliases to prevent breaking changes.
-- Deleted unused legacy code.
+commit_message = """changes
 """
 
 repo = Repo(repo_path)
