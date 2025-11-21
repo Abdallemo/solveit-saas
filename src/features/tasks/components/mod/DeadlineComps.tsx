@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { formatDateAndTime } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { FolderIcon, Plus, Trash2 } from "lucide-react";
@@ -171,7 +170,7 @@ export function DeadlineCard({ deadline }: { deadline: DeadlineType }) {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Tasks: {deadline.taskCount}</span>
           <span>
-            Created: {formatDateAndTime(new Date(deadline.createdAt!))}
+            Created: {deadline.createdAt.toLocaleDateString()}
           </span>
         </div>
       </CardContent>
