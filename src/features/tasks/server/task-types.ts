@@ -3,7 +3,7 @@ import { BlockedSolverType, taskFileType, TaskType } from "@/drizzle/schemas";
 import { publicUserType } from "@/features/users/server/user-types";
 import { JSONContent } from "@tiptap/react";
 
-import { calculateEditorTextLength } from "@/lib/utils";
+import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { z } from "zod";
 import {
   getAllDisputes,
