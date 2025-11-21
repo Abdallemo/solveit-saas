@@ -14,7 +14,7 @@ import {
   getValidEndTimes,
   timeOptions,
   ToPascalCase,
-} from "@/lib/utils";
+} from "@/lib/utils/utils";
 import { Badge } from "@/components/ui/badge";
 
 type AvailbleTimeSelectionProps = {
