@@ -33,7 +33,7 @@ type JSONError struct {
 	Message string `json:"message"`
 }
 
-func sendHttpError(w http.ResponseWriter, message string, statusCode int) {
+func sendHTTPError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(JSONError{Message: message})
@@ -62,12 +62,12 @@ func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusOK)
 	fmt.Fprint(w, "Item successfully deleted based on key: "+deletePayload.Key)
-
 }
+
 func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
-		sendHttpError(w, "Unable to parse form", http.StatusBadRequest)
+		sendHTTPError(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
 
@@ -78,7 +78,7 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 
 	for _, fileHeader := range files {
 		if fileHeader.Size >= 50<<20 {
-			sendHttpError(w, "Exceeded server limit (50MB)", http.StatusBadRequest)
+			sendHTTPError(w, "Exceeded server limit (50MB)", http.StatusBadRequest)
 			return
 		}
 
@@ -119,7 +119,6 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {
-
 	Key := r.URL.Query().Get("key")
 	if Key == "" {
 		http.Error(w, "Missing key", http.StatusBadRequest)
@@ -147,6 +146,7 @@ func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {
 
 	io.Copy(w, obj.Body)
 }
+
 func (s *Server) handleMedia(w http.ResponseWriter, r *http.Request) {
 	Key := r.URL.Query().Get("key")
 	if Key == "" {
