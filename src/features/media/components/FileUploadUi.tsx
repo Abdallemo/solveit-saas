@@ -11,13 +11,12 @@ import {
   useDownloadFile,
   useFileUpload,
 } from "@/hooks/useFile";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
 import type { UploadedFileMeta } from "../server/media-types";
 import { FileChatCardComps } from "./FileHelpers";
-import MediaPreviewer from "./MediaPreviewer";
 
 interface FileUploadUiProps {
   maxFiles?: number;
@@ -114,12 +113,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
 
   return (
     <div className={cn("w-full", className)}>
-      <MediaPreviewer
-        fileRecords={draft.uploadedFiles || []}
-        filePreview={filePreview}
-        onClose={() => setFilePreview(null)}
-      />
-
       <div
         className={cn(
           "border-2 border-dashed rounded-md p-4 text-center",
