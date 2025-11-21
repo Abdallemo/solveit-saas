@@ -31,7 +31,7 @@ import {
   SolverAssignedTaskType,
 } from "@/features/tasks/server/task-types";
 import useQueryParam from "@/hooks/useQueryParms";
-import { cn, getColorClass } from "@/lib/utils";
+import { cn, getColorClass } from "@/lib/utils/utils";
 import { debounce } from "lodash";
 import {
   Check,
