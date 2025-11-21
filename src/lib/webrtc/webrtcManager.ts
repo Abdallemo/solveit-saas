@@ -1,5 +1,5 @@
 import { getTurnCredentials } from "@/lib/cloudflare";
-import { wait } from "@/lib/utils";
+import { wait } from "@/lib/utils/utils";
 import { SignalHandler, SignalingService } from "@/lib/webrtc/signaling-new";
 import { connType, SignalMessage } from "@/lib/webrtc/types";
 
