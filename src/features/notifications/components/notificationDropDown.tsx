@@ -11,7 +11,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { AlertCircle, Bell, Mail, X } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
