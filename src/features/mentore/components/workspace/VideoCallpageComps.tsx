@@ -11,7 +11,7 @@ import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import {
   ChevronDown,
   Maximize2,
