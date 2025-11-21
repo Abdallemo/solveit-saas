@@ -3,7 +3,7 @@
 
 import { Button } from "@/components/ui/button";
 import { TierType } from "@/drizzle/schemas";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Loader2 } from "lucide-react";
 import { useFormStatus } from "react-dom";
 
