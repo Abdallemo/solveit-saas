@@ -26,7 +26,7 @@ import {
 } from "@/components/ui/select";
 import { handleUserOnboarding } from "@/features/payments/server/action";
 import { OnboardingFormData } from "@/features/users/server/user-types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useLocalStorage } from "@uidotdev/usehooks";
 import { format, subYears } from "date-fns";
