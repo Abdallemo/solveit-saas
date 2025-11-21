@@ -2,7 +2,7 @@ import { CommentProvider } from "@/contexts/TaskCommentProvider";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { getWorkspaceById } from "@/features/tasks/server/data";
-import { getCurrentServerTime } from "@/lib/utils";
+import { getCurrentServerTime } from "@/lib/utils/utils";
 import { redirect } from "next/navigation";
 
 import { ReactNode } from "react";
