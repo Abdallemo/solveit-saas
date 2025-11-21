@@ -3,7 +3,7 @@ import { Input } from "@/components/ui/input";
 import {
   FileIconComponent
 } from "@/features/media/components/FileHelpers";
-import { supportedExtentionTypes } from "@/lib/utils";
+import { supportedExtentionTypes } from "@/lib/utils/utils";
 import {
   Paperclip,
   Send
