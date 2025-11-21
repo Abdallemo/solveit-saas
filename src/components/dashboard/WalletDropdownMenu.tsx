@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { getWalletInfo } from "@/features/tasks/server/data";
 import { userSessionType } from "@/features/users/server/user-types";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, Info, Wallet } from "lucide-react";
