@@ -21,7 +21,7 @@ import { taskTableType } from "@/drizzle/schemas";
 import { SolutionById } from "@/features/tasks/server/task-types";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useDownloadFile } from "@/hooks/useFile";
-import { supportedExtentionTypes } from "@/lib/utils";
+import { supportedExtentionTypes } from "@/lib/utils/utils";
 import { formatDistanceToNow } from "date-fns";
 import {
   Archive,
