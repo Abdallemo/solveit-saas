@@ -1,7 +1,7 @@
 import { ReactNode } from "react";
 import { Button , } from "@/components/ui/button";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 
 type iconButtonProp = {
   icon?: ReactNode;
