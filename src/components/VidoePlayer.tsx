@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import {
   Maximize,
   Minimize,
