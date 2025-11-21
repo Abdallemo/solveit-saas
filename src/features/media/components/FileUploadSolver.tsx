@@ -15,13 +15,11 @@ import {
   useDownloadFile,
   useFileUpload,
 } from "@/hooks/useFile";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { UploadedFileMeta } from "../server/media-types";
 import { FileChatCardComps } from "./FileHelpers";
-import MediaPreviewer from "./MediaPreviewer";
 
 interface FileUploadProps {
   className?: string;
@@ -30,10 +28,9 @@ interface FileUploadProps {
 export default function FileUploadSolver({ className }: FileUploadProps) {
   const useCurrentSolver = useCurrentUser();
   const { isLoading, isBlocked } = useAuthGate();
-  const { uploadedFiles, setUploadedFiles, currentWorkspace } = useWorkspace();
+  const { uploadedFiles, setUploadedFiles, currentWorkspace, setFilePreview } = useWorkspace();
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
-  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const { uploadMutate, isUploading } = useFileUpload({});
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
@@ -105,13 +102,6 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
 
   return (
     <div className={cn("w-full", className)}>
-      <MediaPreviewer
-        fileRecords={uploadedFiles}
-        filePreview={filePreview}
-        onClose={() => {
-          setFilePreview(null);
-        }}
-      />
       <div
         className={cn(
           "border-2 border-dashed rounded-md p-4 text-center",
