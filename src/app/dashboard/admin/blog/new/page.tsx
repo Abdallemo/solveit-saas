@@ -14,7 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PostingEditor from "@/features/tasks/components/richTextEdito/BlogTiptap";
 import { MIN_CONTENT_LENGTH } from "@/features/tasks/server/task-types";
-import { calculateEditorTextLength } from "@/lib/utils";
+import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Save, Send } from "lucide-react";
 import Link from "next/link";
