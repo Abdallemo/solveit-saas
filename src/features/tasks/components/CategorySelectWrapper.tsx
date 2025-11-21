@@ -27,7 +27,7 @@ import {
 } from "@/components/ui/select";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useQuery } from "@tanstack/react-query";
 import { getAllTaskCatagories } from "../server/data";
 
