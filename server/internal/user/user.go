@@ -1,3 +1,4 @@
+// Package user holds database and system user related logic
 package user
 
 type PublicUser struct {
