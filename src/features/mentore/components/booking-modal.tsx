@@ -18,7 +18,7 @@ import {
   AvailabilitySlot,
   MentorListigWithAvailbelDatesV2,
 } from "@/features/mentore/server/types";
-import { calculateSlotDuration } from "@/lib/utils";
+import { calculateSlotDuration } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { format, isSameDay } from "date-fns";
