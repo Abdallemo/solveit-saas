@@ -43,6 +43,7 @@ func (w *Worker) runCleanup(ctx context.Context) {
 	wg.Wait()
 	log.Println("Garbage collection cycle finished.")
 }
+
 func (w *Worker) runCleanupWithLock(ctx context.Context) {
 	if !w.mu.TryLock() {
 		log.Println("Skipping scheduled garbage collection. Previous run is still active.")
@@ -53,7 +54,7 @@ func (w *Worker) runCleanupWithLock(ctx context.Context) {
 }
 
 func (w *Worker) deleteUnreferencedS3Files(ctx context.Context) {
-	log.Println("Starting S3 orphan file cleanup")
+	log.Println("Starting S3 Unreferenced file cleanup")
 
 	s3Files := map[string]struct{}{}
 	paginator := s3.NewListObjectsV2Paginator(w.s3, &s3.ListObjectsV2Input{
