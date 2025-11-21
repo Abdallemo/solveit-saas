@@ -1,3 +1,4 @@
+// Package websocket holds the websocket endpoint settings and implementations
 package websocket
 
 import (
@@ -33,7 +34,7 @@ var upgrader = websocket.Upgrader{
 	ReadBufferSize:  1 << 10,
 	WriteBufferSize: 1 << 10,
 	CheckOrigin: func(r *http.Request) bool {
-		//allowedUrl := os.Getenv("NEXTAUTH_URL")
+		// allowedUrl := os.Getenv("NEXTAUTH_URL")
 		origin := r.Header.Get("Origin")
 		return allowedHost[origin] || os.Getenv("NEXTAUTH_URL") == origin
 	},
@@ -95,15 +96,14 @@ func (h *WsHub) handleWS(w http.ResponseWriter, r *http.Request, appChan chan In
 	}()
 
 	log.Println("New connection for channel:", channelID)
-
 }
+
 func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string, appChan chan IncomingMessage) {
 	defer conn.Close()
 	for {
 
 		var msg IncomingMessage
 		err := conn.ReadJSON(&msg)
-
 		if err != nil {
 
 			log.Printf("Read error on channel %s: %v", channelID, err)
@@ -122,7 +122,6 @@ func (h *WsHub) cleanUp(conn *websocket.Conn, channelID string, appChan chan Inc
 		}
 		switch msg.Type {
 		case "PING":
-			log.Println("PONG")
 			continue
 		case "MESSAGE":
 			select {
@@ -154,6 +153,7 @@ func (h *WsHub) sendToChannel(channelID string, payload any) {
 	}
 	h.conns[channelID] = active
 }
+
 func (h *WsHub) sendToChannels(channelIDs []string, payload any) {
 	for _, id := range channelIDs {
 		h.sendToChannel(id, payload)
