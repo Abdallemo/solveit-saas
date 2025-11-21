@@ -54,7 +54,7 @@ import { withRevalidateTag } from "@/lib/cache";
 import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { isError, truncateText } from "@/lib/utils";
+import { isError, truncateText } from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
 import {
   addDays,
