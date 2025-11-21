@@ -11,7 +11,6 @@ import (
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 func (w *Worker) StartDraftMediaCleanupJob(ctx context.Context, timeBetweenChecks time.Duration) {
@@ -25,10 +24,7 @@ func (w *Worker) StartDraftMediaCleanupJob(ctx context.Context, timeBetweenCheck
 			return
 		case <-ticker.C:
 			log.Println("Running scheduled draft task media cleanup")
-			taskDrafts, err := w.store.GetAllTaskDrafts(ctx, pgtype.Timestamptz{
-				Time:  time.Now().Add(-7 * time.Hour * 24),
-				Valid: true,
-			})
+			taskDrafts, err := w.store.GetAllTaskDrafts(ctx, time.Now().Add(-7*time.Hour*24))
 			if err != nil {
 				log.Println("error getting draft tasks")
 				continue
