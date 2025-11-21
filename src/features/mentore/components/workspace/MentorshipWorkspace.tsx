@@ -4,7 +4,7 @@ import { env } from "@/env/client";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
-import { sessionTimeUtils } from "@/lib/utils";
+import { sessionTimeUtils } from "@/lib/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import { User } from "lucide-react";
 import { useMemo, useState } from "react";
