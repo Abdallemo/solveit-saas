@@ -1,5 +1,8 @@
 "use client";
-import { WorkspaceUploadedFileMeta } from "@/features/media/server/media-types";
+import {
+  UploadedFileMeta,
+  WorkspaceUploadedFileMeta,
+} from "@/features/media/server/media-types";
 import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
 import { publicUserType } from "@/features/users/server/user-types";
 import { JSONContent } from "@tiptap/react";
@@ -31,6 +34,8 @@ type WorkspaceContextType = {
   setCurrentWorkspace: React.Dispatch<
     React.SetStateAction<WorkpaceSchemReturnedType>
   >;
+  filePreview: UploadedFileMeta | null;
+  setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>;
   currentWorkspace: WorkpaceSchemReturnedType;
   uploadedFiles: WorkspaceUploadedFileMeta[];
   setUploadedFiles: React.Dispatch<
@@ -59,12 +64,12 @@ export const WorkspaceProvider = ({
 }: WorkspacePorviderProps) => {
   const [content, setContent] = useState(workspace?.content ?? {});
   const [contentText, setContentText] = useState(workspace?.contentText ?? "");
+  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const [serverTime] = useState(serverCurrentTime);
   const [uploadedFiles, setUploadedFiles] = useState<
     WorkspaceUploadedFileMeta[]
   >(workspace?.workspaceFiles ?? []);
   const [currentWorkspace, setCurrentWorkspace] = useState(workspace);
-
 
   return (
     <WorkspaceContext.Provider
@@ -73,12 +78,14 @@ export const WorkspaceProvider = ({
         content,
         contentText,
         setContentText,
+        filePreview,
+        setFilePreview,
         setContent,
         uploadedFiles,
         setUploadedFiles,
         currentWorkspace,
         setCurrentWorkspace,
-        ...useComments()
+        ...useComments(),
       }}>
       {children}
     </WorkspaceContext.Provider>
