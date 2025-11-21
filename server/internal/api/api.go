@@ -1,12 +1,14 @@
+// Package api holds all server settings and endpoint definition
 package api
 
 import (
 	"encoding/json"
+	"log"
+	"net/http"
+
 	"github/abdallemo/solveit-saas/internal/api/websocket"
 	"github/abdallemo/solveit-saas/internal/database"
 	"github/abdallemo/solveit-saas/internal/middleware"
-	"log"
-	"net/http"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
@@ -34,7 +36,6 @@ func NewServer(
 	store *database.Queries,
 	redisClient *redis.Client,
 	dbConn *pgxpool.Pool,
-
 ) *Server {
 	hub := websocket.NewHub()
 
@@ -70,14 +71,14 @@ func (s *Server) routes() http.Handler {
 
 	globalStack := middleware.CreateStack(middleware.Logging)
 	return globalStack(mux)
-
 }
 
-func sendHttpResp(w http.ResponseWriter, payload any, statusCode int) {
+func sendHTTPResp(w http.ResponseWriter, payload any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(payload)
 }
+
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /notification", s.WsNotif.HandleNotification)
 	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
@@ -102,6 +103,7 @@ func (s *Server) Run() error {
 	log.Printf("server running on port:%s", s.addr)
 	return http.ListenAndServe(s.addr, s.routes())
 }
+
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
@@ -110,5 +112,4 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 	}{Message: "alive"}
 
 	json.NewEncoder(w).Encode(msg)
-
 }
