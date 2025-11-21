@@ -3,13 +3,14 @@ package worker
 import (
 	"context"
 	"fmt"
-	"github/abdallemo/solveit-saas/internal/api/websocket"
-	"github/abdallemo/solveit-saas/internal/database"
 	"log"
 	"regexp"
 	"strconv"
 	"sync"
 	"time"
+
+	"github/abdallemo/solveit-saas/internal/api/websocket"
+	"github/abdallemo/solveit-saas/internal/database"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
@@ -18,7 +19,6 @@ import (
 var re = regexp.MustCompile(`^(\d+)([hdwmy])$`)
 
 func parseDuration(lowerValue string, assignedAt *time.Time) (int, string, time.Time, error) {
-
 	if assignedAt == nil {
 		return 0, "", time.Time{}, fmt.Errorf("assignedAt is not a valid timestamp")
 	}
@@ -87,8 +87,8 @@ func (w *Worker) StartDeadlineEnforcerJob(ctx context.Context, concurrency int, 
 			wg.Wait()
 		}
 	}
-
 }
+
 func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task, nowUTC, tmUTC time.Time, wg *sync.WaitGroup) {
 	defer wg.Done()
 	log.Printf("starting process on task %v on %v", task.ID, nowUTC)
@@ -120,15 +120,14 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 		w.wsNotif.SendToUser(task.SolverID.String(), websocket.Message{
 			ID:         notif.ID.String(),
 			Content:    notif.Content,
-			ReceiverId: notif.ReceiverID,
-			SenderId:   notif.SenderID,
+			ReceiverID: notif.ReceiverID,
+			SenderID:   notif.SenderID,
 			Subject:    notif.Subject.String,
 			Method:     string(notif.Method),
 			Read:       notif.Read,
 			CreatedAt:  notif.CreatedAt.String(),
 		})
 	}
-
 }
 
 func (w *Worker) notifySolverAndResetTaskTx(ctx context.Context, SolverID, Title string, TaskID uuid.UUID) (database.Notification, error) {
