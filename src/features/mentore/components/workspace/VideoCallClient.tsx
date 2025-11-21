@@ -2,7 +2,7 @@
 
 import { PostSessionGate } from "@/components/GateComponents";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { sessionTimeUtils } from "@/lib/utils";
+import { sessionTimeUtils } from "@/lib/utils/utils";
 
 export function VideoCallClientWraper({
   children,
