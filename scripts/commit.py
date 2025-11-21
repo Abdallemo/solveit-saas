@@ -2,23 +2,46 @@ from git import Repo
 import os
 
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
-commit_message = """breaking changes - fixed editor issue and migrated to json for editor content
-.
+
+COMMIT_PER_FILE = True 
+commit_message = """Refactor utils.ts: cleanup, reordering, and strict extension typing
+- Grouped functions into regions for better readability.
+- Fixed 'getFileExtension' logic and added type safety.
+- Kept legacy aliases to prevent breaking changes.
+- Deleted unused legacy code.
 """
 
 repo = Repo(repo_path)
 
 if repo.is_dirty(untracked_files=True):
-    changed_files = [item.a_path for item in repo.index.diff(None)]
-    changed_files += repo.untracked_files
+    diffs = repo.index.diff(None)
+    untracked = repo.untracked_files
 
-    for file in changed_files:
-        abs_path = os.path.join(repo_path, file)   # type: ignore
-        if os.path.exists(abs_path):
-            print(f"Staging and committing: {file}")
-            repo.index.add([abs_path])
-            repo.index.commit(commit_message)
-        else:
-            print(f"Skipping missing file: {file}")
+    all_changes = [d.a_path for d in diffs] + untracked
+    print(f"Processing {len(all_changes)} changes...")
+
+    for file_path in all_changes:
+        if (not file_path):continue
+        full_path = os.path.join(repo_path, file_path)
+
+        try:
+            if os.path.exists(full_path):
+                print(f"Staging (Add): {file_path}")
+                repo.index.add([full_path])
+            else:
+                print(f"Staging (Remove): {file_path}")
+                repo.index.remove([file_path]) 
+            
+            if COMMIT_PER_FILE:
+                print(f"Committing: {file_path}")
+                repo.index.commit(commit_message)
+
+        except Exception as e:
+            print(f"Failed to process {file_path}: {e}")
+
+    if not COMMIT_PER_FILE:
+        repo.index.commit(commit_message)
+        print("Done.")
+
 else:
     print("No changes to commit.")
