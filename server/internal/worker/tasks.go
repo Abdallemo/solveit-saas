@@ -11,17 +11,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var re = regexp.MustCompile(`^(\d+)([hdwmy])$`)
 
-func parseDuration(lowerValue string, assignedAt pgtype.Timestamptz) (int, string, time.Time, error) {
+func parseDuration(lowerValue string, assignedAt *time.Time) (int, string, time.Time, error) {
 
-	if !assignedAt.Valid {
+	if assignedAt == nil {
 		return 0, "", time.Time{}, fmt.Errorf("assignedAt is not a valid timestamp")
 	}
-	baseTime := assignedAt.Time
+	baseTime := assignedAt
 
 	match := re.FindStringSubmatch(lowerValue)
 
@@ -98,7 +99,7 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 
 	log.Printf("deadline is passed for task %v ", task.ID)
 	blockedSolver, err := w.store.AddSolverToTaskBlockList(ctx, database.AddSolverToTaskBlockListParams{
-		UserID: task.SolverID,
+		UserID: *task.SolverID,
 		TaskID: task.ID,
 		Reason: pgtype.Text{String: "Missed Deadline", Valid: true},
 	})
@@ -107,7 +108,7 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 		return
 	}
 
-	if blockedSolver.ID.Valid {
+	if blockedSolver.ID != uuid.Nil {
 
 		log.Printf("blcoked %v from task %v", blockedSolver.UserID, blockedSolver.TaskID)
 		notif, err := w.notifySolverAndResetTaskTx(ctx, task.SolverID.String(), task.Title, task.ID)
@@ -124,13 +125,13 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 			Subject:    notif.Subject.String,
 			Method:     string(notif.Method),
 			Read:       notif.Read,
-			CreatedAt:  notif.CreatedAt.Time.String(),
+			CreatedAt:  notif.CreatedAt.String(),
 		})
 	}
 
 }
 
-func (w *Worker) notifySolverAndResetTaskTx(ctx context.Context, SolverID, Title string, TaskID pgtype.UUID) (database.Notification, error) {
+func (w *Worker) notifySolverAndResetTaskTx(ctx context.Context, SolverID, Title string, TaskID uuid.UUID) (database.Notification, error) {
 	tx, err := w.dbConn.Begin(ctx)
 	if err != nil {
 		return database.Notification{}, err
