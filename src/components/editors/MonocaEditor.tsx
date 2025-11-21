@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useFileStream } from "@/hooks/useFile";
+import { getMonocaSupportedLanguage } from "@/lib/utils/utils";
 import { Editor } from "@monaco-editor/react";
 import {
   Check,
@@ -252,35 +253,6 @@ export function MonacoEditor({
     }
   };
 
-  const getLanguage = (filename: string) => {
-    const ext = filename.split(".").pop()?.toLowerCase();
-    switch (ext) {
-      case "js":
-      case "jsx":
-        return "javascript";
-      case "ts":
-      case "tsx":
-        return "typescript";
-      case "html":
-        return "html";
-      case "css":
-      case "scss":
-        return "scss";
-      case "json":
-        return "json";
-      case "md":
-        return "markdown";
-      case "sql":
-        return "sql";
-      case "py":
-        return "python";
-      case "go":
-        return "go";
-      default:
-        return "plaintext";
-    }
-  };
-
   return (
     <div
       className={`flex h-full border rounded-lg overflow-hidden bg-background ${className}`}>
@@ -363,7 +335,7 @@ export function MonacoEditor({
               <FileIcon filename={activeFile} />
               <span className="text-sm font-medium">{activeFile}</span>
               <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
-                {getLanguage(activeFile)}
+                {getMonocaSupportedLanguage(activeFile)}
               </span>
             </div>
             {onSave && !editorOpts.readOnly && (
@@ -393,7 +365,7 @@ export function MonacoEditor({
           ) : activeFile && fileContent !== undefined ? (
             <Editor
               height={height}
-              language={getLanguage(activeFile)}
+              language={getMonocaSupportedLanguage(activeFile)}
               theme={theme}
               value={fileContent}
               onChange={handleEditorChange}
