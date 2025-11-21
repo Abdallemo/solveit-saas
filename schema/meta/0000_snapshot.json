@@ -1,5 +1,5 @@
 {
-  "id": "69b85f8c-5daa-47a6-ad7f-78e3ad275c5d",
+  "id": "69a3c345-db01-46ca-9b6c-f2e1edf5b17c",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -83,6 +83,118 @@
           "tableTo": "users",
           "columnsFrom": [
             "userId"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ai_flags": {
+      "name": "ai_flags",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "hashed_content": {
+          "name": "hashed_content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "confidence_score": {
+          "name": "confidence_score",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.ai_test_sandbox": {
+      "name": "ai_test_sandbox",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "content": {
+          "name": "content",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "''"
+        },
+        "admin_id": {
+          "name": "admin_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "test_amount": {
+          "name": "test_amount",
+          "type": "serial",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "ai_test_sandbox_admin_id_users_id_fk": {
+          "name": "ai_test_sandbox_admin_id_users_id_fk",
+          "tableFrom": "ai_test_sandbox",
+          "tableTo": "users",
+          "columnsFrom": [
+            "admin_id"
           ],
           "columnsTo": [
             "id"
@@ -350,6 +462,79 @@
       },
       "isRLSEnabled": false
     },
+    "public.global_media_files": {
+      "name": "global_media_files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_size": {
+          "name": "file_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_location": {
+          "name": "file_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "media_files_filePath_idx": {
+          "name": "media_files_filePath_idx",
+          "columns": [
+            {
+              "expression": "file_path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.mentorship_bookings": {
       "name": "mentorship_bookings",
       "schema": "",
@@ -592,6 +777,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "mentorship_chat_files_filePath_idx": {
+          "name": "mentorship_chat_files_filePath_idx",
+          "columns": [
+            {
+              "expression": "file_path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -653,6 +853,12 @@
         },
         "sent_by": {
           "name": "sent_by",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sent_to": {
+          "name": "sent_to",
           "type": "uuid",
           "primaryKey": false,
           "notNull": true
@@ -726,6 +932,19 @@
             "id"
           ],
           "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "mentorship_chats_sent_to_users_id_fk": {
+          "name": "mentorship_chats_sent_to_users_id_fk",
+          "tableFrom": "mentorship_chats",
+          "tableTo": "users",
+          "columnsFrom": [
+            "sent_to"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1055,7 +1274,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "no action",
           "onUpdate": "no action"
         }
       },
@@ -1094,7 +1313,7 @@
           "name": "task_id",
           "type": "uuid",
           "primaryKey": false,
-          "notNull": true
+          "notNull": false
         },
         "refund_reason": {
           "name": "refund_reason",
@@ -1229,7 +1448,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "cascade",
+          "onDelete": "set null",
           "onUpdate": "no action"
         },
         "refunds_moderatorId_users_id_fk": {
@@ -1289,6 +1508,13 @@
         },
         "created_at": {
           "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
           "type": "timestamp with time zone",
           "primaryKey": false,
           "notNull": true,
@@ -1432,7 +1658,7 @@
         },
         "content": {
           "name": "content",
-          "type": "text",
+          "type": "json",
           "primaryKey": false,
           "notNull": false
         },
@@ -1838,6 +2064,13 @@
         },
         "content": {
           "name": "content",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{}'"
+        },
+        "contentText": {
+          "name": "contentText",
           "type": "text",
           "primaryKey": false,
           "notNull": true,
@@ -1863,13 +2096,6 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
-        },
-        "finalized": {
-          "name": "finalized",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "uploadedFiles": {
           "name": "uploadedFiles",
@@ -2010,6 +2236,21 @@
           "concurrently": false,
           "method": "btree",
           "with": {}
+        },
+        "task_files_filePath_idx": {
+          "name": "task_files_filePath_idx",
+          "columns": [
+            {
+              "expression": "file_path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
         }
       },
       "foreignKeys": {
@@ -2058,7 +2299,7 @@
         },
         "content": {
           "name": "content",
-          "type": "text",
+          "type": "json",
           "primaryKey": false,
           "notNull": true
         },
@@ -2691,6 +2932,14 @@
           "notNull": true,
           "default": "now()"
         },
+        "status": {
+          "name": "status",
+          "type": "file_status",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'PENDING'"
+        },
         "updated_at": {
           "name": "updated_at",
           "type": "timestamp with time zone",
@@ -2720,6 +2969,21 @@
           "columns": [
             {
               "expression": "uploaded_by_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "solution_workspace_files_filePath_idx": {
+          "name": "solution_workspace_files_filePath_idx",
+          "columns": [
+            {
+              "expression": "file_path",
               "isExpression": false,
               "asc": true,
               "nulls": "last"
@@ -2790,9 +3054,17 @@
         },
         "content": {
           "name": "content",
+          "type": "json",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'{}'"
+        },
+        "contentText": {
+          "name": "contentText",
           "type": "text",
           "primaryKey": false,
-          "notNull": false
+          "notNull": true,
+          "default": "''"
         },
         "created_at": {
           "name": "created_at",
@@ -3082,10 +3354,31 @@
         "POSTER",
         "SOLVER"
       ]
+    },
+    "public.file_status": {
+      "name": "file_status",
+      "schema": "public",
+      "values": [
+        "PENDING",
+        "PROCESSING",
+        "COMPLETED",
+        "FAILED"
+      ]
     }
   },
   "schemas": {},
-  "sequences": {},
+  "sequences": {
+    "public.ai_test_amount_sequence": {
+      "name": "ai_test_amount_sequence",
+      "schema": "public",
+      "increment": "1",
+      "startWith": "1",
+      "minValue": "1",
+      "maxValue": "9223372036854775807",
+      "cache": "1",
+      "cycle": false
+    }
+  },
   "roles": {},
   "policies": {},
   "views": {},
