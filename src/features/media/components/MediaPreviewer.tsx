@@ -16,8 +16,8 @@ import {
   isDoc,
   isImage,
   isUnsupportedExtention,
-  isVideo,
-} from "@/lib/utils";
+  isVideo
+} from "@/lib/utils/utils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UploadedFileMeta } from "../server/media-types";
