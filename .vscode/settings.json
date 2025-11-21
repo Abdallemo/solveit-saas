@@ -5,5 +5,46 @@
       "icon": "terminal-powershell"
     }
   },
-  "terminal.integrated.defaultProfile.windows": "PowerShell (Store)"
+  "terminal.integrated.defaultProfile.windows": "PowerShell",
+  "files.watcherExclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/.git/objects/**": true,
+    "**/.next": true
+  },
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/vendor": true,
+    "**/.next": true,
+    "**/out": true
+  },
+  "[go]": {
+    "editor.defaultFormatter": "golang.go",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": "explicit"
+    },
+    "editor.formatOnSave": true
+  },
+  "gopls": {
+    "formatting.gofumpt": true,
+    "ui.diagnostic.staticcheck": true
+  },
+
+
+  "[typescript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode" // Requires Prettier extension
+  },
+  "[typescriptreact]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  "emmet.includeLanguages": {
+    "javascript": "javascriptreact",
+    "typescript": "typescriptreact"
+  },
+
+  "typescript.preferences.importModuleSpecifier": "non-relative",
+
+  "editor.bracketPairColorization.enabled": true,
+  "editor.guides.bracketPairs": true
 }
