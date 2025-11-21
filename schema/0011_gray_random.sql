@@ -1,1 +1,0 @@
-ALTER TABLE "media_files" RENAME TO "global_media_files";
