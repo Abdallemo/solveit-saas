@@ -43,7 +43,7 @@ import {
   calculateSlotDuration,
   daysInWeek,
   sessionTimeUtils,
-} from "@/lib/utils";
+} from "@/lib/utils/utils";
 import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
