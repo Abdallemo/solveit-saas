@@ -67,7 +67,7 @@ import {
   allUsersType,
   updatUserRoleByid,
 } from "@/features/users/server/actions";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
