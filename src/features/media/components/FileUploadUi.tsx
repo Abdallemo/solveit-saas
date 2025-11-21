@@ -24,11 +24,11 @@ interface FileUploadUiProps {
 }
 
 export default function FileUploadUi({ className }: FileUploadUiProps) {
-  const { updateDraft, draft } = NewuseTask();
+  const { updateDraft, draft,setFilePreview } = NewuseTask();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
-  const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
+
   const {
     category,
     content,
