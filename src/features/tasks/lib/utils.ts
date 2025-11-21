@@ -1,5 +1,5 @@
 import { JSDOM } from "jsdom";
-import { truncateText } from '@/lib/utils';
+import { truncateText } from '@/lib/utils/utils';
 import { SolutionReturnErrorType } from "../server/task-types";
 
 
