@@ -34,7 +34,7 @@ import type {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
-import { toYMD } from "@/lib/utils";
+import { toYMD } from "@/lib/utils/utils";
 import { formatDistance, isPast, subDays } from "date-fns";
 import {
   and,
@@ -503,10 +503,13 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
             with: {
               owner: { columns: publicUserColumns },
             },
+
           },
         },
       },
-      workspaceFiles: true,
+      workspaceFiles: {
+        orderBy:(field,fn)=>fn.desc(field.uploadedAt)
+      },
     },
   });
   return workspace;
