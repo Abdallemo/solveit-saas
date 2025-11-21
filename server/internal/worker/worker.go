@@ -1,9 +1,11 @@
+// Package worker defines all background job and cron jobs for the server
 package worker
 
 import (
+	"sync"
+
 	"github/abdallemo/solveit-saas/internal/api/websocket"
 	"github/abdallemo/solveit-saas/internal/database"
-	"sync"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
