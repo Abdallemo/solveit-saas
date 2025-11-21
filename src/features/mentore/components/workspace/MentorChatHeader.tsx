@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { sessionTimeUtils } from "@/lib/utils";
+import { sessionTimeUtils } from "@/lib/utils/utils";
 import {
   Video
 } from "lucide-react";
