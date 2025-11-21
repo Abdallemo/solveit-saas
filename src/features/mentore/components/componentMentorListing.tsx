@@ -19,7 +19,7 @@ import {
   handleProfilePublishState,
   saveMentorListing,
 } from "../server/action";
-import { daysInWeek } from "@/lib/utils";
+import { daysInWeek } from "@/lib/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { mentorListingFormData, mentorListingSchema } from "../server/types";
