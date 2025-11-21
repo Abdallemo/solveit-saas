@@ -176,7 +176,7 @@ export function getFileExtension(fileName: string) {
   if (lastDotIndex <= 0) {
     return "";
   }
-
+  console.log(trimmedName.substring(lastDotIndex + 1))
   return trimmedName.substring(lastDotIndex + 1);
 }
 
