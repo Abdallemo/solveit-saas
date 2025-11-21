@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/chart";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { getLogs, PaginatedLogs } from "@/lib/logging/action";
-import { formatDateAndTimeNUTC } from "@/lib/utils";
+import { formatDateAndTimeNUTC } from "@/lib/utils/utils";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import {
   AlertCircle,
@@ -319,7 +319,7 @@ export function ServerLogs({ serverLogs }: { serverLogs: PaginatedLogs }) {
                 <p className="text-sm text-muted-foreground">
                   {formatDateAndTimeNUTC(log.createdAt)}
                 </p>
-                <p className="text-sm mt-1 break-words">{log.message}</p>
+                <p className="text-sm mt-1 wrap-break-word">{log.message}</p>
               </div>
             </div>
           ))}
