@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { formatDateAndTimeNUTC, getColorClass } from "@/lib/utils";
+import { getColorClass } from "@/lib/utils/utils";
 import { useWebRTCStore } from "@/store/webRtcStore";
 import { format } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
@@ -107,7 +107,7 @@ export function SessionsList({
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
                   onClick={() => toggleBookingCollapse(booking.id)}>
                   <div className="flex items-center gap-3 flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-shrink-0">
+                    <div className="flex items-center gap-2 shrink-0">
                       {isCollapsed ? (
                         <ChevronRight className="h-4 w-4 text-muted-foreground" />
                       ) : (
@@ -139,13 +139,13 @@ export function SessionsList({
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
                         <Calendar className="h-3 w-3" />
                         <span className="truncate">
-                          {formatDateAndTimeNUTC(booking.createdAt!)}
+                          {booking.createdAt.toLocaleDateString()}
                         </span>
                       </div>
                     </div>
                   </div>
 
-                  <div className="text-right flex-shrink-0 ml-4">
+                  <div className="text-right shrink-0 ml-4">
                     <div className="font-semibold text-sm">
                       RM{booking.price}
                     </div>
@@ -173,7 +173,7 @@ export function SessionsList({
                               : ""
                           }`}>
                           <div className="flex items-center gap-3 flex-1 min-w-0">
-                            <div className="flex items-center gap-3 flex-shrink-0">
+                            <div className="flex items-center gap-3 shrink-0">
                               <div className="relative flex items-center justify-center">
                                 <div className="w-2 h-2 rounded-full bg-primary" />
                               </div>
@@ -184,7 +184,7 @@ export function SessionsList({
 
                             <div className="flex items-center gap-4 flex-wrap text-sm min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <Calendar className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                                <Calendar className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
                                 <span className="font-medium text-muted-foreground">
                                   {format(localStart, "EEEE")}
                                 </span>
@@ -209,7 +209,7 @@ export function SessionsList({
                             </div>
                           </div>
 
-                          <div className="ml-4 flex-shrink-0">
+                          <div className="ml-4 shrink-0">
                             <Button asChild size="sm" className="h-8 text-xs">
                               <Link
                                 className="transition-colors duration-200"
