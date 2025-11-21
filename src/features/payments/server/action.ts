@@ -35,7 +35,7 @@ import {
 } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { getCurrentServerTime, toYMD } from "@/lib/utils";
+import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
 import { subYears } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
