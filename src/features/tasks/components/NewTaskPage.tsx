@@ -13,6 +13,7 @@ import {
   autoSuggestWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
+import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
 import {
   createTaksPaymentCheckoutSession,
@@ -26,7 +27,7 @@ import {
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { calculateEditorTextLength } from "@/lib/utils";
+import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Editor } from "@tiptap/react";
@@ -43,7 +44,7 @@ export default function TaskCreationPage({
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, updateDraft } = NewuseTask(); //new Migrations
+  const { draft, updateDraft,filePreview,setFilePreview } = NewuseTask(); //new Migrations
   const {
     category,
     content,
@@ -237,6 +238,12 @@ export default function TaskCreationPage({
   }
   return (
     <div className="h-full bg-background flex flex-col">
+            <MediaPreviewer
+              fileRecords={draft.uploadedFiles || []}
+              filePreview={filePreview}
+              onClose={() => setFilePreview(null)}
+            />
+      
       <header className="border-b p-4 flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Post a Task</h1>
         <Button
