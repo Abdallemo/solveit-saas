@@ -1,3 +1,4 @@
+// Package utils holds all system utilities
 package utils
 
 import (
