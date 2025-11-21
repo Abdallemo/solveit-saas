@@ -1,1 +1,0 @@
-ALTER TABLE "ai_flags" ADD COLUMN "confidence_score" integer NOT NULL;
