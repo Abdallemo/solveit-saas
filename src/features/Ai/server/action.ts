@@ -2,9 +2,9 @@
 
 import db from "@/drizzle/db";
 import {
-    AiFlagsTable,
-    AiTestSandboxTable,
-    RulesTable,
+  AiFlagsTable,
+  AiTestSandboxTable,
+  RulesTable,
 } from "@/drizzle/schemas";
 import { pgFormatDateYMD } from "@/drizzle/utils";
 import { env } from "@/env/server";
@@ -12,7 +12,7 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
-import { getCurrentServerTime, runInBackground, toYMD } from "@/lib/utils";
+import { getCurrentServerTime, runInBackground, toYMD } from "@/lib/utils/utils";
 import { subDays } from "date-fns";
 import { count, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
