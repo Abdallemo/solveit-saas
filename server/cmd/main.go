@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -21,10 +22,23 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/sashabaranov/go-openai"
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
 	ctx := context.Background()
+	logFile := &lumberjack.Logger{
+		Filename:   "server.log",
+		MaxSize:    10,
+		MaxBackups: 3,
+		MaxAge:     28,
+		Compress:   true,
+	}
+
+	multiWriter := io.MultiWriter(os.Stdout, logFile)
+
+	log.SetOutput(multiWriter)
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	log.Println("Go version:", runtime.Version())
 	_, b, _, _ := runtime.Caller(0)
@@ -46,8 +60,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to load config: %v", err)
 	}
-	dbUrl := os.Getenv("DATABASE_URL")
-	db, err := pgxpool.New(ctx, dbUrl)
+	dbURL := os.Getenv("DATABASE_URL")
+	db, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		log.Fatal("unable to connect to database:", err)
 	}
