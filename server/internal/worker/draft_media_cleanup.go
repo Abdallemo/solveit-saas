@@ -3,11 +3,12 @@ package worker
 import (
 	"context"
 	"encoding/json"
-	"github/abdallemo/solveit-saas/internal/api"
-	"github/abdallemo/solveit-saas/internal/database"
 	"log"
 	"sync"
 	"time"
+
+	"github/abdallemo/solveit-saas/internal/api"
+	"github/abdallemo/solveit-saas/internal/database"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -65,5 +66,4 @@ func process(wg *sync.WaitGroup, store *database.Queries, s3client *s3.Client, d
 	if err != nil {
 		log.Printf("unable to reset task draft files, %v", err.Error())
 	}
-
 }
