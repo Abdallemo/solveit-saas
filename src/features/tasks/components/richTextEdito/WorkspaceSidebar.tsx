@@ -24,7 +24,7 @@ import { commentType, useWorkspace } from "@/contexts/WorkspaceContext";
 import FileUploadSolver from "@/features/media/components/FileUploadSolver";
 import { useIsMobile } from "@/hooks/use-mobile";
 import useCurrentUser from "@/hooks/useCurrentUser";
-import { getColorClass } from "@/lib/utils";
+import { getColorClass } from "@/lib/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
     Code2,
