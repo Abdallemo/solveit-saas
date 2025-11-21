@@ -5,12 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github/abdallemo/solveit-saas/internal/database"
-	"github/abdallemo/solveit-saas/internal/utils"
 	"log"
 	"net/http"
 	"strings"
 	"time"
+
+	"github/abdallemo/solveit-saas/internal/database"
+	"github/abdallemo/solveit-saas/internal/utils"
 
 	"github.com/sashabaranov/go-openai"
 )
@@ -60,7 +61,6 @@ type ResAutoSuggest struct {
 }
 
 func (s *Server) hanleOpenAi(w http.ResponseWriter, r *http.Request) {
-
 	content := ReqContent{}
 	if err := json.NewDecoder(r.Body).Decode(&content); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -77,17 +77,16 @@ func (s *Server) hanleOpenAi(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid parameter: task not recognized", http.StatusBadRequest)
 		return
 	}
-
 }
 
 func handleModeration(s *Server, ctx context.Context, w http.ResponseWriter, content *ReqContent) {
-	resJson := ResContnet{}
+	resJSON := ResContnet{}
 	cacheKey := utils.MakeCacheKey("openai:moderation:", content.Content)
 
-	if s.GetCachedValue(ctx, cacheKey, &resJson) {
+	if s.GetCachedValue(ctx, cacheKey, &resJSON) {
 		log.Println("using cached version for moderation")
 		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(resJson)
+		json.NewEncoder(w).Encode(resJSON)
 		return
 	}
 
@@ -101,26 +100,26 @@ func handleModeration(s *Server, ctx context.Context, w http.ResponseWriter, con
 		ModerationPrompt,
 		strings.Join(rules, ", "),
 	)
-	if err = NewOpenAiReq(ctx, s.openaiClient, systemPrompt, content.Content, &resJson); err != nil {
+	if err = NewOpenAiReq(ctx, s.openaiClient, systemPrompt, content.Content, &resJSON); err != nil {
 		log.Println("AI request failed:", err)
 		http.Error(w, "AI request failed, please try again later", http.StatusInternalServerError)
 	}
 
-	s.SetCachedValue(ctx, cacheKey, resJson, 24*time.Hour)
-	if resJson.ViolatesRules {
-		fmt.Println("rule Violation, reason:", resJson.Reason)
-		fmt.Println("triggeredRules:", resJson.TriggeredRules)
+	s.SetCachedValue(ctx, cacheKey, resJSON, 24*time.Hour)
+	if resJSON.ViolatesRules {
+		fmt.Println("rule Violation, reason:", resJSON.Reason)
+		fmt.Println("triggeredRules:", resJSON.TriggeredRules)
 		s.store.AddAIFlags(ctx, database.AddAIFlagsParams{
 			HashedContent:   cacheKey,
-			Reason:          resJson.Reason,
-			ConfidenceScore: int32(resJson.ConfidenceScore)})
+			Reason:          resJSON.Reason,
+			ConfidenceScore: int32(resJSON.ConfidenceScore),
+		})
 	}
 	// clientRes := ClientModerationRes{
 	// 	ViolatesRules: resJson.ViolatesRules,
 	// }
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(resJson)
-
+	json.NewEncoder(w).Encode(resJSON)
 }
 
 func handleAutoSuggestion(s *Server, ctx context.Context, w http.ResponseWriter, content *ReqContent) {
@@ -149,7 +148,6 @@ func handleAutoSuggestion(s *Server, ctx context.Context, w http.ResponseWriter,
 	s.SetCachedValue(ctx, cacheKey, resAutoSuggest, 24*time.Hour)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resAutoSuggest)
-
 }
 
 func NewOpenAiReq(ctx context.Context, openaiClient *openai.Client, prompt, content string, data any) error {
@@ -172,7 +170,6 @@ func NewOpenAiReq(ctx context.Context, openaiClient *openai.Client, prompt, cont
 	aiRes := resp.Choices[0].Message.Content
 	if err := json.Unmarshal([]byte(aiRes), data); err != nil {
 		return fmt.Errorf("failed to parse AI JSON: %w", err)
-
 	}
 	return nil
 }
