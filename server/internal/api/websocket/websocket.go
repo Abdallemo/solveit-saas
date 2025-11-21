@@ -2,16 +2,17 @@ package websocket
 
 import (
 	"encoding/json"
-	"github/abdallemo/solveit-saas/internal/user"
 	"log"
 	"net/http"
+
+	"github/abdallemo/solveit-saas/internal/user"
 )
 
 type Message struct {
 	ID         string `json:"id"`
 	Content    string `json:"content"`
-	ReceiverId string `json:"receiverId"`
-	SenderId   string `json:"senderId"`
+	ReceiverID string `json:"receiverId"`
+	SenderID   string `json:"senderId"`
 	Subject    string `json:"subject"`
 	Method     string `json:"method"`
 	Read       bool   `json:"read"`
@@ -22,8 +23,8 @@ type Comment struct {
 	ID        string          `json:"id"`
 	Content   string          `json:"content"`
 	CreatedAt string          `json:"createdAt"`
-	UserId    string          `json:"userId"`
-	TaskId    string          `json:"taskId"`
+	UserID    string          `json:"userId"`
+	TaskID    string          `json:"taskId"`
 	Owner     user.PublicUser `json:"owner"`
 }
 type SignalMessage struct {
@@ -31,7 +32,7 @@ type SignalMessage struct {
 	To             string          `json:"to"`
 	Type           string          `json:"type"`
 	Payload        json.RawMessage `json:"payload"`
-	SessionId      string          `json:"sessionId"`
+	SessionID      string          `json:"sessionId"`
 	ConnectionType string          `json:"connectionType"`
 }
 
@@ -53,6 +54,7 @@ func NewWsNotification(hub *WsHub) *WsNotification {
 		notificationChannel: make(chan IncomingMessage, 100),
 	}
 }
+
 func NewWsWsSignalling(hub *WsHub) *WsSignalling {
 	s := &WsSignalling{
 		hub:               hub,
@@ -78,7 +80,6 @@ func (s *WsNotification) HandleNotification(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *WsNotification) HandleSendNotification(w http.ResponseWriter, r *http.Request) {
-
 	msg := Message{}
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
 		http.Error(w, "Invalid request", http.StatusBadRequest)
@@ -88,15 +89,15 @@ func (s *WsNotification) HandleSendNotification(w http.ResponseWriter, r *http.R
 	notification := Message{
 		ID:         msg.ID,
 		Content:    msg.Content,
-		ReceiverId: msg.ReceiverId,
-		SenderId:   msg.SenderId,
+		ReceiverID: msg.ReceiverID,
+		SenderID:   msg.SenderID,
 		Subject:    msg.Subject,
 		Method:     msg.Method,
 		Read:       msg.Read,
 		CreatedAt:  msg.CreatedAt,
 	}
 
-	s.SendToUser(msg.ReceiverId, notification)
+	s.SendToUser(msg.ReceiverID, notification)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Notification sent"))
@@ -125,7 +126,6 @@ func NewWsComments(hub *WsHub) *WsComments {
 }
 
 func (s *WsComments) listenForMessages() {
-
 	for incMsg := range s.commentsChannel {
 
 		comment := Comment{}
@@ -135,9 +135,10 @@ func (s *WsComments) listenForMessages() {
 			continue
 		}
 
-		s.sendToTask(comment.TaskId, comment)
+		s.sendToTask(comment.TaskID, comment)
 	}
 }
+
 func (s *WsComments) HandleComments(w http.ResponseWriter, r *http.Request) {
 	taskID := r.URL.Query().Get("task_id")
 	if taskID == "" {
@@ -159,7 +160,7 @@ func (s *WsComments) HandleSendComments(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	s.sendToTask(comment.TaskId, comment)
+	s.sendToTask(comment.TaskID, comment)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Comment sent"))
@@ -171,7 +172,6 @@ func (s *WsComments) sendToTask(taskID string, comment Comment) {
 
 // -------------------- WebRTC Signalling WS --------------------
 func (s *WsSignalling) listenForMessages() {
-
 	for incMsg := range s.signallingChannel {
 
 		msg := SignalMessage{}
@@ -181,9 +181,10 @@ func (s *WsSignalling) listenForMessages() {
 			continue
 		}
 
-		s.sendToSignalSession(msg.SessionId, msg)
+		s.sendToSignalSession(msg.SessionID, msg)
 	}
 }
+
 func (s *WsSignalling) HandleSignaling(w http.ResponseWriter, r *http.Request) {
 	sessionID := r.URL.Query().Get("session_id")
 	if sessionID == "" {
@@ -197,6 +198,7 @@ func (s *WsSignalling) HandleSignaling(w http.ResponseWriter, r *http.Request) {
 
 	s.hub.handleWS(w, r, s.signallingChannel)
 }
+
 func (s *WsSignalling) HandleSendSignalingMessage(w http.ResponseWriter, r *http.Request) {
 	var msg SignalMessage
 	if err := json.NewDecoder(r.Body).Decode(&msg); err != nil {
@@ -204,11 +206,12 @@ func (s *WsSignalling) HandleSendSignalingMessage(w http.ResponseWriter, r *http
 		return
 	}
 
-	s.sendToSignalSession(msg.SessionId, msg)
+	s.sendToSignalSession(msg.SessionID, msg)
 
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("Signal sent"))
 }
-func (s *WsSignalling) sendToSignalSession(signalId string, message SignalMessage) {
-	s.hub.sendToChannel("signaling:"+signalId, message)
+
+func (s *WsSignalling) sendToSignalSession(signalID string, message SignalMessage) {
+	s.hub.sendToChannel("signaling:"+signalID, message)
 }
