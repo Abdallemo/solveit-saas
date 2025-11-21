@@ -1,7 +1,7 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import { defaultAvatars } from "@/lib/utils";
+import { defaultAvatars } from "@/lib/utils/utils";
 import { Camera, X } from "lucide-react";
 import { useState } from "react";
 
