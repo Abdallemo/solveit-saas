@@ -5,7 +5,7 @@ import {
   removeFileExtension,
   supportedExtentionTypes,
   truncateText,
-} from "@/lib/utils";
+} from "@/lib/utils/utils";
 import { Download, Loader2, X } from 'lucide-react';
 import { SVGProps } from "react";
 import { UploadedFileMeta } from "../server/media-types";
