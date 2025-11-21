@@ -14,6 +14,7 @@ import {
 import { Progress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
+import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import { DeadlineProgress } from "@/features/tasks/components/DeadlineProgress";
 import WorkspaceSidebar from "@/features/tasks/components/richTextEdito/WorkspaceSidebar";
 import {
@@ -27,7 +28,7 @@ import {
 } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { calculateEditorTextLength, cn, getColorClass } from "@/lib/utils";
+import { calculateEditorTextLength, cn, getColorClass } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { debounce } from "lodash";
@@ -40,7 +41,7 @@ import PostingEditor from "./richTextEdito/BlogTiptap";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
-  const { content, currentWorkspace, setCurrentWorkspace, setContent } =
+  const { content, currentWorkspace, setCurrentWorkspace, setContent,setFilePreview,filePreview,uploadedFiles } =
     useWorkspace();
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
@@ -158,6 +159,13 @@ export default function WorkspacePageComp() {
   }
   return (
     <div className="h-full bg-background flex flex-col">
+            <MediaPreviewer
+              fileRecords={uploadedFiles}
+              filePreview={filePreview}
+              onClose={() => {
+                setFilePreview(null);
+              }}
+            />
       <header className="border-b p-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-6 items-center">
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
