@@ -1,5 +1,5 @@
-import { sendSignalMessage } from "@/features/mentore/server/action";
-import { wsManager } from "@/store/wsStore";
+// signaling.ts
+import { SocketClient } from "@/lib/ws/SocketClient";
 import { SignalMessage } from "./types";
 
 export interface SignalHandler {
@@ -7,52 +7,50 @@ export interface SignalHandler {
 }
 
 export class SignalingService {
-  private readonly sessionId: string;
-  private readonly handler: SignalHandler;
-  private wsUrl: string;
+  private ws: SocketClient<SignalMessage> | null = null;
 
-  constructor(sessionId: string, handler: SignalHandler) {
-    this.sessionId = sessionId;
-    this.handler = handler;
-    this.wsUrl = `${process.env.NEXT_PUBLIC_GO_API_WS_URL}/signaling?session_id=${this.sessionId}`;
-  }
+  constructor(
+    private readonly sessionId: string,
+    private readonly handler: SignalHandler
+  ) {}
 
-  public connect() {
+  public connect = () => {
     if (typeof window === "undefined") return;
 
-    wsManager.getState().connect<SignalMessage>(this.wsUrl, {
-      onMessage: (msg) => this.handler.handle(msg),
-      onOpen: () => console.log(`[Signaling] Connected for ${this.sessionId}`),
-      onClose: () => console.log(`[Signaling] Closed for ${this.sessionId}`),
-      onError: (err) => console.error(`[Signaling] Error:`, err),
-      autoReconnect: true,
-      reconnectIntervalInMs: 2000,
-      maxRetries: 5,
-    });
-  }
+    this.ws = new SocketClient<SignalMessage>(
+      `${process.env.NEXT_PUBLIC_GO_API_WS_URL}/signaling?session_id=${this.sessionId}`,
+      {
+        onMessage: async (msg) => {
+          await this.handler.handle(msg);
+        },
+        onOpen: () => console.log("Signaling WS connected"),
+        onClose: () => console.log("Signaling WS disconnected"),
+        onError: (err) => console.error("Signaling WS error:", err),
+      }
+    );
 
+    this.ws.connect();
+  };
+  public isConnected = () => {
+    return this.ws?.getState() === "connected";
+  };
   public async send(msg: SignalMessage) {
     try {
       const messageToSend = {
         ...msg,
         connectionType: msg.connectionType || "camera",
       };
-      await sendSignalMessage(messageToSend);
+      // await sendSignalMessage(messageToSend);
+      if (this.ws?.getState() === "connected") {
+        this.ws?.send(messageToSend);
+      }
     } catch (err) {
-      console.error("[Signaling] Send error:", err);
+      console.error("Signal send error:", err);
     }
   }
 
   public close() {
-    const state = wsManager.getState();
-    state.disconnect(this.wsUrl);
-  }
-
-  public getSocket(): WebSocket | null {
-    return wsManager.getState().getSocket(this.wsUrl);
-  }
-
-  public getConnectionState() {
-    return wsManager.getState().getConnectionState(this.wsUrl);
+    this.ws?.close();
+    this.ws = null;
   }
 }
