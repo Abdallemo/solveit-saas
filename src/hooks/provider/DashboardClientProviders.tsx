@@ -69,7 +69,7 @@ export function DashboardClientProviders({
         <SidebarProvider defaultOpen={defaultSidebarOpen} style={sidebarStyles}>
           {(user.role === "SOLVER" || user.role === "POSTER") &&
           !user.userDetails.onboardingCompleted ? (
-            <div className="relative flex flex-col justify-center items-center h-screen w-full bg-gradient-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
+            <div className="relative flex flex-col justify-center items-center h-screen w-full bg-linear-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
               <Motion3DBackground />
               <OnboardingForm />
             </div>
@@ -79,7 +79,7 @@ export function DashboardClientProviders({
                 <DashboardSidebar user={sessionUser} />
               </Suspense>
               <div className="flex flex-col flex-1 ">
-                <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 border-b">
+                <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
                   <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
                     <div className="flex items-center">
                       <SidebarTrigger className="mr-2" />
