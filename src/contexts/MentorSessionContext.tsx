@@ -4,8 +4,7 @@ import { env } from "@/env/client";
 import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import {
-  getMentorSession,
-  revalidateMentorSessinoData,
+  getMentorSession
 } from "@/features/mentore/server/action";
 import {
   MentorChatSession,
@@ -13,7 +12,7 @@ import {
 } from "@/features/mentore/server/types";
 import { useWebSocket } from "@/hooks/useWebSocketClass";
 import { SessionNotFoundError } from "@/lib/Errors";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   createContext,
   Dispatch,
@@ -37,8 +36,8 @@ type MentorshipSessionContextType = {
   send: (
     msg: MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
   ) => void;
-  filePreview: UploadedFileMeta | null
-  setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>
+  filePreview: UploadedFileMeta | null;
+  setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>;
 };
 
 const MentorshipSessionContext = createContext<
@@ -57,14 +56,17 @@ export const MentorshipSessionProvider = ({
   userId,
 }: MentorshipSessionProviderProps) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
-
+  const queryClient = useQueryClient();
+  const queryKey = [sessionId, userId] 
   const {
     data: sessionData,
     isLoading,
     error,
   } = useQuery({
-    queryKey: [sessionId, userId],
+    queryKey,
     queryFn: async () => await getMentorSession(sessionId),
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
   });
 
   if (error) throw new SessionNotFoundError();
@@ -89,9 +91,6 @@ export const MentorshipSessionProvider = ({
     setSession((prev) => (prev ? { ...prev, ...updates } : prev));
   };
 
-  const mentorSessoin = useMutation({
-    mutationFn: revalidateMentorSessinoData,
-  });
   const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const allFiles = useMemo(() => {
     return chats.flatMap((chat) => chat.chatFiles);
@@ -102,10 +101,14 @@ export const MentorshipSessionProvider = ({
   >(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}:${userId}`,
     {
+      onOpen: ()=> {
+        queryClient.invalidateQueries({ queryKey });
+      },
       onMessage: (msg) => {
         setChats((old) => {
           switch (msg.messageType) {
             case "chat_message":
+              if (old.some((c) => c.id === msg.id)) return old
               return [
                 ...old,
                 { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
@@ -118,9 +121,6 @@ export const MentorshipSessionProvider = ({
               return old;
           }
         });
-
-        mentorSessoin.mutate({ role: "solver", sessionId: msg.sessionId });
-        mentorSessoin.mutate({ role: "poster", sessionId: msg.sessionId });
       },
     }
   );
@@ -139,7 +139,7 @@ export const MentorshipSessionProvider = ({
         sentTo,
         send,
         filePreview,
-        setFilePreview
+        setFilePreview,
       }}>
       {children}
       <MediaPreviewer
