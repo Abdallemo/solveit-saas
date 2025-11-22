@@ -1,5 +1,5 @@
 // useWebSocket.ts (SIMPLIFIED FIX)
-import { ConnectionState, ReliableWebSocket } from "@/lib/ws/ReliableWebsocket";
+import { ConnectionState, SocketClient } from "@/lib/ws/SocketClient";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseWebSocketOptions<MsgType extends object> {
@@ -18,7 +18,7 @@ export function useWebSocket<MsgType extends object>(
 ) {
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("connecting");
-  const wsRef = useRef<ReliableWebSocket<MsgType> | null>(null);
+  const wsRef = useRef<SocketClient<MsgType> | null>(null);
 
   const optionsRef = useRef(options);
   useEffect(() => {
@@ -39,7 +39,7 @@ export function useWebSocket<MsgType extends object>(
       onStateChange: setConnectionState,
     };
 
-    const ws = new ReliableWebSocket<MsgType>(url, proxyOptions);
+    const ws = new SocketClient<MsgType>(url, proxyOptions);
     wsRef.current = ws;
     ws.connect();
 
