@@ -7,7 +7,6 @@ require (
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gorilla/websocket v1.5.3
 	github.com/sashabaranov/go-openai v1.41.1
-	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )
 
 require (
