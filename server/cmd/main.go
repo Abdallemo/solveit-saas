@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"io"
 	"log"
 	"os"
 	"path/filepath"
@@ -22,23 +21,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 	"github.com/sashabaranov/go-openai"
-	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
 	ctx := context.Background()
-	logFile := &lumberjack.Logger{
-		Filename:   "server.log",
-		MaxSize:    10,
-		MaxBackups: 3,
-		MaxAge:     28,
-		Compress:   true,
-	}
-
-	multiWriter := io.MultiWriter(os.Stdout, logFile)
-
-	log.SetOutput(multiWriter)
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
 
 	log.Println("Go version:", runtime.Version())
 	_, b, _, _ := runtime.Caller(0)
