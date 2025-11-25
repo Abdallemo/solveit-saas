@@ -12,11 +12,17 @@
     "**/.git/objects/**": true,
     "**/.next": true
   },
+  "files.exclude": {
+    "**/.git": true,
+    "**/.vscode": true,
+    "**/node_modules": true
+  },
   "search.exclude": {
     "**/node_modules": true,
     "**/vendor": true,
     "**/.next": true,
-    "**/out": true
+    "**/out": true,
+    "**/.git": true
   },
   "[go]": {
     "editor.defaultFormatter": "golang.go",
@@ -29,7 +35,6 @@
     "formatting.gofumpt": true,
     "ui.diagnostic.staticcheck": true
   },
-
 
   "[typescript]": {
     "editor.defaultFormatter": "esbenp.prettier-vscode" // Requires Prettier extension
