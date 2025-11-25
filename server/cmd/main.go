@@ -85,7 +85,7 @@ func main() {
 	server := api.NewServer(":3030", s3Client, openaiClient, database.New(db), redisClient, db)
 
 	worker := worker.NewWorker(database.New(db), s3Client, redisClient, server.WsNotif, db)
-	go worker.StartDeadlineEnforcerJob(ctx, 10, time.Minute)
+	go worker.StartDeadlineEnforcerJob(ctx, 10, 15*time.Minute)
 	go worker.StartDraftMediaCleanupJob(ctx, time.Hour)
 	go worker.StartFileGarbageCollectorJob(ctx, time.Hour*24)
 
