@@ -40,7 +40,6 @@ export class SignalingService {
         ...msg,
         connectionType: msg.connectionType || "camera",
       };
-      // await sendSignalMessage(messageToSend);
       if (this.ws?.getState() === "connected") {
         this.ws?.send(messageToSend);
       }
