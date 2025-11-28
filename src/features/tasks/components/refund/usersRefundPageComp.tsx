@@ -61,27 +61,37 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
   const { mutateAsync: completeRefundMutation, isPending: isRefunding } =
     useMutation({
       mutationFn: completeRefund,
-      onSuccess: () => {
-        toast.success("successfully refunded to your payment method", {
-          id: "refund-complete",
-        });
-        setIsRefundDialogOpen((prev) => !prev);
-        router.refresh();
+      onSuccess: ({ error, success }) => {
+        if (error) {
+          toast.error(error, { id: "refund-complete" });
+        }
+        if (success) {
+          toast.success(success, {
+            id: "refund-complete",
+          });
+          setIsRefundDialogOpen((prev) => !prev);
+          router.refresh();
+        }
       },
-      onError: (e) => toast.error(e.message, { id: "refund-complete" }),
     });
 
   const { mutateAsync: reopenTaskMutation, isPending: isReopening } =
     useMutation({
       mutationFn: reopenTask,
-      onSuccess: () => {
-        toast.success("successfully re-open your task", {
-          id: "opening-complete",
-        });
-        router.refresh();
-        setIsReopenDialogOpen((prev) => !prev);
+      onSuccess: ({ error, success }) => {
+        if (error) {
+          toast.error(error, { id: "opening-complete" });
+        }
+
+        if (success) {
+          toast.success(success, {
+            id: "opening-complete",
+          });
+          router.refresh();
+          setIsReopenDialogOpen((prev) => !prev);
+        }
       },
-      onError: (e) => toast.error(e.message, { id: "opening-complete" }),
+      onError: () => {},
     });
   async function handleCompleteRefund(refundId: string) {
     toast.loading("refunding....", { id: "refund-complete" });
@@ -140,7 +150,7 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
 
                 {d.tasks.price !== null && (
                   <div className="text-sm">
-                    <span className="font-medium">Price: </span>${d.tasks.price}
+                    <span className="font-medium">Price: {d.tasks.price}</span>
                   </div>
                 )}
               </CardContent>
@@ -148,7 +158,7 @@ export function DisputesPage({ disputes }: DisputesPageProps) {
               <CardFooter className="flex justify-end gap-2">
                 {user &&
                   user.role === "POSTER" &&
-                  d.refunds.refundStatus === "PENDING_POSTER_ACTION" && (
+                  d.refunds.refundStatus === "PENDING_USER_ACTION" && (
                     <>
                       <Button
                         disabled={isRefunding}
