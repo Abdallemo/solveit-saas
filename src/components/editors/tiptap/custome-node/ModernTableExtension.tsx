@@ -34,20 +34,19 @@ function createAddButton(
 ) {
   const wrapper = document.createElement("div");
   wrapper.style.cssText =
-    "position: absolute; width: 0; height: 0; overflow: visible; z-index: 50; pointer-events: none;";
+    "position: absolute; top: 0; left: 0; width: 0; height: 0; overflow: visible; z-index: 50; pointer-events: none;";
 
   const widget = document.createElement("button");
 
-  const xOffset = type === "col" ? width - 10 : width / 2 - 10;
-  const yOffset = type === "col" ? height / 2 - 10 : height - 10;
+  const xOffset = type === "col" ? width - 15 : width / 2 - 10;
+  const yOffset = type === "col" ? height / 2 - 10 : height - 15;
 
   widget.className = `absolute flex items-center justify-center w-5 h-5 
     bg-popover text-popover-foreground border border-border 
     rounded-full shadow-lg cursor-pointer hover:bg-accent pointer-events-auto`;
 
   widget.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-  if (type === "col") widget.style.right = "-12px";
-  if (type === "row") widget.style.bottom = "-12px";
+
 
   widget.setAttribute("contenteditable", "false");
   widget.type = "button";
@@ -55,8 +54,10 @@ function createAddButton(
   widget.onmousedown = (e) => {
     e.preventDefault();
     if (type === "col") {
+      if (!editor.isEditable) return;
       editor.chain().focus().addColumnAfter().run();
     } else {
+      if (!editor.isEditable) return;
       editor.chain().focus().addRowAfter().run();
     }
   };
@@ -110,8 +111,6 @@ function tableUIPlugin(editor: Editor): Plugin {
         }
 
         const decorations: Decoration[] = [];
-
-
 
         if (currentHover !== null) {
           if (currentHover.pos <= newState.doc.content.size) {
@@ -202,7 +201,7 @@ function tableUIPlugin(editor: Editor): Plugin {
             if (leaveTimer.id) clearTimeout(leaveTimer.id);
             leaveTimer.id = setTimeout(() => {
               view.dispatch(view.state.tr.setMeta(tableUIKey, null));
-            }, 100);
+            }, 500);
           }
           return false;
         },
