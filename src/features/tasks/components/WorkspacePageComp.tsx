@@ -44,7 +44,6 @@ import { toast } from "sonner";
 import PostingEditor from "./richTextEdito/BlogTiptap";
 
 export default function WorkspacePageComp() {
-  const [isDisabled, setIsDisabled] = useState(true);
   const {
     content,
     currentWorkspace,
@@ -61,6 +60,13 @@ export default function WorkspacePageComp() {
     deadline,
     isLoading: isDeadlineLoading,
   } = DeadlineProgress();
+
+  const contentTextLength = useMemo(() => {
+    if (!content) return 0;
+    return calculateEditorTextLength(content);
+  }, [content]);
+  const isDisabled = contentTextLength <= MIN_CONTENT_LENGTH;
+
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
     currentWorkspace?.task.status == "COMPLETED";
@@ -69,25 +75,20 @@ export default function WorkspacePageComp() {
     currentWorkspace?.task.blockedSolvers.length > 0
       ? true
       : false;
-  const workEnded = blockedFromTask || alreadySubmitedSolution || progress==100;
-  
+  const workEnded =
+    blockedFromTask || alreadySubmitedSolution 
 
   const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
     mutationFn: publishSolution,
     onSuccess: (data) => {
-      toast.success(data.message, { id: "publish-solution" });
-      setCurrentWorkspace(data.workspace);
-    },
-    onError: (err) => {
-      toast.error(err.message, { id: "publish-solution" });
+      if (data.error) {
+        toast.error(data.error, { id: "publish-solution" });
+      } else if (data.success) {
+        toast.success(data.success, { id: "publish-solution" });
+        setCurrentWorkspace(data.workspace);
+      }
     },
   });
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const textLength = calculateEditorTextLength(content);
-
-    setIsDisabled(textLength <= MIN_CONTENT_LENGTH);
-  }, [content]);
 
   const form = useForm({
     resolver: zodResolver(WorkpaceSchem),
@@ -139,29 +140,13 @@ export default function WorkspacePageComp() {
   if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
-    if (progress == 100) {
-      toast.error("The submission has closed");
-      return;
-    }
-    if (!currentWorkspace?.id) {
-      toast.error("Not found current workspace id");
-      return;
-    }
-    if (workEnded) {
-      return;
-    }
-
     try {
-      const { workspace } = await publishSolutionMutation({
-        workspaceId: currentWorkspace.id,
+      await publishSolutionMutation({
+        workspaceId: currentWorkspace?.id!,
         content: data.content,
-        solverId: currentWorkspace.solverId,
+        solverId: currentWorkspace?.solverId!,
       });
-      setCurrentWorkspace(workspace);
-      toast.success("Published successfully", { id: "publish-solution" });
-    } catch (err) {
-      toast.error("Failed to publish", { id: "publish-solution" });
-    }
+    } catch (err) {}
   }
   function onError(errors: FieldErrors<WorkpaceSchemType>) {
     console.warn("Validation errors ", errors);
@@ -198,9 +183,7 @@ export default function WorkspacePageComp() {
           ) : (
             <span className="flex items-center gap-2">
               <span className="font-semibold">
-                {workEnded
-                  ? "Ended on"
-                  : "Ends on"}
+                {workEnded ? "Ended on" : "Ends on"}
               </span>
               <Clock className="size-4" />
               {deadline}
@@ -244,12 +227,7 @@ export default function WorkspacePageComp() {
                 {isDeadlineLoading ? (
                   <Skeleton className="w-30 h-5" />
                 ) : (
-                  <span>
-                    {workEnded
-                      ? 100
-                      : progress.toFixed()}
-                    % Complete
-                  </span>
+                  <span>{workEnded ? 100 : progress.toFixed()}% Complete</span>
                 )}
               </div>
               <div className="flex flex-col w-full items-end">
