@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { formatDateAndTimeNUTC } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { FolderIcon, Plus, Trash2 } from "lucide-react";
@@ -145,6 +144,7 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
   const handleDelete = async () => {
     await deleteCatagoryMutation(category.id);
   };
+  console.log(category)
 
   return (
     <Card className="group hover:shadow-md transition-shadow duration-200">
@@ -172,7 +172,7 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Tasks: {category.taskCount}</span>
           <span>
-            Created: {formatDateAndTimeNUTC(category.createdAt)}
+            Created: {(new Date(category.createdAt)).toLocaleDateString()}
           </span>
         </div>
       </CardContent>
