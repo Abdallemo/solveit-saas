@@ -4,7 +4,10 @@ import os
 repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
 
 COMMIT_PER_FILE = True 
-commit_message = """removed the lumberjack package for storage limitation reasons
+commit_message = """breaking changes
+updated the task clearning threasholds
+removed the post enpoint for websockets exepct the notificaiton
+changed websocket to standalone sturcts
 """
 
 repo = Repo(repo_path)
