@@ -54,7 +54,7 @@ import { withRevalidateTag } from "@/lib/cache";
 import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { isError, truncateText } from "@/lib/utils/utils";
+import { truncateText } from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
 import {
   addDays,
@@ -370,14 +370,14 @@ export async function saveDraftTask(
     const oldTask = await db.query.TaskDraftTable.findFirst({
       where: (table, fn) => fn.eq(table.userId, userId),
     });
-    const transform:JSONContent = JSON.parse(content)
+    const transform: JSONContent = JSON.parse(content);
     if (oldTask) {
       await db
         .update(TaskDraftTable)
         .set({
           title,
           description,
-          content:transform,
+          content: transform,
           category,
           price,
           visibility,
@@ -392,7 +392,7 @@ export async function saveDraftTask(
         title,
         description,
         userId,
-        content:transform,
+        content: transform,
         category,
         price,
         visibility,
@@ -555,17 +555,17 @@ export async function autoSaveDraftWorkspace(
     const oldTask = await db.query.WorkspaceTable.findFirst({
       where: (table, fn) => fn.eq(table.taskId, taskId),
     });
-    const transform:JSONContent = JSON.parse(content)
+    const transform: JSONContent = JSON.parse(content);
     if (oldTask) {
       await db
         .update(WorkspaceTable)
         .set({
-          content:transform,
+          content: transform,
         })
         .where(eq(WorkspaceTable.taskId, taskId));
     } else {
       await db.insert(WorkspaceTable).values({
-        content:transform,
+        content: transform,
         solverId,
         taskId,
       });
@@ -634,23 +634,35 @@ export async function publishSolution(values: {
     const workspace = await getWorkspaceById(workspaceId, solverId);
 
     if (!workspace?.task) {
-      throw new TaskNotFoundError();
+      return {
+        success: null,
+        workspace: workspace,
+        error: new TaskNotFoundError().data.message,
+      };
     }
     if (!workspace) {
-      throw new SolutionError(
-        "Unable to locate the specified workspace. Please verify the ID and try again."
-      );
+      return {
+        success: null,
+        workspace: workspace,
+        error: new SolutionError(
+          "Unable to locate the specified workspace. Please verify the ID and try again."
+        ).code,
+      };
     }
     await handleTaskDeadline(workspace);
     const alreadyBlocked = await getBlockedSolver(
       workspace.solverId,
       workspace.task.id
     );
-    console.log(alreadyBlocked);
+
     if (alreadyBlocked) {
-      throw new SolutionError(
-        "Submission window has closed. You can no longer publish a solution for this task."
-      );
+      return {
+        success: null,
+        workspace: workspace,
+        error: new SolutionError(
+          "Submission window has closed. You can no longer publish a solution for this task."
+        ).code,
+      };
     }
     const workspaceStats = workspace.task.status;
     if (
@@ -658,9 +670,13 @@ export async function publishSolution(values: {
       workspaceStats === "SUBMITTED" ||
       workspaceStats === "OPEN"
     ) {
-      throw new SolutionError(
-        "This solution has already been marked as completed. No further submissions are allowed."
-      );
+      return {
+        success: null,
+        workspace: workspace,
+        error: new SolutionError(
+          "This solution has already been marked as completed. No further submissions are allowed."
+        ).code,
+      };
     }
     await db.transaction(async (dx) => {
       const solution = await dx
@@ -675,9 +691,13 @@ export async function publishSolution(values: {
         .returning();
 
       if (!solution || solution.length === 0 || !solution[0].id) {
-        throw new SolutionError(
-          "Failed to create a solution record. Please try again or contact support if the issue persists."
-        );
+        return {
+          success: null,
+          workspace: workspace,
+          error: new SolutionError(
+            "Failed to create a solution record. Please try again or contact support if the issue persists."
+          ).code,
+        };
       }
       await Promise.all(
         workspace?.workspaceFiles.map(async (workspaceFile) => {
@@ -714,19 +734,18 @@ export async function publishSolution(values: {
       });
 
     return {
-      success: true,
-      message: "Successfully published solution!" as const,
+      success: "Successfully published solution!" as const,
       workspace: updatedWorkspace,
+      error: null,
     };
   } catch (error) {
-    if (isError(error)) {
-      throw new SolutionError(
+    return {
+      success: null,
+      workspace: null,
+      error: new SolutionError(
         "Unable to publish the solution due to an unexpected issue. Please try again later."
-      );
-    }
-    throw new SolutionError(
-      "Publishing failed due to: [error details]. Please review and retry."
-    );
+      ).code,
+    };
   }
 }
 export async function handleTaskDeadline(
@@ -796,10 +815,16 @@ export async function acceptSolution(solution: SolutionById) {
   } = solution;
   try {
     if (!posterId || !taskId) {
-      throw new Error("all field are required ");
+      return {
+        error: "all field are required ",
+        success: null,
+      };
     }
     if (!paymentId) {
-      throw new Error("No payment Record for this Task");
+      return {
+        error: "No payment Record for this Task",
+        success: null,
+      };
     }
 
     const updatedTask = await db
@@ -809,16 +834,18 @@ export async function acceptSolution(solution: SolutionById) {
       .returning();
 
     if (!updatedTask || updatedTask.length === 0) {
-      throw new Error("No such task found");
+      return {
+        error: "No such task found",
+        success: null,
+      };
     }
 
-    const releaseDate = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
-    if (updatedTask.length > 0) {
-      await db
-        .update(PaymentTable)
-        .set({ status: "RELEASED", releaseDate: releaseDate })
-        .where(eq(PaymentTable.id, paymentId));
-    }
+    const releaseDate = addDays(Date.now(), 7);
+
+    await db
+      .update(PaymentTable)
+      .set({ status: "PENDING_USER_ACTION", releaseDate: releaseDate })
+      .where(eq(PaymentTable.id, paymentId));
 
     Notifier()
       .email({
@@ -833,12 +860,20 @@ export async function acceptSolution(solution: SolutionById) {
       });
 
     logger.info(`solution :${solution.id} Accepted`);
+    return {
+      error: null,
+      success: "You have successfully accepted this task to be Complete",
+    };
   } catch (error) {
     logger.error(`unable to Accept solution ${solution.id}`, {
       message: (error as Error)?.message,
       stack: (error as Error)?.stack,
     });
-    throw new Error("Internal Error", { cause: error });
+
+    return {
+      error: "Internal Error",
+      success: null,
+    };
   }
 }
 export async function requestRefund(values: {
@@ -854,7 +889,10 @@ export async function requestRefund(values: {
   } = values;
   const result = taskRefundSchema.safeParse({ reason: reason });
   if (result.error) {
-    throw new Error(result.error.message);
+    return {
+      error: result.error.message,
+      success: null,
+    };
   }
   try {
     const task = await db.query.TaskTable.findFirst({
@@ -869,14 +907,18 @@ export async function requestRefund(values: {
       throw new Error("No such task found");
     }
     if (task.posterId !== posterId) {
-      throw new Error(
-        "Anauthorized Request! You are not the Owner of This Task"
-      );
+      return {
+        error: "Anauthorized Request! You are not the Owner of This Task",
+        success: null,
+      };
     }
     if (task.taskRefund) {
-      throw new Error("There is already a Refund Request for this Task");
+      return {
+        error: "There is already a Refund Request for this Task",
+        success: null,
+      };
     }
-    const refund = await db.insert(RefundTable).values({
+    await db.insert(RefundTable).values({
       paymentId: task.paymentId!,
       taskId: task.id,
       refundReason: reason,
@@ -897,8 +939,15 @@ export async function requestRefund(values: {
       });
 
     withRevalidateTag("dispute-data-cache");
+    return {
+      error: null,
+      success: "Your refund Request Has bean submited",
+    };
   } catch (err) {
-    throw new Error("unable to create a refund request Please try again");
+    return {
+      error: "unable to create a refund request Please try again",
+      success: null,
+    };
   }
 }
 
@@ -950,7 +999,7 @@ export async function createTaskComment(values: {
     //   }
     // }
     revalidatePath(`/`);
-    return result
+    return result;
   } catch (error) {
     logger.error("unable to create comment", {
       message: (error as Error)?.message,
