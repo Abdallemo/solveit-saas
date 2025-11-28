@@ -3,12 +3,11 @@ package main
 import (
 	"context"
 	"log"
-	"os"
-	"path/filepath"
 	"runtime"
 	"time"
 
 	"github/abdallemo/solveit-saas/internal/api"
+	"github/abdallemo/solveit-saas/internal/utils"
 	"github/abdallemo/solveit-saas/internal/worker"
 
 	"github/abdallemo/solveit-saas/internal/database"
@@ -19,40 +18,37 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 	"github.com/go-redis/redis/v8"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 	"github.com/sashabaranov/go-openai"
 )
 
 func main() {
 	ctx := context.Background()
-
 	log.Println("Go version:", runtime.Version())
-	_, b, _, _ := runtime.Caller(0)
-	basepath := filepath.Join(filepath.Dir(b), "..", "..")
-	dotenvPath := filepath.Join(basepath, ".env")
-	if err := godotenv.Load(dotenvPath); err != nil {
-		log.Println("No .env file found, falling back to system env")
-	}
+
+	utils.LoadEnvs()
+
 	cfg, err := config.LoadDefaultConfig(ctx,
 		config.WithRegion("auto"),
 		config.WithCredentialsProvider(
 			credentials.NewStaticCredentialsProvider(
-				os.Getenv("S3_ACCESS_KEY_ID"),
-				os.Getenv("S3_SECRTE_ACCESS_KEY_ID"),
+				utils.GetenvWithDefault("S3_ACCESS_KEY_ID", ""),
+				utils.GetenvWithDefault("S3_SECRTE_ACCESS_KEY_ID", ""),
 				"",
 			),
 		),
 	)
 	if err != nil {
-		log.Fatalf("failed to load config: %v", err)
+		log.Fatalf("failed to S3 load config: %v", err)
 	}
-	dbURL := os.Getenv("DATABASE_URL")
+
+	dbURL := utils.GetenvWithDefault("DATABASE_URL", "")
 	db, err := pgxpool.New(ctx, dbURL)
 	if err != nil {
 		log.Fatal("unable to connect to database:", err)
 	}
+	defer db.Close()
 
-	opt, err := redis.ParseURL(os.Getenv("REDIS_URL"))
+	opt, err := redis.ParseURL(utils.GetenvWithDefault("REDIS_URL", ""))
 	if err != nil {
 		log.Fatal("unable to parse redis url")
 	}
@@ -61,17 +57,18 @@ func main() {
 	if err != nil {
 		log.Fatal("unable to connect to redis instance")
 	}
-
-	defer db.Close()
+	defer redisClient.Close()
 
 	s3Client := s3.NewFromConfig(cfg, func(o *s3.Options) {
-		o.BaseEndpoint = aws.String(os.Getenv("S3_ENDPOINT"))
+		o.BaseEndpoint = aws.String(utils.GetenvWithDefault("S3_ENDPOINT", ""))
 	})
-	openaiClient := openai.NewClient(os.Getenv("OPENAI_API_KEY"))
-	server := api.NewServer(":3030", s3Client, openaiClient, database.New(db), redisClient, db)
 
-	worker := worker.NewWorker(database.New(db), s3Client, redisClient, server.WsNotif, db)
-	go worker.StartDeadlineEnforcerJob(ctx, 10, 15*time.Minute)
+	openaiClient := openai.NewClient(utils.GetenvWithDefault("OPENAI_API_KEY", ""))
+
+	server := api.NewServer(utils.GetenvWithDefault("GO_PORT", ":3030"), s3Client, openaiClient, database.New(db), redisClient, db)
+
+	worker := worker.NewWorker(database.New(db), s3Client, redisClient, server.WebSockets.Notif, db)
+	go worker.StartDeadlineEnforcerJob(ctx, 50, 10*time.Minute)
 	go worker.StartDraftMediaCleanupJob(ctx, time.Hour)
 	go worker.StartFileGarbageCollectorJob(ctx, time.Hour*24)
 
