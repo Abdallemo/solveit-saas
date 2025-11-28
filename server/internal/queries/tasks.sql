@@ -1,8 +1,8 @@
 -- name: GetAvailbleTasks :many
 SELECT *
 FROM tasks
-WHERE task_status = 'ASSIGNED'
-  OR task_status = 'IN_PROGRESS'
+WHERE (task_status = 'ASSIGNED'
+  OR task_status = 'IN_PROGRESS')
   AND assigned_at IS NOT NULL
 LIMIT $1;
 
