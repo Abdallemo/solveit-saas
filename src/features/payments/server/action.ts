@@ -14,8 +14,12 @@ import {
   isAuthorized,
 } from "@/features/auth/server/actions";
 import { Notifier } from "@/features/notifications/server/notifier";
+import { SOLVER_MIN_WITHDRAW_AMOUNT } from "@/features/payments/server/constants";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
-import { getModeratorDisputes } from "@/features/tasks/server/data";
+import {
+  getModeratorDisputes,
+  getWalletInfo,
+} from "@/features/tasks/server/data";
 import {
   getUserById,
   UpdateUserField,
@@ -36,7 +40,7 @@ import {
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
-import { subYears } from "date-fns";
+import { addDays, isBefore, subYears } from "date-fns";
 import { and, eq } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -186,8 +190,7 @@ export async function CreateUserStripeConnectAccount(
           : "5734",
       product_description:
         "SolveIt is a student job board where students post and solve academic tasks.",
-      url:env.PRODUCTION_URL
-          
+      url: env.PRODUCTION_URL,
     },
   });
 
@@ -242,14 +245,17 @@ export async function refundFunds(paymentId: string) {
       columns: { stripeChargeId: true, amount: true, id: true },
     });
     if (!payment?.stripeChargeId) {
-      throw new Error("Payment or Stripe charge not found.");
+      return {
+        error: "Payment charge not found.",
+        success: null,
+      };
     }
 
     const st = await stripe.refunds.create({
       charge: payment.stripeChargeId,
     });
 
-    if (st.status ==="succeeded") {
+    if (st.status === "succeeded") {
       await db.transaction(async (dx) => {
         await dx
           .update(RefundTable)
@@ -263,24 +269,34 @@ export async function refundFunds(paymentId: string) {
           .update(PaymentTable)
           .set({ status: "REFUNDED" })
           .where(eq(PaymentTable.id, paymentId));
-        await dx.delete(TaskTable).where(eq(TaskTable.paymentId,paymentId))
+        await dx.delete(TaskTable).where(eq(TaskTable.paymentId, paymentId));
       });
     } else {
-      throw new Error("Stripe refund failed with status: " + st.status);
+      return {
+        error: "Unable to process the refund.",
+        success: null,
+      };
     }
+    return {
+      error: null,
+      success: "Refunded Successfully",
+    };
   } catch (error) {
     console.error(error);
     logger.error("Failed to execute Stripe refund.", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error("Unable to process the refund.");
+    return {
+      error: "Unable to process the refund.",
+      success: null,
+    };
   }
 }
 export async function completeRefund(refundId: string) {
   console.warn("passed refundId ", refundId);
   try {
-    const { user } = await isAuthorized(["POSTER"]);
+    await isAuthorized(["POSTER"]);
     const refund = await db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
       with: {
@@ -288,10 +304,19 @@ export async function completeRefund(refundId: string) {
       },
     });
 
-    if (!refund || refund.refundStatus !== "PENDING_POSTER_ACTION") {
-      throw new Error("Invalid request to complete refund.");
+    if (!refund || refund.refundStatus !== "PENDING_USER_ACTION") {
+      return {
+        error: "Invalid request to complete refund.",
+        success: null,
+      };
     }
-    await refundFunds(refund.paymentId);
+    const { error } = await refundFunds(refund.paymentId);
+    if (error) {
+      return {
+        error: error,
+        success: null,
+      };
+    }
 
     Notifier()
       .system({
@@ -306,14 +331,21 @@ export async function completeRefund(refundId: string) {
         content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>. 
       The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       });
+    return {
+      error: null,
+      success: "successfully refunded to your payment method",
+    };
   } catch (error) {
     logger.error("Failed to complete refund.", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error(
-      "Unable to complete the refund. Please try again or contact support."
-    );
+
+    return {
+      error:
+        "Unable to complete the refund. Please try again or contact support.",
+      success: null,
+    };
   }
 }
 export async function reopenTask(refundId: string) {
@@ -333,10 +365,13 @@ export async function reopenTask(refundId: string) {
 
     if (
       !refund ||
-      refund.refundStatus !== "PENDING_POSTER_ACTION" ||
+      refund.refundStatus !== "PENDING_USER_ACTION" ||
       refund.taskRefund?.poster.id !== user.id
     ) {
-      throw new Error("Invalid request to re-open task.");
+      return {
+        error: "Invalid request to re-open task.",
+        success: null,
+      };
     }
 
     await db.transaction(async (dx) => {
@@ -372,14 +407,21 @@ export async function reopenTask(refundId: string) {
         content: `You have chosen to re-open task ID ${refund.taskRefund?.id}. The task is now available for other solvers to apply.`,
         subject: "Task Re-opened",
       });
+
+    return {
+      error: null,
+      success: "successfully re-open your task",
+    };
   } catch (error) {
     logger.error("Failed to re-open task.", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error(
-      "Unable to re-open the task. Please try again or contact support."
-    );
+    return {
+      error:
+        " Unable to re-open the task. Please try again or contact support.",
+      success: null,
+    };
   }
 }
 export async function approveRefund(refundId: string) {
@@ -399,24 +441,38 @@ export async function approveRefund(refundId: string) {
     });
 
     if (!refund) {
-      throw new DisputeNotFoundError();
+      return {
+        error: new DisputeNotFoundError().data.message,
+        success: null,
+      };
     }
     const isResponsible = refund.moderatorId === user.id;
-    if (!isResponsible) throw new DisputeUnauthorizedError();
-    if (refund.refundStatus === "REFUNDED") throw new DisputeRefundedError();
+    if (!isResponsible) {
+      return {
+        error: new DisputeUnauthorizedError().message,
+        success: null,
+      };
+    }
+
+    if (refund.refundStatus === "REFUNDED") {
+      return {
+        error: new DisputeRefundedError().message,
+        success: null,
+      };
+    }
     await db.transaction(async (dx) => {
       await dx
         .update(RefundTable)
         .set({
-          refundStatus: "PENDING_POSTER_ACTION",
-          updatedAt:getCurrentServerTime(),
+          refundStatus: "PENDING_USER_ACTION",
+          updatedAt: getCurrentServerTime(),
           refundedAt: getCurrentServerTime(),
         })
         .where(eq(RefundTable.paymentId, refund.paymentId));
 
       await dx
         .update(PaymentTable)
-        .set({ status: "HOLD" })
+        .set({ status: "PENDING_USER_ACTION" })
         .where(eq(PaymentTable.id, refund.paymentId));
     });
     withRevalidateTag("dispute-data-cache");
@@ -447,14 +503,21 @@ export async function approveRefund(refundId: string) {
         content: `The dispute for task ID ${refund.taskRefund?.id} has been resolved in the poster's favor.
           The held payment has been refunded to them and will not be disbursed to you.`,
       });
+    return {
+      error: null,
+      success: "successfully approved the refund",
+    };
   } catch (error) {
     logger.error("Failed to approve refund and set pending state.", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error(
-      "Unable to approve the refund. Please try again or contact support."
-    );
+
+    return {
+      error:
+        "Unable to approve the refund. Please try again or contact support.",
+      success: null,
+    };
   }
 }
 export async function rejectRefund(refundId: string) {
@@ -467,9 +530,14 @@ export async function rejectRefund(refundId: string) {
           with: {
             solver: {
               columns: {
-                ...publicUserColumns,
+                email: true,
                 stripeAccountLinked: true,
                 stripeAccountId: true,
+              },
+            },
+            poster: {
+              columns: {
+                email: true,
               },
             },
           },
@@ -479,40 +547,46 @@ export async function rejectRefund(refundId: string) {
     });
 
     if (!refund) {
-      throw new DisputeNotFoundError();
+      return {
+        error: new DisputeNotFoundError().message,
+        success: null,
+      };
     }
     const isResponsible = refund.moderatorId === user.id;
-    if (!isResponsible) throw new DisputeUnauthorizedError();
+    if (!isResponsible) {
+      return {
+        error: new DisputeUnauthorizedError().message,
+        success: null,
+      };
+    }
     if (
       refund.refundStatus === "REFUNDED" ||
-      refund.refundStatus === "PENDING_POSTER_ACTION"
+      refund.refundStatus === "PENDING_USER_ACTION"
     ) {
-      throw new DisputeRefundedError();
+      return {
+        error: new DisputeRefundedError().message,
+        success: null,
+      };
     }
     if (!refund.taskRefund?.solver?.stripeAccountId) {
-      throw new UnauthorizedError();
+      return {
+        error: new UnauthorizedError().message,
+        success: null,
+      };
     }
-    if (!refund.taskRefund.solver?.stripeAccountLinked) {
-      throw new Error("please visit your billing and connect your account");
-    }
-    const transfer = await stripe.transfers.create({
-      amount: refund.taskRefund.price! * 100,
-      currency: "myr",
-      destination: refund.taskRefund.solver.stripeAccountId,
-    });
-
+    const releaseDate = addDays(Date.now(), 7);
     await db.transaction(async (dx) => {
       await dx
         .update(RefundTable)
         .set({
           refundStatus: "REJECTED",
-          updatedAt: new Date(),
+          updatedAt: getCurrentServerTime(),
         })
         .where(eq(RefundTable.paymentId, refund.paymentId));
-      //todo
+
       await dx
         .update(PaymentTable)
-        .set({ status: "RELEASED", releaseDate: new Date() })
+        .set({ status: "PENDING_USER_ACTION", releaseDate })
         .where(eq(PaymentTable.id, refund.paymentId));
       await dx
         .delete(BlockedTasksTable)
@@ -537,18 +611,86 @@ export async function rejectRefund(refundId: string) {
       })
       .email({
         subject: "Dispute Resolved",
-        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
-        The payment for your completed work has been released to your account. Thank you for your contribution!`,
+        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator. The payment for your completed work has been released to your e-wallet. Please remember to <h2>withdraw the funds</h2> to your bank account. Thank you for your contribution!`,
         receiverEmail: refund.taskRefund.solver.email!,
       });
+
+    Notifier()
+      .system({
+        subject: "Dispute Resolution Finalized",
+        content: `Bad news! Your refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator. 
+      The payment for the completed task has been released to the Solver's account. Thank you for your patience during this process!`,
+        receiverId: refund.taskRefund.posterId!,
+      })
+      .email({
+        subject: "Dispute Resolution Finalized",
+        content: `Bad news! Your refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator. The payment for the completed task has been released to the Solver. Please remember to <h2>review the moderator's decision</h2> for full details. Thank you for using SolveIt!`,
+        receiverEmail: refund.taskRefund.poster.email!,
+      });
+    return {
+      error: null,
+      success: "successfully rejected the refund",
+    };
   } catch (error) {
     logger.error("Failed to reject refund.", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error(
-      "Unable to reject the refund. Please try again or contact support."
-    );
+
+    return {
+      error:
+        "Unable to reject the refund. Please try again or contact support.",
+      success: null,
+    };
+  }
+}
+export async function requestWithdraw() {
+  try {
+    const { user } = await isAuthorized(["SOLVER"]);
+    const { available, nextReleaseDate } = await getWalletInfo(user.id);
+    if (available < SOLVER_MIN_WITHDRAW_AMOUNT) {
+      return {
+        error: `you can withdraw minimum of RM ${SOLVER_MIN_WITHDRAW_AMOUNT}`,
+        success: null,
+      };
+    }
+    if (!user.stripeAccountId) {
+      return {
+        error: new UnauthorizedError().message,
+        success: null,
+      };
+    }
+    if (nextReleaseDate && isBefore(getCurrentServerTime(), nextReleaseDate)) {
+      return {
+        error: `the withdraw is locked your next withdraw is on ${nextReleaseDate?.toLocaleDateString()}`,
+        success: null,
+      };
+    }
+    if (!user.stripeAccountLinked) {
+      return {
+        error: "please visit your billing and connect your account",
+        success: null,
+      };
+    }
+
+    const transfer = await stripe.transfers.create({
+      amount: available * 100,
+      currency: "myr",
+      destination: user.stripeAccountId,
+    });
+    return {
+      error: null,
+      success: "withdrawal request submitted successfully",
+    };
+  } catch (error) {
+    logger.error("Failed to transfer funds to solver.", {
+      message: (error as Error).message,
+      stack: (error as Error).stack,
+    });
+    return {
+      error: "failed to tranfer the amount please try again",
+      success: null,
+    };
   }
 }
 export async function assignDisputeToModerator(disputeId: string) {
