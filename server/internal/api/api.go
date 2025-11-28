@@ -18,11 +18,7 @@ import (
 
 type Server struct {
 	addr         string
-	hub          *websocket.WsHub
-	WsNotif      *websocket.WsNotification
-	wsComm       *websocket.WsComments
-	wsSig        *websocket.WsSignalling
-	wsChat       *websocket.WsMentorChat
+	WebSockets   *websocket.WebSockets
 	s3Client     *s3.Client
 	openaiClient *openai.Client
 	store        *database.Queries
@@ -37,20 +33,15 @@ func NewServer(
 	redisClient *redis.Client,
 	dbConn *pgxpool.Pool,
 ) *Server {
-	hub := websocket.NewHub()
-
+	websocket := websocket.NewWebSockets()
 	return &Server{
 		addr:         addr,
-		hub:          hub,
-		WsNotif:      websocket.NewWsNotification(hub),
-		wsComm:       websocket.NewWsComments(hub),
-		wsChat:       websocket.NewMentorChat(hub),
-		wsSig:        websocket.NewWsWsSignalling(hub),
 		s3Client:     s3Client,
 		openaiClient: openaiClient,
 		store:        store,
 		redisClient:  redisClient,
 		dbConn:       dbConn,
+		WebSockets:   websocket,
 	}
 }
 
@@ -79,19 +70,20 @@ func sendHTTPResp(w http.ResponseWriter, payload any, statusCode int) {
 	json.NewEncoder(w).Encode(payload)
 }
 
+func (s *Server) registerWebsocketRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /notification", s.WebSockets.Notif.HandleNotification)
+	mux.HandleFunc("GET /comments", s.WebSockets.Comments.HandleComments)
+	mux.HandleFunc("GET /mentorship", s.WebSockets.Chat.HandleMentorChats)
+	mux.HandleFunc("GET /signaling", s.WebSockets.Signal.HandleSignaling)
+}
+
 func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("GET /notification", s.WsNotif.HandleNotification)
-	mux.HandleFunc("GET /comments", s.wsComm.HandleComments)
-	mux.HandleFunc("GET /mentorship", s.wsChat.HandleMentorChats)
-	mux.HandleFunc("GET /signaling", s.wsSig.HandleSignaling)
+	s.registerWebsocketRoutes(mux)
 	mux.HandleFunc("GET /healthz", s.healthz)
 }
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
-	mux.HandleFunc("POST /send-notification", s.WsNotif.HandleSendNotification)
-	mux.HandleFunc("POST /send-comment", s.wsComm.HandleSendComments)
-	mux.HandleFunc("POST /send-mentorshipChats", s.wsChat.HandleSendMentorChats)
-	mux.HandleFunc("POST /send-signal", s.wsSig.HandleSendSignalingMessage)
+	mux.HandleFunc("POST /send-notification", s.WebSockets.Notif.HandleSendNotification)
 	mux.HandleFunc("POST /media", s.handleUploadMedia)
 	mux.HandleFunc("DELETE /media", s.handleDeleteMedia)
 	mux.HandleFunc("GET /media/download", s.handleMediaDownload)
@@ -105,11 +97,9 @@ func (s *Server) Run() error {
 }
 
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-
 	msg := struct {
 		Message string `json:"message"`
 	}{Message: "alive"}
 
-	json.NewEncoder(w).Encode(msg)
+	sendHTTPResp(w, msg, 200)
 }
