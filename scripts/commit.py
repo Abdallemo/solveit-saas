@@ -5,9 +5,10 @@ repo_path = r"D:\DegreeProjects\Fyp\solveit-saas"
 
 COMMIT_PER_FILE = True 
 commit_message = """breaking changes
-updated the task clearning threasholds
-removed the post enpoint for websockets exepct the notificaiton
-changed websocket to standalone sturcts
+updated serveral server actins to return object instead of throwing errors
+updated the refund reopen money exchange , withdraw actions
+fixed tiptap table column + buttons 
+updated db schema 
 """
 
 repo = Repo(repo_path)
