@@ -15,7 +15,7 @@ type TableBubbleMenuProps = {
 
 export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
   const shouldShow: BubbleMenuProps["shouldShow"] = ({ editor, state }) => {
-    if (!editor.isActive("table") || isNodeSelection(state.selection)) {
+    if (!editor.isActive("table") || isNodeSelection(state.selection)||!editor.isEditable) {
       return false;
     }
     return true;
