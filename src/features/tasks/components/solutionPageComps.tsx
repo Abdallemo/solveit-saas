@@ -44,13 +44,15 @@ function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
   const { mutateAsync: acceptSolutionMuta, isPending } = useMutation({
     mutationFn: acceptSolution,
-    onSuccess: () => {
-      toast.success("You have successfully accepted this task to be Complete", {
-        id: "accept-task",
-      });
-    },
-    onError: () => {
-      toast.error("something went wrong", { id: "accept-task" });
+    onSuccess: ({ error, success }) => {
+      if (error) {
+        toast.error(error, { id: "accept-task" });
+      }
+      if (success) {
+        toast.success(success, {
+          id: "accept-task",
+        });
+      }
     },
   });
   async function handleAccept() {
@@ -113,15 +115,13 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
 
   const { mutateAsync: requestRefundMutate, isPending } = useMutation({
     mutationFn: requestRefund,
-    onSuccess: () => {
-      toast.success("Your refund Request Has bean submited", {
-        id: "refund-request",
-      });
-    },
-    onError: () => {
-      toast.error("Something Went Wrong please Try again!", {
-        id: "refund-request",
-      });
+    onSuccess: ({ error, success }) => {
+      if (error) {
+        toast.error(error, { id: "refund-request" });
+      }
+      if (success) {
+        toast.success(success, { id: "refund-request" });
+      }
     },
   });
   async function handleRefund(formData: taskRefundSchemaType) {
