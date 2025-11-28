@@ -28,7 +28,11 @@ import {
 } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
-import { calculateEditorTextLength, cn, getColorClass } from "@/lib/utils/utils";
+import {
+  calculateEditorTextLength,
+  cn,
+  getColorClass,
+} from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { debounce } from "lodash";
@@ -41,8 +45,15 @@ import PostingEditor from "./richTextEdito/BlogTiptap";
 
 export default function WorkspacePageComp() {
   const [isDisabled, setIsDisabled] = useState(true);
-  const { content, currentWorkspace, setCurrentWorkspace, setContent,setFilePreview,filePreview,uploadedFiles } =
-    useWorkspace();
+  const {
+    content,
+    currentWorkspace,
+    setCurrentWorkspace,
+    setContent,
+    setFilePreview,
+    filePreview,
+    uploadedFiles,
+  } = useWorkspace();
   const { isLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const {
@@ -52,8 +63,14 @@ export default function WorkspacePageComp() {
   } = DeadlineProgress();
   const alreadySubmitedSolution =
     currentWorkspace?.task.status == "SUBMITTED" ||
-    currentWorkspace?.task.status == "COMPLETED" ||
-    currentWorkspace?.task.status == "OPEN";
+    currentWorkspace?.task.status == "COMPLETED";
+  const blockedFromTask =
+    currentWorkspace?.task.blockedSolvers &&
+    currentWorkspace?.task.blockedSolvers.length > 0
+      ? true
+      : false;
+  const workEnded = blockedFromTask || alreadySubmitedSolution || progress==100;
+  
 
   const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
     mutationFn: publishSolution,
@@ -109,7 +126,7 @@ export default function WorkspacePageComp() {
       currentWorkspace?.taskId!,
     ],
     delay: 700,
-    disabled: alreadySubmitedSolution,
+    disabled: workEnded,
   });
 
   useEffect(() => {
@@ -130,10 +147,7 @@ export default function WorkspacePageComp() {
       toast.error("Not found current workspace id");
       return;
     }
-    if (
-      currentWorkspace.task.status === "COMPLETED" ||
-      currentWorkspace.task.status === "SUBMITTED"
-    ) {
+    if (workEnded) {
       return;
     }
 
@@ -158,14 +172,14 @@ export default function WorkspacePageComp() {
     if (el) el.scrollIntoView({ behavior: "smooth", block: "center" });
   }
   return (
-    <div className="h-full bg-background flex flex-col">
-            <MediaPreviewer
-              fileRecords={uploadedFiles}
-              filePreview={filePreview}
-              onClose={() => {
-                setFilePreview(null);
-              }}
-            />
+    <div className="h-full bg-background flex flex-col overflow-hidden">
+      <MediaPreviewer
+        fileRecords={uploadedFiles}
+        filePreview={filePreview}
+        onClose={() => {
+          setFilePreview(null);
+        }}
+      />
       <header className="border-b p-4 flex flex-wrap items-center justify-between gap-2">
         <div className="flex gap-6 items-center">
           <h1 className="text-2xl font-semibold">Solution Workspace</h1>
@@ -184,7 +198,7 @@ export default function WorkspacePageComp() {
           ) : (
             <span className="flex items-center gap-2">
               <span className="font-semibold">
-                {progress >= 100 || alreadySubmitedSolution
+                {workEnded
                   ? "Ended on"
                   : "Ends on"}
               </span>
@@ -195,19 +209,14 @@ export default function WorkspacePageComp() {
 
           <Button
             form="solution-form"
-            disabled={
-              isDisabled ||
-              isPending ||
-              progress >= 100 ||
-              alreadySubmitedSolution
-            }
+            disabled={isDisabled || isPending || workEnded}
             className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
             {isPending ? (
               <>
                 <Loader className="animate-spin w-4 h-4" />
                 Uploading files...
               </>
-            ) : progress >= 100 ? (
+            ) : progress >= 100 || blockedFromTask ? (
               "Submission Closed"
             ) : alreadySubmitedSolution ? (
               " Already Submited"
@@ -224,8 +233,8 @@ export default function WorkspacePageComp() {
           id="solution-form"
           className="flex flex-col flex-1 overflow-hidden">
           <div className="p-4 pb-2  flex justify-between items-center">
-            <div className="mt-4  w-full">
-              <div className="ml-5 flex items-center justify-between text-sm text-foreground mb-2">
+            <div className="w-full">
+              <div className=" flex items-center justify-between text-sm text-foreground mb-2">
                 <Link
                   className="underline text-lg"
                   target="_blank"
@@ -236,8 +245,7 @@ export default function WorkspacePageComp() {
                   <Skeleton className="w-30 h-5" />
                 ) : (
                   <span>
-                    {currentWorkspace?.task.status === "SUBMITTED" ||
-                    currentWorkspace?.task.status === "COMPLETED"
+                    {workEnded
                       ? 100
                       : progress.toFixed()}
                     % Complete
@@ -246,7 +254,7 @@ export default function WorkspacePageComp() {
               </div>
               <div className="flex flex-col w-full items-end">
                 <Progress
-                  value={alreadySubmitedSolution ? 100 : progress}
+                  value={workEnded ? 100 : progress}
                   className="h-2 w-full"
                 />
               </div>
@@ -270,7 +278,7 @@ export default function WorkspacePageComp() {
                                 handleEditorChange(editor);
                               }}
                               editorOptions={{
-                                editable: !alreadySubmitedSolution,
+                                editable: !workEnded,
                               }}
                             />
                           </Suspense>
