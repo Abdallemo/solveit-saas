@@ -40,6 +40,13 @@ var upgrader = websocket.Upgrader{
 	},
 }
 
+type WebSockets struct {
+	Hub      *WsHub
+	Notif    *WsNotification
+	Comments *WsComments
+	Signal   *WsSignalling
+	Chat     *WsMentorChat
+}
 type WsHub struct {
 	conns map[string][]*websocket.Conn
 	mu    sync.RWMutex
@@ -49,6 +56,17 @@ type WsHub struct {
 func NewHub() *WsHub {
 	return &WsHub{
 		conns: make(map[string][]*websocket.Conn),
+	}
+}
+
+func NewWebSockets() *WebSockets {
+	hub := NewHub()
+	return &WebSockets{
+		Hub:      hub,
+		Notif:    NewWsNotification(hub),
+		Comments: NewWsComments(hub),
+		Chat:     NewMentorChat(hub),
+		Signal:   NewWsWsSignalling(hub),
 	}
 }
 
