@@ -1,6 +1,7 @@
 import { CommentProvider } from "@/contexts/TaskCommentProvider";
 import { WorkspaceProvider } from "@/contexts/WorkspaceContext";
 import { isAuthorized } from "@/features/auth/server/actions";
+import { handleTaskDeadline } from "@/features/tasks/server/action";
 import { getWorkspaceById } from "@/features/tasks/server/data";
 import { getCurrentServerTime } from "@/lib/utils/utils";
 import { redirect } from "next/navigation";
@@ -23,7 +24,7 @@ export default async function WorkspaceLayout({
   if (currentWorkspace.solverId !== user?.id) {
     redirect("/dashboard/");
   }
-
+  await handleTaskDeadline(currentWorkspace);
   return (
     <CommentProvider
       taskComments={currentWorkspace.task.taskComments}
