@@ -170,7 +170,7 @@ export function DeadlineCard({ deadline }: { deadline: DeadlineType }) {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Tasks: {deadline.taskCount}</span>
           <span>
-            Created: {deadline.createdAt.toLocaleDateString()}
+            Created: {new Date(deadline.createdAt).toLocaleDateString()}
           </span>
         </div>
       </CardContent>
