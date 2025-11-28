@@ -52,23 +52,27 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
   const [isRejectDialogOpen, setIsRejectDialogOpen] = useState(false);
   const { mutateAsync: ApproveRefundMutation, isPending } = useMutation({
     mutationFn: approveRefund,
-    onSuccess: () =>
-      toast.success("successfully approved the refund", { id: "refund-task" }),
-    onError: (e) => {
-      if (e.message !== "NEXT_REDIRECT") {
-        toast.error(e.message, { id: "refund-task" });
+    onSuccess: ({ error, success }) => {
+      if (success) {
+        toast.success(success, { id: "refund-task" });
+      }
+      if (error) {
+        toast.error(error, { id: "refund-task" });
       }
     },
   });
   const { mutateAsync: RejectRefundMutation, isPending: isRejecting } =
     useMutation({
       mutationFn: rejectRefund,
-      onSuccess: () =>
-        toast.success("successfully rejected and released the fund", {
-          id: "reject-task",
-        }),
-      onError: (e) => {
-        toast.error(e.message, { id: "reject-task" });
+      onSuccess: ({ error, success }) => {
+        if (success) {
+          toast.success(success, {
+            id: "reject-task",
+          });
+        }
+        if (error) {
+          toast.error(error, { id: "reject-task" });
+        }
       },
     });
   async function handleTaskRefund() {
