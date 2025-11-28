@@ -40,6 +40,7 @@ export const PaymentStatus = pgEnum("payment_status", [
   "FAILED",
   "CANCELED",
   "REFUNDED",
+  "PENDING_USER_ACTION",
 ]);
 export const MentorChatStatus = pgEnum("status", ["PENDING", "SENT"]);
 export const MentorChatFileStatus = pgEnum("status", ["UPLOADING", "DONE"]);
@@ -62,7 +63,7 @@ export const RefundStatusEnum = pgEnum("refund_status", [
   "REFUNDED",
   "REJECTED",
   "FAILED",
-  "PENDING_POSTER_ACTION",
+  "PENDING_USER_ACTION",
 ]);
 export const PaymentPorposeEnum = pgEnum("payment_porpose", [
   "Task Payment",
@@ -206,7 +207,9 @@ export const UserSubscriptionTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (subscription) => [index("subscription_userId_idx").on(subscription.userId)]
 );
@@ -224,7 +227,9 @@ export const SolverProfileTable = pgTable("solver_profile", {
   createdAt: timestamp("created_at", {
     mode: "date",
     withTimezone: true,
-  }).notNull().defaultNow(),
+  })
+    .notNull()
+    .defaultNow(),
   updatedAt: timestamp("updated_at", {
     mode: "date",
     withTimezone: true,
@@ -245,7 +250,9 @@ export const PaymentTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
     releaseDate: timestamp("release_date", {
       mode: "date",
       withTimezone: true,
@@ -279,7 +286,9 @@ export const FeedbackTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (table) => ({
     feedbackSourceCheck: check(
@@ -351,7 +360,9 @@ export const BlockedTasksTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (blokedTask) => [
     index("blocked_taskId_idx").on(blokedTask.taskId),
@@ -468,7 +479,9 @@ export const RefundTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
     updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
@@ -496,7 +509,9 @@ export const TaskCommentTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (taskComments) => [
     index("task_comments_taskId_idx").on(taskComments.taskId),
@@ -660,7 +675,9 @@ export const MentorshipSessionTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (mentorSession) => [
     index("mentor_session_bookingId_idx").on(mentorSession.bookingId),
@@ -686,7 +703,9 @@ export const MentorshipBookingTable = pgTable(
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
-    }).notNull().defaultNow(),
+    })
+      .notNull()
+      .defaultNow(),
   },
   (mentorshipBookings) => [
     index("mentorship_bookings_solverId_idx").on(mentorshipBookings.solverId),
