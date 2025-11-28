@@ -136,7 +136,7 @@ export default function DisplayListComponent({
           <>
             <Button variant="outline" size="sm" asChild>
               <Link
-                className="w-full flex-1"
+                className="w-1/2 flex-1"
                 href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                   task.id
                 }`}>
@@ -147,7 +147,7 @@ export default function DisplayListComponent({
             <Button variant="success" size="sm" asChild>
               <Link
                 href={`/dashboard/solver/workspace/start/${task.id}`}
-                className="w-full flex-1">
+                className="w-1/2 flex-1">
                 {task.status === "IN_PROGRESS"
                   ? "Continue Workspace"
                   : task.blockedSolvers.some(
