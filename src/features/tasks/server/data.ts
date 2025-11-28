@@ -29,7 +29,7 @@ import type {
   PosterTaskReturn,
   SolverStats,
   SolverTaskReturn,
-  Units
+  Units,
 } from "@/features/tasks/server/task-types";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
@@ -45,12 +45,13 @@ import {
   eq,
   ilike,
   inArray,
+  isNull,
+  min,
   not,
-  notExists,
   notInArray,
   or,
   sql,
-  sum,
+  sum
 } from "drizzle-orm";
 import { unionAll } from "drizzle-orm/pg-core";
 import isUUID from "validator/es/lib/isUUID";
@@ -126,42 +127,45 @@ export async function getWalletInfo(solverId: string) {
   if (!solverId) {
     throw new Error("error! user id is empty");
   }
-  const tasks = await db
-    .select()
-    .from(TaskTable)
-    .where(
+  const [wallet] = await db
+    .select({
+      pending: sum(sql<number>`
+      CASE
+        WHEN ${PaymentTable.status} = 'HOLD'
+        THEN ${PaymentTable.amount}
+
+        WHEN ${TaskTable.status} IN ('ASSIGNED','IN_PROGRESS','SUBMITTED')
+        THEN ${PaymentTable.amount}
+
+        ELSE 0
+      END
+    `).mapWith(Number),
+
+      available: sum(sql<number>`
+      CASE
+        WHEN ${PaymentTable.status} = 'PENDING_USER_ACTION'
+        THEN ${PaymentTable.amount}
+
+        WHEN ${TaskTable.status} = 'COMPLETED'
+        THEN ${PaymentTable.amount}
+
+        ELSE 0
+      END
+    `).mapWith(Number),
+    nextReleaseDate: min(PaymentTable.releaseDate)
+    })
+    .from(PaymentTable)
+    .innerJoin(TaskTable, eq(TaskTable.paymentId, PaymentTable.id))
+    .leftJoin(
+      RefundTable,
       and(
-        eq(TaskTable.solverId, solverId),
-        notExists(
-          db
-            .select()
-            .from(RefundTable)
-            .where(
-              and(
-                eq(RefundTable.taskId, TaskTable.id),
-                eq(RefundTable.refundStatus, "REFUNDED")
-              )
-            )
-        )
+        eq(RefundTable.paymentId, PaymentTable.id),
+        eq(RefundTable.refundStatus, "PENDING_USER_ACTION")
       )
-    );
+    )
+    .where(and(eq(TaskTable.solverId, solverId), isNull(RefundTable.id)));
 
-  let pending = 0;
-  let available = 0;
-  for (const task of tasks) {
-    switch (task.status) {
-      case "ASSIGNED":
-      case "IN_PROGRESS":
-      case "SUBMITTED":
-        pending += task.price ?? 0;
-        break;
-      case "COMPLETED":
-        available += task.price ?? 0;
-        break;
-    }
-  }
-
-  return { pending, available };
+  return wallet;
 }
 
 export async function getUserTasksbyId(userId: string) {
@@ -499,17 +503,16 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
           poster: { columns: publicUserColumns },
           workspace: true,
           category: true,
-          blockedSolvers:true,
+          blockedSolvers: true,
           taskComments: {
             with: {
               owner: { columns: publicUserColumns },
             },
-
           },
         },
       },
       workspaceFiles: {
-        orderBy:(field,fn)=>fn.desc(field.uploadedAt)
+        orderBy: (field, fn) => fn.desc(field.uploadedAt),
       },
     },
   });
