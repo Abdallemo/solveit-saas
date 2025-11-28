@@ -9,15 +9,15 @@ import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useFeatureFlags } from "@/contexts/FeatureFlagContext";
 import { commentType, useWorkspace } from "@/contexts/WorkspaceContext";
@@ -27,12 +27,12 @@ import useCurrentUser from "@/hooks/useCurrentUser";
 import { getColorClass } from "@/lib/utils/utils";
 import { useMutation } from "@tanstack/react-query";
 import {
-    Code2,
-    FileText,
-    Lock,
-    MessageCircle,
-    Send,
-    User2,
+  Code2,
+  FileText,
+  Lock,
+  MessageCircle,
+  Send,
+  User2,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { Ref, useEffect, useRef, useState } from "react";
@@ -70,8 +70,8 @@ export default function WorkspaceSidebar({
     );
 
   return (
-    <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col">
-      <div className="p-4 border-b bg-background">
+    <div className="w-80 border-l bg-muted/20 overflow-hidden flex flex-col ">
+      <div className="p-4 border-b bg-background ">
         <div className="flex justify-center gap-1">
           <h2 className="font-medium">Solution Workspace</h2>
         </div>
@@ -107,24 +107,7 @@ function SideBarForm() {
 
   async function handleSendComment() {
     if (!comment.trim()) return;
-    //old
-    // const newComment: commentType = {
-    //   id: crypto.randomUUID(),
-    //   content: comment,
-    //   createdAt: new Date(),
-    //   userId: user!.id!,
-    //   taskId: currentWorkspace!.taskId,
-    //   owner: {
-    //     name: user!.name ?? null,
-    //     id: user!.id!,
-    //     role: user!.role ?? null,
-    //     image: user!.image ?? null,
-    //     email: user!.email ?? null,
-    //     password: null,
-    //     emailVerified: null,
-    //     createdAt: null,
-    //   },
-    // };
+
     setComment("");
     await createTaskCommentMuta({
       comment,
@@ -141,11 +124,9 @@ function SideBarForm() {
       handleSendComment();
     }
   };
-  function onRefresh() {
-    router.refresh();
-  }
+
   return (
-    <div className="p-2 space-y-4 flex flex-col overflow-scroll">
+    <div className="p-2 space-y-4 flex flex-col overflow-hidden">
       <div className="space-y-1 ">
         <div className="flex items-center gap-1">
           <FileText className="h-4 w-4 text-muted-foreground" />
@@ -188,8 +169,8 @@ function SideBarForm() {
           <div className="flex gap-2">
             <TextareaAutosize
               minRows={1}
-              maxRows={3}
-              className="flex-1 min-h-[40px] w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-all duration-200"
+              maxRows={2}
+              className="flex-1 min-h-10 w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/20 focus-visible:border-primary disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-all duration-200"
               placeholder="Type your comment..."
               value={comment}
               onChange={(e) => setComment(e.target.value)}
@@ -227,7 +208,7 @@ function SideBarForm() {
                     <p className="text-xs mt-1">Start the conversation above</p>
                   </div>
                 ) : (
-                  <ScrollArea className="h-60 w-full px-2">
+                  <ScrollArea className="h-60 w-full p-2">
                     {comments.map((commentItem, index) => {
                       const isLast = index === comments.length - 1;
                       return (
