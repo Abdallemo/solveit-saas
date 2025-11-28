@@ -19,8 +19,7 @@ import {
   AvailabilitySlot,
   BookingFormData,
   bookingSchema,
-  MentorChatSession,
-  MentorListigWithAvailbelDates,
+  MentorListigWithAvailbelDates
 } from "@/features/mentore/server/types";
 import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -36,7 +35,6 @@ import {
   SessionNotFoundError,
   SubscriptionError,
 } from "@/lib/Errors";
-import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import {
@@ -44,7 +42,6 @@ import {
   daysInWeek,
   sessionTimeUtils,
 } from "@/lib/utils/utils";
-import { SignalMessage } from "@/lib/webrtc/types";
 import { addDays, format, isFuture, startOfWeek } from "date-fns";
 import { fromZonedTime } from "date-fns-tz";
 import { and, count, eq, or } from "drizzle-orm";
@@ -649,29 +646,8 @@ export async function sendMentorMessages({
     throw new Error("unable to send message");
   }
 }
-export async function sendMentorDeleteMessages({
-  deletedMessage,
-  messageType = "chat_deleted",
-}: {
-  deletedMessage: MentorChatSession;
-  messageType?: "chat_message" | "chat_deleted";
-}) {
-  if (!deletedMessage || !deletedMessage.id) return;
-  if (messageType === "chat_deleted") {
-    await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
-      method: "POST",
-      headers: GoHeaders,
-      body: JSON.stringify({ ...deletedMessage, messageType }),
-    });
-  }
-}
-export async function sendSignalMessage(message: SignalMessage) {
-  await fetch(`${env.GO_API_URL}/send-signal`, {
-    method: "POST",
-    headers: GoHeaders,
-    body: JSON.stringify(message),
-  });
-}
+
+
 export async function revalidateMentorSessinoData(values: {
   sessionId: string;
   role: string;
