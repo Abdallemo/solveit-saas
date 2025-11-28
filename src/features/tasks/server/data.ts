@@ -499,6 +499,7 @@ export async function getWorkspaceById(workspaceId: string, solverId: string) {
           poster: { columns: publicUserColumns },
           workspace: true,
           category: true,
+          blockedSolvers:true,
           taskComments: {
             with: {
               owner: { columns: publicUserColumns },
