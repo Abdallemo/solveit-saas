@@ -9,14 +9,11 @@ import {
   useDeleteFileGeneric,
   useDownloadFile
 } from "@/hooks/useFile";
-import { useMutation } from "@tanstack/react-query";
 import {
   FileText
 } from "lucide-react";
 
-import {
-  sendMentorDeleteMessages
-} from "@/features/mentore/server/action";
+import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { userSessionType } from "@/features/users/server/user-types";
 import { MentorChatSession } from "../../server/types";
 
@@ -53,14 +50,10 @@ export default function ChatSideBar({
 
   filePreview: UploadedFileMeta | null;
 }) {
+   const {send}= useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
-  const { mutate: sendDeleteMessage } = useMutation({
-    mutationFn: sendMentorDeleteMessages,
-    onError: (e) => {
-      console.log(e);
-    },
-  });
+
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
   const isMobile = useIsMobile();
@@ -117,7 +110,7 @@ export default function ChatSideBar({
                     const [deletedChat] = chat.filter(
                       (c) => c.id === file.chatId
                     );
-                    sendDeleteMessage({ deletedMessage: deletedChat });
+                    send({ ...deletedChat, messageType: "chat_deleted" });
                   }}
                 />
               </div>
