@@ -74,7 +74,7 @@ export default function PostingEditor({
     },
   });
   return (
-    <div className="border rounded-md flex flex-col h-[600px] md:h-[800px] lg:h-[800px] overflow-auto">
+    <div className="border rounded-md flex flex-col h-[600px] md:h-[700px] lg:h-[700px] overflow-auto">
       {showMenuBar && (
         <MenuBar editor={editor} disabled={!editorOptions.editable} />
       )}
