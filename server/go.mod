@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go-v2 v1.37.2
 	github.com/go-redis/redis/v8 v8.11.5
 	github.com/gorilla/websocket v1.5.3
+	github.com/rs/cors v1.11.1
 	github.com/sashabaranov/go-openai v1.41.1
 )
 

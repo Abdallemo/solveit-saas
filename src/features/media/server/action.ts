@@ -30,7 +30,7 @@ export async function downloadFileFromR2(filePath: string) {
       {
         method: "GET",
         headers: GoHeaders,
-      }
+      },
     );
     if (!res.ok) {
       throw new Error("Failed to download," + res.statusText);
@@ -48,18 +48,27 @@ export async function downloadFileFromR2(filePath: string) {
 /**
  * Uploads an array of File objects to the specified media endpoint.
  */
-type UploadOptions = {
+export type UploadOptions = {
   files: File[];
   scope: string;
   url: string;
 };
+type UploadResponse = {
+  uploaded_files: UploadedFileMeta[];
+  failed_files: { file: UploadedFileMeta; error: string }[];
+};
+type uploadFilesReturnType = {
+  error: string | null;
+  response: UploadResponse;
+};
 
-export async function uploadFiles({ files, scope, url }: UploadOptions) {
+export async function uploadFiles({
+  files,
+  scope,
+  url,
+}: UploadOptions): Promise<uploadFilesReturnType> {
   const formData = new FormData();
   files.forEach((file) => {
-    if (file.size >= 50 << 20) {
-      throw new Error("file Exceeded Limit");
-    }
     formData.append("files", file);
   });
   formData.append("scope", scope);
@@ -75,15 +84,30 @@ export async function uploadFiles({ files, scope, url }: UploadOptions) {
         .json()
         .catch(() => ({ message: "Unknown error" }));
       logger.error("error uploading file", JSON.stringify(errorData));
-      throw new Error(
-        errorData.message || `HTTP error! status: ${response.status}`
-      );
+      return {
+        error:
+          (errorData.message as string) ||
+          `HTTP error! status: ${response.status}`,
+        response: {
+          failed_files: [],
+          uploaded_files: [],
+        },
+      };
     }
-    const data: UploadedFileMeta[] = await response.json();
-    return data;
+    const data: UploadResponse = await response.json();
+    return {
+      response: data,
+      error: null,
+    };
   } catch (error) {
     logger.error("Error in uploadFiles:", { error: error });
-    throw error;
+    return {
+      error: "internal error",
+      response: {
+        failed_files: [],
+        uploaded_files: [],
+      },
+    };
   }
 }
 export async function saveMediaFileToDb(media: UploadedFileMeta) {

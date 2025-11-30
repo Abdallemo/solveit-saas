@@ -55,7 +55,8 @@ export default function WorkspaceSidebar({
           type="button"
           size="icon"
           onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
+          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg"
+        >
           <FileText className="w-5 h-5" />
         </Button>
         <SheetContent side="right" className="w-80 sm:w-96">
@@ -136,7 +137,8 @@ function SideBarForm() {
               <Button
                 type="button"
                 onClick={() => router.push(`${pathName}/code-editor`)}
-                className="cursor-pointer">
+                className="cursor-pointer"
+              >
                 Open Code Editor <Code2 />{" "}
               </Button>
             ) : (
@@ -145,7 +147,8 @@ function SideBarForm() {
                   <Button
                     type="button"
                     disabled={false}
-                    className="opacity-50 cursor-not-allowed">
+                    className="opacity-50 cursor-not-allowed"
+                  >
                     Open Code Editor <Code2 /> <Lock />
                   </Button>
                 </TooltipTrigger>
@@ -181,7 +184,8 @@ function SideBarForm() {
               size="sm"
               onClick={handleSendComment}
               disabled={!comment.trim() || isPending}
-              className="self-end rounded-xl shadow-sm hover:shadow-md transition-all duration-200">
+              className="self-end rounded-xl shadow-sm hover:shadow-md transition-all duration-200"
+            >
               <Send className="h-4 w-4" />
             </Button>
           </div>
@@ -272,8 +276,9 @@ export function CommentCard({
     return (
       <div
         ref={ref}
-        className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors">
-        <Avatar className="h-8 w-8 flex-shrink-0">
+        className="flex items-start gap-3 p-3 hover:bg-muted/50 transition-colors"
+      >
+        <Avatar className="h-8 w-8 shrink-0">
           <AvatarImage
             src={comment.owner.image || undefined}
             alt={displayName}
@@ -293,25 +298,27 @@ export function CommentCard({
               <span
                 className={`text-sm font-medium truncate ${
                   isOwner ? "text-primary" : "text-foreground"
-                }`}>
+                }`}
+              >
                 {displayName}
               </span>
               {showRole && comment.owner.role && (
                 <Badge
                   variant="secondary"
                   className={`text-xs px-1.5 py-0.5 ${getColorClass(
-                    comment.owner.role
-                  )}`}>
+                    comment.owner.role,
+                  )}`}
+                >
                   {comment.owner.role.toLowerCase()}
                 </Badge>
               )}
             </div>
-            <span className="text-xs text-muted-foreground flex-shrink-0">
+            <span className="text-xs text-muted-foreground shrink-0">
               {formatDate(createdAt)}
             </span>
           </div>
 
-          <p className="text-sm text-muted-foreground break-words w-40">
+          <p className="text-sm text-muted-foreground wrap-break-words w-40">
             {comment.content}
           </p>
         </div>
@@ -322,8 +329,9 @@ export function CommentCard({
   return (
     <div
       ref={ref}
-      className="flex items-start gap-4 p-4 border-b border-border/50 last:border-b-0">
-      <Avatar className="h-10 w-10 flex-shrink-0">
+      className="flex items-start gap-4 p-4 border-b border-border/50 last:border-b-0"
+    >
+      <Avatar className="h-10 w-10 shrink-0">
         <AvatarImage src={comment.owner.image || undefined} alt={displayName} />
         <AvatarFallback>
           {comment.owner.name ? (
@@ -340,13 +348,15 @@ export function CommentCard({
             <span
               className={`font-medium ${
                 isOwner ? "text-primary" : "text-foreground"
-              }`}>
+              }`}
+            >
               {displayName}
             </span>
             {showRole && comment.owner.role && (
               <Badge
                 variant="secondary"
-                className={`text-xs ${getColorClass(comment.owner.role)}`}>
+                className={`text-xs ${getColorClass(comment.owner.role)}`}
+              >
                 {comment.owner.role.toLowerCase()}
               </Badge>
             )}
@@ -356,7 +366,7 @@ export function CommentCard({
           </span>
         </div>
 
-        <p className="text-sm text-muted-foreground break-words w-52  lg:w-96">
+        <p className="text-sm text-muted-foreground wrap-break-word w-52  lg:w-96">
           {comment.content}
         </p>
       </div>

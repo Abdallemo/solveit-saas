@@ -16,7 +16,6 @@ export function useAutoSave<T extends any[], RT>({
   delay = 2000,
   disabled = false,
 }: UseAutoSaveProps<T, RT>) {
-  
   const latestArgsRef = useRef(autoSaveArgs);
 
   useEffect(() => {
@@ -27,25 +26,45 @@ export function useAutoSave<T extends any[], RT>({
     () =>
       lodashDebounce(() => {
         const currentArgs = latestArgsRef.current;
-        
+
         const isValidArgs = currentArgs.every(
-          (arg) => arg !== undefined && arg !== null
+          (arg) => arg !== undefined && arg !== null,
         );
 
         if (!isValidArgs) return;
 
         autoSaveFn(...currentArgs);
       }, delay),
-    [delay, autoSaveFn]
+    [delay, autoSaveFn],
   );
 
   useEffect(() => {
     if (!disabled) {
       debouncedSave();
     }
-    
+
     return () => {
       debouncedSave.cancel();
     };
   }, [autoSaveArgs, debouncedSave, disabled]);
+}
+
+export function useDebouncedCallback<T extends (...args: any[]) => any>(
+  callback: T,
+  delay: number,
+  dependencies: any[],
+) {
+  const debouncedFn = useMemo(
+    () => lodashDebounce(callback, delay),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [delay, ...dependencies],
+  );
+
+  useEffect(() => {
+    return () => {
+      debouncedFn.cancel();
+    };
+  }, [debouncedFn]);
+
+  return debouncedFn;
 }

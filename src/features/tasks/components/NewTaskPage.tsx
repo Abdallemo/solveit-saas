@@ -25,15 +25,14 @@ import {
   taskSchema,
 } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { useAutoSave } from "@/hooks/useAutoDraftSave";
+import { useAutoSave, useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Editor } from "@tiptap/react";
-import { debounce } from "lodash";
 import { CircleAlert } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
 import PostingEditor from "./richTextEdito/BlogTiptap";
@@ -44,7 +43,7 @@ export default function TaskCreationPage({
 }: {
   defaultValues: TaskSchema;
 }) {
-  const { draft, updateDraft,filePreview,setFilePreview } = NewuseTask(); //new Migrations
+  const { draft, updateDraft, filePreview, setFilePreview } = NewuseTask(); //new Migrations
   const {
     category,
     content,
@@ -83,7 +82,7 @@ export default function TaskCreationPage({
       onError: (er) => {
         toast.error(er.message);
       },
-    }
+    },
   );
   async function handleSugestions() {
     toast.loading("Ai Suggesting...", { id: "autosuggestion" });
@@ -112,26 +111,6 @@ export default function TaskCreationPage({
     defaultValues,
   });
 
-  useEffect(() => {
-    form.reset({
-      title,
-      description,
-      content,
-      deadline,
-      visibility,
-      category,
-      price,
-    });
-  }, [
-    form,
-    title,
-    description,
-    content,
-    deadline,
-    visibility,
-    category,
-    price,
-  ]);
   useAutoSave({
     autoSaveFn: saveDraftTask,
     autoSaveArgs: [
@@ -146,37 +125,32 @@ export default function TaskCreationPage({
       deadline,
       uploadedFiles,
     ],
-    delay: 700,
+    delay: 250,
   });
 
-  const handleEditorChange = useMemo(
-    () =>
-      debounce((editor: Editor) => {
-        if (!editor) return;
-        const jsonContent = editor.getJSON();
-        const textContent = editor.getText({
-          textSerializers: CustomeTextSerializersForAi,
-        });
+  const handleEditorChange = useDebouncedCallback(
+    (editor: Editor) => {
+      if (!editor) return;
+      const jsonContent = editor.getJSON();
+      const textContent = editor.getText({
+        textSerializers: CustomeTextSerializersForAi,
+      });
 
-        form.setValue("content", jsonContent, {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        });
-        updateDraft({
-          content: jsonContent,
-          contentText: textContent,
-        });
+      form.setValue("content", jsonContent, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
+      updateDraft({
+        content: jsonContent,
+        contentText: textContent,
+      });
 
-        console.log("Debounced Update Triggered");
-      }, 500),
-    [updateDraft, form]
+      console.log("Debounced Update Triggered");
+    },
+    200,
+    [updateDraft, form],
   );
-  useEffect(() => {
-    return () => {
-      handleEditorChange.cancel();
-    };
-  }, [handleEditorChange]);
 
   if (authLoading) return <Loading />;
   if (isBlocked) return <AuthGate />;
@@ -197,7 +171,7 @@ export default function TaskCreationPage({
             </span>
           </div>,
 
-          { id: "openai" }
+          { id: "openai" },
         );
         return;
       }
@@ -213,7 +187,7 @@ export default function TaskCreationPage({
         price,
         visibility,
         deadline,
-        uploadedFiles
+        uploadedFiles,
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({
@@ -238,19 +212,27 @@ export default function TaskCreationPage({
   }
   return (
     <div className="h-full bg-background flex flex-col">
-            <MediaPreviewer
-              fileRecords={draft.uploadedFiles || []}
-              filePreview={filePreview}
-              onClose={() => setFilePreview(null)}
-            />
-      
+      <MediaPreviewer
+        fileRecords={draft.uploadedFiles || []}
+        filePreview={filePreview}
+        onClose={() => setFilePreview(null)}
+      />
+
       <header className="border-b p-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Post a Task</h1>
+        <div className="">
+          <h1 className="text-2xl font-semibold">Post a Task</h1>
+          <p className="text-sm text-muted-foreground">
+            Describe the task clearly so students can understand and solve it
+            effectively.
+          </p>
+        </div>
+
         <Button
           type="submit"
           form="task-form"
           disabled={isDisabled || isPending || isAutoSeggesting}
-          className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+          className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]"
+        >
           Publish Task
         </Button>
       </header>
@@ -259,15 +241,9 @@ export default function TaskCreationPage({
         <form
           onSubmit={form.handleSubmit(onSubmit, onError)}
           id="task-form"
-          className="flex flex-col flex-1 overflow-hidden">
-          <div className="p-4 pb-2">
-            <p className="text-sm text-muted-foreground">
-              Describe the task clearly so students can understand and solve it
-              effectively.
-            </p>
-          </div>
-
-          <div className="flex flex-1 overflow-hidden">
+          className="flex flex-col flex-1 "
+        >
+          <div className="flex h-full">
             <div className="flex-1 border-r flex flex-col min-w-0">
               <div className="flex-1 overflow-y-auto overflow-x-auto">
                 <div className="px-6 py-6 min-w-fit">

@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewuseTask } from "@/contexts/TaskContext";
 import { env } from "@/env/client";
+
 import { saveDraftTask } from "@/features/tasks/server/action";
 import {
   useDeleteFileGeneric,
@@ -15,7 +16,6 @@ import { cn } from "@/lib/utils/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import type { UploadedFileMeta } from "../server/media-types";
 import { FileChatCardComps } from "./FileHelpers";
 
 interface FileUploadUiProps {
@@ -24,7 +24,7 @@ interface FileUploadUiProps {
 }
 
 export default function FileUploadUi({ className }: FileUploadUiProps) {
-  const { updateDraft, draft,setFilePreview } = NewuseTask();
+  const { updateDraft, draft, setFilePreview } = NewuseTask();
   const inputRef = useRef<HTMLInputElement>(null);
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
@@ -49,44 +49,40 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
   const handleFiles = async (newFiles: FileList | null) => {
     if (!newFiles) return;
     const fileArray = Array.from(newFiles);
-    const uploadedMetas: UploadedFileMeta[] = [];
+
     setUploadingFiles(() => [...fileArray]);
 
-    for (const file of fileArray) {
-      try {
-        toast.loading("Uploading...", { id: "file-upload" });
-        const [uploadedMeta] = await uploadMutate({
-          files: [file],
-          scope: "task",
-          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
-        });
+    try {
+      const uploadedMeta = await uploadMutate({
+        files: fileArray,
+        scope: "task",
+        url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+      });
 
-        uploadedMetas.push(uploadedMeta);
-
-        setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
-      } catch (err) {
-        console.error(err);
-        toast.error(`Failed to upload ${file.name}`);
-      }
+      const newUploadedFiles = [
+        ...(draft.uploadedFiles || []),
+        ...uploadedMeta,
+      ];
+      updateDraft({ uploadedFiles: newUploadedFiles });
+      await saveDraftTask(
+        title,
+        description,
+        JSON.stringify(content),
+        contentText,
+        userId,
+        category,
+        price,
+        visibility,
+        deadline,
+        newUploadedFiles,
+      );
+    } catch (err) {
+      console.error(err);
+      setUploadingFiles(() => []);
+    } finally {
+      inputRef.current!.value = "";
+      setUploadingFiles([]);
     }
-    const newUploadedFiles = [...(draft.uploadedFiles || []), ...uploadedMetas];
-    updateDraft({ uploadedFiles: newUploadedFiles });
-
-    await saveDraftTask(
-      title,
-      description,
-      JSON.stringify(content),
-      contentText,
-      userId,
-      category,
-      price,
-      visibility,
-      deadline,
-      newUploadedFiles
-    );
-
-    inputRef.current!.value = "";
-    setUploadingFiles([]);
   };
 
   const handleFileDelete = async (filePath: string) => {
@@ -95,7 +91,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
         filePath,
       });
       const filtered = (draft.uploadedFiles || []).filter(
-        (f) => f.filePath !== filePath
+        (f) => f.filePath !== filePath,
       );
       updateDraft({ uploadedFiles: filtered });
     } catch (err) {
@@ -116,7 +112,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
       <div
         className={cn(
           "border-2 border-dashed rounded-md p-4 text-center",
-          isDragging ? "border-primary bg-primary/5" : "border-muted"
+          isDragging ? "border-primary bg-primary/5" : "border-muted",
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -130,7 +126,8 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
           e.preventDefault();
           setIsDragging(false);
           handleFiles(e.dataTransfer.files);
-        }}>
+        }}
+      >
         <Input
           ref={inputRef}
           type="file"
@@ -145,16 +142,13 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
           <div className="text-sm font-medium">
             Drop files here or click to browse
           </div>
-          <div className="text-xs text-muted-foreground">
-            PDF, DOC, JPG, PNG up to 50MB • {draft.uploadedFiles?.length || 0}{" "}
-            files
-          </div>
           <Button
             type="button"
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => inputRef.current?.click()}>
+            onClick={() => inputRef.current?.click()}
+          >
             Select Files
           </Button>
         </div>
@@ -162,10 +156,10 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
 
       {(uploadingFiles.length > 0 ||
         (draft.uploadedFiles?.length ?? 0) > 0) && (
-        <ScrollArea className="flex-1">
-          <div className="space-y-2 h-[200px] overflow-scroll p-2 ">
+        <ScrollArea className="h-40 py-2">
+          <div className="space-y-2 h-40">
             {uploadingFiles.map((file) => (
-              <div key={file.name} className="w-58">
+              <div key={file.name} className="w-full ">
                 <FileChatCardComps
                   key={file.name}
                   loading
@@ -180,7 +174,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
               </div>
             ))}
             {(draft.uploadedFiles || []).map((file) => (
-              <div key={file.filePath} className="w-58">
+              <div key={file.filePath} className="w-full">
                 <FileChatCardComps
                   file={file}
                   action={() =>

@@ -31,6 +31,7 @@ export type NewtaskDraftType = Exclude<
   Awaited<ReturnType<typeof getDraftTaskWithDefualtVal>>,
   null
 >;
+export type PartialTaskDraft = Partial<NewtaskDraftType>;
 export type taskDraftType = Exclude<
   Awaited<ReturnType<typeof getDraftTask>>,
   null
@@ -160,7 +161,7 @@ const content = z
     },
     {
       message: `Task content is too short. Please provide at least ${MIN_CONTENT_LENGTH} characters.`,
-    }
+    },
   )
   .transform((val) => val as JSONContent);
 export const taskSchema = z
@@ -181,5 +182,3 @@ export type Units = "h" | "d" | "w" | "m" | "y";
 export type dataOptions = {
   useCache?: boolean;
 };
-
-

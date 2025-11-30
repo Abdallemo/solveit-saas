@@ -28,8 +28,12 @@ import { NewuseTask } from "@/contexts/TaskContext";
 import FileUploadUi from "@/features/media/components/FileUploadUi";
 import { CategoryComps } from "@/features/tasks/components/CategorySelectWrapper";
 import { getAllTaskDeadlines } from "@/features/tasks/server/data";
-import { TaskSchema } from "@/features/tasks/server/task-types";
+import {
+  PartialTaskDraft,
+  TaskSchema,
+} from "@/features/tasks/server/task-types";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import { useQuery } from "@tanstack/react-query";
 import { FileText, Loader2, Wand2 } from "lucide-react";
 import { useFormContext } from "react-hook-form";
@@ -55,9 +59,10 @@ export default function NewTaskSidebar({
       <Sheet open={open} onOpenChange={setOpen}>
         <Button
           type="button"
-          size="icon"
+          size="lg"
           onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg">
+          className="fixed bottom-4 right-4 z-50 bg-sidebar hover:bg-background text-foreground cursor-pointer rounded-full shadow-lg"
+        >
           <FileText className="w-5 h-5" />
         </Button>
         <SheetContent side="right" className="w-80 sm:w-96">
@@ -68,7 +73,8 @@ export default function NewTaskSidebar({
               className="text-xs"
               type="button"
               variant={"outline"}
-              onClick={handleSugestions}>
+              onClick={handleSugestions}
+            >
               {" "}
               {isPending ? (
                 <Loader2 className=" size-4 animate-spin" />
@@ -86,7 +92,7 @@ export default function NewTaskSidebar({
     );
 
   return (
-    <div className="w-80 border-l bg-muted/20  flex flex-col ">
+    <div className="w-80 border-l bg-muted/20  flex flex-col h-full">
       <div className="p-4 border-b bg-background flex justify-between items-center">
         <h2 className="text-lg">Task Details</h2>
         <Button
@@ -94,7 +100,8 @@ export default function NewTaskSidebar({
           type="button"
           disabled={isPending || isDisabled}
           variant={"outline"}
-          onClick={handleSugestions}>
+          onClick={handleSugestions}
+        >
           {" "}
           {isPending ? <Loader2 className=" size-4 animate-spin" /> : <Wand2 />}
           Auto Suggest with Ai{" "}
@@ -115,8 +122,17 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
     queryFn: async () => await getAllTaskDeadlines(),
   });
   const form = useFormContext<TaskSchema>();
+
+  const debouncedUpdateDraft = useDebouncedCallback(
+    (updates: PartialTaskDraft) => {
+      updateDraft(updates);
+    },
+    200,
+    [updateDraft],
+  );
+
   return (
-    <div className="px-5 py-3 mb-3 flex flex-col gap-2 ">
+    <div className="px-5 py-3 mb-3 flex flex-col gap-2 overflow-x-auto">
       <FormField
         control={form.control}
         name="title"
@@ -132,10 +148,9 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
                   className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                   placeholder="Task Title"
                   {...field}
-                  value={title}
                   onChange={(e) => {
                     field.onChange(e.target.value);
-                    updateDraft({ title: e.target.value });
+                    debouncedUpdateDraft({ title: e.target.value });
                   }}
                 />
                 {isPending && (
@@ -162,11 +177,9 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
                   className="h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground shadow-sm placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50 resize-none"
                   placeholder="Task Description"
                   {...field}
-                  value={description}
                   onChange={(e) => {
-                    updateDraft({ description: e.target.value });
-
                     field.onChange(e.target.value);
+                    debouncedUpdateDraft({ description: e.target.value });
                   }}
                 />
                 {isPending && (
@@ -190,8 +203,9 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
               disabled={isLoading}
               onValueChange={(val) => {
                 field.onChange(val);
-                updateDraft({ deadline: val });
-              }}>
+                debouncedUpdateDraft({ deadline: val });
+              }}
+            >
               <FormControl>
                 <SelectTrigger className=" w-full">
                   <SelectValue placeholder="Select task deadline" />
@@ -204,7 +218,8 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
                     <SelectItem
                       key={de.id}
                       value={de.deadline}
-                      className="text-white">
+                      className="text-white"
+                    >
                       {de.deadline}
                     </SelectItem>
                   ))}
@@ -226,8 +241,11 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
               value={field.value}
               onValueChange={(val) => {
                 field.onChange(val);
-                updateDraft({ visibility: val as "public" | "private" });
-              }}>
+                debouncedUpdateDraft({
+                  visibility: val as "public" | "private",
+                });
+              }}
+            >
               <FormControl>
                 <SelectTrigger className=" w-full">
                   <SelectValue placeholder="Choose task visibility" />
@@ -253,7 +271,10 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
               <div className="relative">
                 <CategoryComps
                   value={field.value}
-                  onChange={field.onChange}
+                  onChange={(val) => {
+                    field.onChange(val);
+                    debouncedUpdateDraft({ category: val });
+                  }}
                   isPending={isPending}
                 />
                 {isPending && (
@@ -281,9 +302,9 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
                   placeholder="Enter price"
                   {...field}
                   onChange={(e) => {
-                    const val = Number(e.target.value);
-                    field.onChange(val);
-                    updateDraft({ price: val });
+                    const price = Number(e.target.value);
+                    field.onChange(price);
+                    debouncedUpdateDraft({ price });
                   }}
                 />
                 {isPending && (
@@ -299,11 +320,11 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
       <Separator />
 
       <div className="space-y-1 ">
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 ">
           <FileText className="h-4 w-4 text-muted-foreground" />
           <Label>Attachments</Label>
         </div>
-        <FileUploadUi  />
+        <FileUploadUi />
       </div>
     </div>
   );

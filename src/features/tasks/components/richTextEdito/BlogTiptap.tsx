@@ -38,7 +38,7 @@ export default function PostingEditor({
   });
   const { mutateAsync: deleteFile } = useDeleteFileGeneric("generic");
   const myMediaUploadFunction = async (
-    file: File
+    file: File,
   ): Promise<UploadedFileMeta> => {
     const res = await uploadMutate({
       files: [file],
@@ -74,7 +74,7 @@ export default function PostingEditor({
     },
   });
   return (
-    <div className="border rounded-md flex flex-col h-[600px] md:h-[700px] lg:h-[700px] overflow-auto">
+    <div className="border rounded-md flex flex-col h-[690px] md:h-[700px] lg:h-[780px] overflow-auto">
       {showMenuBar && (
         <MenuBar editor={editor} disabled={!editorOptions.editable} />
       )}
