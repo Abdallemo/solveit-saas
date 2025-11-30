@@ -105,7 +105,7 @@ export async function ManageUserCreditCardPortal() {
 }
 
 export async function getPaymentByPaymentIntentId(
-  stripePaymentIntentId: string
+  stripePaymentIntentId: string,
 ) {
   return await db.query.PaymentTable.findFirst({
     where: (tb, fn) => fn.eq(tb.stripePaymentIntentId, stripePaymentIntentId),
@@ -140,7 +140,7 @@ export async function handlerStripeConnect() {
     env.NEXTAUTH_URL
   }/dashboard/${user.role?.toLocaleLowerCase()}/billings?user=${user.id}`;
   console.log(
-    `trying to account link for user with account id : ${user.stripeAccountId} and url :${urlprix}`
+    `trying to account link for user with account id : ${user.stripeAccountId} and url :${urlprix}`,
   );
   const session = await stripe.accountLinks.create({
     account: user.stripeAccountId!,
@@ -154,7 +154,7 @@ export async function handlerStripeConnect() {
 }
 export async function CreateUserStripeConnectAccount(
   values: OnboardingFormData,
-  user: UserDbType
+  user: UserDbType,
 ) {
   const account = await stripe.accounts.create({
     type: "standard",
@@ -213,7 +213,7 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
 
     if (dob > maxDate || dob < minDate) {
       throw new Error(
-        "You must be at least 13 years of age to use the platform and receive funds"
+        "You must be at least 13 years of age to use the platform and receive funds",
       );
     }
     await CreateUserStripeConnectAccount({ ...values, dob }, user); //==> synchronous job
@@ -322,13 +322,13 @@ export async function completeRefund(refundId: string) {
       .system({
         receiverId: refund.taskRefund?.posterId!,
         subject: "Refund Processed",
-        content: `Your refund for the dispute with ID ${refund.id} has been successfully processed. 
+        content: `Your refund for the dispute with ID ${refund.id} has been successfully processed.
       The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       })
       .email({
         receiverEmail: refund.taskRefund?.poster.email!,
         subject: "Refund Processed",
-        content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>. 
+        content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>.
       The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
       });
     return {
@@ -593,8 +593,8 @@ export async function rejectRefund(refundId: string) {
         .where(
           and(
             eq(BlockedTasksTable.taskId, refund.taskId!),
-            eq(BlockedTasksTable.userId, refund.taskRefund?.solverId!)
-          )
+            eq(BlockedTasksTable.userId, refund.taskRefund?.solverId!),
+          ),
         );
       await dx
         .update(TaskTable)
@@ -605,7 +605,7 @@ export async function rejectRefund(refundId: string) {
     Notifier()
       .system({
         subject: "Dispute Resolved",
-        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.  
+        content: `Good news! The refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.
         The payment for your completed work has been released to your account. Thank you for your contribution!`,
         receiverId: refund.taskRefund.solverId!,
       })
@@ -618,7 +618,7 @@ export async function rejectRefund(refundId: string) {
     Notifier()
       .system({
         subject: "Dispute Resolution Finalized",
-        content: `Bad news! Your refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator. 
+        content: `Bad news! Your refund request for Task ID ${refund.taskRefund.id} has been rejected by the moderator.
       The payment for the completed task has been released to the Solver's account. Thank you for your patience during this process!`,
         receiverId: refund.taskRefund.posterId!,
       })
@@ -678,6 +678,9 @@ export async function requestWithdraw() {
       currency: "myr",
       destination: user.stripeAccountId,
     });
+    // db.transaction(async (dx) => {
+    //   await dx.update(PaymentTable).set({status:"RELEASED"})
+    // });
     return {
       error: null,
       success: "withdrawal request submitted successfully",

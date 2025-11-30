@@ -2,12 +2,30 @@ package middleware
 
 import (
 	"errors"
+	"github/abdallemo/solveit-saas/internal/utils"
 	"net/http"
 	"os"
 	"strings"
+
+	"github.com/rs/cors"
 )
 
 type Middleware func(http.Handler) http.Handler
+
+var CoresOptions = cors.Options{
+	AllowedOrigins:   []string{utils.GetenvWithDefault("NEXTAUTH_URL", "http://localhost:3000")},
+	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+	AllowCredentials: true,
+	MaxAge:           5 * 60,
+}
+
+func CORS() Middleware {
+	c := cors.New(CoresOptions)
+	return func(next http.Handler) http.Handler {
+		return c.Handler(next)
+	}
+}
 
 func CreateStack(xs ...Middleware) Middleware {
 	return func(next http.Handler) http.Handler {

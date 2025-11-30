@@ -32,6 +32,14 @@ type DeleteKey struct {
 type JSONError struct {
 	Message string `json:"message"`
 }
+type failedFileError struct {
+	File  FileMeta `json:"file"`
+	Error string   `json:"error"`
+}
+type uploadResp struct {
+	FailedFiles   []failedFileError `json:"failed_files"`
+	UploadedFiles []FileMeta        `json:"uploaded_files"`
+}
 
 func sendHTTPError(w http.ResponseWriter, message string, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
@@ -65,6 +73,7 @@ func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
+	response := uploadResp{}
 	err := r.ParseMultipartForm(32 << 20)
 	if err != nil {
 		sendHTTPError(w, "Unable to parse form", http.StatusBadRequest)
@@ -74,17 +83,37 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	files := r.MultipartForm.File["files"]
 	scope := r.FormValue("scope")
 	var uploadedFiles []FileMeta
+	failedFiles := []failedFileError{}
 	id := uuid.New()
 
 	for _, fileHeader := range files {
 		if fileHeader.Size >= 50<<20 {
-			sendHTTPError(w, "Exceeded server limit (50MB)", http.StatusBadRequest)
-			return
+			failedFiles = append(failedFiles, failedFileError{
+				File: FileMeta{
+					FileName:        fileHeader.Filename,
+					FileType:        fileHeader.Header.Get("Content-Type"),
+					FileSize:        float64(fileHeader.Size),
+					FilePath:        "",
+					StorageLocation: "",
+				},
+				Error: "Exceeded server limit (50MB)",
+			})
+			continue
 		}
 
 		file, err := fileHeader.Open()
 		if err != nil {
 			log.Println("file open error:", err)
+			failedFiles = append(failedFiles, failedFileError{
+				File: FileMeta{
+					FileName:        fileHeader.Filename,
+					FileType:        fileHeader.Header.Get("Content-Type"),
+					FileSize:        float64(fileHeader.Size),
+					FilePath:        "",
+					StorageLocation: "",
+				},
+				Error: fmt.Sprintf("file open error:%s", err),
+			})
 			continue
 		}
 
@@ -100,6 +129,16 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 
 		if err != nil {
 			log.Println("upload error:", err)
+			failedFiles = append(failedFiles, failedFileError{
+				File: FileMeta{
+					FileName:        fileHeader.Filename,
+					FileType:        fileHeader.Header.Get("Content-Type"),
+					FileSize:        float64(fileHeader.Size),
+					FilePath:        "",
+					StorageLocation: "",
+				},
+				Error: fmt.Sprintf("upload error::%s", err),
+			})
 			continue
 		}
 
@@ -113,9 +152,20 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 			StorageLocation: publicURL,
 		})
 	}
-
+	response = uploadResp{
+		FailedFiles:   failedFiles,
+		UploadedFiles: uploadedFiles,
+	}
+	if len(uploadedFiles) == 0 && len(failedFiles) > 0 {
+		w.WriteHeader(http.StatusMultiStatus)
+	} else if len(failedFiles) > 0 {
+		w.WriteHeader(http.StatusMultiStatus)
+	} else {
+		w.WriteHeader(http.StatusOK)
+	}
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(uploadedFiles)
+
+	json.NewEncoder(w).Encode(response)
 }
 
 func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {

@@ -19,9 +19,15 @@
       }
     ],
     "paths": {
-      "@/*": ["./src/*","./*"]
+      "@/*": ["./src/*", "./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts","types/next-auth.d.ts"],
-  "exclude": ["node_modules","server",".next"]
+  "include": [
+    "next-env.d.ts",
+    "src/**/*.ts",
+    "src/**/*.tsx",
+    "types/**/*.ts",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": ["node_modules", "server", ".next", "schema", "vitest"]
 }

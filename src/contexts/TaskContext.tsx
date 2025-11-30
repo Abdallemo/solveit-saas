@@ -1,6 +1,9 @@
 "use client";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import { NewtaskDraftType } from "@/features/tasks/server/task-types";
+import {
+  NewtaskDraftType,
+  PartialTaskDraft,
+} from "@/features/tasks/server/task-types";
 import {
   createContext,
   Dispatch,
@@ -10,7 +13,6 @@ import {
   useState,
 } from "react";
 
-type Draft = Partial<NewtaskDraftType>;
 const initialType = {
   content: "",
   contentText: "",
@@ -24,7 +26,7 @@ const initialType = {
 };
 type TaskContextType = {
   draft: NewtaskDraftType;
-  updateDraft: (d: Draft) => void;
+  updateDraft: (d: PartialTaskDraft) => void;
   filePreview: UploadedFileMeta | null;
   setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>;
 };
@@ -41,13 +43,14 @@ export const NewTaskProvider = ({
   const [draft, setDraft] = useState(initialDraft ?? initialType);
   const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
 
-  const updateDraft = (updates: Draft) => {
+  const updateDraft = (updates: PartialTaskDraft) => {
     setDraft((prev) => ({ ...prev, ...updates }));
   };
 
   return (
     <NewTaskContext.Provider
-      value={{ filePreview, setFilePreview, draft, updateDraft }}>
+      value={{ filePreview, setFilePreview, draft, updateDraft }}
+    >
       {children}
     </NewTaskContext.Provider>
   );

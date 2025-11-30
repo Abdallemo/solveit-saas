@@ -1,9 +1,10 @@
-import { uploadFiles } from "@/features/media/server/action";
+import { uploadFiles, UploadOptions } from "@/features/media/server/action";
+import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 type FileUploadProps = {
   successMsg?: boolean;
-  onSucessAction?: () => void;
+  onSucessAction?: (data: UploadedFileMeta[], variables: UploadOptions) => void;
 };
 export function useFileUpload({
   onSucessAction,
@@ -15,24 +16,50 @@ export function useFileUpload({
     data: uploadedFilesData,
     error: uploadError,
   } = useMutation({
-    mutationFn: uploadFiles,
+    mutationFn: async (values: UploadOptions) => {
+      const { response, error } = await uploadFiles(values);
+      if (error) {
+        throw new Error(error);
+      }
+      if (response.failed_files && response.failed_files.length > 0) {
+        response.failed_files.forEach((failedFile) => {
+          toast.error(
+            `${failedFile.file.fileName} failed : ${failedFile.error}`,
+            { id: failedFile.file.fileName },
+          );
+        });
+      }
+      return response.uploaded_files;
+    },
     onSuccess: onSucessAction
-      ? () => onSucessAction()
-      : () => {
-          if (successMsg) {
-            toast.success("Files uploaded successfully!", {
-              id: "file-upload",
-            });
+      ? (data: UploadedFileMeta[], variables: UploadOptions) =>
+          onSucessAction(data, variables)
+      : (uploadedFiles, variables) => {
+          const successFiles = uploadedFiles ? uploadedFiles.length : 0;
+          const failedCount = variables.files.length - successFiles;
+
+          if (successMsg && uploadedFiles && uploadedFiles.length > 0) {
+            toast.success(
+              `${uploadedFiles.length} uploaded / ${failedCount} failed`,
+              {
+                id: "file-upload",
+              },
+            );
           }
         },
     onError: (error) => {
-      toast.error(`File upload failed: ${error.message}`, {
+      toast.error(`uploaded Process Failed To Start: ${error.message}`, {
         id: "file-upload",
       });
     },
   });
 
-  return { uploadMutate, isUploading, uploadedFilesData, uploadError };
+  return {
+    uploadMutate,
+    isUploading,
+    uploadedFilesData,
+    uploadError,
+  };
 }
 
 type DeleteMediaEndpointScope =
@@ -44,7 +71,7 @@ type DeleteMediaEndpointScope =
 export function useDeleteFileGeneric<
   Args extends Record<string, any> & {
     filePath: string;
-  }
+  },
 >(type: DeleteMediaEndpointScope) {
   return useMutation({
     mutationFn: async (args: Args) => {
@@ -54,7 +81,7 @@ export function useDeleteFileGeneric<
             `/api/media/tasks/draft?key=${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
-            }
+            },
           );
           break;
         case "mentorship_chat":
@@ -62,7 +89,7 @@ export function useDeleteFileGeneric<
             `/api/media/mentorship?key=${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
-            }
+            },
           );
           break;
         case "solution_workspace":
@@ -70,7 +97,7 @@ export function useDeleteFileGeneric<
             `/api/media/solutions?key=${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
-            }
+            },
           );
           break;
         case "task":
@@ -112,7 +139,7 @@ export function useDownloadFile() {
       fileName: string;
     }) => {
       const res = await fetch(
-        `/api/media/download-proxy?key=${encodeURIComponent(key)}`
+        `/api/media/download-proxy?key=${encodeURIComponent(key)}`,
       );
       if (!res.ok) throw new Error("Failed to download file");
 
@@ -162,7 +189,7 @@ export function useFileStream(key: string | null) {
       if (!res.ok) {
         const errorText = await res.text();
         throw new Error(
-          `Failed to fetch file content: ${errorText || res.statusText}`
+          `Failed to fetch file content: ${errorText || res.statusText}`,
         );
       }
       const content = await res.text();

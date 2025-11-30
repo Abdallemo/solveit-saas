@@ -25,7 +25,6 @@ export default function SocialButtons() {
     try {
       await signIn(provider);
     } catch (error) {
-      // Handle error if needed
       console.error(`Error signing in with ${provider}:`, error);
     } finally {
       setPendingProviders((prev) => ({ ...prev, [provider]: false }));
@@ -40,7 +39,8 @@ export default function SocialButtons() {
         className="py-6 flex-1 "
         variant="outline"
         disabled={isPending}
-        onClick={() => handleSignIn(provider)}>
+        onClick={() => handleSignIn(provider)}
+      >
         {isPending && <Loader2 className="h-5 w-5 animate-spin" />}
         {!isPending && icon}
         {provider.charAt(0).toUpperCase() + provider.slice(1)}

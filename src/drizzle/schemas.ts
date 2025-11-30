@@ -1,4 +1,3 @@
-import { relations } from "@/drizzle/relations";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import { Address, Business } from "@/features/users/server/user-types";
@@ -24,6 +23,7 @@ import {
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
+import { relations } from "./relations";
 
 export const UserRole = pgEnum("role", [
   "ADMIN",
@@ -123,7 +123,7 @@ export const UserTable = pgTable(
       .defaultNow()
       .notNull(),
   },
-  (user) => [index("user_role_idx").on(user.role)]
+  (user) => [index("user_role_idx").on(user.role)],
 );
 export const UserDetails = pgTable("user_details", {
   userId: uuid("user_id")
@@ -165,7 +165,7 @@ export const AccountTable = pgTable(
         columns: [account.provider, account.providerAccountId],
       }),
     },
-  ]
+  ],
 );
 
 export const VerificationTokenTable = pgTable(
@@ -185,7 +185,7 @@ export const VerificationTokenTable = pgTable(
         columns: [verificationToken.email, verificationToken.token],
       }),
     },
-  ]
+  ],
 );
 
 export const UserSubscriptionTable = pgTable(
@@ -211,7 +211,7 @@ export const UserSubscriptionTable = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (subscription) => [index("subscription_userId_idx").on(subscription.userId)]
+  (subscription) => [index("subscription_userId_idx").on(subscription.userId)],
 );
 
 export const SolverProfileTable = pgTable("solver_profile", {
@@ -261,7 +261,7 @@ export const PaymentTable = pgTable(
   (payments) => [
     index("payments_userId_idx").on(payments.userId),
     index("payments_status_idx").on(payments.status),
-  ]
+  ],
 );
 
 export const FeedbackTable = pgTable(
@@ -276,7 +276,7 @@ export const FeedbackTable = pgTable(
       .notNull(),
     feedbackType: FeedbackType("feedback_type").notNull(),
     mentorBookingId: uuid("mentor_booking_id").references(
-      () => MentorshipBookingTable.id
+      () => MentorshipBookingTable.id,
     ),
     taskId: uuid("task_id").references(() => TaskTable.id, {
       onDelete: "cascade",
@@ -293,10 +293,10 @@ export const FeedbackTable = pgTable(
   (table) => ({
     feedbackSourceCheck: check(
       "feedback_source_check",
-      sql`(feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR 
-          (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)`
+      sql`(feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR
+          (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)`,
     ),
-  })
+  }),
 );
 
 export const TaskTable = pgTable(
@@ -344,7 +344,7 @@ export const TaskTable = pgTable(
     index("task_solver_idx").on(task.solverId),
     index("task_status_idx").on(task.status),
     index("task_created_idx").on(task.assignedAt),
-  ]
+  ],
 );
 export const BlockedTasksTable = pgTable(
   "blocked_tasks",
@@ -368,7 +368,7 @@ export const BlockedTasksTable = pgTable(
     index("blocked_taskId_idx").on(blokedTask.taskId),
     index("blocked_userId_idx").on(blokedTask.userId),
     uniqueIndex("unique_blocked_task").on(blokedTask.userId, blokedTask.taskId),
-  ]
+  ],
 );
 export const TaskDraftTable = pgTable(
   "task_drafts",
@@ -397,7 +397,7 @@ export const TaskDraftTable = pgTable(
     visibility: TaskVisibility("visibility").default("public").notNull(),
     price: integer("price").default(10).notNull(),
   },
-  (taskDraft) => [index("task_drafts_userId_idx").on(taskDraft.userId)]
+  (taskDraft) => [index("task_drafts_userId_idx").on(taskDraft.userId)],
 );
 
 export const TaskFileTable = pgTable(
@@ -420,7 +420,7 @@ export const TaskFileTable = pgTable(
   (taskFiles) => [
     index("task_files_taskId_idx").on(taskFiles.taskId),
     index("task_files_filePath_idx").on(taskFiles.filePath),
-  ]
+  ],
 );
 export const GlobalMediaFiles = pgTable(
   "global_media_files",
@@ -436,7 +436,7 @@ export const GlobalMediaFiles = pgTable(
       withTimezone: true,
     }).defaultNow(),
   },
-  (mediaFiles) => [index("media_files_filePath_idx").on(mediaFiles.filePath)]
+  (mediaFiles) => [index("media_files_filePath_idx").on(mediaFiles.filePath)],
 );
 
 export const TaskCategoryTable = pgTable("task_categories", {
@@ -456,7 +456,7 @@ export const TaskDeadlineTable = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (taskDeadline) => [index("task_deadline_idx").on(taskDeadline.deadline)]
+  (taskDeadline) => [index("task_deadline_idx").on(taskDeadline.deadline)],
 );
 
 export const RefundTable = pgTable(
@@ -492,7 +492,7 @@ export const RefundTable = pgTable(
     index("refunds_paymentId_idx").on(refunds.paymentId),
     index("refunds_taskId_idx").on(refunds.taskId),
     index("refund_status_idx").on(refunds.refundStatus),
-  ]
+  ],
 );
 
 export const TaskCommentTable = pgTable(
@@ -516,7 +516,7 @@ export const TaskCommentTable = pgTable(
   (taskComments) => [
     index("task_comments_taskId_idx").on(taskComments.taskId),
     index("task_comments_userId_idx").on(taskComments.userId),
-  ]
+  ],
 );
 
 export const WorkspaceTable = pgTable(
@@ -541,7 +541,7 @@ export const WorkspaceTable = pgTable(
   (solutionWorkspaces) => [
     index("solution_workspaces_taskId_idx").on(solutionWorkspaces.taskId),
     index("solution_workspaces_solverId_idx").on(solutionWorkspaces.solverId),
-  ]
+  ],
 );
 
 export const WorkspaceFilesTable = pgTable(
@@ -576,15 +576,15 @@ export const WorkspaceFilesTable = pgTable(
   },
   (solutionWorkspaceFiles) => [
     index("solution_workspace_files_workspaceId_idx").on(
-      solutionWorkspaceFiles.workspaceId
+      solutionWorkspaceFiles.workspaceId,
     ),
     index("solution_workspace_files_uploadedById_idx").on(
-      solutionWorkspaceFiles.uploadedById
+      solutionWorkspaceFiles.uploadedById,
     ),
     index("solution_workspace_files_filePath_idx").on(
-      solutionWorkspaceFiles.filePath
+      solutionWorkspaceFiles.filePath,
     ),
-  ]
+  ],
 );
 
 export const SolutionTable = pgTable(
@@ -612,7 +612,7 @@ export const SolutionTable = pgTable(
   (solutions) => [
     index("solutions_taskId_idx").on(solutions.taskId),
     index("solutions_workspaceId_idx").on(solutions.workspaceId),
-  ]
+  ],
 );
 
 export const SolutionFilesTable = pgTable(
@@ -629,9 +629,9 @@ export const SolutionFilesTable = pgTable(
   (solutionFiles) => [
     index("solution_files_solutionId_idx").on(solutionFiles.solutionId),
     index("solution_files_workspaceFileId_idx").on(
-      solutionFiles.workspaceFileId
+      solutionFiles.workspaceFileId,
     ),
-  ]
+  ],
 );
 export const MentorshipProfileTable = pgTable(
   "mentorship_profiles",
@@ -658,7 +658,7 @@ export const MentorshipProfileTable = pgTable(
   },
   (mentorshipProfiles) => [
     index("mentorship_profiles_userId_idx").on(mentorshipProfiles.userId),
-  ]
+  ],
 );
 export const MentorshipSessionTable = pgTable(
   "mentor_session",
@@ -681,7 +681,7 @@ export const MentorshipSessionTable = pgTable(
   },
   (mentorSession) => [
     index("mentor_session_bookingId_idx").on(mentorSession.bookingId),
-  ]
+  ],
 );
 
 export const MentorshipBookingTable = pgTable(
@@ -712,7 +712,7 @@ export const MentorshipBookingTable = pgTable(
     index("mentorship_bookings_posterId_idx").on(mentorshipBookings.posterId),
     index("mentorship_bookings_paymentId_idx").on(mentorshipBookings.paymentId),
     index("mentorship_bookings_status_idx").on(mentorshipBookings.status),
-  ]
+  ],
 );
 
 export const MentorshipChatTable = pgTable(
@@ -739,7 +739,7 @@ export const MentorshipChatTable = pgTable(
   },
   (mentorshipChats) => [
     index("mentorship_chats_sessionId_idx").on(mentorshipChats.sessionId),
-  ]
+  ],
 );
 
 export const MentorshipChatFilesTable = pgTable(
@@ -765,9 +765,9 @@ export const MentorshipChatFilesTable = pgTable(
   (mentorshipChatFiles) => [
     index("mentorship_chat_files_chatId_idx").on(mentorshipChatFiles.chatId),
     index("mentorship_chat_files_filePath_idx").on(
-      mentorshipChatFiles.filePath
+      mentorshipChatFiles.filePath,
     ),
-  ]
+  ],
 );
 
 export const RulesTable = pgTable("ai_rules", {
@@ -944,7 +944,7 @@ export const TaskCategoryTableRelations = relations(
     category: many(TaskTable, {
       relationName: "category",
     }),
-  })
+  }),
 );
 export const TaskCommentTableRelations = relations(
   TaskCommentTable,
@@ -959,7 +959,7 @@ export const TaskCommentTableRelations = relations(
       references: [TaskTable.id],
       relationName: "taskComments",
     }),
-  })
+  }),
 );
 export const BlockedTasksTableRelation = relations(
   BlockedTasksTable,
@@ -975,7 +975,7 @@ export const BlockedTasksTableRelation = relations(
       fields: [BlockedTasksTable.userId],
       references: [UserTable.id],
     }),
-  })
+  }),
 );
 export const workspaceRelations = relations(
   WorkspaceTable,
@@ -991,7 +991,7 @@ export const workspaceRelations = relations(
       references: [UserTable.id],
     }),
     workspaceFiles: many(WorkspaceFilesTable),
-  })
+  }),
 );
 export const workspaceFilesRelation = relations(
   WorkspaceFilesTable,
@@ -1005,7 +1005,7 @@ export const workspaceFilesRelation = relations(
       references: [SolutionFilesTable.workspaceFileId],
       relationName: "solutionFile",
     }),
-  })
+  }),
 );
 export const TaskFileTableRelation = relations(TaskFileTable, ({ one }) => ({
   taskFiles: one(TaskTable, {
@@ -1026,7 +1026,7 @@ export const SolutionTableRelation = relations(
       references: [TaskTable.id],
       relationName: "taskSolution",
     }),
-  })
+  }),
 );
 export const SolutionFilesTableRelations = relations(
   SolutionFilesTable,
@@ -1041,7 +1041,7 @@ export const SolutionFilesTableRelations = relations(
       references: [WorkspaceFilesTable.id],
       relationName: "solutionFile",
     }),
-  })
+  }),
 );
 export const RefundTableRelation = relations(RefundTable, ({ one, many }) => ({
   taskRefund: one(TaskTable, {
@@ -1064,7 +1064,7 @@ export const PaymentTableRelation = relations(
       references: [UserTable.id],
       relationName: "payer",
     }),
-  })
+  }),
 );
 export const MentorshipProfileRelations = relations(
   MentorshipProfileTable,
@@ -1077,7 +1077,7 @@ export const MentorshipProfileRelations = relations(
       references: [UserTable.id],
       relationName: "mentorSystemDetail",
     }),
-  })
+  }),
 );
 
 export const MentorshipBookingRelations = relations(
@@ -1095,7 +1095,7 @@ export const MentorshipBookingRelations = relations(
     bookedSessions: many(MentorshipSessionTable, {
       relationName: "bookedSessions",
     }),
-  })
+  }),
 );
 
 export const MentorshipSessionRelations = relations(
@@ -1109,7 +1109,7 @@ export const MentorshipSessionRelations = relations(
     chats: many(MentorshipChatTable, {
       relationName: "chat",
     }),
-  })
+  }),
 );
 export const MentorshipChatTableRelations = relations(
   MentorshipChatTable,
@@ -1127,7 +1127,7 @@ export const MentorshipChatTableRelations = relations(
       references: [UserTable.id],
       relationName: "chatOwner",
     }),
-  })
+  }),
 );
 export const MentorshipChatFilesTableRelations = relations(
   MentorshipChatFilesTable,
@@ -1137,5 +1137,5 @@ export const MentorshipChatFilesTableRelations = relations(
       references: [MentorshipChatTable.id],
       relationName: "chatFiles",
     }),
-  })
+  }),
 );

@@ -1,6 +1,7 @@
 "use server";
 import db from "@/drizzle/db";
 import { UserDetails } from "@/drizzle/schemas";
+import { Notifier } from "@/features/notifications/server/notifier";
 import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
 import {
   CreateUser,
@@ -12,13 +13,13 @@ import {
 } from "@/features/users/server/actions";
 import { auth, signIn, signOut } from "@/lib/auth";
 import { DEFAULTREVALIDATEDURATION, withCache } from "@/lib/cache";
-import { sendVerificationEmail } from "@/lib/nodemailer";
 import bcrypt from "bcryptjs";
 import { AuthError, Session } from "next-auth";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 import { UserRole } from "../../../../types/next-auth";
+import { getVerificationEmailBody } from "../register/components/emailVerificationMessage";
 import {
   loginFormSchema,
   loginInferedTypes,
@@ -44,7 +45,7 @@ type EmailResponeActionType = Promise<{
 }>;
 
 export async function EmailSignInAction(
-  values: loginInferedTypes
+  values: loginInferedTypes,
 ): EmailResponeActionType {
   const validateValues = loginFormSchema.safeParse(values);
   if (!validateValues.success) return { error: "" };
@@ -59,7 +60,7 @@ export async function EmailSignInAction(
     }
     const passwordMacth = await bcrypt.compare(
       password,
-      exsistingUser?.password!
+      exsistingUser?.password!,
     );
 
     if (!passwordMacth) {
@@ -69,14 +70,15 @@ export async function EmailSignInAction(
     if (!exsistingUser?.emailVerified) {
       await generateVerificationToken(exsistingUser?.email);
       const verificationToken = await getVerificationTokenByEmail(
-        exsistingUser.email
+        exsistingUser.email,
       );
 
       if (verificationToken?.token) {
-        await sendVerificationEmail(
-          exsistingUser.email,
-          verificationToken.token
-        );
+        Notifier().email({
+          subject: "Please verify your email address",
+          content: getVerificationEmailBody(verificationToken.token),
+          receiverEmail: exsistingUser.email,
+        });
         return { success: "Confirmation Email Send. please check your mail" };
       }
     }
@@ -97,7 +99,7 @@ export async function EmailSignInAction(
 }
 
 export async function EmailRegisterAction(
-  values: registerInferedTypes
+  values: registerInferedTypes,
 ): EmailResponeActionType {
   const { error, data } = registerFormSchema.safeParse(values);
   if (error) return { error: error.message };
@@ -119,8 +121,11 @@ export async function EmailRegisterAction(
 
     const verificationToken = await generateVerificationToken(email);
 
-    //Todo send email to the user
-    await sendVerificationEmail(email, verificationToken.token!);
+    Notifier().email({
+      subject: "Please verify your email address",
+      content: getVerificationEmailBody(verificationToken.token!),
+      receiverEmail: email,
+    });
   } catch (error) {
     console.log(error);
     return { error: "Something Went Wrong" };
@@ -177,7 +182,7 @@ type verificationTokenReturn =
   | undefined;
 
 export async function verifyVerificationToken(
-  token: string
+  token: string,
 ): Promise<verificationTokenReturn> {
   const exsistingToken = await db.query.VerificationTokenTable.findFirst({
     where: (table, fn) => fn.eq(table.token, token),
@@ -227,12 +232,12 @@ const createFailureAuth = (): UnauthorizedRespType => ({
 
 export async function isAuthorized(
   whichRole: UserRole[],
-  options?: { useCache?: boolean; revalidate?: number; useResponse?: false }
+  options?: { useCache?: boolean; revalidate?: number; useResponse?: false },
 ): Promise<{ user: UserDbType; session: Session }>;
 
 export async function isAuthorized(
   whichRole: UserRole[],
-  options: { useCache?: boolean; revalidate?: number; useResponse: true }
+  options: { useCache?: boolean; revalidate?: number; useResponse: true },
 ): Promise<{
   user: UserDbType | null;
   session: Session | null;
@@ -249,9 +254,8 @@ export async function isAuthorized(
     useCache: true,
     revalidate: DEFAULTREVALIDATEDURATION,
     useResponse: false,
-  }
+  },
 ): Promise<any> {
-
   const redirectOrReturnError = (url: string): UnauthorizedRespType | void => {
     if (options.useResponse) return createFailureAuth();
     return redirect(url);
@@ -262,7 +266,6 @@ export async function isAuthorized(
     if (options.useResponse && errorResult) {
       return { user: null, session: null, Auth: errorResult };
     }
-
   };
 
   const session = await getServerSession();
@@ -288,7 +291,7 @@ export async function isAuthorized(
 
   if (!userDb) {
     return handleFailure(
-      "/api/auth/signout?callbackUrl=/login?error=account_deleted"
+      "/api/auth/signout?callbackUrl=/login?error=account_deleted",
     );
   }
   if (!userDb.emailVerified) {
