@@ -81,7 +81,8 @@ function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
         <AlertDialogFooter>
           <AlertDialogCancel
             disabled={isPending}
-            className={`${isPending ? "cursor-not-allowed" : ""} `}>
+            className={`${isPending ? "cursor-not-allowed" : ""} `}
+          >
             Cancel
           </AlertDialogCancel>
           <AlertDialogAction
@@ -89,7 +90,8 @@ function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
             onClick={handleAccept}
             className={`${
               isPending ? "cursor-not-allowed" : ""
-            } bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 cursor-pointer`}>
+            } bg-emerald-600 text-white hover:bg-emerald-700 focus:ring-emerald-500 cursor-pointer`}
+          >
             Yes, Accept Solution
           </AlertDialogAction>
         </AlertDialogFooter>
@@ -137,13 +139,14 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
           <Button
             onClick={() => setOpen(true)}
             variant="destructive"
-            className="flex items-center space-x-2 ">
+            className="flex items-center space-x-2 "
+          >
             <XCircle className="h-4 w-4" />
             <span>Request Refund</span>
           </Button>
         </AlertDialogTrigger>
         <AlertDialogContent>
-          <form onSubmit={form.handleSubmit(handleRefund)}>
+          <form onSubmit={form.handleSubmit(handleRefund)} className="min-w-0">
             <AlertDialogHeader>
               <AlertDialogTitle>Request a Refund?</AlertDialogTitle>
               <AlertDialogDescription className="text-foreground">
@@ -173,7 +176,8 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
               <Button
                 type="submit"
                 disabled={!isValid || isPending}
-                className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer flex items-center space-x-2 px-4 py-2 rounded">
+                className="bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 cursor-pointer flex items-center space-x-2 px-4 py-2 rounded"
+              >
                 {isPending ? (
                   <>
                     <Loader2 className="animate-spin" />
@@ -283,6 +287,7 @@ export default function SolutionPageComps({
                   content={solution.content!}
                   editorOptions={{ editable: false }}
                   showMenuBar={false}
+                  className="w-full"
                 />
               </Suspense>
             </div>
@@ -342,7 +347,8 @@ export default function SolutionPageComps({
                   <Button
                     className="self-end"
                     onClick={handleSendComment}
-                    disabled={!comment.trim() || isPending}>
+                    disabled={!comment.trim() || isPending}
+                  >
                     <Send className="h-4 w-4" />
                   </Button>
                 </div>

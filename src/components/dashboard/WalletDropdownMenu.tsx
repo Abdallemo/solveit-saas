@@ -7,24 +7,27 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { requestWithdraw } from "@/features/payments/server/action";
 import { getWalletInfo } from "@/features/tasks/server/data";
 import { userSessionType } from "@/features/users/server/user-types";
 import { cn } from "@/lib/utils/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, Info, Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
-import { Skeleton } from "../ui/skeleton";
-import { Tooltip, TooltipContent } from "../ui/tooltip";
 
 export default function WalletDropdownMenu({
   user,
 }: {
   user: userSessionType;
 }) {
-  const { data, isFetching } = useQuery({
-    queryKey: ["wallet", user?.id],
+  const queryClient = useQueryClient();
+
+  const queryKey = ["wallet", user?.id];
+  const { data, isPending } = useQuery({
+    queryKey,
     queryFn: () => getWalletInfo(user?.id!),
     staleTime: 0,
     gcTime: 0,
@@ -32,6 +35,11 @@ export default function WalletDropdownMenu({
     refetchOnMount: "always",
     enabled: !!user.id,
   });
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
+      queryClient.invalidateQueries({ queryKey: queryKey });
+    }
+  };
   const { mutateAsync: WithdrawAction, isPending: isWithdrawing } = useMutation(
     {
       mutationFn: requestWithdraw,
@@ -43,23 +51,31 @@ export default function WalletDropdownMenu({
           toast.success(success, { id: "withdraw" });
         }
       },
-    }
+    },
   );
   const handleWithdraw = async () => {
     try {
       await WithdrawAction();
     } catch (error) {}
   };
+
+  const MoneyLoading = () => (
+    <div className="flex gap-2 items-center">
+      <span>RM</span>
+      <Skeleton className="h-3 w-7" />
+    </div>
+  );
   return (
-    <DropdownMenu>
+    <DropdownMenu onOpenChange={handleOpenChange}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           className={cn(
             "relative h-9 w-9 rounded-full transition-colors",
             "hover:bg-accent hover:text-accent-foreground",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          )}>
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        >
           <Wallet className="h-4 w-4" />
         </Button>
       </DropdownMenuTrigger>
@@ -77,11 +93,7 @@ export default function WalletDropdownMenu({
                 <div className="h-1.5 w-1.5 rounded-full bg-amber-500" />
               </div>
               <div className="text-lg font-semibold">
-                {isFetching ? (
-                  <Skeleton className="h-2 w-2" />
-                ) : (
-                  <>RM{data?.pending}</>
-                )}
+                {isPending ? <MoneyLoading /> : <>RM{data?.pending}</>}
               </div>
               <div className="flex items-start gap-1.5 text-xs text-muted-foreground">
                 <Info className="h-3 w-3 mt-0.5 shrink-0" />
@@ -97,18 +109,15 @@ export default function WalletDropdownMenu({
                 <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
               </div>
               <div className="text-lg font-semibold text-green-600">
-                {isFetching ? (
-                  <Skeleton className="h-2 w-2" />
-                ) : (
-                  <>RM{data?.available}</>
-                )}
+                {isPending ? <MoneyLoading /> : <>RM{data?.available}</>}
               </div>
               <Tooltip>
                 {data?.available! <= 20 && (
                   <TooltipContent
                     align="end"
                     alignOffset={20}
-                    className="bg-primary">
+                    className="bg-primary"
+                  >
                     you can only withdraw more then RM20
                   </TooltipContent>
                 )}
@@ -121,7 +130,8 @@ export default function WalletDropdownMenu({
                       onClick={async () => {
                         await handleWithdraw();
                       }}
-                      disabled={data?.available! < 30 || isWithdrawing}>
+                      disabled={data?.available! < 30 || isWithdrawing}
+                    >
                       {isWithdrawing ? (
                         <Loader2 className="h-3 w-3 mr-1 animate-spin" />
                       ) : (

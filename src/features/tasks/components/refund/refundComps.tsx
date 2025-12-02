@@ -91,6 +91,13 @@ function NewRefundColumns({
     {
       accessorKey: "refundReason",
       header: "Refund Reason",
+      cell: ({ row }) => {
+        return (
+          <p className="wrap-break-word truncate max-w-60">
+            {row.getValue("refundReason")}
+          </p>
+        );
+      },
     },
     {
       accessorKey: "refundStatus",
@@ -118,9 +125,8 @@ function NewRefundColumns({
         return (
           <Button
             variant={"ghost"}
-            onClick={() =>
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }>
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Refunded At <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -134,7 +140,7 @@ function NewRefundColumns({
             month: "2-digit",
             minute: "2-digit",
             year: "numeric",
-          }
+          },
         );
       },
     },
@@ -144,9 +150,8 @@ function NewRefundColumns({
         return (
           <Button
             variant={"ghost"}
-            onClick={() =>
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }>
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Created At <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -160,7 +165,7 @@ function NewRefundColumns({
             month: "2-digit",
             minute: "2-digit",
             year: "numeric",
-          }
+          },
         );
       },
     },
@@ -176,7 +181,8 @@ function NewRefundColumns({
         return (
           <DropdownMenu
             open={isOpen}
-            onOpenChange={(open) => setOpenRowId(open ? dispute.id : null)}>
+            onOpenChange={(open) => setOpenRowId(open ? dispute.id : null)}
+          >
             <DropdownMenuTrigger asChild>
               <Button variant="ghost" className="h-8 w-8 p-0">
                 <span className="sr-only">Open menu</span>
@@ -192,7 +198,8 @@ function NewRefundColumns({
                   navigator.clipboard.writeText(dispute.id);
                   toast.info("Copied to clipboard");
                   setOpenRowId(null);
-                }}>
+                }}
+              >
                 Copy Dispute ID
               </DropdownMenuItem>
 
@@ -203,7 +210,8 @@ function NewRefundColumns({
                     await handleDispute(dispute).finally(() => {
                       setOpenRowId(null);
                     });
-                  }}>
+                  }}
+                >
                   Resolve Dispute
                   {isPending && (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -303,7 +311,8 @@ export function RefundTable({ data }: RefundTableProps) {
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(!!value)
-                    }>
+                    }
+                  >
                     {column.id}
                   </DropdownMenuCheckboxItem>
                 );
@@ -322,7 +331,7 @@ export function RefundTable({ data }: RefundTableProps) {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -334,12 +343,13 @@ export function RefundTable({ data }: RefundTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}>
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -349,7 +359,8 @@ export function RefundTable({ data }: RefundTableProps) {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center">
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -362,14 +373,16 @@ export function RefundTable({ data }: RefundTableProps) {
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}>
+          disabled={!table.getCanPreviousPage()}
+        >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}>
+          disabled={!table.getCanNextPage()}
+        >
           Next
         </Button>
       </div>

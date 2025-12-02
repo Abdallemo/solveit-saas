@@ -60,6 +60,10 @@ export default function TaskCreationPage({
   const [isDisabled, setIsDisabled] = useState(true);
   const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
+  const form = useForm({
+    resolver: zodResolver(taskSchema),
+    defaultValues,
+  });
 
   const { mutateAsync: validateContent, isPending } = useMutation({
     mutationFn: validateContentWithAi,
@@ -91,11 +95,18 @@ export default function TaskCreationPage({
     }).finally(() => {
       toast.dismiss("autosuggestion");
     });
+
     updateDraft({
       category: res.category,
       description: res.description,
       price: res.price,
       title: res.title,
+    });
+    form.reset({
+      title: res.title,
+      description: res.description,
+      category: res.category,
+      price: res.price,
     });
     toast.dismiss("autosuggestion");
   }
@@ -105,11 +116,6 @@ export default function TaskCreationPage({
     const textLength = calculateEditorTextLength(content);
     setIsDisabled(textLength <= MIN_CONTENT_LENGTH);
   }, [content]);
-
-  const form = useForm({
-    resolver: zodResolver(taskSchema),
-    defaultValues,
-  });
 
   useAutoSave({
     autoSaveFn: saveDraftTask,

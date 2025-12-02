@@ -51,7 +51,7 @@ import {
   notInArray,
   or,
   sql,
-  sum
+  sum,
 } from "drizzle-orm";
 import { unionAll } from "drizzle-orm/pg-core";
 import isUUID from "validator/es/lib/isUUID";
@@ -66,7 +66,7 @@ export async function getBlockedSolver(solverId: string, taskId: string) {
 }
 
 export async function getAllTaskCatagories(
-  options: dataOptions = { useCache: true }
+  options: dataOptions = { useCache: true },
 ) {
   return await withCache({
     callback: async () => {
@@ -88,7 +88,7 @@ export async function getAllTaskCatagories(
 }
 
 export async function getAllTaskDeadlines(
-  options: dataOptions = { useCache: true }
+  options: dataOptions = { useCache: true },
 ) {
   return await withCache({
     callback: async () => {
@@ -146,13 +146,15 @@ export async function getWalletInfo(solverId: string) {
         WHEN ${PaymentTable.status} = 'PENDING_USER_ACTION'
         THEN ${PaymentTable.amount}
 
-        WHEN ${TaskTable.status} = 'COMPLETED'
-        THEN ${PaymentTable.amount}
-
         ELSE 0
       END
     `).mapWith(Number),
-    nextReleaseDate: min(PaymentTable.releaseDate)
+      nextReleaseDate: min(PaymentTable.releaseDate),
+      paymentIds: sql<
+        string[]
+      >`STRING_AGG(${PaymentTable.id}::text, ',')`.mapWith((s: string) =>
+        s.split(","),
+      ),
     })
     .from(PaymentTable)
     .innerJoin(TaskTable, eq(TaskTable.paymentId, PaymentTable.id))
@@ -160,8 +162,8 @@ export async function getWalletInfo(solverId: string) {
       RefundTable,
       and(
         eq(RefundTable.paymentId, PaymentTable.id),
-        eq(RefundTable.refundStatus, "PENDING_USER_ACTION")
-      )
+        eq(RefundTable.refundStatus, "PENDING_USER_ACTION"),
+      ),
     )
     .where(and(eq(TaskTable.solverId, solverId), isNull(RefundTable.id)));
 
@@ -198,17 +200,17 @@ export async function getTasksbyId(id: string) {
 
 export async function getTasksbyIdWithFiles(
   id: string,
-  role: "POSTER"
+  role: "POSTER",
 ): Promise<PosterTaskReturn | null>;
 
 export async function getTasksbyIdWithFiles(
   id: string,
-  role: "SOLVER"
+  role: "SOLVER",
 ): Promise<SolverTaskReturn | null>;
 
 export async function getTasksbyIdWithFiles(
   id: string,
-  role: Exclude<UserRoleType, "ADMIN" | "MODERATOR">
+  role: Exclude<UserRoleType, "ADMIN" | "MODERATOR">,
 ): Promise<PosterTaskReturn | SolverTaskReturn | null> {
   if (!isUUID(id, "4")) {
     return null;
@@ -248,7 +250,7 @@ export async function getAllTasks() {
     where: (table, fn) =>
       fn.and(
         fn.not(fn.eq(table.status, "IN_PROGRESS")),
-        fn.not(fn.eq(table.status, "ASSIGNED"))
+        fn.not(fn.eq(table.status, "ASSIGNED")),
       ),
     with: {
       poster: { columns: publicUserColumns },
@@ -273,12 +275,12 @@ export async function getPosterTasksbyIdPaginated(
     limit: number;
     offset: number;
     status: TaskStatusType;
-  }
+  },
 ) {
   const where = and(
     eq(TaskTable.posterId, userId),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined,
-    status ? eq(TaskTable.status, status) : undefined
+    status ? eq(TaskTable.status, status) : undefined,
   );
 
   const [tasks, totalCountResult] = await Promise.all([
@@ -310,7 +312,7 @@ export async function getSolverAssignedTasksbyIdPaginated(
     offset,
     status,
   }: { search?: string; limit: number; offset: number; status: TaskStatusType },
-  showBlocked: boolean
+  showBlocked: boolean,
 ) {
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
     with: { task: true },
@@ -321,10 +323,10 @@ export async function getSolverAssignedTasksbyIdPaginated(
   const where = and(
     or(
       eq(TaskTable.solverId, userId),
-      showBlocked ? inArray(TaskTable.id, blockedTaskIds) : undefined
+      showBlocked ? inArray(TaskTable.id, blockedTaskIds) : undefined,
     ),
     search ? ilike(TaskTable.title, `%${search}%`) : undefined,
-    status ? eq(TaskTable.status, status) : undefined
+    status ? eq(TaskTable.status, status) : undefined,
   );
 
   const [tasks, totalCountResult] = await Promise.all([
@@ -363,7 +365,7 @@ export async function getAllTasksByRolePaginated(
     categoryId?: string;
     limit: number;
     offset: number;
-  }
+  },
 ) {
   let where;
   const blockedTasks = await db.query.BlockedTasksTable.findMany({
@@ -382,10 +384,10 @@ export async function getAllTasksByRolePaginated(
         ? or(
             ilike(TaskTable.title, `%${search}%`),
             ilike(TaskTable.description, `%${search}%`),
-            ilike(TaskTable.deadline, `%${search}%`)
+            ilike(TaskTable.deadline, `%${search}%`),
           )
         : undefined,
-      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined
+      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined,
     );
   } else if (role === "SOLVER") {
     where = and(
@@ -398,10 +400,10 @@ export async function getAllTasksByRolePaginated(
         ? or(
             ilike(TaskTable.title, `%${search}%`),
             ilike(TaskTable.description, `%${search}%`),
-            ilike(TaskTable.deadline, `%${search}%`)
+            ilike(TaskTable.deadline, `%${search}%`),
           )
         : undefined,
-      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined
+      categoryId ? eq(TaskTable.categoryId, categoryId) : undefined,
     );
   }
 
@@ -531,8 +533,8 @@ function getPosterTaskStatus(range: string, userId: string) {
     .where(
       and(
         eq(TaskTable.posterId, userId),
-        pgInterveralRange(TaskTable.createdAt, range)
-      )
+        pgInterveralRange(TaskTable.createdAt, range),
+      ),
     )
     .groupBy(pgFormatDateYMD(TaskTable.createdAt));
 }
@@ -549,8 +551,8 @@ function getPosterMentorshipStatus(range: string, userId: string) {
     .where(
       and(
         eq(MentorshipBookingTable.posterId, userId),
-        pgInterveralRange(MentorshipBookingTable.createdAt, range)
-      )
+        pgInterveralRange(MentorshipBookingTable.createdAt, range),
+      ),
     )
     .groupBy(pgFormatDateYMD(MentorshipBookingTable.createdAt));
 }
@@ -561,7 +563,7 @@ export async function getPosterStats(range: string = "7 days") {
 
   const merged = unionAll(
     getPosterTaskStatus(range, user.id),
-    getPosterMentorshipStatus(range, user.id)
+    getPosterMentorshipStatus(range, user.id),
   ).as("merged");
 
   const result = await db
@@ -584,10 +586,10 @@ function getSolverTaskStats(range: string, userId: string) {
       date: pgFormatDateYMD(TaskTable.createdAt).as("date"),
       allTasks: count(TaskTable.id).as("allTasks"),
       solvedTasks: pgCountWithFilter(TaskTable.status, "COMPLETED").as(
-        "solvedTasks"
+        "solvedTasks",
       ),
       inProgressTasks: pgCountWithFilter(TaskTable.status, "IN_PROGRESS").as(
-        "inProgressTasks"
+        "inProgressTasks",
       ),
       mentorSessions: sql<number>`0`.as("mentorSessions"),
       earnings: sum(TaskTable.price).as("earnings"),
@@ -596,8 +598,8 @@ function getSolverTaskStats(range: string, userId: string) {
     .where(
       and(
         eq(TaskTable.solverId, userId),
-        pgInterveralRange(TaskTable.createdAt, range)
-      )
+        pgInterveralRange(TaskTable.createdAt, range),
+      ),
     )
     .groupBy(pgFormatDateYMD(TaskTable.createdAt));
 }
@@ -615,25 +617,25 @@ function getSolverMentorStasts(userId: string) {
     .from(MentorshipBookingTable)
     .leftJoin(
       MentorshipSessionTable,
-      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
+      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId),
     )
     .where(
       and(
         eq(MentorshipBookingTable.solverId, userId),
-        pgInterveralRange(MentorshipBookingTable.createdAt, "7 days")
-      )
+        pgInterveralRange(MentorshipBookingTable.createdAt, "7 days"),
+      ),
     )
     .groupBy(pgFormatDateYMD(MentorshipBookingTable.createdAt));
 }
 
 export async function getSolverStats(
-  range = "30 days"
+  range = "30 days",
 ): Promise<SolverStats[]> {
   const { user } = await isAuthorized(["SOLVER"]);
   try {
     const merged = unionAll(
       getSolverTaskStats(range, user.id),
-      getSolverMentorStasts(user.id)
+      getSolverMentorStasts(user.id),
     ).as("merged");
 
     const result = await db
@@ -715,7 +717,7 @@ export async function getSolverUpcomminDeadlines(): Promise<upcomingTasks[]> {
         unit: unit,
         deadlineDate: deadline,
       };
-    })
+    }),
   );
 
   return result.filter((t): t is upcomingTasks => t !== null);
@@ -726,7 +728,7 @@ function getUserStats(range: string) {
       date: pgFormatDateYMD(UserTable.createdAt).as("date"),
       users: count(UserTable.id).mapWith(Number).as("users"),
       newUsers: pgCountWithinRange(UserTable.createdAt, "7 days").as(
-        "newUsers"
+        "newUsers",
       ),
       revenue: sql<number>`0`.as("revenue"),
       subscriptions: sql<number>`0`.as("subscriptions"),
@@ -757,7 +759,7 @@ function getSubscriptionStats(range: string) {
       newUsers: sql<number>`0`.as("newUsers"),
       revenue: sql<number>`0`.as("revenue"),
       subscriptions: countDistinct(
-        UserSubscriptionTable.stripeSubscriptionItemId
+        UserSubscriptionTable.stripeSubscriptionItemId,
       )
         .mapWith(Number)
         .as("subscriptions"),
@@ -773,7 +775,7 @@ export async function getAdminStats(range: string = "30 days") {
   const merged = unionAll(
     getUserStats(range),
     getRevenueStats(range),
-    getSubscriptionStats(range)
+    getSubscriptionStats(range),
   ).as("merged");
 
   const result = await db
@@ -809,7 +811,7 @@ async function AllDisputes() {
   });
 }
 export async function getAllDisputes(
-  options: dataOptions = { useCache: true }
+  options: dataOptions = { useCache: true },
 ) {
   const allDisputes = await withCache({
     callback: () => AllDisputes(),
@@ -979,8 +981,8 @@ export async function getRevenueData(from: string, to: string) {
     .where(
       and(
         pgBetweenDates(PaymentTable.createdAt, { from, to }),
-        eq(PaymentTable.status, "HOLD")
-      )
+        eq(PaymentTable.status, "HOLD"),
+      ),
     )
     .groupBy(pgFormatDateYMD(PaymentTable.createdAt));
 
@@ -1048,9 +1050,18 @@ export async function getModeratorResolvedTaskStats(range = "6 days") {
       RefundTable,
       and(
         sql`${RefundTable.createdAt}::date = days.date`,
-        notInArray(RefundTable.refundStatus, ["PENDING", "PROCESSING"])
-      )
+        notInArray(RefundTable.refundStatus, ["PENDING", "PROCESSING"]),
+      ),
     )
     .groupBy(date)
     .orderBy(date);
+}
+export async function getAllModertorIDs() {
+  return await db.query.UserTable.findMany({
+    where: (tb, fn) => fn.eq(tb.role, "MODERATOR"),
+    columns: {
+      id: true,
+      email: true,
+    },
+  });
 }

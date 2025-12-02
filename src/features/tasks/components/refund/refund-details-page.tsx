@@ -109,7 +109,8 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                 <Badge
                   variant={
                     dispute.refundStatus === "PENDING" ? "secondary" : "default"
-                  }>
+                  }
+                >
                   {dispute.refundStatus || "PENDING"}
                 </Badge>
               </CardTitle>
@@ -156,7 +157,8 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                 <Badge
                   variant={
                     task.status === "COMPLETED" ? "default" : "secondary"
-                  }>
+                  }
+                >
                   {task.status}
                 </Badge>
               </CardTitle>
@@ -280,76 +282,77 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
               {task.taskSolution.solutionFiles.length > 0 && (
                 <FilesTable
                   files={task.taskSolution.solutionFiles.map(
-                    (item) => item.solutionFile
+                    (item) => item.solutionFile,
                   )}
                   scopeType="solution"
                 />
               )}
             </CardContent>
           </Card>
+          {task.taskComments && task.taskComments.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MessageSquareIcon className="h-4 w-4" />
+                  Comments & Discussion
+                  <Badge variant="secondary" className="ml-auto">
+                    {task.taskComments.length}
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="space-y-4 h-100 p-4">
+                  {task.taskComments.map((comment, index) => {
+                    const isFromPoster = comment.userId === task.posterId;
+                    const isFromSolver = comment.userId === task.solverId;
+                    const userRole = isFromPoster
+                      ? "POSTER"
+                      : isFromSolver
+                        ? "SOLVER"
+                        : "OTHER";
+                    const userName = isFromPoster
+                      ? task.poster.name
+                      : isFromSolver
+                        ? task.solver?.name
+                        : "Unknown User";
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <MessageSquareIcon className="h-4 w-4" />
-                Comments & Discussion
-                <Badge variant="secondary" className="ml-auto">
-                  {task.taskComments.length}
-                </Badge>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ScrollArea className="space-y-4 h-100 p-4">
-                {task.taskComments.map((comment, index) => {
-                  const isFromPoster = comment.userId === task.posterId;
-                  const isFromSolver = comment.userId === task.solverId;
-                  const userRole = isFromPoster
-                    ? "POSTER"
-                    : isFromSolver
-                    ? "SOLVER"
-                    : "OTHER";
-                  const userName = isFromPoster
-                    ? task.poster.name
-                    : isFromSolver
-                    ? task.solver?.name
-                    : "Unknown User";
-
-                  return (
-                    <div key={comment.id}>
-                      <div className="flex gap-3">
-                        <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
-                          <span className="text-muted-foreground text-sm font-medium">
-                            {userName?.charAt(0).toUpperCase()}
-                          </span>
-                        </div>
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-sm">
-                              {userName}
-                            </span>
-                            <Badge variant="outline" className="text-xs">
-                              {userRole}
-                            </Badge>
-                            <span className="text-xs text-muted-foreground">
-                              {comment.createdAt?.toLocaleString()}
+                    return (
+                      <div key={comment.id}>
+                        <div className="flex gap-3">
+                          <div className="w-8 h-8 bg-muted rounded-full flex items-center justify-center shrink-0">
+                            <span className="text-muted-foreground text-sm font-medium">
+                              {userName?.charAt(0).toUpperCase()}
                             </span>
                           </div>
-                          <div className="border rounded-lg p-3 bg-muted/50">
-                            <p className="text-sm leading-relaxed">
-                              {comment.content}
-                            </p>
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <span className="font-medium text-sm">
+                                {userName}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {userRole}
+                              </Badge>
+                              <span className="text-xs text-muted-foreground">
+                                {comment.createdAt?.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="border rounded-lg p-3 bg-muted/50">
+                              <p className="text-sm leading-relaxed">
+                                {comment.content}
+                              </p>
+                            </div>
                           </div>
                         </div>
+                        {index < task.taskComments.length - 1 && (
+                          <Separator className="my-4" />
+                        )}
                       </div>
-                      {index < task.taskComments.length - 1 && (
-                        <Separator className="my-4" />
-                      )}
-                    </div>
-                  );
-                })}
-              </ScrollArea>
-            </CardContent>
-          </Card>
+                    );
+                  })}
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          )}
 
           {canDecide && (
             <>
@@ -365,13 +368,15 @@ export default function DisputePageComps({ dispute }: { dispute: Dispute }) {
                       variant="destructive"
                       size="lg"
                       className="flex-1"
-                      onClick={() => setIsRejectDialogOpen((prev) => !prev)}>
+                      onClick={() => setIsRejectDialogOpen((prev) => !prev)}
+                    >
                       Reject Dispute
                     </Button>
                     <Button
                       size="lg"
                       className="flex-1"
-                      onClick={() => setIsRefundDialogOpen((prev) => !prev)}>
+                      onClick={() => setIsRefundDialogOpen((prev) => !prev)}
+                    >
                       Approve Refund
                     </Button>
                   </div>
@@ -437,8 +442,8 @@ function ApproveRefundDialog({
             refund or task re-open to the poster. .
           </DialogDescription>
 
-          <div className="flex flex-col space-y-4">
-            <div className="space-y-2">
+          <div className="flex flex-col space-y-4 min-w-0">
+            <div className="space-y-2 w-full">
               <p className="text-sm text-muted-foreground">
                 By typing
                 <span className="font-semibold text-foreground">
@@ -446,7 +451,7 @@ function ApproveRefundDialog({
                   "I confirm"{" "}
                 </span>
                 below, you authorize the refund of the task for reason "
-                <span className="font-semibold text-foreground">
+                <span className="font-semibold text-foreground break-all ">
                   {dispute.refundReason?.toLocaleLowerCase()}"
                 </span>{" "}
                 to{" "}
@@ -476,7 +481,8 @@ function ApproveRefundDialog({
             disabled={confirmInput !== "I confirm" || isRefunding}
             onClick={async () => {
               await handleTaskRefund();
-            }}>
+            }}
+          >
             {isRefunding && <Loader2 className="animate-spin" />} Refund
           </Button>
         </DialogFooter>
@@ -548,7 +554,8 @@ function RejectRefundDialog({
             disabled={confirmInput !== "I confirm" || isRejecting}
             onClick={async () => {
               await handleTaskReject();
-            }}>
+            }}
+          >
             {isRejecting && <Loader2 className="animate-spin" />} Refund
           </Button>
         </DialogFooter>

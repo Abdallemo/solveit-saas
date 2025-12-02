@@ -5,6 +5,7 @@ import { env } from "@/env/client";
 import { saveMediaFileToDb } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
+import { cn } from "@/lib/utils/cn";
 import { useMutation } from "@tanstack/react-query";
 import { Transaction } from "@tiptap/pm/state";
 import { Editor, EditorContent, JSONContent, useEditor } from "@tiptap/react";
@@ -74,7 +75,12 @@ export default function PostingEditor({
     },
   });
   return (
-    <div className="border rounded-md flex flex-col h-[690px] md:h-[700px] lg:h-[780px] overflow-auto">
+    <div
+      className={cn(
+        "border rounded-md flex flex-col h-[690px] md:h-[700px] lg:h-[780px] overflow-auto",
+        className,
+      )}
+    >
       {showMenuBar && (
         <MenuBar editor={editor} disabled={!editorOptions.editable} />
       )}
