@@ -27,7 +27,7 @@ import {
   WorkpaceSchemType,
 } from "@/features/tasks/server/task-types";
 import { useAuthGate } from "@/hooks/useAuthGate";
-import { useAutoSave } from "@/hooks/useAutoDraftSave";
+import { useAutoSave, useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import {
   calculateEditorTextLength,
   cn,
@@ -35,7 +35,6 @@ import {
 } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
-import { debounce } from "lodash";
 import { Clock, Loader } from "lucide-react";
 import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
@@ -75,8 +74,7 @@ export default function WorkspacePageComp() {
     currentWorkspace?.task.blockedSolvers.length > 0
       ? true
       : false;
-  const workEnded =
-    blockedFromTask || alreadySubmitedSolution 
+  const workEnded = blockedFromTask || alreadySubmitedSolution;
 
   const { mutateAsync: publishSolutionMutation, isPending } = useMutation({
     mutationFn: publishSolution,
@@ -94,30 +92,23 @@ export default function WorkspacePageComp() {
     resolver: zodResolver(WorkpaceSchem),
   });
 
-  const handleEditorChange = useMemo(
-    () =>
-      debounce((editor: Editor) => {
-        if (!editor) return;
+  const handleEditorChange = useDebouncedCallback(
+    (editor: Editor) => {
+      if (!editor) return;
 
-        const jsonContent = editor.getJSON();
+      const jsonContent = editor.getJSON();
 
-        form.setValue("content", jsonContent, {
-          shouldDirty: true,
-          shouldTouch: true,
-          shouldValidate: true,
-        });
+      form.setValue("content", jsonContent, {
+        shouldDirty: true,
+        shouldTouch: true,
+        shouldValidate: true,
+      });
 
-        setContent(jsonContent);
-
-        console.log("Debounced Update Triggered");
-      }, 500),
-    [setContent, form]
+      setContent(jsonContent);
+    },
+    200,
+    [setContent, form],
   );
-  useEffect(() => {
-    return () => {
-      handleEditorChange.cancel();
-    };
-  }, [handleEditorChange]);
 
   useAutoSave({
     autoSaveFn: autoSaveDraftWorkspace,
@@ -171,8 +162,9 @@ export default function WorkspacePageComp() {
           <Badge
             className={cn(
               getColorClass(currentWorkspace?.task.category.name!),
-              "h-6"
-            )}>
+              "h-6",
+            )}
+          >
             {currentWorkspace?.task.category.name}
           </Badge>
         </div>
@@ -193,7 +185,8 @@ export default function WorkspacePageComp() {
           <Button
             form="solution-form"
             disabled={isDisabled || isPending || workEnded}
-            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]">
+            className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]"
+          >
             {isPending ? (
               <>
                 <Loader className="animate-spin w-4 h-4" />
@@ -214,14 +207,16 @@ export default function WorkspacePageComp() {
         <form
           onSubmit={form.handleSubmit(onSubmit, onError)}
           id="solution-form"
-          className="flex flex-col flex-1 overflow-hidden">
+          className="flex flex-col flex-1 overflow-hidden"
+        >
           <div className="p-4 pb-2  flex justify-between items-center">
             <div className="w-full">
               <div className=" flex items-center justify-between text-sm text-foreground mb-2">
                 <Link
                   className="underline text-lg"
                   target="_blank"
-                  href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}>
+                  href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}
+                >
                   {currentWorkspace?.task.title}
                 </Link>
                 {isDeadlineLoading ? (

@@ -14,6 +14,11 @@ import {
   isAuthorized,
 } from "@/features/auth/server/actions";
 import { Notifier } from "@/features/notifications/server/notifier";
+import {
+  notifyRefundApproval,
+  notifyRefundComplete,
+  notifyTaskReopen,
+} from "@/features/notifications/server/utils";
 import { SOLVER_MIN_WITHDRAW_AMOUNT } from "@/features/payments/server/constants";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import {
@@ -41,9 +46,11 @@ import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
 import { addDays, isBefore, subYears } from "date-fns";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
+import { getRefundDetails } from "./data";
+import { refundType } from "./types";
 export type cardsType = Awaited<
   ReturnType<typeof getAllCustomerPaymentMethods>
 >;
@@ -294,15 +301,9 @@ export async function refundFunds(paymentId: string) {
   }
 }
 export async function completeRefund(refundId: string) {
-  console.warn("passed refundId ", refundId);
   try {
     await isAuthorized(["POSTER"]);
-    const refund = await db.query.RefundTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: {
-        taskRefund: { with: { poster: { columns: publicUserColumns } } },
-      },
-    });
+    const refund = await getRefundDetails(refundId);
 
     if (!refund || refund.refundStatus !== "PENDING_USER_ACTION") {
       return {
@@ -317,20 +318,7 @@ export async function completeRefund(refundId: string) {
         success: null,
       };
     }
-
-    Notifier()
-      .system({
-        receiverId: refund.taskRefund?.posterId!,
-        subject: "Refund Processed",
-        content: `Your refund for the dispute with ID ${refund.id} has been successfully processed.
-      The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
-      })
-      .email({
-        receiverEmail: refund.taskRefund?.poster.email!,
-        subject: "Refund Processed",
-        content: `<h4>Your refund for the dispute with ID ${refund.id} has been successfully processed</h4>.
-      The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
-      });
+    notifyRefundComplete(refund);
     return {
       error: null,
       success: "successfully refunded to your payment method",
@@ -351,17 +339,7 @@ export async function completeRefund(refundId: string) {
 export async function reopenTask(refundId: string) {
   try {
     const { user } = await isAuthorized(["POSTER"]);
-    const refund = await db.query.RefundTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: {
-        taskRefund: {
-          with: {
-            poster: { columns: publicUserColumns },
-            solver: { columns: publicUserColumns },
-          },
-        },
-      },
-    });
+    const refund = await getRefundDetails(refundId);
 
     if (
       !refund ||
@@ -374,39 +352,11 @@ export async function reopenTask(refundId: string) {
       };
     }
 
-    await db.transaction(async (dx) => {
-      await dx
-        .update(RefundTable)
-        .set({
-          refundStatus: "REJECTED",
-          updatedAt: new Date(),
-        })
-        .where(eq(RefundTable.id, refund.id));
-
-      await dx
-        .update(TaskTable)
-        .set({
-          assignedAt: null,
-          solverId: null,
-          status: "OPEN",
-          updatedAt: new Date(),
-        })
-        .where(eq(TaskTable.id, refund.taskRefund?.id!));
-    });
+    await updateRefundAndResetTaskTx(refund);
 
     withRevalidateTag("dispute-data-cache");
 
-    Notifier()
-      .system({
-        receiverId: refund.taskRefund?.posterId!,
-        content: `You have chosen to re-open task ID ${refund.taskRefund?.id}. The task is now available for other solvers to apply.`,
-        subject: "Task Re-opened",
-      })
-      .email({
-        receiverEmail: refund.taskRefund?.poster.email!,
-        content: `You have chosen to re-open task ID ${refund.taskRefund?.id}. The task is now available for other solvers to apply.`,
-        subject: "Task Re-opened",
-      });
+    notifyTaskReopen(refund);
 
     return {
       error: null,
@@ -427,18 +377,7 @@ export async function reopenTask(refundId: string) {
 export async function approveRefund(refundId: string) {
   try {
     const { user } = await isAuthorized(["MODERATOR"]);
-    const refund = await db.query.RefundTable.findFirst({
-      where: (tb, fn) => fn.eq(tb.id, refundId),
-      with: {
-        taskRefund: {
-          with: {
-            poster: { columns: publicUserColumns },
-            solver: { columns: publicUserColumns },
-          },
-        },
-      },
-      // columns:{moderatorId:true,refundStatus:true}
-    });
+    const refund = await getRefundDetails(refundId);
 
     if (!refund) {
       return {
@@ -460,49 +399,11 @@ export async function approveRefund(refundId: string) {
         success: null,
       };
     }
-    await db.transaction(async (dx) => {
-      await dx
-        .update(RefundTable)
-        .set({
-          refundStatus: "PENDING_USER_ACTION",
-          updatedAt: getCurrentServerTime(),
-          refundedAt: getCurrentServerTime(),
-        })
-        .where(eq(RefundTable.paymentId, refund.paymentId));
+    await updateRefundApprovePendingTx(refund);
 
-      await dx
-        .update(PaymentTable)
-        .set({ status: "PENDING_USER_ACTION" })
-        .where(eq(PaymentTable.id, refund.paymentId));
-    });
     withRevalidateTag("dispute-data-cache");
+    notifyRefundApproval(refund);
 
-    Notifier()
-      .system({
-        subject: "Refund Accepted",
-        receiverId: refund.taskRefund?.posterId!,
-        content: `Your refund for the dispute with ID ${refund.id} has been Accepted.Please Take action with in 7days or The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
-      })
-      .email({
-        subject: "Refund Accepted",
-        receiverEmail: refund.taskRefund?.poster.email!,
-        content: `<h3>Your refund for the dispute with ID ${refund.id} has been Accepted.</h3>
-        Please Take action with in 7days or The amount of ${refund.taskRefund?.price} will be returned to your original payment method.`,
-      });
-
-    Notifier()
-      .system({
-        subject: "Dispute Resolved",
-        receiverId: refund.taskRefund?.solverId!,
-        content: `The dispute for task ID ${refund.taskRefund?.id} has been resolved in the poster's favor.
-          The held payment has been refunded to them and will not be disbursed to you.`,
-      })
-      .email({
-        subject: "Dispute Resolved",
-        receiverEmail: refund.taskRefund?.solver?.email!,
-        content: `The dispute for task ID ${refund.taskRefund?.id} has been resolved in the poster's favor.
-          The held payment has been refunded to them and will not be disbursed to you.`,
-      });
     return {
       error: null,
       success: "successfully approved the refund",
@@ -647,7 +548,9 @@ export async function rejectRefund(refundId: string) {
 export async function requestWithdraw() {
   try {
     const { user } = await isAuthorized(["SOLVER"]);
-    const { available, nextReleaseDate } = await getWalletInfo(user.id);
+    const { available, nextReleaseDate, paymentIds } = await getWalletInfo(
+      user.id,
+    );
     if (available < SOLVER_MIN_WITHDRAW_AMOUNT) {
       return {
         error: `you can withdraw minimum of RM ${SOLVER_MIN_WITHDRAW_AMOUNT}`,
@@ -673,14 +576,16 @@ export async function requestWithdraw() {
       };
     }
 
-    const transfer = await stripe.transfers.create({
+    await stripe.transfers.create({
       amount: available * 100,
       currency: "myr",
       destination: user.stripeAccountId,
     });
-    // db.transaction(async (dx) => {
-    //   await dx.update(PaymentTable).set({status:"RELEASED"})
-    // });
+    await db
+      .update(PaymentTable)
+      .set({ status: "RELEASED" })
+      .where(inArray(PaymentTable.id, paymentIds));
+
     return {
       error: null,
       success: "withdrawal request submitted successfully",
@@ -710,4 +615,42 @@ export async function assignDisputeToModerator(disputeId: string) {
   withRevalidateTag("dispute-data-cache");
 
   return `/dashboard/moderator/disputes/${dispute.id}`;
+}
+export async function updateRefundAndResetTaskTx(refund: refundType) {
+  return await db.transaction(async (dx) => {
+    await dx
+      .update(RefundTable)
+      .set({
+        refundStatus: "REJECTED",
+        updatedAt: new Date(),
+      })
+      .where(eq(RefundTable.id, refund.id));
+
+    await dx
+      .update(TaskTable)
+      .set({
+        assignedAt: null,
+        solverId: null,
+        status: "OPEN",
+        updatedAt: new Date(),
+      })
+      .where(eq(TaskTable.id, refund.taskRefund?.id!));
+  });
+}
+export async function updateRefundApprovePendingTx(refund: refundType) {
+  await db.transaction(async (dx) => {
+    await dx
+      .update(RefundTable)
+      .set({
+        refundStatus: "PENDING_USER_ACTION",
+        updatedAt: getCurrentServerTime(),
+        refundedAt: getCurrentServerTime(),
+      })
+      .where(eq(RefundTable.paymentId, refund.paymentId));
+
+    await dx
+      .update(PaymentTable)
+      .set({ status: "PENDING_USER_ACTION" })
+      .where(eq(PaymentTable.id, refund.paymentId));
+  });
 }

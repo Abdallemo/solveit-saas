@@ -30,6 +30,7 @@ import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
+  getAllModertorIDs,
   getBlockedSolver,
   getTaskCatagoryId,
   getWorkspaceById,
@@ -37,7 +38,6 @@ import {
 } from "@/features/tasks/server/data";
 import type {
   SolutionById,
-  Units,
   WorkpaceWithRelationType,
 } from "@/features/tasks/server/task-types";
 import {
@@ -51,17 +51,18 @@ import {
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
+import { generateRefundNotificationEmail } from "@/lib/email/templates/refunds";
 import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
-import { truncateText } from "@/lib/utils/utils";
+import {
+  getCurrentServerTime,
+  parseDeadlineV2,
+  truncateText,
+} from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
 import {
   addDays,
-  addHours,
-  addMonths,
-  addWeeks,
-  addYears,
   differenceInMilliseconds,
   isAfter,
   isBefore,
@@ -72,55 +73,14 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 //the Magic Parts 🪄
-function parseDeadlineV2(value: string, baseTime: Date): Date | null {
-  const lowerValue = value.toLowerCase();
-  const match = lowerValue.match(/^(\d+)([hdwmy])$/);
-  if (!match) {
-    return null;
-  }
 
-  const [, numStr, unit] = match;
-  const num = parseInt(numStr, 10);
-
-  switch (unit as Units) {
-    case "h":
-      return addHours(baseTime, num);
-    case "d":
-      return addDays(baseTime, num);
-    case "w":
-      return addWeeks(baseTime, num);
-    case "m":
-      return addMonths(baseTime, num);
-    case "y":
-      return addYears(baseTime, num);
-    default:
-      return null;
-  }
-}
-function parseDeadline(value: string, baseTime: Date): Date | null {
-  const base = baseTime.getTime();
-  switch (value) {
-    case "12h":
-      return new Date(base + 12 * 60 * 60 * 1000);
-    case "24h":
-      return new Date(base + 24 * 60 * 60 * 1000);
-    case "48h":
-      return new Date(base + 48 * 60 * 60 * 1000);
-    case "3days":
-      return new Date(base + 3 * 24 * 60 * 60 * 1000);
-    case "7days":
-      return new Date(base + 7 * 24 * 60 * 60 * 1000);
-    default:
-      return null;
-  }
-}
 export async function calculateTaskProgress(solverId: string, taskId: string) {
   const workspace = await getWorkspaceByTaskId(taskId, solverId);
   if (!workspace) return -1;
 
   const deadline = parseDeadlineV2(
     workspace.task.deadline!,
-    workspace.createdAt!
+    workspace.createdAt!,
   );
   if (!deadline) return -1;
 
@@ -134,7 +94,7 @@ export async function calculateTaskProgress(solverId: string, taskId: string) {
 }
 export async function calculateTaskProgressV2(
   solverId: string,
-  taskId: string
+  taskId: string,
 ) {
   const currentTime = new Date();
 
@@ -185,7 +145,7 @@ export async function createTaskAction(
   deadline: string,
   price: number,
   uploadedFiles: UploadedFileMeta[],
-  paymentId: string
+  paymentId: string,
 ) {
   logger.info("starting creat Task prosess");
   const categoryId = await getTaskCatagoryId(category);
@@ -219,7 +179,7 @@ export async function createTaskAction(
             fileSize: file.fileSize,
             filePath: file.filePath,
             storageLocation: file.storageLocation,
-          }))
+          })),
         );
       }
       await dx
@@ -245,7 +205,7 @@ export async function taskPaymentInsetion(
   userId: string,
   stripePaymentIntentId: string,
   purpose?: PaymentPorposeType,
-  stripeChargeId?: string
+  stripeChargeId?: string,
 ) {
   logger.info("Saving into Payment table");
   const payment = await db
@@ -280,7 +240,7 @@ export async function createTaksPaymentCheckoutSession(values: {
     const currentUser = await getServerUserSession();
     if (!currentUser?.id) redirect("/login");
     const userSubscription = await getServerUserSubscriptionById(
-      currentUser?.id!
+      currentUser?.id!,
     );
     const user = await getUserById(userId);
     if (!user || !user.id) return;
@@ -363,7 +323,7 @@ export async function saveDraftTask(
   price: number,
   visibility: "public" | "private",
   deadline: string,
-  uploadedFiles: UploadedFileMeta[] = []
+  uploadedFiles: UploadedFileMeta[] = [],
 ) {
   const now = new Date();
   try {
@@ -425,7 +385,7 @@ export async function assignTaskToSolverById(values: {
       throw new Error(
         `you are blocked From this Task, Reason:${
           oldTask.blockedSolvers[0].reason ?? "unknown"
-        }`
+        }`,
       );
 
     const result = await db.transaction(async (tx) => {
@@ -461,7 +421,7 @@ export async function assignTaskToSolverById(values: {
 
     const deadline = parseDeadlineV2(
       result.deadline,
-      startDateOperation
+      startDateOperation,
     )?.toLocaleString(undefined);
     Notifier()
       .email({
@@ -488,7 +448,7 @@ export async function createWorkspace(
   dx: DBTransaction,
   solverId: string,
   taskId: string,
-  startDateOperation: Date
+  startDateOperation: Date,
 ) {
   const newWorkspace = await dx
     .insert(WorkspaceTable)
@@ -503,13 +463,22 @@ export async function createWorkspace(
 export async function addSolverToTaskBlockList(
   userId: string,
   taskId: string,
-  reason: string
+  reason: string,
+  dx?: DBTransaction,
 ) {
-  await db.insert(BlockedTasksTable).values({
-    userId,
-    taskId,
-    reason,
-  });
+  if (dx) {
+    await dx.insert(BlockedTasksTable).values({
+      userId,
+      taskId,
+      reason,
+    });
+  } else {
+    await db.insert(BlockedTasksTable).values({
+      userId,
+      taskId,
+      reason,
+    });
+  }
 }
 export async function createCatagory(name: string) {
   await db.insert(TaskCategoryTable).values({
@@ -547,7 +516,7 @@ export async function deleteDeadline(id: string) {
 export async function autoSaveDraftWorkspace(
   content: string,
   solverId: string,
-  taskId: string
+  taskId: string,
 ) {
   if (!solverId || !taskId) return;
 
@@ -645,14 +614,14 @@ export async function publishSolution(values: {
         success: null,
         workspace: workspace,
         error: new SolutionError(
-          "Unable to locate the specified workspace. Please verify the ID and try again."
+          "Unable to locate the specified workspace. Please verify the ID and try again.",
         ).code,
       };
     }
     await handleTaskDeadline(workspace);
     const alreadyBlocked = await getBlockedSolver(
       workspace.solverId,
-      workspace.task.id
+      workspace.task.id,
     );
 
     if (alreadyBlocked) {
@@ -660,7 +629,7 @@ export async function publishSolution(values: {
         success: null,
         workspace: workspace,
         error: new SolutionError(
-          "Submission window has closed. You can no longer publish a solution for this task."
+          "Submission window has closed. You can no longer publish a solution for this task.",
         ).code,
       };
     }
@@ -674,7 +643,7 @@ export async function publishSolution(values: {
         success: null,
         workspace: workspace,
         error: new SolutionError(
-          "This solution has already been marked as completed. No further submissions are allowed."
+          "This solution has already been marked as completed. No further submissions are allowed.",
         ).code,
       };
     }
@@ -695,7 +664,7 @@ export async function publishSolution(values: {
           success: null,
           workspace: workspace,
           error: new SolutionError(
-            "Failed to create a solution record. Please try again or contact support if the issue persists."
+            "Failed to create a solution record. Please try again or contact support if the issue persists.",
           ).code,
         };
       }
@@ -710,7 +679,7 @@ export async function publishSolution(values: {
             .update(WorkspaceFilesTable)
             .set({ isDraft: false })
             .where(eq(WorkspaceFilesTable.id, workspaceFile.id));
-        })
+        }),
       );
       await dx
         .update(TaskTable)
@@ -722,13 +691,13 @@ export async function publishSolution(values: {
     Notifier()
       .email({
         subject: "Task Submited",
-        content: `you Task titiled ${workspace.task.title} 
+        content: `you Task titiled ${workspace.task.title}
           has bean submited please review it with in 7days `,
         receiverEmail: workspace.task.poster.email!,
       })
       .system({
         subject: "Task Submited",
-        content: `you Task titiled ${workspace.task.title} 
+        content: `you Task titiled ${workspace.task.title}
           has bean submited please review it with in 7days `,
         receiverId: workspace.task.poster.id!,
       });
@@ -743,13 +712,13 @@ export async function publishSolution(values: {
       success: null,
       workspace: null,
       error: new SolutionError(
-        "Unable to publish the solution due to an unexpected issue. Please try again later."
+        "Unable to publish the solution due to an unexpected issue. Please try again later.",
       ).code,
     };
   }
 }
 export async function handleTaskDeadline(
-  solverWorksapce: WorkpaceWithRelationType
+  solverWorksapce: WorkpaceWithRelationType,
 ) {
   const status = solverWorksapce.task.status;
 
@@ -759,7 +728,7 @@ export async function handleTaskDeadline(
 
   const { percentage, deadline } = await calculateTaskProgressV2(
     solverWorksapce.solverId,
-    solverWorksapce.taskId
+    solverWorksapce.taskId,
   );
   console.log("in this");
   if (deadline && !isPast(deadline)) return;
@@ -767,7 +736,7 @@ export async function handleTaskDeadline(
   try {
     const alreadyBlocked = await getBlockedSolver(
       solverWorksapce.solverId,
-      solverWorksapce.taskId
+      solverWorksapce.taskId,
     );
     if (alreadyBlocked) return;
     Notifier()
@@ -788,17 +757,17 @@ export async function handleTaskDeadline(
       .where(
         and(
           eq(TaskTable.id, solverWorksapce.taskId),
-          inArray(TaskTable.status, ["ASSIGNED", "IN_PROGRESS"])
-        )
+          inArray(TaskTable.status, ["ASSIGNED", "IN_PROGRESS"]),
+        ),
       );
 
     await addSolverToTaskBlockList(
       solverWorksapce.solverId,
       solverWorksapce.taskId,
-      "Missed deadline"
+      "Missed deadline",
     );
     logger.warn(
-      `Task ${solverWorksapce.taskId} missed deadline. Solver ${solverWorksapce.solverId} blocked.`
+      `Task ${solverWorksapce.taskId} missed deadline. Solver ${solverWorksapce.solverId} blocked.`,
     );
   } catch (error) {
     logger.error("unable to find blocked user", {
@@ -840,7 +809,7 @@ export async function acceptSolution(solution: SolutionById) {
       };
     }
 
-    const releaseDate = addDays(Date.now(), 7);
+    const releaseDate = addDays(getCurrentServerTime(), 7);
 
     await db
       .update(PaymentTable)
@@ -918,10 +887,13 @@ export async function requestRefund(values: {
         success: null,
       };
     }
-    await db.insert(RefundTable).values({
-      paymentId: task.paymentId!,
-      taskId: task.id,
-      refundReason: reason,
+    await db.transaction(async (dx) => {
+      await dx.insert(RefundTable).values({
+        paymentId: task.paymentId!,
+        taskId: task.id,
+        refundReason: reason,
+      });
+      addSolverToTaskBlockList(solverId!, taskId, "Blocked For Refund", dx);
     });
 
     Notifier()
@@ -937,6 +909,22 @@ export async function requestRefund(values: {
           "The refund request is currently under moderator review. you currently are in block list for this task. Please check the comments for more details.",
         receiverEmail: solver?.email!,
       });
+    (async () => {
+      const mods = await getAllModertorIDs();
+      mods.forEach(({ email, id }) => {
+        Notifier()
+          .system({
+            subject: `New Refund Request: Task "${title}"`,
+            content: `Task: "${title}" (ID: [Task ID]) has a new refund request. The request requires moderator review.`,
+            receiverId: id,
+          })
+          .email({
+            subject: `New Refund Request for Task: ${title}`,
+            content: generateRefundNotificationEmail({ title }),
+            receiverEmail: email,
+          });
+      });
+    })();
 
     withRevalidateTag("dispute-data-cache");
     return {
@@ -966,7 +954,7 @@ export async function createTaskComment(values: {
     if (!(posterId !== userId || solverId !== userId)) {
       console.warn(
         `posterId !== userId || solverId !== userId`,
-        posterId == userId
+        posterId == userId,
       );
       throw new UnauthorizedError();
     }
@@ -987,17 +975,6 @@ export async function createTaskComment(values: {
         },
       },
     });
-    // if (result || result !== undefined) {
-    //   try {
-    //     await fetch(`${env.GO_API_URL}/send-comment`, {
-    //       method: "POST",
-    //       headers: GoHeaders,
-    //       body: JSON.stringify(result),
-    //     });
-    //   } catch (error) {
-    //     logger.error("unable to send comment ", error);
-    //   }
-    // }
     revalidatePath(`/`);
     return result;
   } catch (error) {

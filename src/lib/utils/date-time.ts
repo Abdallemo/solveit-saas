@@ -28,8 +28,21 @@ export const daysInWeek = [
 ];
 
 export const timeOptions = [
-  "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00",
-  "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00",
+  "08:00",
+  "09:00",
+  "10:00",
+  "11:00",
+  "12:00",
+  "13:00",
+  "14:00",
+  "15:00",
+  "16:00",
+  "17:00",
+  "18:00",
+  "19:00",
+  "20:00",
+  "21:00",
+  "22:00",
 ];
 
 export function toYMD(date: Date): string {
@@ -74,12 +87,18 @@ export function parseDeadlineV2(value: string, baseTime: Date): Date | null {
   const num = parseInt(numStr, 10);
 
   switch (unit as Units) {
-    case "h": return addHours(baseTime, num);
-    case "d": return addDays(baseTime, num);
-    case "w": return addWeeks(baseTime, num);
-    case "m": return addMonths(baseTime, num);
-    case "y": return addYears(baseTime, num);
-    default: return null;
+    case "h":
+      return addHours(baseTime, num);
+    case "d":
+      return addDays(baseTime, num);
+    case "w":
+      return addWeeks(baseTime, num);
+    case "m":
+      return addMonths(baseTime, num);
+    case "y":
+      return addYears(baseTime, num);
+    default:
+      return null;
   }
 }
 
@@ -116,7 +135,7 @@ export function formatTimeRemaining(end: Date, now: Date, unit: Units) {
 export const sessionTimeUtils = {
   isSessionActive: (
     session: { sessionStart: string | Date; sessionEnd: string | Date },
-    now: Date
+    now: Date,
   ): boolean => {
     const start = normalizeDate(session.sessionStart);
     const end = normalizeDate(session.sessionEnd);
@@ -129,7 +148,7 @@ export const sessionTimeUtils = {
 
   isBeforeSession: (
     session: { sessionStart: string | Date },
-    now: Date
+    now: Date,
   ): boolean => {
     const start = normalizeDate(session.sessionStart);
     return isBefore(now, start);
@@ -137,7 +156,7 @@ export const sessionTimeUtils = {
 
   isAfterSession: (
     session: { sessionEnd: string | Date },
-    now: Date
+    now: Date,
   ): boolean => {
     const end = normalizeDate(session.sessionEnd);
     return isAfter(now, end);

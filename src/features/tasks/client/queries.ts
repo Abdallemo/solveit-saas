@@ -14,7 +14,9 @@ import {
   getSolverUpcomminDeadlines,
 } from "@/features/tasks/server/data";
 import { UserDbType } from "@/features/users/server/actions";
+import { Nullable } from "@/lib/utils/types";
 import { queryOptions } from "@tanstack/react-query";
+import { calculateTaskProgressV2 } from "../server/action";
 
 type tasksQueryParams = {
   title: string;
@@ -72,9 +74,9 @@ export const tasksQuery = (params: tasksQueryParams) =>
             offset,
             categoryId:
               Object.keys(categoryMap).find(
-                (key) => categoryMap[key] === selectedValue
+                (key) => categoryMap[key] === selectedValue,
               ) ?? "",
-          }
+          },
         );
       }
 
@@ -86,7 +88,7 @@ export const tasksQuery = (params: tasksQueryParams) =>
           offset,
           status: (status as TaskStatusType) ?? "",
         },
-        true
+        true,
       );
     },
   });
@@ -109,7 +111,7 @@ export const userGrowthQuery = (params: {
           `/api/admin/reports/user_growth?from=${from}&to=${to}`,
           {
             method: "GET",
-          }
+          },
         );
         dataToSend = await res.json();
 
@@ -141,7 +143,7 @@ export const aiFlagsDataQuery = (params: {
           `/api/admin/reports/ai-flags?from=${from}&to=${to}`,
           {
             method: "GET",
-          }
+          },
         );
         dataToSend = await res.json();
 
@@ -173,7 +175,7 @@ export const revenueQuery = (params: {
           `/api/admin/reports/revenue?from=${from}&to=${to}`,
           {
             method: "GET",
-          }
+          },
         );
         revenueToSend = await res.json();
 
@@ -206,7 +208,7 @@ export const taskCategoriesQuery = (params: {
           `/api/admin/reports/task_categories?from=${from}&to=${to}`,
           {
             method: "GET",
-          }
+          },
         );
         taskCategoryToSend = await res.json();
         return taskCategoryToSend;
@@ -267,4 +269,25 @@ export const moderatorResolvedTaskStatsQuery = () =>
     queryFn: async () => {
       return await getModeratorResolvedTaskStats();
     },
+  });
+
+export const deadlineProgressTrackerQuery = ({
+  worksapceId,
+  solverId,
+  taskId,
+}: {
+  worksapceId: Nullable<string>;
+  solverId: Nullable<string>;
+  taskId: Nullable<string>;
+}) =>
+  queryOptions({
+    queryKey: ["progress", worksapceId],
+    queryFn: async () => {
+      if (!solverId || !worksapceId || !taskId) {
+        return 0;
+      }
+      return await calculateTaskProgressV2(solverId, taskId);
+    },
+    refetchInterval: 10 * 1000,
+    enabled: !!solverId && !!worksapceId,
   });
