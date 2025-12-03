@@ -27,7 +27,6 @@ import {
   LucideSearch,
   LucideSettings,
   LucideShieldCheck,
-  LucideStar,
   LucideTrendingUp,
   LucideUserPlus,
   LucideUsers,
@@ -83,7 +82,7 @@ export const MenuItemsModerator: MenuItem[] = [
         url: "/dashboard/moderator/disputes",
         icon: LucideAlertTriangle,
       },
-       {
+      {
         type: "link",
         title: "My Assigned Disputes",
         url: "/dashboard/moderator/my-disputes",
@@ -339,13 +338,6 @@ export const MenuItemsSolver: MenuItem[] = [
         title: "Mentor Listing",
         url: "/dashboard/solver/listing",
         icon: LucideUserPlus,
-      },
-      {
-        type: "link",
-
-        title: "My Reviews",
-        url: "/dashboard/solver/reviews",
-        icon: LucideStar,
       },
     ],
   },

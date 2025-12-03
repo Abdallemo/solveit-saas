@@ -2,9 +2,9 @@
 
 import { getServerUserSession } from "@/features/auth/server/actions";
 import {
+  createStripeCustomer,
   getServerUserSubscriptionById,
   getUserById,
-  UpdateUserField,
 } from "@/features/users/server/actions";
 import { stripe, SubPriceMap } from "@/lib/stripe";
 import { redirect } from "next/navigation";
@@ -38,7 +38,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
     const currentUser = await getServerUserSession(); //next_auth
     if (!currentUser?.id) redirect("/login");
     const userSubscription = await getServerUserSubscriptionById(
-      currentUser?.id!
+      currentUser?.id!,
     );
 
     if (!SubPriceMap[tier]) throw new Error("Plan not found");
@@ -49,20 +49,14 @@ export async function createStripeCheckoutSession(tier: TierType) {
     const user = await getUserById(currentUser.id!);
     if (!user || !user.id) return;
     if (!currentUser.email || !currentUser!.id) return;
+
     let customerId = user.stripeCustomerId;
     if (!user.stripeCustomerId) {
-      const newCustomer = await stripe.customers.create({
-        email: currentUser.email,
-        name: user.name!,
-        metadata: {
-          userId: user.id,
-        },
-      });
-      customerId = newCustomer.id;
-      await UpdateUserField({
-        id: user.id,
-        data: { stripeCustomerId: customerId },
-      });
+      const [newCustomerId, err] = await createStripeCustomer(user);
+      if (err) {
+        throw new Error("internal error! Try again");
+      }
+      customerId = newCustomerId;
     }
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",

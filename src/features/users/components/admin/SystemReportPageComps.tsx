@@ -77,7 +77,6 @@ import {
   YAxis,
 } from "recharts";
 
-
 const userGrowthConfig = {
   users: {
     label: "Users",
@@ -151,7 +150,9 @@ async function downloadPDF() {
 }
 
 async function downloadExcel() {
-  const res = await fetch("/api/admin/reports/export/excel", { method: "POST" });
+  const res = await fetch("/api/admin/reports/export/excel", {
+    method: "POST",
+  });
   const blob = await res.blob();
   browserFileDownload({ fileName: "solveit-report.xlsx", blob });
 }
@@ -189,7 +190,7 @@ export default function SystemReportsPage({
   // const [stateTo, setStateTo] = useState(toYMD(today));
 
   const { data: userGrowthData, isLoading: isUserGrowthLoading } = useQuery(
-    userGrowthQuery({ from: from, to: to, enabled: shouldShowUsers })
+    userGrowthQuery({ from: from, to: to, enabled: shouldShowUsers }),
   );
   const {
     data: revenueData,
@@ -197,24 +198,27 @@ export default function SystemReportsPage({
     status,
     error,
   } = useQuery(
-    revenueQuery({ from: from, to: to, enabled: shouldShowRevenue })
+    revenueQuery({ from: from, to: to, enabled: shouldShowRevenue }),
   );
   const { data: taskCategoriesData, isLoading: isTaskCategoriesLoading } =
     useQuery(
-      taskCategoriesQuery({ from: from, to: to, enabled: shouldShowTasks })
+      taskCategoriesQuery({ from: from, to: to, enabled: shouldShowTasks }),
     );
   const { data: aiFlagsData, isLoading: isAiFlagsDataLoading } = useQuery(
-    aiFlagsDataQuery({ from: from, to: to, enabled: shouldShowTasks })
+    aiFlagsDataQuery({ from: from, to: to, enabled: shouldShowTasks }),
   );
 
   const aggregatedTaskData = taskCategoriesData
     ? Object.values(
-        taskCategoriesData.reduce((acc, cur) => {
-          const name = cur.name || "Unknown";
-          if (!acc[name]) acc[name] = { name, value: 0 };
-          acc[name].value += cur.taskCount ?? 0;
-          return acc;
-        }, {} as Record<string, { name: string; value: number }>)
+        taskCategoriesData.reduce(
+          (acc, cur) => {
+            const name = cur.name || "Unknown";
+            if (!acc[name]) acc[name] = { name, value: 0 };
+            acc[name].value += cur.taskCount ?? 0;
+            return acc;
+          },
+          {} as Record<string, { name: string; value: number }>,
+        ),
       )
     : [];
 
@@ -226,17 +230,17 @@ export default function SystemReportsPage({
       };
       return config;
     },
-    {} as Record<string, { label: string; color: string }>
+    {} as Record<string, { label: string; color: string }>,
   );
 
   const statsGridClass =
     visibleStatsCount === 1
       ? "grid gap-4 md:grid-cols-1"
       : visibleStatsCount === 2
-      ? "grid gap-4 md:grid-cols-2"
-      : visibleStatsCount === 3
-      ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
-      : "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
+        ? "grid gap-4 md:grid-cols-2"
+        : visibleStatsCount === 3
+          ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+          : "grid gap-4 md:grid-cols-2 lg:grid-cols-4";
 
   const chartsGridClass =
     visibleChartsCount === 1
@@ -244,38 +248,31 @@ export default function SystemReportsPage({
       : "grid gap-4 md:grid-cols-2";
 
   const handleGenerateReport = () => {};
-  const handleExportPDF = async() => {
-    await downloadPDF()
-    
+  const handleExportPDF = async () => {
+    await downloadPDF();
   };
-  const handleExportExcel = async() => {
-    await downloadExcel()
+  const handleExportExcel = async () => {
+    await downloadExcel();
   };
   const handleSearchChange = (value: string) => {};
   const handleViewReport = (reportId: string) => {};
-  const totoalReven = revenueData
-    ? revenueData.reduce(
-        (accumulator, currentObject) =>
-          accumulator + currentObject.totalRevenue,
-        0
-      )
-    : 0;
+
   const totoalTask = taskCategoriesData
     ? taskCategoriesData.reduce(
         (accumulator, currentObject) => accumulator + currentObject.taskCount,
-        0
+        0,
       )
     : 0;
   const totoalUser = userGrowthData
     ? userGrowthData.reduce(
         (accumulator, currentObject) => accumulator + currentObject.users,
-        0
+        0,
       )
     : 0;
   const totoalAiFlags = aiFlagsData
     ? aiFlagsData.reduce(
         (accumulator, currentObject) => accumulator + currentObject.flags,
-        0
+        0,
       )
     : 0;
 
@@ -388,10 +385,10 @@ export default function SystemReportsPage({
             ) : (
               <CardContent>
                 <div className="text-2xl font-bold">
-                  {revenueData ? "RM" + totoalReven : "N/A"}
+                  {revenueData ? "RM" + revenueData.totalRevenueInRange : "N/A"}
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  +21% from last month
+                  {revenueData?.increasePercentageInRange}% from last month
                 </p>
               </CardContent>
             )}
@@ -429,7 +426,8 @@ export default function SystemReportsPage({
               <CardContent>
                 <ChartContainer
                   config={userGrowthConfig}
-                  className="h-[300px] w-full">
+                  className="h-[300px] w-full"
+                >
                   <LineChart accessibilityLayer data={userGrowthData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
@@ -474,8 +472,9 @@ export default function SystemReportsPage({
               <CardContent>
                 <ChartContainer
                   config={revenueConfig}
-                  className="h-[300px] w-full">
-                  <BarChart accessibilityLayer data={revenueData}>
+                  className="h-[300px] w-full"
+                >
+                  <BarChart accessibilityLayer data={revenueData.data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
                       dataKey="date"
@@ -520,7 +519,8 @@ export default function SystemReportsPage({
               <CardContent>
                 <ChartContainer
                   config={dynamicTaskCategoriesConfig}
-                  className="h-[300px] w-full">
+                  className="h-[300px] w-full"
+                >
                   <PieChart>
                     <ChartTooltip content={<ChartTooltipContent />} />
                     <Pie
@@ -530,7 +530,8 @@ export default function SystemReportsPage({
                       labelLine={false}
                       outerRadius={80}
                       dataKey="value"
-                      nameKey="name">
+                      nameKey="name"
+                    >
                       {aggregatedTaskData.map((entry, index) => (
                         <Cell
                           key={`cell-${index}`}
@@ -552,41 +553,42 @@ export default function SystemReportsPage({
               <CardTitle>AI Flags Trend</CardTitle>
               <CardDescription>Daily AI moderation flags</CardDescription>
             </CardHeader>
-             {isAiFlagsDataLoading ? (
+            {isAiFlagsDataLoading ? (
               <LoadingChartContent />
             ) : (
-            <CardContent>
-              <ChartContainer
-                config={aiFlagsConfig}
-                className="h-[300px] w-full">
-                <AreaChart accessibilityLayer data={aiFlagsData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                  <XAxis
-                    dataKey="date"
-                    tickLine={false}
-                    axisLine={false}
-                    tickMargin={8}
-                    tickFormatter={(value) => {
-                      const date = new Date(value);
-                      return date.toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                      });
-                    }}
-                  />
-                  <YAxis tickLine={false} axisLine={false} tickMargin={8} />
-                  <ChartTooltip content={<ChartTooltipContent />} />
-                  <ChartLegend content={<ChartLegendContent />} />
-                  <Area
-                    type="monotone"
-                    dataKey="flags"
-                    stroke="var(--color-flags)"
-                    fill="var(--color-flags)"
-                    fillOpacity={0.6}
-                  />
-                </AreaChart>
-              </ChartContainer>
-            </CardContent>
+              <CardContent>
+                <ChartContainer
+                  config={aiFlagsConfig}
+                  className="h-[300px] w-full"
+                >
+                  <AreaChart accessibilityLayer data={aiFlagsData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis
+                      dataKey="date"
+                      tickLine={false}
+                      axisLine={false}
+                      tickMargin={8}
+                      tickFormatter={(value) => {
+                        const date = new Date(value);
+                        return date.toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                        });
+                      }}
+                    />
+                    <YAxis tickLine={false} axisLine={false} tickMargin={8} />
+                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <ChartLegend content={<ChartLegendContent />} />
+                    <Area
+                      type="monotone"
+                      dataKey="flags"
+                      stroke="var(--color-flags)"
+                      fill="var(--color-flags)"
+                      fillOpacity={0.6}
+                    />
+                  </AreaChart>
+                </ChartContainer>
+              </CardContent>
             )}
           </Card>
         )}
@@ -621,7 +623,8 @@ export default function SystemReportsPage({
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleViewReport(report.id)}>
+                      onClick={() => handleViewReport(report.id)}
+                    >
                       View
                     </Button>
                   </TableCell>
@@ -657,7 +660,7 @@ function Calendar22({
   const [open, setOpen] = useState(false);
 
   const [dateRange, setDateRange] = useState<DateRange | undefined>(
-    initialRange
+    initialRange,
   );
   const [isRangeComplete, setIsRangeComplete] = useState(true);
 
@@ -665,8 +668,8 @@ function Calendar22({
     if (isRangeComplete && dateRange?.from && dateRange?.to) {
       console.log(
         `Final Range Selected/Initialized (Triggering Action):from=${toYMD(
-          dateRange.from
-        )} to=${toYMD(dateRange.to)}`
+          dateRange.from,
+        )} to=${toYMD(dateRange.to)}`,
       );
     }
   }, [isRangeComplete, dateRange, setFrom, setTo]);
@@ -703,7 +706,8 @@ function Calendar22({
           <Button
             variant="outline"
             id="date"
-            className="w-64 justify-between font-normal">
+            className="w-64 justify-between font-normal"
+          >
             {getDisplayText()}
             <ChevronDownIcon className="h-4 w-4 opacity-50 ml-2" />
           </Button>

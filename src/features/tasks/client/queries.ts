@@ -17,6 +17,7 @@ import { UserDbType } from "@/features/users/server/actions";
 import { Nullable } from "@/lib/utils/types";
 import { queryOptions } from "@tanstack/react-query";
 import { calculateTaskProgressV2 } from "../server/action";
+import { revenueReturnType } from "../server/task-types";
 
 type tasksQueryParams = {
   title: string;
@@ -156,10 +157,6 @@ export const aiFlagsDataQuery = (params: {
     enabled: params.enabled,
   });
 
-type revenueReturnType = {
-  date: string;
-  totalRevenue: number;
-}[];
 export const revenueQuery = (params: {
   from: string;
   to: string;
@@ -169,7 +166,10 @@ export const revenueQuery = (params: {
     queryKey: ["revenue", params.from, params.to],
     queryFn: async () => {
       const { from, to } = params;
-      let revenueToSend: revenueReturnType = [];
+      let revenueToSend: revenueReturnType = {
+        data: [],
+        increasePercentageInRange: 0,
+      };
       try {
         const res = await fetch(
           `/api/admin/reports/revenue?from=${from}&to=${to}`,

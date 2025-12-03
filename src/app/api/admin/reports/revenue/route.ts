@@ -1,5 +1,5 @@
 import { isAuthorized } from "@/features/auth/server/actions";
-import { getRevenueData } from "@/features/tasks/server/data";
+import { getRevenueDataV1 } from "@/features/tasks/server/data";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
@@ -10,6 +10,7 @@ export async function GET(req: NextRequest) {
 
   let from = req.nextUrl.searchParams.get("from");
   let to = req.nextUrl.searchParams.get("to");
-  const data = await getRevenueData(from!, to!);
+  const data = await getRevenueDataV1(from!, to!);
+  console.log(data);
   return NextResponse.json(data);
 }
