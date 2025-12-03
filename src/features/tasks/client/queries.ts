@@ -169,6 +169,7 @@ export const revenueQuery = (params: {
       let revenueToSend: revenueReturnType = {
         data: [],
         increasePercentageInRange: 0,
+        totalRevenueInRange: 0,
       };
       try {
         const res = await fetch(
