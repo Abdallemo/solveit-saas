@@ -15,6 +15,7 @@ import {
   getDraftTaskWithDefualtVal,
   getModeratorDisputes,
   getPosterTasksbyIdPaginated,
+  getRevenueDataV1,
   getSolutionById,
   getSolverAssignedTasksbyIdPaginated,
   getTasksbyId,
@@ -182,3 +183,4 @@ export type Units = "h" | "d" | "w" | "m" | "y";
 export type dataOptions = {
   useCache?: boolean;
 };
+export type revenueReturnType = Awaited<ReturnType<typeof getRevenueDataV1>>;

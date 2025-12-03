@@ -1,31 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
-import { Eye, Save, Star, CheckCircle, Loader2 } from "lucide-react";
-import { toast } from "sonner";
-import {
-  AvailabilitySlot,
-  MentorListType,
-} from "@/features/mentore/server/types";
-import {
-  handleProfileAvatarState,
-  handleProfilePublishState,
-  saveMentorListing,
-} from "../server/action";
-import { daysInWeek } from "@/lib/utils/utils";
-import { useMutation } from "@tanstack/react-query";
-import { useForm } from "react-hook-form";
-import { mentorListingFormData, mentorListingSchema } from "../server/types";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ProfileSelection } from "./ProfileSelection";
-import AvailbleTimeSelection from "./AvailbleTimeSelection";
 import {
   Form,
   FormControl,
@@ -35,6 +12,29 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
+import {
+  AvailabilitySlot,
+  MentorListType,
+} from "@/features/mentore/server/types";
+import { daysInWeek } from "@/lib/utils/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
+import { CheckCircle, Eye, Loader2, Save, Star } from "lucide-react";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import {
+  handleProfileAvatarState,
+  handleProfilePublishState,
+  saveMentorListing,
+} from "../server/action";
+import { mentorListingFormData, mentorListingSchema } from "../server/types";
+import AvailbleTimeSelection from "./AvailbleTimeSelection";
+import { ProfileSelection } from "./ProfileSelection";
 
 export function MentorProfile({
   intialMentorData,
@@ -50,6 +50,7 @@ export function MentorProfile({
       description: intialMentorData.description,
       title: intialMentorData.title,
     },
+    mode: "onChange",
   });
   const { mutate: prfileVisiblityMutate } = useMutation({
     mutationFn: handleProfilePublishState,
@@ -58,7 +59,7 @@ export function MentorProfile({
         mentorData.isPublished
           ? "Your profile is now visible to mentees."
           : "Your profile is now hidden from mentees.",
-        { id: "publish-profile" }
+        { id: "publish-profile" },
       );
     },
     onError: () => {
@@ -66,7 +67,7 @@ export function MentorProfile({
         mentorData.isPublished
           ? "failed to make your profile visible"
           : "failed to make your profile hidden",
-        { id: "publish-profile" }
+        { id: "publish-profile" },
       );
     },
   });
@@ -121,12 +122,12 @@ export function MentorProfile({
   function updateAvailabilitySlot(
     index: number,
     field: keyof AvailabilitySlot,
-    value: string
+    value: string,
   ) {
     setMentorData((prev) => ({
       ...prev,
       availableTimes: prev.availableTimes.map((slot, i) =>
-        i === index ? { ...slot, [field]: value } : slot
+        i === index ? { ...slot, [field]: value } : slot,
       ),
     }));
   }
@@ -154,12 +155,13 @@ export function MentorProfile({
     toast.loading("saving profile...", { id: "save-avatar" });
     await mentorAvatarMutate(avatarUrl);
   }
-
+  const { isValid } = from.formState;
   return (
     <Form {...from}>
       <form
         onSubmit={from.handleSubmit(handleSave)}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        className="grid grid-cols-1 lg:grid-cols-3 gap-8"
+      >
         <div className="lg:col-span-1">
           <Card>
             <CardHeader>
@@ -189,7 +191,8 @@ export function MentorProfile({
               <div className="flex justify-center">
                 <Badge
                   variant="secondary"
-                  className="bg-primary/10 text-primary">
+                  className="bg-primary/10 text-primary"
+                >
                   <Star className="h-3 w-3 mr-1" />
                   Solver++ Premium
                 </Badge>
@@ -220,6 +223,7 @@ export function MentorProfile({
                   <Switch
                     checked={mentorData.isPublished}
                     onCheckedChange={handlePublishToggle}
+                    disabled={!isValid}
                   />
                 </div>
               </div>
@@ -252,7 +256,8 @@ export function MentorProfile({
                 <Button
                   variant="outline"
                   className="w-full bg-transparent"
-                  disabled>
+                  disabled
+                >
                   <Eye className="h-4 w-4 mr-2" />
                   Preview Profile
                 </Button>
@@ -314,7 +319,7 @@ export function MentorProfile({
                     <FormLabel>Rate per hour</FormLabel>
                     <FormControl>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-6 w-4 text-muted-foreground">
+                        <span className="absolute left-3 top-1/2 transform -translate-y-1/2 h-6 min-w-0 text-muted-foreground">
                           RM
                         </span>
                         <Input {...field} type="number" className="pl-10" />
@@ -337,7 +342,8 @@ export function MentorProfile({
                 <Button
                   type="submit"
                   disabled={isPending || isSaving}
-                  className="flex-1">
+                  className="flex-1"
+                >
                   <Save className="h-4 w-4 mr-2" />
                   {isPending && <Loader2 className="animate-spine" />}Save
                   Changes

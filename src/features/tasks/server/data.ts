@@ -1065,3 +1065,78 @@ export async function getAllModertorIDs() {
     },
   });
 }
+
+async function revenueDbQeury({ from, to }: { from: string; to: string }) {
+  const revenueAgg = db.$with("revenue_agg").as(
+    db
+      .select({
+        date: pgFormatDateYMD(PaymentTable.createdAt).as("date"),
+        totalRevenue: sum(PaymentTable.amount)
+          .mapWith(Number)
+          .as("totalRevenue"),
+      })
+      .from(PaymentTable)
+      .where(
+        and(
+          pgBetweenDates(PaymentTable.createdAt, { from, to }),
+          eq(PaymentTable.status, "HOLD"),
+        ),
+      )
+      .groupBy(sql`${pgFormatDateYMD(PaymentTable.createdAt)}`),
+  );
+  const rawResults = await db
+    .with(revenueAgg)
+    .select({
+      date: revenueAgg.date,
+      totalRevenue: revenueAgg.totalRevenue,
+      prevRevenue: sql<number>`
+        COALESCE(LAG(${revenueAgg.totalRevenue}) OVER (ORDER BY ${revenueAgg.date}), 0)
+      `.mapWith(Number),
+      totalRevenueInRange: sql<number>`
+        SUM(${revenueAgg.totalRevenue}) OVER ()
+      `.mapWith(Number),
+    })
+    .from(revenueAgg)
+    .orderBy(revenueAgg.date);
+
+  return rawResults;
+}
+
+export async function getRevenueDataV1(from: string, to: string) {
+  if (!from) from = toYMD(subDays(new Date(), 30));
+  if (!to) to = toYMD(new Date());
+
+  const rawResults = await revenueDbQeury({ from, to });
+
+  if (!rawResults.length) {
+    return { data: [], increasePercentageInRange: 0, totalRevenueInRange: 0 };
+  }
+
+  const results = rawResults.map((row) => ({
+    date: row.date,
+    totalRevenue: row.totalRevenue,
+    changePercentage:
+      row.prevRevenue === 0
+        ? 0
+        : Number(
+            (
+              ((row.totalRevenue - row.prevRevenue) / row.prevRevenue) *
+              100
+            ).toFixed(2),
+          ),
+  }));
+
+  const first = results[0];
+  const last = results[results.length - 1];
+  const totalRevenueInRange = rawResults[0].totalRevenueInRange;
+  const increasePercentage =
+    first.totalRevenue === 0
+      ? 0
+      : ((last.totalRevenue - first.totalRevenue) / first.totalRevenue) * 100;
+
+  return {
+    data: results,
+    increasePercentageInRange: increasePercentage,
+    totalRevenueInRange,
+  };
+}

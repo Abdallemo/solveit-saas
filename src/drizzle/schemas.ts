@@ -9,7 +9,7 @@ import {
   date,
   index,
   integer,
-  json,
+  jsonb,
   numeric,
   pgEnum,
   pgSequence,
@@ -134,8 +134,8 @@ export const UserDetails = pgTable("user_details", {
   firstName: text("first_name"),
   lastName: text("last_name"),
   dateOfBirth: date("date_of_birth"),
-  address: json("address").$type<Address>(),
-  business: json("business").$type<Business>(),
+  address: jsonb("address").$type<Address>(),
+  business: jsonb("business").$type<Business>(),
   updatedAt: timestamp("updated_at", {
     mode: "date",
     withTimezone: true,
@@ -305,7 +305,7 @@ export const TaskTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     title: text("title").notNull(),
     description: text("description").notNull(),
-    content: json("content").notNull().$type<JSONContent>(),
+    content: jsonb("content").notNull().$type<JSONContent>(),
     price: integer("price").notNull(),
     posterId: uuid("poster_id")
       .references(() => UserTable.id, { onDelete: "cascade" })
@@ -380,7 +380,7 @@ export const TaskDraftTable = pgTable(
       .unique(),
     title: text("title").default("").notNull(),
     description: text("description").default("").notNull(),
-    content: json("content").default("{}").notNull().$type<JSONContent>(),
+    content: jsonb("content").default("{}").notNull().$type<JSONContent>(),
     contentText: text("contentText").default("").notNull(),
     category: text("category").default("").notNull(),
     deadline: text("deadline").default("12h").notNull(),
@@ -390,7 +390,7 @@ export const TaskDraftTable = pgTable(
     })
       .notNull()
       .defaultNow(),
-    uploadedFiles: json("uploadedFiles")
+    uploadedFiles: jsonb("uploadedFiles")
       .default("[]")
       .notNull()
       .$type<UploadedFileMeta[]>(),
@@ -529,7 +529,7 @@ export const WorkspaceTable = pgTable(
     solverId: uuid("solver_id")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
-    content: json("content").default("{}").$type<JSONContent>(),
+    content: jsonb("content").default("{}").$type<JSONContent>(),
     contentText: text("contentText").default("").notNull(),
     createdAt: timestamp("created_at", {
       mode: "date",
@@ -597,7 +597,7 @@ export const SolutionTable = pgTable(
     taskId: uuid("task_id")
       .notNull()
       .references(() => TaskTable.id, { onDelete: "cascade" }),
-    content: json("content").$type<JSONContent>(),
+    content: jsonb("content").$type<JSONContent>(),
     fileUrl: text("file_url"),
     isFinal: boolean("is_final").default(false),
     createdAt: timestamp("created_at", {
@@ -646,7 +646,7 @@ export const MentorshipProfileTable = pgTable(
     title: text("title").notNull().default(""),
     description: text("description").notNull().default(""),
     ratePerHour: real("rate_per_hour").notNull().default(0),
-    availableTimes: json("available_times")
+    availableTimes: jsonb("available_times")
       .notNull()
       .$type<AvailabilitySlot[]>()
       .default([]),
@@ -668,7 +668,7 @@ export const MentorshipSessionTable = pgTable(
       .notNull()
       .references(() => MentorshipBookingTable.id, { onDelete: "cascade" }),
     sessionDate: date("session_date").notNull(),
-    timeSlot: json("time_slot").notNull().$type<AvailabilitySlot>(),
+    timeSlot: jsonb("time_slot").notNull().$type<AvailabilitySlot>(),
     sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),
     sessionEnd: timestamp("session_end", { withTimezone: true }).notNull(),
 
@@ -818,6 +818,21 @@ export const AiTestSandboxTable = pgTable("ai_test_sandbox", {
     mode: "date",
     withTimezone: true,
   }).defaultNow(),
+});
+export const BlogTable = pgTable("blogs", {
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  description: text("description").notNull(),
+  content: jsonb("content").$type<JSONContent>().notNull(),
+  category: text("category").notNull(),
+  author: uuid("author")
+    .references(() => UserTable.id, { onDelete: "cascade" })
+    .notNull(),
+  publishedAt: timestamp("publishedAt", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  readTime: integer("readTime").notNull(),
 });
 
 export const notifications = pgTable("notifications", {

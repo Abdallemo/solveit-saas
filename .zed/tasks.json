@@ -1,0 +1,54 @@
+[
+  {
+    "label": "Next.js Dev Server",
+    "command": "p dev",
+    "reveal": "always",
+    "use_new_terminal": true,
+    "shell": {
+      "program": "pwsh"
+    }
+  },
+  {
+    "label": "Next.js Build Server",
+    "command": "git rev-parse --show-toplevel 2>$null; $CURRENT_HASH=(git rev-parse HEAD).trim(); $BUILD_HASH=((Get-Content ./.next/BUILD_ID -ErrorAction SilentlyContinue) | Select-Object -First 1).trim() -replace '\\s',''; if ($CURRENT_HASH -eq $BUILD_HASH) { pnpm start -p 3001; } else { pnpm build ; pnpm start -p 3001; }",
+    "reveal": "always",
+    "use_new_terminal": true,
+    "shell": {
+      "program": "pwsh"
+    }
+  },
+  {
+    "label": "Check Shell",
+    "command": "Write-Host $PSVersionTable.PSVersion; Get-Command pwsh",
+    "shell": {
+      "program": "pwsh"
+    }
+  },
+  {
+    "label": "Stripe Webhook Listener",
+    "command": "p stripe",
+    "reveal": "never",
+    "use_new_terminal": true,
+    "shell": {
+      "program": "pwsh"
+    }
+  },
+  {
+    "label": "Drizzle DB Studio",
+    "command": "p db:std",
+    "reveal": "never",
+    "use_new_terminal": true,
+    "shell": {
+      "program": "pwsh"
+    }
+  },
+  {
+    "label": "Go Backend Microservice",
+    "command": "cd server ; make run",
+    "reveal": "always",
+    "use_new_terminal": true,
+    "shell": {
+      "program": "pwsh"
+    }
+  }
+]

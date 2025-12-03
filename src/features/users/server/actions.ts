@@ -12,16 +12,10 @@ import {
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import { withRevalidateTag } from "@/lib/cache";
 import { stripe } from "@/lib/stripe";
-import {
-  and,
-  count,
-  eq,
-  isNotNull,
-  isNull,
-  sql,
-  sum
-} from "drizzle-orm";
+import { to } from "@/lib/utils/async";
+import { and, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
 import { UserRole } from "../../../../types/next-auth";
+import { publicUserType } from "./user-types";
 
 //* User Types
 
@@ -111,7 +105,7 @@ export async function getSummaryStats() {
         sql`
         ${UserTable.createdAt} >= date_trunc('month', now())
         AND ${UserTable.createdAt} < date_trunc('month', now() + interval '1 month')
-      `
+      `,
       )
       .groupBy(UserTable.role);
 
@@ -130,13 +124,13 @@ export async function getSummaryStats() {
         sql`
         ${UserTable.createdAt} >= date_trunc('month', now() - interval '1 month')
         AND ${UserTable.createdAt} < date_trunc('month', now())
-      `
+      `,
       )
       .groupBy(UserTable.role);
 
     const prevTotalUsers = prevUserResult.reduce(
       (acc, r) => acc + Number(r.value),
-      0
+      0,
     );
 
     // ===== TASKS =====
@@ -147,7 +141,7 @@ export async function getSummaryStats() {
         sql`
         ${TaskTable.createdAt} >= date_trunc('month', now())
         AND ${TaskTable.createdAt} < date_trunc('month', now() + interval '1 month')
-      `
+      `,
       )
       .groupBy(TaskTable.status);
 
@@ -164,13 +158,13 @@ export async function getSummaryStats() {
         sql`
         ${TaskTable.createdAt} >= date_trunc('month', now() - interval '1 month')
         AND ${TaskTable.createdAt} < date_trunc('month', now())
-      `
+      `,
       )
       .groupBy(TaskTable.status);
 
     const prevTotalTasks = prevTaskResult.reduce(
       (acc, r) => acc + Number(r.value),
-      0
+      0,
     );
 
     // ===== DISPUTES =====
@@ -181,13 +175,13 @@ export async function getSummaryStats() {
         sql`
         ${RefundTable.createdAt} >= date_trunc('month', now())
         AND ${RefundTable.createdAt} < date_trunc('month', now() + interval '1 month')
-      `
+      `,
       )
       .groupBy(RefundTable.refundStatus);
 
     const totalDisputes = disputeResult.reduce(
       (acc, r) => acc + Number(r.value),
-      0
+      0,
     );
     const pendingDisputes =
       disputeResult.find((r) => r.status === "PENDING")?.value || 0;
@@ -202,13 +196,13 @@ export async function getSummaryStats() {
         sql`
         ${RefundTable.createdAt} >= date_trunc('month', now() - interval '1 month')
         AND ${RefundTable.createdAt} < date_trunc('month', now())
-      `
+      `,
       )
       .groupBy(RefundTable.refundStatus);
 
     const prevTotalDisputes = prevDisputeResult.reduce(
       (acc, r) => acc + Number(r.value),
-      0
+      0,
     );
 
     // ===== REVENUE =====
@@ -393,4 +387,22 @@ export async function isUserAccountOauth(userId: string): Promise<boolean> {
     console.error("Error checking if user is OAuth:", error);
     return false;
   }
+}
+export async function createStripeCustomer(user: publicUserType) {
+  return await to(
+    (async () => {
+      const newCustomer = await stripe.customers.create({
+        email: user.email!,
+        name: user.name!,
+        metadata: {
+          userId: user.id,
+        },
+      });
+      await UpdateUserField({
+        id: user.id,
+        data: { stripeCustomerId: newCustomer.id },
+      });
+      return newCustomer.id;
+    })(),
+  );
 }

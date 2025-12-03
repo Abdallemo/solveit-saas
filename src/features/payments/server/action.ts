@@ -135,14 +135,13 @@ export async function getAllPayments() {
     };
   });
 }
-export async function getStripeConnectAccount() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
-  if (!user || !user.id) return;
-}
 
 export async function handlerStripeConnect() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  const { user } = await isAuthorized(["POSTER", "SOLVER"], {
+    useCache: false,
+  });
   if (!user || !user.id) return;
+  console.log(`user stripe account id : ${user.stripeAccountId}`);
   const urlprix = `${
     env.NEXTAUTH_URL
   }/dashboard/${user.role?.toLocaleLowerCase()}/billings?user=${user.id}`;
@@ -223,7 +222,9 @@ export async function handleUserOnboarding(values: OnboardingFormData) {
         "You must be at least 13 years of age to use the platform and receive funds",
       );
     }
-    await CreateUserStripeConnectAccount({ ...values, dob }, user); //==> synchronous job
+
+    await CreateUserStripeConnectAccount({ ...values, dob }, user);
+
     await db
       .update(UserDetails)
       .set({
