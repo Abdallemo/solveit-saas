@@ -19,9 +19,9 @@ import {
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
 import useCurrentUser from "@/hooks/useCurrentUser";
+import { signOut } from "@/lib/auth-client";
 import { cn } from "@/lib/utils/utils";
 import { Loader2, LogOut, Menu } from "lucide-react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useRef, useState } from "react";
@@ -29,12 +29,13 @@ import { ModeToggle } from "../toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
 export default function Navbar() {
-  const { user, state } = useCurrentUser();
+  const { user, state: isLoading } = useCurrentUser();
+
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const mobileMenuRef = useRef<HTMLDivElement>(null);
   const [isNavigating, setIsNavigating] = useState(false);
   const router = useRouter();
-  const isLoading = state === "loading";
+
   const handleNavigation = (path: string) => {
     setIsNavigating(true);
     router.push(path);
@@ -61,11 +62,9 @@ export default function Navbar() {
   }, [mobileMenuOpen]);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 flex justify-between px-2 rounded-lg">
+    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 flex justify-between px-2 rounded-lg">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link
-          href="/"
-          className="mr-6 flex items-center space-x-2 flex-shrink-0">
+        <Link href="/" className="mr-6 flex items-center space-x-2 shrink-0">
           <span className="font-bold">SolveIt</span>
         </Link>
 
@@ -74,7 +73,8 @@ export default function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
-                href="#features">
+                href="#features"
+              >
                 Features
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -82,7 +82,8 @@ export default function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
-                href="#pricing">
+                href="#pricing"
+              >
                 Pricing
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -102,7 +103,8 @@ export default function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
-                asChild>
+                asChild
+              >
                 <Link href="/about-us">About Us</Link>
               </NavigationMenuLink>
             </NavigationMenuItem>
@@ -111,7 +113,8 @@ export default function Navbar() {
 
         <button
           className="md:hidden ml-auto mr-4"
-          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+        >
           <Menu className="h-6 w-6" />
         </button>
 
@@ -122,11 +125,11 @@ export default function Navbar() {
             </Button>
           </Link>
 
-          {state == "loading" && (
+          {isLoading && (
             <Skeleton className="size-8 rounded-full shimmer-wave" />
           )}
 
-          {!user && state != "loading" && (
+          {!user && !isLoading && (
             <Button size="sm" asChild>
               <Link href={"/login"}>SignIn</Link>
             </Button>
@@ -164,7 +167,7 @@ export default function Navbar() {
                   <Link href={"/dashboard"}>Dashboard</Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ redirectTo: "/" })}>
+                <DropdownMenuItem onClick={() => signOut()}>
                   <LogOut />
                   Log out
                 </DropdownMenuItem>
@@ -179,20 +182,24 @@ export default function Navbar() {
       {mobileMenuOpen && (
         <div
           ref={mobileMenuRef}
-          className="md:hidden absolute top-full left-0 right-0 bg-background border-t border-border/40 p-4 space-y-2">
+          className="md:hidden absolute top-full left-0 right-0 bg-background border-t border-border/40 p-4 space-y-2"
+        >
           <Link
             href="#features"
-            className="block py-2 px-4 rounded hover:bg-accent">
+            className="block py-2 px-4 rounded hover:bg-accent"
+          >
             Features
           </Link>
           <Link
             href="/about"
-            className="block py-2 px-4 rounded hover:bg-accent">
+            className="block py-2 px-4 rounded hover:bg-accent"
+          >
             About Us
           </Link>
           <Link
             href="#pricing"
-            className="block py-2 px-4 rounded hover:bg-accent">
+            className="block py-2 px-4 rounded hover:bg-accent"
+          >
             Pricing
           </Link>
           <div className="py-2 px-4">
@@ -200,17 +207,20 @@ export default function Navbar() {
             <div className="pl-4 space-y-2">
               <Link
                 href="/blogs"
-                className="block py-1 text-sm rounded hover:bg-accent">
+                className="block py-1 text-sm rounded hover:bg-accent"
+              >
                 Blog
               </Link>
               <Link
                 href="/resources"
-                className="block py-1 text-sm rounded hover:bg-accent">
+                className="block py-1 text-sm rounded hover:bg-accent"
+              >
                 Resources
               </Link>
               <Link
                 href="/faq"
-                className="block py-1 text-sm rounded hover:bg-accent">
+                className="block py-1 text-sm rounded hover:bg-accent"
+              >
                 FAQ
               </Link>
             </div>
@@ -228,14 +238,16 @@ export default function Navbar() {
                 size="sm"
                 className="flex-1"
                 disabled={isNavigating}
-                onClick={() => handleNavigation("/login")}>
+                onClick={() => handleNavigation("/login")}
+              >
                 {isNavigating ? <Loader2 className="animate-spin" /> : "SignIn"}
               </Button>
             ) : (
               <Button
                 size="sm"
                 className="flex-1"
-                onClick={() => handleNavigation("/dashboard")}>
+                onClick={() => handleNavigation("/dashboard")}
+              >
                 {isNavigating ? (
                   <Loader2 className="animate-spin" />
                 ) : (
@@ -262,9 +274,10 @@ const ListItem = React.forwardRef<
           ref={ref}
           className={cn(
             "block select-none space-y-1 rounded-md p-3 leading-none no-underline outline-none transition-colors hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground",
-            className
+            className,
           )}
-          {...props}>
+          {...props}
+        >
           <div className="text-sm font-medium leading-none">{title}</div>
           <p className="line-clamp-2 text-sm leading-snug text-muted-foreground">
             {children}

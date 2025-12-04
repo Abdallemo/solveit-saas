@@ -13,7 +13,7 @@ import {
   getSolverStats,
   getSolverUpcomminDeadlines,
 } from "@/features/tasks/server/data";
-import { UserDbType } from "@/features/users/server/actions";
+import { User } from "@/features/users/server/user-types";
 import { Nullable } from "@/lib/utils/types";
 import { queryOptions } from "@tanstack/react-query";
 import { calculateTaskProgressV2 } from "../server/action";
@@ -24,7 +24,7 @@ type tasksQueryParams = {
   search: string;
   selectedValue: string;
   type: "PosterTasks" | "AllTasks" | "SolverTasks";
-  currentUser: UserDbType;
+  currentUser: User;
   limit: number;
   offset: number;
   status?: TaskStatusType;

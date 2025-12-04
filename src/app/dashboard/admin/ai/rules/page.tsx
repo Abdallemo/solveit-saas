@@ -3,7 +3,7 @@ import { AIRuleManagement } from "@/features/Ai/server/components/ai-rule-manage
 import { isAuthorized } from "@/features/auth/server/actions";
 
 export default async function AIPage() {
-  const { user } = await isAuthorized(["ADMIN"]);
+  const { session } = await isAuthorized(["ADMIN"]);
   const allAiRules = await getAllAiRules();
   if (!allAiRules) return;
   return (
@@ -14,7 +14,7 @@ export default async function AIPage() {
         Manage AI rules and policies for your system.
       </p>
 
-      <AIRuleManagement allAiRules={allAiRules} adminId={user.id} />
+      <AIRuleManagement allAiRules={allAiRules} adminId={session?.user.id} />
     </div>
   );
 }

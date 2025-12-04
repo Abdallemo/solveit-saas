@@ -117,11 +117,11 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
           : null,
         price: (sub.items.data[0].price.unit_amount ?? 0) / 100,
         status: sub.status,
-        interval:sub.items.data[0].plan.interval
+        interval: sub.items.data[0].plan.interval,
       },
       "SOLVER",
       userId,
-      customerId
+      customerId,
     );
   } catch (err) {
     logger.error("Failed to handle subscription creation:", { error: err });
@@ -159,11 +159,11 @@ async function handleUpdate(subscription: Stripe.Subscription) {
         ? new Date(subscription.current_period_end * 1000)
         : null,
       price: (subscription.items.data[0].price.unit_amount ?? 0) / 100,
-      interval:subscription.items.data[0].plan.interval
+      interval: subscription.items.data[0].plan.interval,
     },
     "SOLVER",
     userId,
-    customerId
+    customerId,
   );
 }
 async function handleDelete(subscription: Stripe.Subscription) {
@@ -180,7 +180,7 @@ async function handleDelete(subscription: Stripe.Subscription) {
       stripeSubscriptionItemId: null,
       tier: "POSTER",
       userId: userId,
-    }
+    },
   );
 }
 
@@ -221,7 +221,7 @@ async function handleCheckout(event: Stripe.Event) {
 
     if (paymentExist) {
       logger.warn(
-        `PaymentIntent ${paymentIntentId} already processed, skipping`
+        `PaymentIntent ${paymentIntentId} already processed, skipping`,
       );
       return;
     }
@@ -232,7 +232,7 @@ async function handleCheckout(event: Stripe.Event) {
       userId,
       paymentIntentId,
       type,
-      chargeId
+      chargeId,
     );
     if (!paymentId) {
       logger.warn("unable to insert paymentIntent for the payment table ");
@@ -255,13 +255,13 @@ async function handleCheckout(event: Stripe.Event) {
 
 async function handleTaskCreate(
   session: Stripe.Checkout.Session,
-  paymentId: string
+  paymentId: string,
 ) {
   const draftTaskId = session.metadata?.draftTaskId;
   const userId = session.metadata?.userId;
   if (!draftTaskId || !userId) {
     logger.warn(
-      `[session: ${session.id}]\ncouldnt found draftId for user: ${userId} `
+      `[session: ${session.id}]\ncouldnt found draftId for user: ${userId} `,
     );
     return;
   }
@@ -304,7 +304,7 @@ async function handleTaskCreate(
       deadline,
       price,
       uploadedFiles,
-      paymentId
+      paymentId,
     );
   } catch (error) {
     logger.error("Failed To handle Task Creatio", {
@@ -312,20 +312,20 @@ async function handleTaskCreate(
       stripeSession: session.id,
     });
     throw new Error(
-      "Task Handle Webhook Failed due to: " + (error as Error).message
+      "Task Handle Webhook Failed due to: " + (error as Error).message,
     );
   }
 }
 
 async function handleMentorBooking(
   session: Stripe.Checkout.Session,
-  paymentId: string
+  paymentId: string,
 ) {
   const bookingId = session.metadata?.bookingId;
   const userId = session.metadata?.userId;
   if (!bookingId || !userId) {
     logger.warn(
-      `[session: ${session.id}]\nCouldnt found bookingId for user: ${userId} `
+      `[session: ${session.id}]\nCouldnt found bookingId for user: ${userId} `,
     );
     return;
   }

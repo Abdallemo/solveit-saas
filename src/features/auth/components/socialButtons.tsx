@@ -3,8 +3,8 @@
 import type React from "react";
 
 import { Button } from "@/components/ui/button";
+import { signIn } from "@/lib/auth-client";
 import { Loader2 } from "lucide-react";
-import { signIn } from "next-auth/react";
 import { useState } from "react";
 import { FaGithub } from "react-icons/fa";
 import { FcGoogle } from "react-icons/fc";
@@ -23,7 +23,7 @@ export default function SocialButtons() {
     setPendingProviders((prev) => ({ ...prev, [provider]: true }));
 
     try {
-      await signIn(provider);
+      await signIn.social({ provider: provider, callbackURL: "/dashboard" });
     } catch (error) {
       console.error(`Error signing in with ${provider}:`, error);
     } finally {

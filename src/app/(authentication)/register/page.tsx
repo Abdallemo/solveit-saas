@@ -3,11 +3,11 @@
 import Logo from "@/components/marketing/logo";
 import FeaturePanelWithAnimation from "@/features/auth/components/feature-panel";
 import RegisterCard from "@/features/auth/register/components/regsiterCard";
-import { EmailRegisterAction } from "@/features/auth/server/actions";
 import {
   registerFormSchema,
   registerInferedTypes,
 } from "@/features/auth/server/auth-types";
+import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -20,20 +20,21 @@ export default function Register() {
     startTransition(async () => {
       setError("");
       setSuccess("");
-
-      myformController.reset();
       try {
-        const { error, success } = await EmailRegisterAction(values);
-
-        if (error) setError(error);
-        if (success) setSuccess(success);
-      } catch (error) {
-        clientLogger("error", "unable to register", {
-          message: (error as Error)?.message,
-          stack: (error as Error)?.stack,
+        const { data, error } = await authClient.signUp.email({
+          email: values.email,
+          password: values.password,
+          name: values.name,
         });
-        console.log(error);
-      }
+
+        if (error) {
+          setError(error.message!);
+          return;
+        }
+
+        setSuccess("Account created! Please check your email.");
+        myformController.reset();
+      } catch (e) {}
     });
   };
 

@@ -1,7 +1,6 @@
 "use client";
 
 import RuleSandBoxLoading from "@/app/dashboard/admin/ai/rule-sandbox/loading";
-import { AuthGate } from "@/components/GateComponents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -22,7 +21,6 @@ import {
   validateContentWithAi,
 } from "@/features/Ai/server/action";
 import { getAllAiRulesQuery } from "@/features/tasks/client/queries";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave } from "@/hooks/useAutoDraftSave";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { AlertCircle, CheckCircle2, PlayCircle } from "lucide-react";
@@ -34,9 +32,8 @@ export default function AIRuleSandboxPage({
 }: {
   adminAiSandboxTests: AdminAiSandboxTestsType;
 }) {
-  const { isLoading: isAuthLoading, isBlocked } = useAuthGate();
   const [sampleMessage, setSampleMessage] = useState(
-    adminAiSandboxTests ? adminAiSandboxTests.content : ""
+    adminAiSandboxTests ? adminAiSandboxTests.content : "",
   );
   const [result, setResult] = useState<openaiResAdminType | null>(null);
   const {
@@ -52,7 +49,7 @@ export default function AIRuleSandboxPage({
           adminMode: true,
         });
       },
-    }
+    },
   );
   useAutoSave({
     autoSaveFn: saveAdminAiSandboxTests,
@@ -63,15 +60,13 @@ export default function AIRuleSandboxPage({
       },
     ],
     delay: 700,
-    disabled: isLoading || !allAiRules || isAuthLoading,
+    disabled: isLoading || !allAiRules,
   });
-
-  if (isBlocked) return <AuthGate />;
 
   if (AiRulesQueryError) {
     throw AiRulesQueryError;
   }
-  if (isLoading || !allAiRules || isAuthLoading) {
+  if (isLoading || !allAiRules) {
     return <RuleSandBoxLoading />;
   }
   const handleTest = async () => {
@@ -86,7 +81,7 @@ export default function AIRuleSandboxPage({
       setResult(result);
     } catch (error) {
       if (error instanceof Error) {
-        toast.error("failed to request,"+error.message);
+        toast.error("failed to request," + error.message);
         console.error(error);
       }
     }
@@ -124,7 +119,8 @@ export default function AIRuleSandboxPage({
                 <Button
                   onClick={handleTest}
                   disabled={!sampleMessage.trim() || isLoadings}
-                  className="w-full">
+                  className="w-full"
+                >
                   <PlayCircle className="mr-2 h-4 w-4" />
                   {isLoadings ? "Testing..." : "Test Rules"}
                 </Button>
@@ -158,7 +154,8 @@ export default function AIRuleSandboxPage({
                                 variant={
                                   rule.isActive ? "success" : "secondary"
                                 }
-                                className="text-xs">
+                                className="text-xs"
+                              >
                                 {rule.isActive ? "Active" : "Disabled"}
                               </Badge>
                             </div>
@@ -205,9 +202,8 @@ export default function AIRuleSandboxPage({
                   <div className="space-y-4">
                     <Alert
                       className="flex"
-                      variant={
-                        result.violatesRules ? "destructive" : "default"
-                      }>
+                      variant={result.violatesRules ? "destructive" : "default"}
+                    >
                       <div className="flex items-start gap-3">
                         {result.violatesRules ? (
                           <AlertCircle className="h-5 w-5" />
@@ -257,7 +253,8 @@ export default function AIRuleSandboxPage({
                           {result.triggeredRules.map((rule, index) => (
                             <div
                               key={index}
-                              className="rounded-md border border-destructive/50 bg-destructive/10 p-3">
+                              className="rounded-md border border-destructive/50 bg-destructive/10 p-3"
+                            >
                               <p className="text-sm text-foreground leading-relaxed">
                                 - {rule}.
                               </p>
@@ -270,7 +267,8 @@ export default function AIRuleSandboxPage({
                     <Button
                       variant="outline"
                       onClick={() => setResult(null)}
-                      className="w-full">
+                      className="w-full"
+                    >
                       Clear Results
                     </Button>
                   </div>
@@ -283,4 +281,3 @@ export default function AIRuleSandboxPage({
     </div>
   );
 }
-

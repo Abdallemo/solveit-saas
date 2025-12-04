@@ -87,7 +87,7 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	id := uuid.New()
 
 	for _, fileHeader := range files {
-		if fileHeader.Size >= 50<<20 {
+		if fileHeader.Size >= 01<<20 {
 			failedFiles = append(failedFiles, failedFileError{
 				File: FileMeta{
 					FileName:        fileHeader.Filename,

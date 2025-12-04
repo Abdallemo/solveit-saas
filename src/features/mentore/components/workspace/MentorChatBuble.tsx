@@ -6,7 +6,7 @@ import { CheckCheck, User2 } from "lucide-react";
 import type React from "react";
 
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { MentorChatSession } from "../../server/types";
 
 export default function MentorChatBuble({
@@ -23,7 +23,7 @@ export default function MentorChatBuble({
   chat: MentorChatSession;
   messageRefs: React.RefObject<Map<string, HTMLElement>>;
   isCurrentUser: boolean;
-  user: userSessionType;
+  user: User;
   setFilePreview: (file: UploadedFileMeta) => void;
   isPostSession: boolean;
 
@@ -50,12 +50,14 @@ export default function MentorChatBuble({
       key={chat.id}
       className={`flex gap-3 ${
         isCurrentUser ? "flex-row-reverse" : "flex-row"
-      }`}>
+      }`}
+    >
       <Avatar className="h-9 w-9 shadow-sm">
         <AvatarFallback
           className={
             isCurrentUser ? "bg-primary text-primary-foreground" : "bg-muted"
-          }>
+          }
+        >
           {chat?.chatOwner ? (
             chat?.chatOwner.name?.charAt(0).toUpperCase()
           ) : (
@@ -67,11 +69,13 @@ export default function MentorChatBuble({
       <div
         className={`flex-1 space-y-2 flex flex-col min-w-0 max-w-sm md:max-w-lg xl:max-w-xl ${
           isCurrentUser ? "items-end" : "items-start"
-        }`}>
+        }`}
+      >
         <div
           className={`flex items-center gap-2 ${
             isCurrentUser ? "flex-row-reverse" : ""
-          }`}>
+          }`}
+        >
           <p className="text-sm font-medium text-foreground">
             {chat.chatOwner.name.split(" ")[0]}
           </p>
@@ -94,7 +98,8 @@ export default function MentorChatBuble({
               isCurrentUser
                 ? "bg-primary text-primary-foreground rounded-br-md"
                 : "bg-muted rounded-bl-md"
-            }`}>
+            }`}
+          >
             <p className="text-sm leading-relaxed break-all">{chat.message}</p>
           </div>
         )}
@@ -104,7 +109,8 @@ export default function MentorChatBuble({
               isCurrentUser
                 ? "bg-primary/50 text-primary-foreground rounded-br-md"
                 : "bg-muted/50 rounded-bl-md"
-            }`}>
+            }`}
+          >
             <p className="text-sm leading-relaxed break-all">
               {isCurrentUser
                 ? "you deleted this message"
@@ -141,7 +147,7 @@ export default function MentorChatBuble({
                   return old.map((c) =>
                     c.id === chat.id
                       ? { ...c, isDeleted: true, chatFiles: [] }
-                      : c
+                      : c,
                   );
                 });
                 send({ ...chat, messageType: "chat_deleted" });

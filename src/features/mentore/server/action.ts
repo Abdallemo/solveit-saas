@@ -19,7 +19,7 @@ import {
   AvailabilitySlot,
   BookingFormData,
   bookingSchema,
-  MentorListigWithAvailbelDates
+  MentorListigWithAvailbelDates,
 } from "@/features/mentore/server/types";
 import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -175,7 +175,7 @@ export async function getMentorAllSessionCount(solverId: string) {
     .from(MentorshipSessionTable)
     .leftJoin(
       MentorshipBookingTable,
-      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId)
+      eq(MentorshipBookingTable.id, MentorshipSessionTable.bookingId),
     )
     .where(eq(MentorshipBookingTable.solverId, solverId));
   return allsessions[0];
@@ -193,9 +193,9 @@ export async function getMentorListigWithAvailbelDates() {
       const solverId = session.bookedSessions.solverId;
       return `${solverId}-${getSessionKey(
         session.sessionDate,
-        session.timeSlot
+        session.timeSlot,
       )}`;
-    })
+    }),
   );
 
   const mentorsWithFilteredAvailability = allMentors.map((mentor) => {
@@ -243,9 +243,9 @@ export async function getMentorListigWithAvailbelDatesV2() {
       const solverId = session.bookedSessions.solverId;
       return `${solverId}-${getSessionKey(
         session.sessionDate,
-        session.timeSlot
+        session.timeSlot,
       )}`;
-    })
+    }),
   );
 
   const mentorsWithFilteredAvailability = allMentors.map((mentor) => {
@@ -278,12 +278,12 @@ export async function getMentorListigWithAvailbelDatesV2() {
 
           const sessionStart = fromZonedTime(
             `${toYMD(dateObj)}T${slot.start}`,
-            mentorTz
+            mentorTz,
           ).toISOString();
 
           const sessionEnd = fromZonedTime(
             `${toYMD(dateObj)}T${slot.end}`,
-            mentorTz
+            mentorTz,
           ).toISOString();
 
           availableDates.push({
@@ -309,8 +309,8 @@ export async function cleanPendingBookign(booking_id: string) {
       .where(
         and(
           eq(MentorshipBookingTable.id, booking_id),
-          eq(MentorshipBookingTable.status, "PENDING")
-        )
+          eq(MentorshipBookingTable.status, "PENDING"),
+        ),
       );
   } catch (error) {}
 }
@@ -320,7 +320,8 @@ export async function createMentorBookingPaymentCheckout(values: {
 }) {
   const referer = await getServerReturnUrl();
   try {
-    const { user: currentUser } = await isAuthorized(["POSTER"]);
+    const { session: Session } = await isAuthorized(["POSTER"]);
+    const { user: currentUser } = Session;
     const { data, mentor } = values;
     if (!currentUser.id) throw new Error("unAuthorized");
     const validData = bookingSchema.safeParse(data);
@@ -365,7 +366,7 @@ export async function createMentorBookingPaymentCheckout(values: {
         .returning({ bookingId: MentorshipBookingTable.id });
       bookingId = result[0].bookingId;
       logger.warn(
-        "when assigned from the db transaction bookingId: " + bookingId
+        "when assigned from the db transaction bookingId: " + bookingId,
       );
 
       await Promise.all(
@@ -376,8 +377,8 @@ export async function createMentorBookingPaymentCheckout(values: {
             timeSlot: session.slot,
             sessionStart: new Date(session.sessionStart),
             sessionEnd: new Date(session.sessionEnd),
-          })
-        )
+          }),
+        ),
       );
     });
     logger.warn("before creating checkout sessoin bookingId: " + bookingId);
@@ -431,7 +432,7 @@ export async function createMentorBookingPaymentCheckout(values: {
 
 export async function updateMentorBooking(
   bookingId: string,
-  paymentId: string
+  paymentId: string,
 ) {
   try {
     await db
@@ -470,7 +471,7 @@ export async function updateMentorBooking(
       });
   } catch (error) {
     logger.error(
-      "failed to update Mentor Temperory Booking\n" + (error as Error).message
+      "failed to update Mentor Temperory Booking\n" + (error as Error).message,
     );
     throw new Error("failed to update Mentor Temperory Booking");
   }
@@ -481,9 +482,9 @@ export async function getMentorBookingSessions() {
   const where = and(
     or(
       eq(MentorshipBookingTable.posterId, user.id),
-      eq(MentorshipBookingTable.solverId, user.id)
+      eq(MentorshipBookingTable.solverId, user.id),
     ),
-    eq(MentorshipBookingTable.status, "PAID")
+    eq(MentorshipBookingTable.status, "PAID"),
   );
   const result = await db.query.MentorshipBookingTable.findMany({
     where,
@@ -584,11 +585,11 @@ export async function sendMentorMessages({
   if (
     sessionTimeUtils.isAfterSession(
       { sessionEnd: session.sessionEnd },
-      new Date()
+      new Date(),
     )
   ) {
     throw new Error(
-      "The session has concluded. You can no longer send messages or files. The session is now in read-only mode for review."
+      "The session has concluded. You can no longer send messages or files. The session is now in read-only mode for review.",
     );
   }
   try {
@@ -614,8 +615,8 @@ export async function sendMentorMessages({
               fileType: file.fileType,
               storageLocation: file.storageLocation,
               uploadedById: sentBy,
-            })
-          )
+            }),
+          ),
         );
       }
       return chat[0];
@@ -632,7 +633,7 @@ export async function sendMentorMessages({
     revalidatePath(
       `${
         env.NEXTAUTH_URL
-      }/dashboard/${user.role.toLocaleLowerCase()}/sessions/${sessionId}`
+      }/dashboard/${user.role.toLocaleLowerCase()}/sessions/${sessionId}`,
     );
 
     // await fetch(`${env.GO_API_URL}/send-mentorshipChats`, {
@@ -647,7 +648,6 @@ export async function sendMentorMessages({
   }
 }
 
-
 export async function revalidateMentorSessinoData(values: {
   sessionId: string;
   role: string;
@@ -658,7 +658,7 @@ export async function revalidateMentorSessinoData(values: {
 
 export async function deleteFileFromChatSessionDb(
   fileId: string,
-  userId: string
+  userId: string,
 ) {
   try {
     const txResult = await db.transaction(async (dx) => {
@@ -667,8 +667,8 @@ export async function deleteFileFromChatSessionDb(
         .where(
           and(
             eq(MentorshipChatFilesTable.id, fileId),
-            eq(MentorshipChatFilesTable.uploadedById, userId)
-          )
+            eq(MentorshipChatFilesTable.uploadedById, userId),
+          ),
         )
         .returning();
       const [updatedChat] = await dx
@@ -677,18 +677,18 @@ export async function deleteFileFromChatSessionDb(
         .where(
           and(
             eq(MentorshipChatTable.id, chatFile.chatId),
-            eq(MentorshipChatTable.sentBy, userId)
-          )
+            eq(MentorshipChatTable.sentBy, userId),
+          ),
         )
         .returning();
       return updatedChat;
     });
 
     revalidatePath(
-      `${env.NEXTAUTH_URL}/dashboard/solver/sessions/${txResult.sessionId}`
+      `${env.NEXTAUTH_URL}/dashboard/solver/sessions/${txResult.sessionId}`,
     );
     revalidatePath(
-      `${env.NEXTAUTH_URL}/dashboard/poster/sessions/${txResult.sessionId}`
+      `${env.NEXTAUTH_URL}/dashboard/poster/sessions/${txResult.sessionId}`,
     );
   } catch (error) {
     console.error(error);

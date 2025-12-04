@@ -1,14 +1,11 @@
 "use client";
 
-import Loading from "@/app/loading";
-import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
 import { env } from "@/env/client";
 import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
   useDeleteFileGeneric,
@@ -27,8 +24,9 @@ interface FileUploadProps {
 
 export default function FileUploadSolver({ className }: FileUploadProps) {
   const useCurrentSolver = useCurrentUser();
-  const { isLoading, isBlocked } = useAuthGate();
-  const { uploadedFiles, setUploadedFiles, currentWorkspace, setFilePreview } = useWorkspace();
+
+  const { uploadedFiles, setUploadedFiles, currentWorkspace, setFilePreview } =
+    useWorkspace();
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
@@ -46,8 +44,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
     isPending: isDeleting,
     isError,
   } = useDeleteFileGeneric("solution_workspace");
-  if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
+
   const fileDisabled =
     currentWorkspace?.task.status === "SUBMITTED" ||
     currentWorkspace?.task.status === "COMPLETED";
@@ -105,7 +102,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
       <div
         className={cn(
           "border-2 border-dashed rounded-md p-4 text-center",
-          isDragging ? "border-primary bg-primary/5" : "border-muted"
+          isDragging ? "border-primary bg-primary/5" : "border-muted",
         )}
         onDragOver={(e) => {
           e.preventDefault();
@@ -119,7 +116,8 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
           e.preventDefault();
           setIsDragging(false);
           handleFiles(e.dataTransfer.files);
-        }}>
+        }}
+      >
         <Input
           disabled={fileDisabled}
           ref={inputRef}
@@ -148,7 +146,8 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
             variant="outline"
             size="sm"
             className="mt-2"
-            onClick={() => inputRef.current?.click()}>
+            onClick={() => inputRef.current?.click()}
+          >
             Select Files
           </Button>
         </div>
@@ -191,7 +190,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
                         filePath: file.filePath,
                       });
                       setUploadedFiles((prev) =>
-                        prev.filter((f) => f.filePath !== file.filePath)
+                        prev.filter((f) => f.filePath !== file.filePath),
                       );
                     } catch (error) {}
                   }}

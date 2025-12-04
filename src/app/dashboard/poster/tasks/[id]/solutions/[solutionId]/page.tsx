@@ -10,12 +10,13 @@ export default async function SolutionPage({
 }) {
   const { solutionId } = await params;
   const solution = await getSolutionById(solutionId);
-  const { user } = await isAuthorized(["POSTER"]);
+  const { session } = await isAuthorized(["POSTER"]);
   return (
     <CommentProvider
       taskComments={solution.taskSolution.taskComments}
       taskId={solution.taskId}
-      userId={user.id}>
+      userId={session?.user.id}
+    >
       <SolutionPageComps solution={solution} />
     </CommentProvider>
   );

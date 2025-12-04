@@ -7,12 +7,12 @@ export default async function page({
 }: {
   params: Promise<{ sessionId: string }>;
 }) {
-  const { user } = await isAuthorized(["POSTER"]);
+  const { session } = await isAuthorized(["POSTER"]);
   const { sessionId } = await params;
 
   return (
     <VideoCallClientWraper>
-      <VideoCallPageComps userId={user.id} sessionId={sessionId} />
+      <VideoCallPageComps userId={session?.user.id} sessionId={sessionId} />
     </VideoCallClientWraper>
   );
 }

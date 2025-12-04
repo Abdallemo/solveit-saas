@@ -97,7 +97,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
       (user) =>
         (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (selectedRole === "" || user.role === selectedRole)
+        (selectedRole === "" || user.role === selectedRole),
     )
     .sort((a, b) => {
       if (!sortOrder) return 0;
@@ -106,7 +106,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
       return sortOrder === "asc" ? dateA - dateB : dateB - dateA;
     });
 
-  const getStatusBadge = (verified: Date | null) =>
+  const getStatusBadge = (verified: boolean) =>
     verified ? (
       <Badge className="bg-green-100 text-green-800 hover:bg-green-100">
         Verified
@@ -141,8 +141,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
   const handleRoleChange = (userId: string, newRole: UserRoleType) => {
     setUserData((prev) =>
       prev.map((user) =>
-        user.id === userId ? { ...user, role: newRole } : user
-      )
+        user.id === userId ? { ...user, role: newRole } : user,
+      ),
     );
 
     setModifiedUsers((prev) => ({
@@ -163,21 +163,21 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
   };
   const toggleUserActivation = (
     userId: string,
-    mode: "activate" | "deactivate"
+    mode: "activate" | "deactivate",
   ) => {
-    const now = mode === "activate" ? new Date() : null;
+    const verified = mode === "activate" ? true : false;
 
     setUserData((prev) =>
       prev.map((user) =>
-        user.id === userId ? { ...user, emailVerified: now } : user
-      )
+        user.id === userId ? { ...user, emailVerified: verified } : user,
+      ),
     );
 
     setModifiedUsers((prev) => ({
       ...prev,
       [userId]: {
         ...(prev[userId] || {}),
-        emailVerified: now,
+        emailVerified: verified,
       },
     }));
 
@@ -245,7 +245,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                 variant="outline"
                 role="combobox"
                 aria-expanded={roleOpen}
-                className="w-[200px] justify-between">
+                className="w-[200px] justify-between"
+              >
                 {selectedRole
                   ? roles.find((role) => role.value === selectedRole)?.label
                   : "Filter by role..."}
@@ -263,11 +264,12 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                       onSelect={() => {
                         setSelectedRole("");
                         setRoleOpen(false);
-                      }}>
+                      }}
+                    >
                       <Check
                         className={cn(
                           "mr-2 h-4 w-4",
-                          selectedRole === "" ? "opacity-100" : "opacity-0"
+                          selectedRole === "" ? "opacity-100" : "opacity-0",
                         )}
                       />
                       All roles
@@ -278,16 +280,17 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                         value={role.value}
                         onSelect={(currentValue) => {
                           setSelectedRole(
-                            currentValue === selectedRole ? "" : currentValue
+                            currentValue === selectedRole ? "" : currentValue,
                           );
                           setRoleOpen(false);
-                        }}>
+                        }}
+                      >
                         <Check
                           className={cn(
                             "mr-2 h-4 w-4",
                             selectedRole === role.value
                               ? "opacity-100"
-                              : "opacity-0"
+                              : "opacity-0",
                           )}
                         />
                         {role.label}
@@ -344,7 +347,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                     value={user.role ?? undefined}
                     onValueChange={(value) =>
                       handleRoleChange(user.id, value as UserRoleType)
-                    }>
+                    }
+                  >
                     <SelectTrigger className="w-[130px] h-8 border-0 bg-transparent p-0 focus:ring-0">
                       <SelectValue>{getRoleBadge(user.role ?? "")}</SelectValue>
                     </SelectTrigger>
@@ -359,7 +363,7 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                     </SelectContent>
                   </Select>
                 </TableCell>
-                <TableCell>{getStatusBadge(user.emailVerified)}</TableCell>
+                <TableCell>{getStatusBadge(user.emailVerified!)}</TableCell>
                 <TableCell className="hidden lg:table-cell text-muted-foreground">
                   {user.createdAt
                     ? new Date(user.createdAt).toLocaleDateString()
@@ -380,7 +384,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                         <DropdownMenuItem
                           onClick={() =>
                             toggleUserActivation(user.id, "activate")
-                          }>
+                          }
+                        >
                           <UserCheck className="mr-2 h-4 w-4" />
                           Activate user
                         </DropdownMenuItem>
@@ -389,7 +394,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                         <DropdownMenuItem
                           onClick={() =>
                             toggleUserActivation(user.id, "deactivate")
-                          }>
+                          }
+                        >
                           <UserX className="mr-2 h-4 w-4" />
                           Deactivate user
                         </DropdownMenuItem>
@@ -398,7 +404,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         className="text-red-600"
-                        onClick={() => setUserToDelete(user.id)}>
+                        onClick={() => setUserToDelete(user.id)}
+                      >
                         Delete user
                       </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -411,7 +418,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
       </div>
       <AlertDialog
         open={userToDelete !== null}
-        onOpenChange={(open) => !open && setUserToDelete(null)}>
+        onOpenChange={(open) => !open && setUserToDelete(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
@@ -423,7 +431,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
           <AlertDialogFooter>
             <AlertDialogCancel
               onClick={() => setUserToDelete(null)}
-              className="cursor-pointer">
+              className="cursor-pointer"
+            >
               Cancel
             </AlertDialogCancel>
             <AlertDialogAction
@@ -433,7 +442,8 @@ export default function UserPageComponent({ users }: { users: allUsersType }) {
                   handleUserDelete(userToDelete);
                   setUserToDelete(null);
                 }
-              }}>
+              }}
+            >
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>

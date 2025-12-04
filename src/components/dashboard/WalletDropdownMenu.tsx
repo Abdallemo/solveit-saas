@@ -11,18 +11,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent } from "@/components/ui/tooltip";
 import { requestWithdraw } from "@/features/payments/server/action";
 import { getWalletInfo } from "@/features/tasks/server/data";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { cn } from "@/lib/utils/utils";
 import { TooltipTrigger } from "@radix-ui/react-tooltip";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowUpRight, Info, Loader2, Wallet } from "lucide-react";
 import { toast } from "sonner";
 
-export default function WalletDropdownMenu({
-  user,
-}: {
-  user: userSessionType;
-}) {
+export default function WalletDropdownMenu({ user }: { user: User }) {
   const queryClient = useQueryClient();
 
   const queryKey = ["wallet", user?.id];

@@ -44,7 +44,7 @@ import Link from "next/link";
 import { useMemo, useState } from "react";
 
 import TaskLoading from "@/app/dashboard/solver/tasks/loading";
-import { UserDbType } from "@/features/users/server/actions";
+import { User } from "@/features/users/server/user-types";
 import { useQuery } from "@tanstack/react-query";
 import { tasksQuery } from "../client/queries";
 import PaginationControls from "./PaginatedControls";
@@ -55,7 +55,7 @@ type DisplayComponentProps = {
   title: string;
   categoryMap: Record<string, string>;
   type: "PosterTasks" | "AllTasks" | "SolverTasks";
-  currentUser: UserDbType;
+  currentUser: User;
   limit: number;
 };
 
@@ -91,7 +91,7 @@ export default function DisplayListComponent({
       offset,
       status: selectedValue as TaskStatusType,
       categoryMap,
-    })
+    }),
   );
 
   const debouncedSetSearch = useMemo(
@@ -99,7 +99,7 @@ export default function DisplayListComponent({
       debounce((val: string) => {
         setSearch(val);
       }, 500),
-    [setSearch]
+    [setSearch],
   );
 
   if (isLoading) {
@@ -117,7 +117,7 @@ export default function DisplayListComponent({
   function statusUiCheck(task: SolverAssignedTaskType | PosterTasksFiltred) {
     return "blockedSolvers" in task &&
       task.blockedSolvers.some(
-        (blocked) => blocked.userId === currentUser?.id!
+        (blocked) => blocked.userId === currentUser?.id!,
       ) ? (
       <Badge variant="secondary" className="bg-yellow-100 text-yellow-800">
         Canceled
@@ -128,7 +128,7 @@ export default function DisplayListComponent({
   }
 
   function actionButtoneCheck(
-    task: SolverAssignedTaskType | PosterTasksFiltred
+    task: SolverAssignedTaskType | PosterTasksFiltred,
   ) {
     return (
       <div className="flex gap-2 w-full ">
@@ -139,7 +139,8 @@ export default function DisplayListComponent({
                 className="w-1/2 flex-1"
                 href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                   task.id
-                }`}>
+                }`}
+              >
                 <SquareArrowUpRight className="w-4 h-4 mr-1" />
                 Task Overview
               </Link>
@@ -147,16 +148,17 @@ export default function DisplayListComponent({
             <Button variant="success" size="sm" asChild>
               <Link
                 href={`/dashboard/solver/workspace/start/${task.id}`}
-                className="w-1/2 flex-1">
+                className="w-1/2 flex-1"
+              >
                 {task.status === "IN_PROGRESS"
                   ? "Continue Workspace"
                   : task.blockedSolvers.some(
-                      (blocked) => blocked.userId === currentUser?.id
-                    ) ||
-                    task.status === "COMPLETED" ||
-                    task.status === "SUBMITTED"
-                  ? "View Workspace"
-                  : "Start Workspace"}
+                        (blocked) => blocked.userId === currentUser?.id,
+                      ) ||
+                      task.status === "COMPLETED" ||
+                      task.status === "SUBMITTED"
+                    ? "View Workspace"
+                    : "Start Workspace"}
               </Link>
             </Button>
           </>
@@ -167,7 +169,8 @@ export default function DisplayListComponent({
                 className="w-full flex-1"
                 href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                   task.id
-                }`}>
+                }`}
+              >
                 View Task
               </Link>
             </Button>
@@ -176,7 +179,8 @@ export default function DisplayListComponent({
                 className="w-full flex-1"
                 href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                   task.id
-                }/solutions/${task.taskSolution.id}`}>
+                }/solutions/${task.taskSolution.id}`}
+              >
                 <SquareArrowUpRight className="w-4 h-4 mr-1" />
                 View Solution
               </Link>
@@ -188,7 +192,8 @@ export default function DisplayListComponent({
               className="w-full flex-1"
               href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
                 task.id
-              }`}>
+              }`}
+            >
               View Task
             </Link>
           </Button>
@@ -204,7 +209,8 @@ export default function DisplayListComponent({
           {tasks.map((task) => (
             <Card
               key={task.id}
-              className="hover:shadow-md transition-shadow flex flex-col">
+              className="hover:shadow-md transition-shadow flex flex-col"
+            >
               <CardHeader className="pb-2 space-y-2 ">
                 <div className="flex items-center justify-between">
                   <Badge className={getColorClass(task.category.name)}>
@@ -286,7 +292,8 @@ export default function DisplayListComponent({
             <PopoverTrigger asChild>
               <Button
                 variant="outline"
-                className="w-full sm:w-[200px] justify-between">
+                className="w-full sm:w-[200px] justify-between"
+              >
                 {selectedValue ? selectedValue : `Filter by ${filterType}`}
                 <ChevronsUpDown className="ml-2 h-4 w-4 opacity-50" />
               </Button>
@@ -303,16 +310,17 @@ export default function DisplayListComponent({
                             key={category}
                             onSelect={() =>
                               setSelectedValue(
-                                selectedValue === category ? "" : category
+                                selectedValue === category ? "" : category,
                               )
                             }
-                            className="cursor-pointer">
+                            className="cursor-pointer"
+                          >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
                                 selectedValue === category
                                   ? "opacity-100"
-                                  : "opacity-0"
+                                  : "opacity-0",
                               )}
                             />
                             <Badge className={cn(getColorClass(category))}>
@@ -325,16 +333,17 @@ export default function DisplayListComponent({
                             key={status}
                             onSelect={() =>
                               setSelectedValue(
-                                selectedValue === status ? "" : status
+                                selectedValue === status ? "" : status,
                               )
                             }
-                            className="cursor-pointer">
+                            className="cursor-pointer"
+                          >
                             <Check
                               className={cn(
                                 "mr-2 h-4 w-4",
                                 selectedValue === status
                                   ? "opacity-100"
-                                  : "opacity-0"
+                                  : "opacity-0",
                               )}
                             />
                             {GetStatusBadge(status)}
@@ -357,7 +366,7 @@ export default function DisplayListComponent({
           No tasks found for this page or search query.
         </div>
       )}
-      {(hasNext||hasPrevious) && (
+      {(hasNext || hasPrevious) && (
         <PaginationControls
           hasNext={hasNext}
           hasPrevious={hasPrevious}

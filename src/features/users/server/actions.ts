@@ -10,12 +10,15 @@ import {
   UserTable,
 } from "@/drizzle/schemas";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
+import {
+  publicUserColumns,
+  publicUserType,
+  UserRole,
+} from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import { stripe } from "@/lib/stripe";
 import { to } from "@/lib/utils/async";
-import { and, count, eq, isNotNull, isNull, sql, sum } from "drizzle-orm";
-import { UserRole } from "../../../../types/next-auth";
-import { publicUserType } from "./user-types";
+import { count, eq, sql, sum } from "drizzle-orm";
 
 //* User Types
 
@@ -266,32 +269,27 @@ export async function updatUserRoleByid(userId: string, role: UserRoleType) {
     })
     .where(eq(UserTable.id, userId));
 }
-export async function activeUser(userId: string, emailVerified: Date | null) {
+export async function activeUser(userId: string, emailVerified: boolean) {
   console.log("usr to togle actiavtion with date :", emailVerified);
-  const serverDate = new Date();
-  if (emailVerified) {
-    await db
-      .update(UserTable)
-      .set({
-        emailVerified: serverDate,
-      })
-      .where(and(eq(UserTable.id, userId), isNull(UserTable.emailVerified)));
-    withRevalidateTag("user-data-cache", userId);
-  } else {
-    await db
-      .update(UserTable)
-      .set({
-        emailVerified: null,
-      })
-      .where(and(eq(UserTable.id, userId), isNotNull(UserTable.emailVerified)));
-    withRevalidateTag("user-data-cache", userId);
-  }
+  await db
+    .update(UserTable)
+    .set({
+      emailVerified: emailVerified,
+    })
+    .where(eq(UserTable.id, userId));
+  withRevalidateTag("user-data-cache", userId);
 }
 export async function getUserById(id: string) {
   try {
     const result = await db.query.UserTable.findFirst({
       where: (table, fn) => fn.eq(table.id, id),
       with: { userDetails: true },
+      columns: {
+        ...publicUserColumns,
+        stripeAccountId: true,
+        stripeCustomerId: true,
+        stripeAccountLinked: true,
+      },
     });
     return result;
   } catch (error) {

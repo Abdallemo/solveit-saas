@@ -137,26 +137,27 @@ export async function getAllPayments() {
 }
 
 export async function handlerStripeConnect() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"], {
+  const { session } = await isAuthorized(["POSTER", "SOLVER"], {
     useCache: false,
   });
+  const { user } = session;
   if (!user || !user.id) return;
-  console.log(`user stripe account id : ${user.stripeAccountId}`);
+
   const urlprix = `${
     env.NEXTAUTH_URL
   }/dashboard/${user.role?.toLocaleLowerCase()}/billings?user=${user.id}`;
   console.log(
     `trying to account link for user with account id : ${user.stripeAccountId} and url :${urlprix}`,
   );
-  const session = await stripe.accountLinks.create({
+  const stripeSession = await stripe.accountLinks.create({
     account: user.stripeAccountId!,
     type: "account_onboarding",
     collect: "currently_due",
     return_url: urlprix,
     refresh_url: urlprix,
   });
-  console.log(`redirecting to ${session.url}`);
-  return redirect(session.url);
+
+  return redirect(stripeSession.url);
 }
 export async function CreateUserStripeConnectAccount(
   values: OnboardingFormData,

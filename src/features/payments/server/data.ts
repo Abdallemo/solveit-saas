@@ -27,7 +27,9 @@ export async function getRefundDetails(refundId: string) {
 }
 
 export async function getBillingStatus() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["POSTER", "SOLVER"]);
 
   if (!user?.stripeAccountId) {
     return {
@@ -36,7 +38,7 @@ export async function getBillingStatus() {
       hasPendingRequirements: false,
       externalAccountLast4: null,
       balance: { available: 0, pending: 0 },
-      accountInfo: null, // New field for rich info
+      accountInfo: null,
       error: "Stripe account ID is missing.",
     };
   }
@@ -112,7 +114,9 @@ export interface PayoutTransaction {
 }
 
 export async function getPayoutHistory() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["POSTER", "SOLVER"]);
   if (!user?.stripeAccountId) return [];
 
   try {
@@ -135,7 +139,9 @@ export async function getPayoutHistory() {
   }
 }
 export async function getTransferHistory() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["POSTER", "SOLVER"]);
   if (!user?.stripeAccountId) return [];
 
   try {
@@ -157,7 +163,9 @@ export async function getTransferHistory() {
   }
 }
 export async function manageStripeAccount() {
-  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["POSTER", "SOLVER"]);
 
   if (!user || !user.stripeAccountId) {
     throw new Error("No connected Stripe account found.");

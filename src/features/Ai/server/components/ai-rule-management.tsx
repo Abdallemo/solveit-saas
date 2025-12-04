@@ -1,13 +1,10 @@
 "use client";
 
-import Loading from "@/app/loading";
-import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { Edit2, Plus, Trash2 } from "lucide-react";
@@ -40,8 +37,6 @@ export function AIRuleManagement({
   allAiRules: AiRule[];
   adminId: string;
 }) {
-  const { isLoading, isBlocked } = useAuthGate();
-
   const [isAddingRule, setIsAddingRule] = useState(false);
   const [editingRule, setEditingRule] = useState<AiRule | null>(null);
   const [togglingRuleId, setTogglingRuleId] = useState<string | null>(null);
@@ -132,8 +127,6 @@ export function AIRuleManagement({
     setIsAddingRule(false);
     form.reset({ description: "", rule: "" });
   };
-  if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
 
   return (
     <div className="mx-auto max-w-8xl ">
@@ -149,7 +142,8 @@ export function AIRuleManagement({
                 form.reset();
                 setIsAddingRule(true);
               }}
-              disabled={isAddingRule || editingRule !== null}>
+              disabled={isAddingRule || editingRule !== null}
+            >
               <Plus className="w-4 h-4 mr-2" />
               Add Rule
             </Button>
@@ -165,7 +159,8 @@ export function AIRuleManagement({
               <CardContent className="space-y-4">
                 <form
                   onSubmit={form.handleSubmit(handleSubmit)}
-                  className="space-y-4">
+                  className="space-y-4"
+                >
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex flex-col gap-2">
                       <Label htmlFor="name">Rule</Label>
@@ -204,7 +199,8 @@ export function AIRuleManagement({
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={cancelEdit}>
+                      onClick={cancelEdit}
+                    >
                       Cancel
                     </Button>
                   </div>
@@ -222,7 +218,8 @@ export function AIRuleManagement({
               allAiRules.map((rule) => (
                 <Card
                   key={rule.id}
-                  className={`${!rule.isActive ? "opacity-60" : ""}`}>
+                  className={`${!rule.isActive ? "opacity-60" : ""}`}
+                >
                   <CardContent className="pt-6">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
@@ -242,14 +239,16 @@ export function AIRuleManagement({
                               ruleId: rule.id,
                               state: !rule.isActive,
                             })
-                          }>
+                          }
+                        >
                           {rule.isActive ? "Disable" : "Enable"}
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => startEdit(rule)}
-                          disabled={editingRule !== null || isAddingRule}>
+                          disabled={editingRule !== null || isAddingRule}
+                        >
                           <Edit2 className="w-4 h-4" />
                         </Button>
                         <Button
@@ -261,7 +260,8 @@ export function AIRuleManagement({
                             await ruleDeleteMutate(rule.id);
                             router.refresh();
                           }}
-                          className="text-destructive hover:text-destructive">
+                          className="text-destructive hover:text-destructive"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </Button>
                       </div>

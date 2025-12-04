@@ -17,7 +17,8 @@ import NotificationDropDown, {
   Message,
 } from "@/features/notifications/components/notificationDropDown";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
-import { Session } from "next-auth";
+import { UserDbType } from "@/features/users/server/actions";
+import { Session } from "@/features/users/server/user-types";
 import { Suspense } from "react";
 import { useIsMounted } from "../useIsMounted";
 
@@ -29,13 +30,7 @@ const dbFlags = {
 } as const;
 
 interface UserSessionProps {
-  user: {
-    id: string;
-    role: "ADMIN" | "MODERATOR" | "POSTER" | "SOLVER";
-    userDetails: {
-      onboardingCompleted: boolean;
-    };
-  };
+  user: UserDbType;
   sessionUser: Session["user"];
   allNotifications: Message[];
 }
@@ -64,8 +59,9 @@ export function DashboardClientProviders({
   return (
     <StripeSubscriptionProvider value={stripeData}>
       <NotificationProvider
-        user={user}
-        initailAllNotifications={allNotifications}>
+        user={sessionUser}
+        initailAllNotifications={allNotifications}
+      >
         <SidebarProvider defaultOpen={defaultSidebarOpen} style={sidebarStyles}>
           {(user.role === "SOLVER" || user.role === "POSTER") &&
           !user.userDetails.onboardingCompleted ? (
@@ -87,9 +83,9 @@ export function DashboardClientProviders({
                     </div>
                     <div className="flex gap-2 justify-center items-center">
                       {user.role === "SOLVER" && isMounted && (
-                        <WalletDropdownMenu user={user} />
+                        <WalletDropdownMenu user={sessionUser} />
                       )}
-                      <NotificationDropDown user={user} />
+                      <NotificationDropDown user={sessionUser} />
                     </div>
                   </div>
                 </header>

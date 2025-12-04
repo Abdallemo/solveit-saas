@@ -1,7 +1,5 @@
 import db from "@/drizzle/db";
-import {
-  MentorshipChatFilesTable
-} from "@/drizzle/schemas";
+import { MentorshipChatFilesTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { deleteFileFromChatSessionDb } from "@/features/mentore/server/action";
@@ -10,13 +8,12 @@ import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 export async function DELETE(req: NextRequest) {
-  const { user, Auth } = await isAuthorized(["POSTER", "SOLVER"], {
+  const { user, Auth, session } = await isAuthorized(["POSTER", "SOLVER"], {
     useResponse: true,
   });
   if (Auth.isAuthError) {
     return Auth.response;
   }
-
   const key = req.nextUrl.searchParams.get("key");
   if (!key) {
     return new Response("Missing key", { status: 400 });
@@ -41,7 +38,7 @@ export async function DELETE(req: NextRequest) {
     if (!res.ok || !res.body) {
       return new Response("Failed to delete file", { status: res.status });
     }
-    await deleteFileFromChatSessionDb(file.id, user?.id!);
+    await deleteFileFromChatSessionDb(file.id, session?.user.id!);
 
     return new Response("Successfully Deleted", { status: res.status });
   } catch (error) {

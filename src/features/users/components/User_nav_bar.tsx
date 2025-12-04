@@ -6,7 +6,7 @@ import {
   Bell,
   ChevronsUpDown,
   LogOut,
-  Sparkles
+  Sparkles,
 } from "lucide-react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -29,13 +29,15 @@ import {
   createStripeCheckoutSession,
   upgradeSolverToPlus,
 } from "@/features/subscriptions/server/action";
+import { User } from "@/features/users/server/user-types";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
-import { signOut } from "next-auth/react";
+import { signOut } from "@/lib/auth-client";
 import Link from "next/link";
-import { AppUser } from "../../../../types/next-auth";
+import { useRouter } from "next/navigation";
 
-export function NavUser({ image, name, email, role, id }: AppUser) {
+export function NavUser({ image, name, email, role, id }: User) {
   const { subTier } = useStripeSubscription();
+  const router = useRouter();
   const { isMobile, openMobile, setOpenMobile, setOpen, open, toggleSidebar } =
     useSidebar();
   const closeMobileSidebar = () => {
@@ -48,9 +50,7 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
       <SidebarMenuItem>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="">
+            <SidebarMenuButton size="lg" className="">
               <Avatar className="h-8 w-8 rounded-lg">
                 <AvatarImage src={image!} alt={"test"} />
                 <AvatarFallback className="rounded-lg">
@@ -72,7 +72,8 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
             className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
             side={isMobile ? "bottom" : "right"}
             align="end"
-            sideOffset={4}>
+            sideOffset={4}
+          >
             <DropdownMenuLabel className="p-0 font-normal">
               <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
                 <Avatar>
@@ -95,7 +96,8 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
                   className="cursor-pointer"
                   onSelect={async () => {
                     await createStripeCheckoutSession("SOLVER");
-                  }}>
+                  }}
+                >
                   <Sparkles />
                   Become a Solver
                 </DropdownMenuItem>
@@ -103,10 +105,10 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
               {role === "SOLVER" && subTier === "SOLVER" && (
                 <DropdownMenuItem
                   className="cursor-pointer"
-                  
                   onSelect={async () => {
                     await upgradeSolverToPlus(id!);
-                  }}>
+                  }}
+                >
                   <Sparkles />
                   Upgrade to Solver++
                 </DropdownMenuItem>
@@ -118,7 +120,8 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
                 <Link
                   href={`${urlPrfx}/account`}
                   onClick={closeMobileSidebar}
-                  className="cursor-pointer">
+                  className="cursor-pointer"
+                >
                   <BadgeCheck />
                   Account
                 </Link>
@@ -131,14 +134,17 @@ export function NavUser({ image, name, email, role, id }: AppUser) {
               <DropdownMenuItem asChild>
                 <Link
                   href={`/dashboard/notifications`}
-                  className="cursor-pointer">
+                  className="cursor-pointer"
+                >
                   <Bell />
                   Notifications
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => signOut({ redirectTo: "/login" })}>
+            <DropdownMenuItem
+              onClick={() => signOut().then(() => router.push("/login"))}
+            >
               <LogOut />
               Log out
             </DropdownMenuItem>

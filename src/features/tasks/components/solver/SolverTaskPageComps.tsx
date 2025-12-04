@@ -2,7 +2,7 @@
 import { FilesTable } from "@/features/media/components/FilesTable";
 import { AssignTaskButton } from "@/features/tasks/components/AssignTaskButton";
 import { SolverTaskReturn } from "@/features/tasks/server/task-types";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { TaskNotFoundError } from "@/lib/Errors";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
@@ -14,7 +14,7 @@ export default function SolverTaskPageComps({
   isBlocked,
 }: {
   task: SolverTaskReturn | null;
-  currentUser: userSessionType;
+  currentUser: User;
   isBlocked: boolean;
 }) {
   if (!task) throw new TaskNotFoundError();
