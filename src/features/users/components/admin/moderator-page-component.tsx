@@ -62,7 +62,7 @@ export default function ModeratorsPageComponent({
       (user) =>
         (user.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
           user.email?.toLowerCase().includes(searchTerm.toLowerCase())) &&
-        (selectedRole === "" || user.role === selectedRole)
+        (selectedRole === "" || user.role === selectedRole),
     )
     .sort((a, b) => {
       if (!sortOrder) return 0;
@@ -78,7 +78,7 @@ export default function ModeratorsPageComponent({
         if (updates.role) {
           await updatUserRoleByid(userId, updates.role as UserRoleType);
         }
-        if (updates.emailVerified !== undefined) {
+        if (updates.emailVerified) {
           await activeUser(userId, updates.emailVerified);
         }
       }
@@ -180,9 +180,8 @@ export default function ModeratorsPageComponent({
                     <Button
                       variant="link"
                       className="p-0 h-auto font-medium"
-                      onClick={() =>
-                        router.push(`/moderator/${user.id}/cases`)
-                      }>
+                      onClick={() => router.push(`/moderator/${user.id}/cases`)}
+                    >
                       {user.Cases}
                     </Button>
                   </TableCell>
@@ -200,9 +199,8 @@ export default function ModeratorsPageComponent({
                     <Button
                       variant="link"
                       className="p-0 h-auto font-medium"
-                      onClick={() =>
-                        router.push(`/moderator/${user.id}/stats`)
-                      }>
+                      onClick={() => router.push(`/moderator/${user.id}/stats`)}
+                    >
                       View Stats
                     </Button>
                   </TableCell>
@@ -213,7 +211,8 @@ export default function ModeratorsPageComponent({
                       variant="ghost"
                       size="sm"
                       onClick={() => toggleRow(user.id)}
-                      className="p-0">
+                      className="p-0"
+                    >
                       {expandedRows[user.id] ? <ChevronUp /> : <ChevronDown />}
                     </Button>
 
@@ -229,23 +228,27 @@ export default function ModeratorsPageComponent({
                         <DropdownMenuItem
                           onClick={() =>
                             toast.info(`Reassigning ${user.name}...`)
-                          }>
+                          }
+                        >
                           Remove / Reassign from Dispute
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             router.push(`/moderator/${user.id}/audit`)
-                          }>
+                          }
+                        >
                           View Audit Log
                         </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={() =>
                             toast.info(`Notifying ${user.name}...`)
-                          }>
+                          }
+                        >
                           Send Notification
                         </DropdownMenuItem>
                         <DropdownMenuItem
-                          onClick={() => router.push(`/moderator/${user.id}`)}>
+                          onClick={() => router.push(`/moderator/${user.id}`)}
+                        >
                           View Profile
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -261,7 +264,8 @@ export default function ModeratorsPageComponent({
                         <div className="space-y-2">
                           <div
                             key={d.id}
-                            className="flex justify-between items-center border p-2 rounded-md">
+                            className="flex justify-between items-center border p-2 rounded-md"
+                          >
                             <div>
                               #{d.id.slice(-8)} ({d.refundStatus})
                             </div>
@@ -271,7 +275,8 @@ export default function ModeratorsPageComponent({
                                 variant="ghost"
                                 onClick={() =>
                                   toast.info(`Reassigning dispute ${d.id}...`)
-                                }>
+                                }
+                              >
                                 Reassign
                               </Button>
                               <Button
@@ -279,9 +284,10 @@ export default function ModeratorsPageComponent({
                                 variant="destructive"
                                 onClick={() =>
                                   toast.error(
-                                    `Removed dispute ${d.id} from ${user.name}`
+                                    `Removed dispute ${d.id} from ${user.name}`,
                                   )
-                                }>
+                                }
+                              >
                                 Remove
                               </Button>
                             </div>

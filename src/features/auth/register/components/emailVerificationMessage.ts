@@ -1,7 +1,5 @@
-import { env } from "@/env/server";
-
 export function getVerificationEmailBody(verificationToken: string) {
-  const verificationUrl = `${env.NEXTAUTH_URL}/login/verify?token=${verificationToken}`;
+  const verificationUrl = `${verificationToken}`;
 
   return `<div style="font-family: Arial, sans-serif; color: #333; padding: 20px; line-height: 1.5;">
   <h2 style="color: #1a73e8;">Please Verify Your Email Address</h2>

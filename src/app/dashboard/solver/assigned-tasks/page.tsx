@@ -7,14 +7,10 @@ export default async function ServerWrapper({
 }: {
   searchParams: Promise<{ search: string; page: string; status: string }>;
 }) {
-  const { user } = await isAuthorized(["SOLVER"]);
+  const { session } = await isAuthorized(["SOLVER"]);
 
   const categoryMap = await getAllCategoryMap();
   const limit = 8;
-
-  // for (const task of tasks) {
-  //   await handleTaskDeadline(task);
-  // }
 
   return (
     <DisplayListComponent
@@ -22,7 +18,7 @@ export default async function ServerWrapper({
       categoryMap={categoryMap}
       filterType="status"
       type="SolverTasks"
-      currentUser={user}
+      currentUser={session?.user}
       limit={limit}
     />
   );

@@ -1,178 +1,40 @@
 "use server";
-import db from "@/drizzle/db";
-import { UserDetails } from "@/drizzle/schemas";
-import { Notifier } from "@/features/notifications/server/notifier";
-import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
+import { UserRoleType as UserRole } from "@/drizzle/schemas";
 import {
-  CreateUser,
   DeleteUserFromDb,
-  getUserByEmail,
   getUserById,
-  UpdateUserField,
   UserDbType,
 } from "@/features/users/server/actions";
-import { auth, signIn, signOut } from "@/lib/auth";
+import { Session } from "@/features/users/server/user-types";
+import { auth } from "@/lib/auth";
 import { DEFAULTREVALIDATEDURATION, withCache } from "@/lib/cache";
-import bcrypt from "bcryptjs";
-import { AuthError, Session } from "next-auth";
+
 import { revalidateTag } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
-import { UserRole } from "../../../../types/next-auth";
-import { getVerificationEmailBody } from "../register/components/emailVerificationMessage";
-import {
-  loginFormSchema,
-  loginInferedTypes,
-  registerFormSchema,
-  registerInferedTypes,
-} from "./auth-types";
-import { generateVerificationToken } from "./auth-uitls";
-// import { verificationTokens } from "@/drizzle/schemas";
-// import { eq } from "drizzle-orm";
-
-export async function GithubSignInAction() {
-  await signIn("github");
-}
-export async function SignOutAction() {
-  await signOut({ redirectTo: "/login" });
-}
-export async function GooogleSignInAction() {
-  await signIn("google");
-}
-type EmailResponeActionType = Promise<{
-  error?: string;
-  success?: string;
-}>;
-
-export async function EmailSignInAction(
-  values: loginInferedTypes,
-): EmailResponeActionType {
-  const validateValues = loginFormSchema.safeParse(values);
-  if (!validateValues.success) return { error: "" };
-
-  const { email, password } = validateValues.data;
-
-  try {
-    const exsistingUser = await getUserByEmail(email);
-
-    if (!exsistingUser || !exsistingUser.email || !exsistingUser.password) {
-      return { error: "Email does not exist! " };
-    }
-    const passwordMacth = await bcrypt.compare(
-      password,
-      exsistingUser?.password!,
-    );
-
-    if (!passwordMacth) {
-      return { error: "Incorrect Password " };
-    }
-
-    if (!exsistingUser?.emailVerified) {
-      await generateVerificationToken(exsistingUser?.email);
-      const verificationToken = await getVerificationTokenByEmail(
-        exsistingUser.email,
-      );
-
-      if (verificationToken?.token) {
-        Notifier().email({
-          subject: "Please verify your email address",
-          content: getVerificationEmailBody(verificationToken.token),
-          receiverEmail: exsistingUser.email,
-        });
-        return { success: "Confirmation Email Send. please check your mail" };
-      }
-    }
-  } catch (error) {
-    if (error instanceof AuthError) {
-      switch (error.type) {
-        case "CredentialsSignin":
-          return { error: "Invalid Cridentials" };
-
-        default:
-          return { error: "Something Went Wrong" };
-      }
-    }
-    throw error;
-  }
-
-  return { success: "OK" };
-}
-
-export async function EmailRegisterAction(
-  values: registerInferedTypes,
-): EmailResponeActionType {
-  const { error, data } = registerFormSchema.safeParse(values);
-  if (error) return { error: error.message };
-
-  const { email, password, name } = data;
-  try {
-    const hashedPassword = await bcrypt.hash(password, 10);
-
-    const exsistingUser = await getUserByEmail(email);
-    if (exsistingUser) return { error: "Email Already in Use" };
-
-    const { userId } = await CreateUser({
-      email,
-      password: hashedPassword,
-      name,
-    });
-    await CreateUserSubsciption({ tier: "POSTER", userId: userId });
-    await db.insert(UserDetails).values({ userId, onboardingCompleted: false });
-
-    const verificationToken = await generateVerificationToken(email);
-
-    Notifier().email({
-      subject: "Please verify your email address",
-      content: getVerificationEmailBody(verificationToken.token!),
-      receiverEmail: email,
-    });
-  } catch (error) {
-    console.log(error);
-    return { error: "Something Went Wrong" };
-  }
-
-  return { success: "Confirmation Email Send" };
-}
 
 //* session
 export async function getServerUserSession() {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   if (!session?.user) return null;
   return session?.user;
 }
 export async function getServerSession() {
-  const session = await auth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
   return session;
 }
 export async function userRoleSession() {
   const r = await getServerSession();
   const role = r?.user.role;
-  return role;
+  return role as UserRole;
 }
 
 //* Auth Db Calls
-
-export async function getVerificationTokenByEmail(email: string) {
-  try {
-    return await db.query.VerificationTokenTable.findFirst({
-      where: (table, fn) => fn.eq(table.email, email),
-    });
-  } catch (error) {
-    console.error({ verificationError: error });
-    return null;
-  }
-}
-
-export async function getVerificationTokenById(id: string) {
-  try {
-    return await db.query.VerificationTokenTable.findFirst({
-      where: (table, fn) => fn.eq(table.id, id),
-    });
-  } catch (error) {
-    console.error({ verificationError: error });
-    return null;
-  }
-}
 
 type verificationTokenReturn =
   | {
@@ -180,35 +42,6 @@ type verificationTokenReturn =
       success?: "VERIFIED";
     }
   | undefined;
-
-export async function verifyVerificationToken(
-  token: string,
-): Promise<verificationTokenReturn> {
-  const exsistingToken = await db.query.VerificationTokenTable.findFirst({
-    where: (table, fn) => fn.eq(table.token, token),
-  });
-
-  const currentDate = new Date(Date.now());
-
-  if (!exsistingToken || !exsistingToken.token) {
-    return { error: "INVALID" };
-  }
-
-  if (currentDate > exsistingToken?.expires) {
-    console.log(`time comparism:  ${currentDate} > ${exsistingToken}`);
-    return { error: "EXPIRED" };
-  }
-  if (exsistingToken.email) {
-    await UpdateUserField({
-      email: exsistingToken.email!,
-      data: { emailVerified: currentDate },
-    });
-    // await db
-    //   .delete(verificationTokens)
-    //   .where(eq(verificationTokens.email, exsistingToken.email!));
-    return { success: "VERIFIED" };
-  }
-}
 
 type UnauthorizedRespType = {
   isAuthError: boolean;
@@ -270,12 +103,12 @@ export async function isAuthorized(
 
   const session = await getServerSession();
   if (!session) {
-    return handleFailure("/api/auth/signout?callbackUrl=/login");
+    return handleFailure("/login");
   }
 
   const user = session.user;
   if (!user || !user.id || !user.role) {
-    return handleFailure("/api/auth/signout?callbackUrl=/login");
+    return handleFailure("/login");
   }
 
   const userId: string = user.id;
@@ -289,12 +122,7 @@ export async function isAuthorized(
     revalidate: options.revalidate,
   })()) as UserDbType;
 
-  if (!userDb) {
-    return handleFailure(
-      "/api/auth/signout?callbackUrl=/login?error=account_deleted",
-    );
-  }
-  if (!userDb.emailVerified) {
+  if (!user.emailVerified) {
     return handleFailure(`/${userDb.id}/account-deactivated`);
   }
 
@@ -324,5 +152,5 @@ export async function DeleteUserAccount() {
 
   await DeleteUserFromDb(user.id);
   revalidateTag(`user-${user.id}`);
-  await signOut();
+  await auth.api.signOut();
 }

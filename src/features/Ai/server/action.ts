@@ -12,7 +12,11 @@ import { isAuthorized } from "@/features/auth/server/actions";
 import { GoHeaders } from "@/lib/go-config";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
-import { getCurrentServerTime, runInBackground, toYMD } from "@/lib/utils/utils";
+import {
+  getCurrentServerTime,
+  runInBackground,
+  toYMD,
+} from "@/lib/utils/utils";
 import { subDays } from "date-fns";
 import { count, eq, sql } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -149,7 +153,7 @@ export async function validateContentWithAi(fields: {
 export async function validateContentWithAi(
   fields:
     | { content: string; adminMode: true }
-    | { content: string; adminMode: false }
+    | { content: string; adminMode: false },
 ): Promise<openaiResAdminType | openaiResUserType> {
   console.log("data :", JSON.stringify(fields));
   try {
@@ -215,7 +219,7 @@ export async function deleteRule(id: string) {
     });
   } catch (error) {
     logger.error(
-      "unable to delete this rule, cause: " + (error as Error).message
+      "unable to delete this rule, cause: " + (error as Error).message,
     );
     throw new Error("unable to delete this rule");
   }
@@ -230,10 +234,10 @@ export async function saveAdminAiSandboxTests({
   autoSave?: boolean;
 }) {
   try {
+    const { session } = await isAuthorized(["ADMIN"]);
     const {
       user: { id: adminId },
-    } = await isAuthorized(["ADMIN"]);
-
+    } = session;
     const res = await db.query.AiTestSandboxTable.findFirst({
       where: (tb, fn) => fn.eq(tb.adminId, adminId),
     });
@@ -271,7 +275,9 @@ export type AdminAiSandboxTestsType = Exclude<
   undefined
 >;
 export async function getAdminAiSandboxTests() {
-  const { user } = await isAuthorized(["ADMIN"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["ADMIN"]);
   return await db.query.AiTestSandboxTable.findFirst({
     where: (tb, fn) => fn.eq(tb.adminId, user.id),
   });
@@ -289,10 +295,9 @@ export async function getAIFlagsData(from: string, to: string) {
       date: pgFormatDateYMD(AiFlagsTable.createdAt),
       flags: count(AiFlagsTable.id),
     })
-    .from(AiFlagsTable).where(
-      sql`${pgFormatDateYMD(
-        AiFlagsTable.createdAt
-      )} BETWEEN ${from} AND ${to}`
+    .from(AiFlagsTable)
+    .where(
+      sql`${pgFormatDateYMD(AiFlagsTable.createdAt)} BETWEEN ${from} AND ${to}`,
     )
     .groupBy(pgFormatDateYMD(AiFlagsTable.createdAt));
 

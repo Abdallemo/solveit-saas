@@ -18,7 +18,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 
 import { useNotification } from "@/contexts/NotificationContext";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import {
   useNotificationDelete,
   useNotificationMarkAllAsRead,
@@ -40,7 +40,7 @@ export function formatTimeAgo(date: Date | null) {
 
   const now = new Date();
   const diffInSeconds = Math.floor(
-    (now.getTime() - new Date(date).getTime()) / 1000
+    (now.getTime() - new Date(date).getTime()) / 1000,
   );
 
   if (diffInSeconds < 60) return "Just now";
@@ -61,11 +61,7 @@ export type Message = {
   method: "SYSTEM" | "EMAIL";
   read: boolean;
 };
-export default function NotificationDropDown({
-  user,
-}: {
-  user: userSessionType;
-}) {
+export default function NotificationDropDown({ user }: { user: User }) {
   // const [messages, setMessages] = useState<Message[]>(
   //   (initailAllNotifications ?? []).slice(0, 3)
   // );
@@ -82,8 +78,8 @@ export default function NotificationDropDown({
     toast.loading("loading..", { id: "mark-as-read" });
     setMessages((prev) =>
       prev.map((msg) =>
-        msg.id === notificationId ? { ...msg, read: true } : msg
-      )
+        msg.id === notificationId ? { ...msg, read: true } : msg,
+      ),
     );
     await ReadMuta({ id: notificationId, receiverId: userId!, read: true });
   };
@@ -94,14 +90,14 @@ export default function NotificationDropDown({
     setMessages((prev) =>
       prev.map((msg) => {
         return { ...msg, read: true };
-      })
+      }),
     );
     await markAllAsReadMuta({ receiverId: userId! });
   };
 
   const handleDeleteNotification = async (
     notificationId: string,
-    e: React.MouseEvent
+    e: React.MouseEvent,
   ) => {
     setMessages((prev) => prev.filter((msg) => msg.id !== notificationId));
 
@@ -121,13 +117,15 @@ export default function NotificationDropDown({
           className={cn(
             "relative h-9 w-9 rounded-full transition-colors",
             "hover:bg-accent hover:text-accent-foreground",
-            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-          )}>
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          )}
+        >
           <Bell className="h-4 w-4" />
           {unreadCount > 0 && (
             <Badge
               variant="destructive"
-              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs font-medium animate-in zoom-in-50">
+              className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs font-medium animate-in zoom-in-50"
+            >
               {unreadCount > 99 ? "99+" : unreadCount}
             </Badge>
           )}
@@ -142,7 +140,8 @@ export default function NotificationDropDown({
       <DropdownMenuContent
         align="end"
         className="w-96 p-0 shadow-lg border-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60"
-        sideOffset={8}>
+        sideOffset={8}
+      >
         <div className="flex items-center justify-between p-4 border-b bg-muted/30">
           <div className="flex items-center gap-2">
             <h4 className="font-semibold text-base">Notifications</h4>
@@ -153,7 +152,8 @@ export default function NotificationDropDown({
               variant="ghost"
               size="sm"
               onClick={handleMarkAllAsRead}
-              className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground">
+              className="text-xs h-7 px-2 text-muted-foreground hover:text-foreground"
+            >
               Mark all read
             </Button>
           )}
@@ -168,17 +168,19 @@ export default function NotificationDropDown({
                     className={cn(
                       "group relative p-4 cursor-pointer transition-colors",
                       "hover:bg-accent/50",
-                      !notification.read && "bg-blue-50/50 dark:bg-blue-950/20"
+                      !notification.read && "bg-blue-50/50 dark:bg-blue-950/20",
                     )}
-                    onClick={() => handleNotificationClick(notification.id)}>
+                    onClick={() => handleNotificationClick(notification.id)}
+                  >
                     <div className="flex gap-3">
                       <div
                         className={cn(
                           "flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center",
                           notification.method === "EMAIL"
                             ? "bg-blue-100 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400"
-                        )}>
+                            : "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400",
+                        )}
+                      >
                         {getNotificationIcon(notification.method)}
                       </div>
 
@@ -187,8 +189,9 @@ export default function NotificationDropDown({
                           <p
                             className={cn(
                               "text-sm font-medium leading-tight",
-                              !notification.read && "font-semibold"
-                            )}>
+                              !notification.read && "font-semibold",
+                            )}
+                          >
                             {notification.subject || "New notification"}
                           </p>
 
@@ -202,7 +205,8 @@ export default function NotificationDropDown({
                               className="h-6 w-6 text-muted-foreground hover:text-foreground"
                               onClick={(e) =>
                                 handleDeleteNotification(notification.id, e)
-                              }>
+                              }
+                            >
                               <X className="h-3 w-3" />
                             </Button>
                           </div>
@@ -219,7 +223,8 @@ export default function NotificationDropDown({
 
                           <Badge
                             variant="secondary"
-                            className="text-xs px-2 py-0.5 h-5">
+                            className="text-xs px-2 py-0.5 h-5"
+                          >
                             {notification.method.toLowerCase()}
                           </Badge>
                         </div>
@@ -233,10 +238,12 @@ export default function NotificationDropDown({
                   <Button
                     variant="ghost"
                     className="w-full justify-center text-sm h-9"
-                    asChild>
+                    asChild
+                  >
                     <Link
                       href={urlPrfix}
-                      onClick={() => setIsOpen((prev) => !prev)}>
+                      onClick={() => setIsOpen((prev) => !prev)}
+                    >
                       View all notifications
                     </Link>
                   </Button>

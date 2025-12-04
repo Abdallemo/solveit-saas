@@ -1,10 +1,10 @@
 import { getServerSession } from "@/features/auth/server/actions";
+import { UserRole } from "@/features/users/server/user-types";
 import { redirect } from "next/navigation";
-import { UserRole } from "../../../types/next-auth";
 
 export default async function DashboardCheckingComponent() {
   const session = await getServerSession();
-  const useRole = session?.user.role;
+  const useRole = session?.user.role as UserRole;
 
   const roleRedirectMap: Record<UserRole, string> = {
     POSTER: "/dashboard/poster",

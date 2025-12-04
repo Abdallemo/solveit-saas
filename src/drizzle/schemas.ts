@@ -14,7 +14,6 @@ import {
   pgEnum,
   pgSequence,
   pgTable,
-  primaryKey,
   real,
   serial,
   text,
@@ -107,16 +106,22 @@ export const UserTable = pgTable(
     name: text("name").notNull(),
     email: text("email").unique().notNull(),
     password: text("password"),
-    role: UserRole("role").default("POSTER").notNull(),
+    role: UserRole("role").default("POSTER").notNull().$type<UserRoleType>(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
     stripeAccountLinked: boolean("stripe_account_linked")
       .notNull()
       .default(false),
 
-    emailVerified: timestamp("emailVerified", { mode: "date" }),
+    emailVerified: boolean("emailVerified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {
+      mode: "date",
+      withTimezone: true,
+    })
+      .defaultNow()
+      .notNull(),
+    updatedAt: timestamp("updated_at", {
       mode: "date",
       withTimezone: true,
     })
@@ -142,51 +147,59 @@ export const UserDetails = pgTable("user_details", {
   }).defaultNow(),
 });
 
-export const AccountTable = pgTable(
-  "account",
-  {
-    userId: uuid("userId")
-      .notNull()
-      .references(() => UserTable.id, { onDelete: "cascade" }),
-    type: text("type").notNull(),
-    provider: text("provider").notNull(),
-    providerAccountId: text("providerAccountId").notNull(),
-    refresh_token: text("refresh_token"),
-    access_token: text("access_token"),
-    expires_at: integer("expires_at"),
-    token_type: text("token_type"),
-    scope: text("scope"),
-    id_token: text("id_token"),
-    session_state: text("session_state"),
-  },
-  (account) => [
-    {
-      compoundKey: primaryKey({
-        columns: [account.provider, account.providerAccountId],
-      }),
-    },
-  ],
-);
+export const AccountTable = pgTable("account", {
+  id: uuid("id").primaryKey().defaultRandom(),
 
-export const VerificationTokenTable = pgTable(
-  "verificationToken",
-  {
-    id: uuid().defaultRandom().notNull(),
-    email: text("email"),
-    token: text("token").unique(),
-    expires: timestamp("expires", {
-      mode: "date",
-      withTimezone: true,
-    }).notNull(),
-  },
-  (verificationToken) => [
-    {
-      compositePk: primaryKey({
-        columns: [verificationToken.email, verificationToken.token],
-      }),
-    },
-  ],
-);
+  userId: uuid("userId")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  accountId: text("accountId").notNull(),
+  providerId: text("providerId").notNull(),
+  accessToken: text("accessToken"),
+  refreshToken: text("refreshToken"),
+  accessTokenExpiresAt: timestamp("accessTokenExpiresAt", {
+    mode: "date",
+    withTimezone: true,
+  }),
+  refreshTokenExpiresAt: timestamp("refreshTokenExpiresAt", {
+    mode: "date",
+    withTimezone: true,
+  }),
+  scope: text("scope"),
+  idToken: text("idToken"),
+  password: text("password"),
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  }),
+  updatedAt: timestamp("updatedAt", {
+    mode: "date",
+    withTimezone: true,
+  }),
+
+  session_state: text("session_state"),
+});
+
+export const VerificationTable = pgTable("verification", {
+  id: uuid().defaultRandom().notNull(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+
+  expiresAt: timestamp("expires_at", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+
+  createdAt: timestamp("createdAt", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+
+  updatedAt: timestamp("updatedAt", {
+    mode: "date",
+    withTimezone: true,
+  }).notNull(),
+});
 
 export const UserSubscriptionTable = pgTable(
   "subscription",
@@ -241,7 +254,7 @@ export const PaymentTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     userId: uuid("user_id")
       .notNull()
-      .references(() => UserTable.id, { onDelete: "no action" }),
+      .references(() => UserTable.id, { onDelete: "cascade" }),
     amount: integer("amount").notNull(),
     status: PaymentStatus("status").default("HOLD"),
     stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
@@ -859,6 +872,28 @@ export const logTable = pgTable("logs", {
   message: text("message").notNull(),
   error: text("error").default(""),
 });
+
+export const SessionTable = pgTable("session", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+export const JWKSTable = pgTable("jwks", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  publicKey: text("publicKey").notNull(),
+  privateKey: text("privateKey").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
+});
+
 //* RELATINOS
 
 //* To Many Relations Here
@@ -878,6 +913,11 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   account: one(AccountTable, {
     fields: [UserTable.id],
     references: [AccountTable.userId],
+  }),
+  session: one(SessionTable, {
+    fields: [UserTable.id],
+    references: [SessionTable.userId],
+    relationName: "session",
   }),
   userDetails: one(UserDetails, {
     fields: [UserTable.id],
@@ -901,6 +941,13 @@ export const accountRelations = relations(AccountTable, ({ one }) => ({
   user: one(UserTable, {
     fields: [AccountTable.userId],
     references: [UserTable.id],
+  }),
+}));
+export const sessionRelations = relations(SessionTable, ({ one }) => ({
+  session: one(UserTable, {
+    fields: [SessionTable.userId],
+    references: [UserTable.id],
+    relationName: "session",
   }),
 }));
 export const userDetailsRelations = relations(UserDetails, ({ one }) => ({

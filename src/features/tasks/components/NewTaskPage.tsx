@@ -1,6 +1,4 @@
 "use client";
-import Loading from "@/app/dashboard/solver/workspace/start/[taskId]/loading";
-import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
 import {
   FormControl,
@@ -24,7 +22,6 @@ import {
   TaskSchema,
   taskSchema,
 } from "@/features/tasks/server/task-types";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave, useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { calculateEditorTextLength } from "@/lib/utils/utils";
@@ -58,7 +55,6 @@ export default function TaskCreationPage({
   const currentUser = useCurrentUser();
   const { user } = currentUser;
   const [isDisabled, setIsDisabled] = useState(true);
-  const { isLoading: authLoading, isBlocked } = useAuthGate();
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const form = useForm({
     resolver: zodResolver(taskSchema),
@@ -158,8 +154,6 @@ export default function TaskCreationPage({
     [updateDraft, form],
   );
 
-  if (authLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
   async function onSubmit(data: TaskSchema) {
     try {
       const ruleRes = await validateContent({

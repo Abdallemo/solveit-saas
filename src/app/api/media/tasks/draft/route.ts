@@ -7,7 +7,9 @@ import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
 export async function DELETE(req: NextRequest) {
-  const { user, Auth } = await isAuthorized(["POSTER"], { useResponse: true });
+  const { user, Auth, session } = await isAuthorized(["POSTER"], {
+    useResponse: true,
+  });
   if (Auth.isAuthError) {
     return Auth.response;
   }
@@ -29,7 +31,7 @@ export async function DELETE(req: NextRequest) {
     await db
       .update(TaskDraftTable)
       .set({ uploadedFiles: [] })
-      .where(eq(TaskDraftTable.userId, user?.id!));
+      .where(eq(TaskDraftTable.userId, session?.user.id!));
 
     return new Response("Successfully Deleted", { status: res.status });
   } catch (error) {

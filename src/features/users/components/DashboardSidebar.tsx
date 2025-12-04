@@ -1,7 +1,7 @@
 "use client";
+import { User } from "@/features/users/server/user-types";
 import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-provider";
 import { GalleryVerticalEnd } from "lucide-react";
-import { Session } from "next-auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/sidebar";
 
 import ProfileSkeleton from "@/components/profile-loading-skeleton";
-import { UserRole } from "@/features/auth/server/auth-uitls";
+import { UserRole } from "@/features/users/server/user-types";
 import { NavSecondary } from "./NavSecondary";
 import { NavUser } from "./User_nav_bar";
 
@@ -43,7 +43,7 @@ const roleMenuMap: Record<UserRole, MenuItem[]> = {
   ADMIN: MenuItemsAdmin,
 };
 
-export default function DashboardSidebar({ user }: { user: Session["user"] }) {
+export default function DashboardSidebar({ user }: { user: User }) {
   const pathname = usePathname();
   const { isMobile, openMobile, setOpenMobile } = useSidebar();
   const { subTier } = useStripeSubscription();
@@ -123,13 +123,7 @@ export default function DashboardSidebar({ user }: { user: Session["user"] }) {
         <NavSecondary items={navSecondary} />
 
         <Suspense fallback={<ProfileSkeleton />}>
-          <NavUser
-            email={user?.email}
-            name={user?.name}
-            image={user?.image}
-            role={user?.role}
-            id={user.id}
-          />
+          <NavUser {...user} />
         </Suspense>
       </SidebarFooter>
     </Sidebar>
@@ -163,7 +157,8 @@ function MenuRenderer({
                   isActive(item.url, true)
                     ? "bg-primary text-sidebar-primary-foreground"
                     : ""
-                }`}>
+                }`}
+              >
                 <item.icon />
                 <span>{item.title}</span>
               </Link>
@@ -179,10 +174,11 @@ function MenuRenderer({
                       onClick={closeMobileSidebar}
                       href={cld.url}
                       className={`flex items-center gap-2 px-3 py-2 rounded-md transition ${
-                        isActive(cld.url,true)
+                        isActive(cld.url, true)
                           ? "bg-primary text-sidebar-primary-foreground"
                           : ""
-                      }`}>
+                      }`}
+                    >
                       <cld.icon />
                       <span>{cld.title}</span>
                     </Link>

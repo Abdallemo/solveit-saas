@@ -1,15 +1,15 @@
 "use client";
 
-import { UserRole } from "@/types/next-auth";
+import { UserRole } from "@/features/users/server/user-types";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Fragment } from "react";
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbLink,
-    BreadcrumbList,
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
 } from "./ui/breadcrumb";
 
 function formatBreadcrumbText(text: string) {
@@ -38,7 +38,8 @@ export default function BridCarmComponent({
           <BreadcrumbItem>
             <BreadcrumbLink
               className="text-foreground hover:text-foreground/50 font-medium"
-              asChild>
+              asChild
+            >
               <Link href={`/dashboard/${role}`}>Dashboard</Link>
             </BreadcrumbLink>
           </BreadcrumbItem>
@@ -72,7 +73,8 @@ export default function BridCarmComponent({
                         isLast
                           ? "font-semibold text-foreground/90"
                           : "text-foreground/40 cursor-default"
-                      }`}>
+                      }`}
+                    >
                       {pathSegment === "dashboard"
                         ? "Dashboard"
                         : formatBreadcrumbText(pathSegment)}
@@ -84,9 +86,13 @@ export default function BridCarmComponent({
                         pathSegment === "dashboard"
                           ? `/dashboard/${role}`
                           : pathSegment === "workspace"
-                          ? currentPath.replace("/workspace", "/assigned-tasks")
-                          : currentPath
-                      }>
+                            ? currentPath.replace(
+                                "/workspace",
+                                "/assigned-tasks",
+                              )
+                            : currentPath
+                      }
+                    >
                       {pathSegment === "dashboard"
                         ? "Dashboard"
                         : formatBreadcrumbText(pathSegment)}

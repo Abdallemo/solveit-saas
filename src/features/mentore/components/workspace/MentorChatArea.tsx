@@ -2,17 +2,12 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import {
-  FileChatCardComps
-} from "@/features/media/components/FileHelpers";
+import { FileChatCardComps } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
-import {
-  User,
-  User2
-} from "lucide-react";
+import { User2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import MentorChatBuble from "./MentorChatBuble";
 
 export function MentorChatArea({
@@ -21,13 +16,13 @@ export function MentorChatArea({
   setFilePreview,
   isPostSession,
 }: {
-  user: userSessionType;
+  user: User;
   filePreview: UploadedFileMeta | null;
   setFilePreview: (file: UploadedFileMeta) => void;
 
   isPostSession: boolean;
 }) {
-  const { uploadingFiles,chats } = useMentorshipSession();
+  const { uploadingFiles, chats } = useMentorshipSession();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const observerInstance = useRef<IntersectionObserver | null>(null);
   const messageRefs = useRef(new Map<string, HTMLElement>());
@@ -47,15 +42,14 @@ export function MentorChatArea({
         const chat = chats.find((c) => c.id === id);
         if (!chat) return;
 
-       
         if (chat.chatOwner.id !== user?.id) {
           seenRef.current.add(id);
           console.log("Message from OTHER user visible:", chat.message);
-          // TODO:  mark-as-read mutation 
+          // TODO:  mark-as-read mutation
         }
       });
     },
-    [chats, user?.id]
+    [chats, user?.id],
   );
 
   useEffect(() => {
@@ -73,7 +67,7 @@ export function MentorChatArea({
     if (!scrollContainerRef.current) return;
 
     const viewport = scrollContainerRef.current.querySelector(
-      '[data-slot="scroll-area-viewport"]'
+      '[data-slot="scroll-area-viewport"]',
     ) as HTMLDivElement | null;
 
     if (!viewport) {
@@ -102,7 +96,8 @@ export function MentorChatArea({
   return (
     <ScrollArea
       className="flex-1 h-[500px] p-5 bg relative "
-      ref={scrollContainerRef}>
+      ref={scrollContainerRef}
+    >
       <div className="p-6 space-y-6 max-h-[500px]">
         {chats && chats.length > 0 ? (
           <>
@@ -162,7 +157,7 @@ export function MentorChatArea({
         ) : (
           <div className="flex flex-col items-center justify-center h-64 space-y-4">
             <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-              <User className="h-8 w-8 text-muted-foreground" />
+              <User2 className="h-8 w-8 text-muted-foreground" />
             </div>
             <div className="text-center space-y-1">
               <p className="font-medium">No messages yet</p>
@@ -178,11 +173,11 @@ export function MentorChatArea({
           onClick={() =>
             messageRef.current?.scrollIntoView({ behavior: "smooth" })
           }
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-full shadow-md">
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-full shadow-md"
+        >
           ↓ New messages
         </button>
       )}
     </ScrollArea>
   );
 }
-

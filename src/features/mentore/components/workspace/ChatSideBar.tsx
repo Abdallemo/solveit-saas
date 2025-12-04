@@ -1,23 +1,14 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  FileChatCardComps
-} from "@/features/media/components/FileHelpers";
+import { FileChatCardComps } from "@/features/media/components/FileHelpers";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
-import {
-  useDeleteFileGeneric,
-  useDownloadFile
-} from "@/hooks/useFile";
-import {
-  FileText
-} from "lucide-react";
+import { useDeleteFileGeneric, useDownloadFile } from "@/hooks/useFile";
+import { FileText } from "lucide-react";
 
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { MentorChatSession } from "../../server/types";
-
-
 
 type allFilesType = {
   id: string;
@@ -44,13 +35,13 @@ export default function ChatSideBar({
   sidebar: boolean;
   allFiles: allFilesType;
   chat: MentorChatSession[];
-  user: userSessionType;
+  user: User;
   setFilePreview: (file: UploadedFileMeta) => void;
   isPostSession: boolean;
 
   filePreview: UploadedFileMeta | null;
 }) {
-   const {send}= useMentorshipSession();
+  const { send } = useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
 
@@ -108,7 +99,7 @@ export default function ChatSideBar({
                   deleteAction={async (f) => {
                     await deleteFile({ filePath: f.filePath });
                     const [deletedChat] = chat.filter(
-                      (c) => c.id === file.chatId
+                      (c) => c.id === file.chatId,
                     );
                     send({ ...deletedChat, messageType: "chat_deleted" });
                   }}

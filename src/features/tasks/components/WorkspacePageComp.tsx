@@ -1,6 +1,4 @@
 "use client";
-import Loading from "@/app/dashboard/solver/loading";
-import { AuthGate } from "@/components/GateComponents";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Editor } from "@tiptap/react";
@@ -26,7 +24,6 @@ import {
   WorkpaceSchem,
   WorkpaceSchemType,
 } from "@/features/tasks/server/task-types";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { useAutoSave, useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import {
   calculateEditorTextLength,
@@ -52,7 +49,7 @@ export default function WorkspacePageComp() {
     filePreview,
     uploadedFiles,
   } = useWorkspace();
-  const { isLoading, isBlocked } = useAuthGate();
+
   const [isSheetOpen, setIsSheetOpen] = useState(false);
   const {
     progress,
@@ -126,9 +123,6 @@ export default function WorkspacePageComp() {
       content,
     });
   }, [form, content]);
-
-  if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
 
   async function onSubmit(data: WorkpaceSchemType) {
     try {

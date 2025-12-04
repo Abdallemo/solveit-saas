@@ -12,8 +12,6 @@ import { useTheme } from "next-themes";
 import { useState, useTransition } from "react";
 import AccountSubscption from "../Account-subscption";
 
-import Loading from "@/app/loading";
-import { AuthGate } from "@/components/GateComponents";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,7 +29,6 @@ import {
   cardsType,
   ManageUserCreditCardPortal,
 } from "@/features/payments/server/action";
-import { useAuthGate } from "@/hooks/useAuthGate";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
@@ -63,10 +60,6 @@ export default function AccountComponent({
       //     },
       //   }),
     });
-  const { isLoading, isBlocked } = useAuthGate();
-
-  if (isLoading) return <Loading />;
-  if (isBlocked) return <AuthGate />;
 
   return (
     <div className="w-full  mt-5" suppressHydrationWarning>
@@ -79,12 +72,14 @@ export default function AccountComponent({
             <>
               <Button
                 variant={"secondary"}
-                onClick={() => toast.error("cancled")}>
+                onClick={() => toast.error("cancled")}
+              >
                 cancel
               </Button>
               <Button
                 variant={"success"}
-                onClick={() => toast.success("saved")}>
+                onClick={() => toast.success("saved")}
+              >
                 save
               </Button>
             </>
@@ -157,12 +152,14 @@ export default function AccountComponent({
             <>
               <Button
                 variant={"secondary"}
-                onClick={() => toast.error("cancled")}>
+                onClick={() => toast.error("cancled")}
+              >
                 cancel
               </Button>
               <Button
                 variant={"success"}
-                onClick={() => toast.success("saved")}>
+                onClick={() => toast.success("saved")}
+              >
                 save
               </Button>
             </>
@@ -180,7 +177,8 @@ export default function AccountComponent({
                   <RadioGroup
                     value={theme}
                     onValueChange={(value) => setTheme(value)}
-                    className="grid grid-cols-3 gap-4">
+                    className="grid grid-cols-3 gap-4"
+                  >
                     <div>
                       <RadioGroupItem
                         value="dark"
@@ -189,7 +187,8 @@ export default function AccountComponent({
                       />
                       <Label
                         htmlFor="dark"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
                         <span>Dark</span>
                       </Label>
                     </div>
@@ -201,7 +200,8 @@ export default function AccountComponent({
                       />
                       <Label
                         htmlFor="light"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
                         <span>Light</span>
                       </Label>
                     </div>
@@ -213,7 +213,8 @@ export default function AccountComponent({
                       />
                       <Label
                         htmlFor="system"
-                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary">
+                        className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary"
+                      >
                         <span>System</span>
                       </Label>
                     </div>
@@ -259,12 +260,14 @@ export default function AccountComponent({
               <>
                 <Button
                   variant={"secondary"}
-                  onClick={() => toast.error("cancled")}>
+                  onClick={() => toast.error("cancled")}
+                >
                   cancel
                 </Button>
                 <Button
                   variant={"success"}
-                  onClick={() => toast.success("saved")}>
+                  onClick={() => toast.success("saved")}
+                >
                   save
                 </Button>
               </>
@@ -280,7 +283,8 @@ export default function AccountComponent({
                 cards.map((card) => (
                   <div
                     className="flex items-center justify-between"
-                    key={card.id}>
+                    key={card.id}
+                  >
                     <div className="flex items-center gap-4">
                       <div className="h-10 w-16 rounded bg-muted flex items-center justify-center">
                         <CreditCard className="h-6 w-6" />
@@ -309,7 +313,8 @@ export default function AccountComponent({
                   const url = (await ManageUserCreditCardPortal())!;
                   router.push(url);
                 })
-              }>
+              }
+            >
               {isPending && <Loader2 className="animate-spin" />}
               Add Payment Method
             </Button>
@@ -323,7 +328,8 @@ export default function AccountComponent({
           <AlertDialogTrigger asChild>
             <Button
               variant="destructive"
-              className="cursor-pointer  w-full max-w-4xl ">
+              className="cursor-pointer  w-full max-w-4xl "
+            >
               Delete account
             </Button>
           </AlertDialogTrigger>
@@ -344,7 +350,8 @@ export default function AccountComponent({
                   await DeleteAccountMutation();
                 }}
                 disabled={isDeleting}
-                className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-1/2">
+                className="cursor-pointer bg-destructive text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60 w-1/2"
+              >
                 {isDeleting && <Loader2 className="animate-spin" />}
                 Continue
               </AlertDialogAction>

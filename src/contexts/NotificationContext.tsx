@@ -1,6 +1,6 @@
 "use client";
 import { env } from "@/env/client";
-import { userSessionType } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { useWebSocket } from "@/hooks/useWebSocketClass";
 
 import {
@@ -18,12 +18,12 @@ type NotificationContextType = {
 };
 
 const NotificationContext = createContext<NotificationContextType | undefined>(
-  undefined
+  undefined,
 );
 type NotificationPorviderProps = {
   children: ReactNode;
   initailAllNotifications: Message[];
-  user: userSessionType;
+  user: User;
 };
 
 export type Message = {
@@ -42,7 +42,7 @@ export const NotificationProvider = ({
   user,
 }: NotificationPorviderProps) => {
   const [messages, setMessages] = useState<Message[]>(
-    (initailAllNotifications ?? []).slice(0, 3)
+    (initailAllNotifications ?? []).slice(0, 3),
   );
 
   useWebSocket<Message>(
@@ -56,7 +56,7 @@ export const NotificationProvider = ({
           return [msg, ...prev].slice(0, 3);
         });
       },
-    }
+    },
   );
 
   return (
@@ -64,7 +64,8 @@ export const NotificationProvider = ({
       value={{
         messages,
         setMessages,
-      }}>
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

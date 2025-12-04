@@ -1,14 +1,14 @@
 import db from "@/drizzle/db";
 import { UserSubscriptionTable, UserTable } from "@/drizzle/schemas";
+import { UserRole } from "@/features/users/server/user-types";
 import { logger } from "@/lib/logging/winston";
 import { eq, isNotNull, SQL } from "drizzle-orm";
-import { UserRole } from "../../../../types/next-auth";
 
 export async function updateUserSubscription(
   values: typeof UserSubscriptionTable.$inferInsert,
   role: UserRole,
   id: string,
-  stripeCustomerId: string
+  stripeCustomerId: string,
 ) {
   try {
     await db.transaction(async (dx) => {
@@ -31,7 +31,7 @@ export async function updateUserSubscription(
       {
         message: (error as Error).message,
         cause: (error as Error).cause,
-      }
+      },
     );
     throw new Error("unable to update user subscription cause: ", {
       cause: error,
@@ -42,7 +42,7 @@ export async function updateUserSubscription(
 export async function CancelUserSubscription(
   where: SQL,
   values: typeof UserSubscriptionTable.$inferInsert,
-  id?: string
+  id?: string,
 ) {
   await db.transaction(async (dx) => {
     await dx.update(UserSubscriptionTable).set(values).where(where);
@@ -55,7 +55,7 @@ export async function CancelUserSubscription(
 }
 
 export async function CreateUserSubsciption(
-  values: typeof UserSubscriptionTable.$inferInsert
+  values: typeof UserSubscriptionTable.$inferInsert,
 ) {
   await db.insert(UserSubscriptionTable).values(values);
 }

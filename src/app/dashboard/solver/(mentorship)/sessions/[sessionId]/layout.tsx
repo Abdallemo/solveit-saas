@@ -10,11 +10,11 @@ export default async function WorkspaceLayout({
   children: ReactNode;
   params: Promise<{ sessionId: string }>;
 }) {
-  const { user } = await isAuthorized(["SOLVER"]);
+  const { session } = await isAuthorized(["SOLVER"]);
   const { sessionId } = await params;
 
   return (
-    <MentorshipSessionProvider sessionId={sessionId} userId={user.id}>
+    <MentorshipSessionProvider sessionId={sessionId} userId={session?.user.id}>
       {children}
     </MentorshipSessionProvider>
   );

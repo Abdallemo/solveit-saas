@@ -3,13 +3,12 @@
 import Logo from "@/components/marketing/logo";
 import FeaturePanelWithAnimation from "@/features/auth/components/feature-panel";
 import LoginCard from "@/features/auth/login/components/LoginCard";
-import { EmailSignInAction } from "@/features/auth/server/actions";
 import {
   loginFormSchema,
   loginInferedTypes,
 } from "@/features/auth/server/auth-types";
+import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
@@ -32,22 +31,18 @@ export default function Login() {
 
       myformController.reset();
 
-      const { error, success } = await EmailSignInAction(values);
-
-      if (error) return setError(error);
-      if (success && success !== "OK") return setSuccess(success);
-
-      const res = await signIn("credentials", {
-        email: values.email,
-        password: values.password,
-        redirect: false,
-      });
-
-      if (res?.error) {
-        setError("Login failed: " + res.error);
-      } else {
-        router.push("/dashboard");
-      }
+      await authClient.signIn.email(
+        {
+          email: values.email,
+          password: values.password,
+          callbackURL: "/dashboard",
+        },
+        {
+          onError: (ctx) => {
+            setError(ctx.error.message);
+          },
+        },
+      );
     });
   };
 

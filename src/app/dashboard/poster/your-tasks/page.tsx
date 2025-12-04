@@ -14,7 +14,7 @@ export default async function ServerWrapper({
     status: string;
   }>;
 }) {
-  const { user } = await isAuthorized(["POSTER"]);
+  const { session } = await isAuthorized(["POSTER"]);
   const { id } = await searchParams;
   const categoryMap = await getAllCategoryMap();
   const limit = 8;
@@ -27,7 +27,7 @@ export default async function ServerWrapper({
         title="Your Tasks"
         filterType="status"
         type="PosterTasks"
-        currentUser={user}
+        currentUser={session?.user}
         limit={limit}
       />
     </>

@@ -1,15 +1,13 @@
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
+import { User } from "@/features/users/server/user-types";
+import { useSession } from "@/lib/auth-client";
 
 export default function useCurrentUser() {
-    const { data: session, status } = useSession();
-    const [user, setUser] = useState(session?.user);
-    const [state, setState] = useState(status);
+  const { data, isPending, error, isRefetching } = useSession();
 
-    useEffect(() => {
-        setUser(session?.user);
-        setState(status);
-    }, [session, status]);
-
-    return { user, state };
+  return {
+    user: data?.user as User,
+    state: isPending,
+    error,
+    isRefetching,
+  };
 }

@@ -990,7 +990,7 @@ export async function deleteDraftFile(values: {
 }) {
   const { filePath, userId } = values;
   try {
-    const {} = await isAuthorized(["POSTER"]);
+    await isAuthorized(["POSTER"]);
     await deleteFileFromR2(filePath);
     await db
       .update(TaskDraftTable)

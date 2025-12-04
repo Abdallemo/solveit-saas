@@ -1,6 +1,5 @@
-import { AuthGate } from "@/components/GateComponents";
 import { Button } from "@/components/ui/button";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { getAllCustomerPaymentMethods } from "@/features/payments/server/action";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import AccountComponent from "@/features/users/components/poster/AccountComponent";
@@ -9,16 +8,14 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default async function PosterAccountPage() {
-  const currentUser = await getServerUserSession();
-  if (!currentUser || !currentUser.id) return <AuthGate />;
-
+  const { session } = await isAuthorized(["POSTER"]);
   let refress = await getServerReturnUrl();
 
-  const isOauthUser = await isUserAccountOauth(currentUser.id);
-  const cards = await getAllCustomerPaymentMethods(currentUser.id);
+  const isOauthUser = await isUserAccountOauth(session?.user.id);
+  const cards = await getAllCustomerPaymentMethods(session?.user.id);
   return (
     <div className="w-full">
-      <div className="border-b bg-sidebar/95 backdrop-blur supports-[backdrop-filter]:bg-sidebar/60 sticky top-0 z-50">
+      <div className="border-b bg-sidebar/95 backdrop-blur supports-backdrop-filter:bg-sidebar/60 sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 max-w-4xl">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

@@ -15,7 +15,8 @@ export default async function WorkspaceLayout({
   children: ReactNode;
   params: Promise<{ workspaceId: string }>;
 }) {
-  const { user } = await isAuthorized(["SOLVER"]);
+  const { session } = await isAuthorized(["SOLVER"]);
+  const { user } = session;
   const { workspaceId } = await params;
   const currentWorkspace = await getWorkspaceById(workspaceId, user?.id!);
   if (!currentWorkspace) {
@@ -29,11 +30,13 @@ export default async function WorkspaceLayout({
     <CommentProvider
       taskComments={currentWorkspace.task.taskComments}
       taskId={currentWorkspace.taskId}
-      userId={user.id}>
+      userId={user.id}
+    >
       <WorkspaceProvider
         workspace={currentWorkspace}
         serverCurrentTime={getCurrentServerTime().toISOString()}
-        userId={user.id}>
+        userId={user.id}
+      >
         {children}
       </WorkspaceProvider>
     </CommentProvider>

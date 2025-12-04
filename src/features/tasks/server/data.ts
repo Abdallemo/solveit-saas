@@ -558,7 +558,9 @@ function getPosterMentorshipStatus(range: string, userId: string) {
 }
 
 export async function getPosterStats(range: string = "7 days") {
-  const { user } = await isAuthorized(["POSTER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["POSTER"]);
   if (!user?.id) return [];
 
   const merged = unionAll(
@@ -631,7 +633,9 @@ function getSolverMentorStasts(userId: string) {
 export async function getSolverStats(
   range = "30 days",
 ): Promise<SolverStats[]> {
-  const { user } = await isAuthorized(["SOLVER"]);
+  const {
+    session: { user },
+  } = await isAuthorized(["SOLVER"]);
   try {
     const merged = unionAll(
       getSolverTaskStats(range, user.id),

@@ -8,7 +8,7 @@ export default async function ServerWrapper({
 }: {
   searchParams: Promise<{ category: string; search: string; page: string }>;
 }) {
-  const { user } = await isAuthorized(["SOLVER"]);
+  const { session } = await isAuthorized(["SOLVER"]);
   const limit = 8;
 
   const categoryMap = await getAllCategoryMap();
@@ -18,7 +18,7 @@ export default async function ServerWrapper({
       title={"Available Tasks"}
       categoryMap={categoryMap}
       filterType="category"
-      currentUser={user}
+      currentUser={session?.user}
       limit={limit}
       type="AllTasks"
     />
