@@ -347,10 +347,12 @@ export async function createMentorBookingPaymentCheckout(values: {
         },
       });
       customerId = newCustomer.id;
-      await UpdateUserField({
-        id: user.id,
-        data: { stripeCustomerId: customerId },
-      });
+      await UpdateUserField(
+        {
+          id: user.id,
+        },
+        { stripeCustomerId: customerId },
+      );
     }
     let bookingId = "";
     await db.transaction(async (tx) => {

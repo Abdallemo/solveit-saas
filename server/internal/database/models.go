@@ -229,12 +229,13 @@ func (ns NullPaymentPorpose) Value() (driver.Value, error) {
 type PaymentStatus string
 
 const (
-	PaymentStatusHOLD      PaymentStatus = "HOLD"
-	PaymentStatusRELEASED  PaymentStatus = "RELEASED"
-	PaymentStatusSUCCEEDED PaymentStatus = "SUCCEEDED"
-	PaymentStatusFAILED    PaymentStatus = "FAILED"
-	PaymentStatusCANCELED  PaymentStatus = "CANCELED"
-	PaymentStatusREFUNDED  PaymentStatus = "REFUNDED"
+	PaymentStatusHOLD              PaymentStatus = "HOLD"
+	PaymentStatusRELEASED          PaymentStatus = "RELEASED"
+	PaymentStatusSUCCEEDED         PaymentStatus = "SUCCEEDED"
+	PaymentStatusFAILED            PaymentStatus = "FAILED"
+	PaymentStatusCANCELED          PaymentStatus = "CANCELED"
+	PaymentStatusREFUNDED          PaymentStatus = "REFUNDED"
+	PaymentStatusPENDINGUSERACTION PaymentStatus = "PENDING_USER_ACTION"
 )
 
 func (e *PaymentStatus) Scan(src interface{}) error {
@@ -275,12 +276,12 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 type RefundStatus string
 
 const (
-	RefundStatusPENDING             RefundStatus = "PENDING"
-	RefundStatusPROCESSING          RefundStatus = "PROCESSING"
-	RefundStatusREFUNDED            RefundStatus = "REFUNDED"
-	RefundStatusREJECTED            RefundStatus = "REJECTED"
-	RefundStatusFAILED              RefundStatus = "FAILED"
-	RefundStatusPENDINGPOSTERACTION RefundStatus = "PENDING_POSTER_ACTION"
+	RefundStatusPENDING           RefundStatus = "PENDING"
+	RefundStatusPROCESSING        RefundStatus = "PROCESSING"
+	RefundStatusREFUNDED          RefundStatus = "REFUNDED"
+	RefundStatusREJECTED          RefundStatus = "REJECTED"
+	RefundStatusFAILED            RefundStatus = "FAILED"
+	RefundStatusPENDINGUSERACTION RefundStatus = "PENDING_USER_ACTION"
 )
 
 func (e *RefundStatus) Scan(src interface{}) error {
@@ -535,17 +536,20 @@ func (ns NullVisibility) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	UserId            uuid.UUID   `json:"userId"`
-	Type              string      `json:"type"`
-	Provider          string      `json:"provider"`
-	ProviderAccountId string      `json:"providerAccountId"`
-	RefreshToken      pgtype.Text `json:"refresh_token"`
-	AccessToken       pgtype.Text `json:"access_token"`
-	ExpiresAt         pgtype.Int4 `json:"expires_at"`
-	TokenType         pgtype.Text `json:"token_type"`
-	Scope             pgtype.Text `json:"scope"`
-	IDToken           pgtype.Text `json:"id_token"`
-	SessionState      pgtype.Text `json:"session_state"`
+	ID                    uuid.UUID   `json:"id"`
+	UserId                uuid.UUID   `json:"userId"`
+	AccountId             string      `json:"accountId"`
+	ProviderId            string      `json:"providerId"`
+	AccessToken           pgtype.Text `json:"accessToken"`
+	RefreshToken          pgtype.Text `json:"refreshToken"`
+	AccessTokenExpiresAt  *time.Time  `json:"accessTokenExpiresAt"`
+	RefreshTokenExpiresAt *time.Time  `json:"refreshTokenExpiresAt"`
+	Scope                 pgtype.Text `json:"scope"`
+	IdToken               pgtype.Text `json:"idToken"`
+	Password              pgtype.Text `json:"password"`
+	CreatedAt             *time.Time  `json:"createdAt"`
+	UpdatedAt             *time.Time  `json:"updatedAt"`
+	SessionState          pgtype.Text `json:"session_state"`
 }
 
 type AiFlag struct {
@@ -580,7 +584,19 @@ type BlockedTask struct {
 	UserID    uuid.UUID   `json:"user_id"`
 	TaskID    uuid.UUID   `json:"task_id"`
 	Reason    pgtype.Text `json:"reason"`
-	CreatedAt *time.Time  `json:"created_at"`
+	CreatedAt time.Time   `json:"created_at"`
+}
+
+type Blog struct {
+	ID          uuid.UUID `json:"id"`
+	Title       string    `json:"title"`
+	Url         string    `json:"url"`
+	Description string    `json:"description"`
+	Content     []byte    `json:"content"`
+	Category    string    `json:"category"`
+	Author      uuid.UUID `json:"author"`
+	PublishedAt time.Time `json:"publishedAt"`
+	ReadTime    int32     `json:"readTime"`
 }
 
 type Feedback struct {
@@ -592,7 +608,7 @@ type Feedback struct {
 	TaskID          *uuid.UUID       `json:"task_id"`
 	Rating          int32            `json:"rating"`
 	Comment         pgtype.Text      `json:"comment"`
-	CreatedAt       *time.Time       `json:"created_at"`
+	CreatedAt       time.Time        `json:"created_at"`
 }
 
 type GlobalMediaFile struct {
@@ -603,6 +619,14 @@ type GlobalMediaFile struct {
 	FileLocation string     `json:"file_location"`
 	FilePath     string     `json:"file_path"`
 	UploadedAt   *time.Time `json:"uploaded_at"`
+}
+
+type Jwk struct {
+	ID         uuid.UUID  `json:"id"`
+	PublicKey  string     `json:"publicKey"`
+	PrivateKey string     `json:"privateKey"`
+	CreatedAt  time.Time  `json:"createdAt"`
+	ExpiresAt  *time.Time `json:"expires_at"`
 }
 
 type Log struct {
@@ -620,7 +644,7 @@ type MentorSession struct {
 	TimeSlot     []byte      `json:"time_slot"`
 	SessionStart time.Time   `json:"session_start"`
 	SessionEnd   time.Time   `json:"session_end"`
-	CreatedAt    *time.Time  `json:"created_at"`
+	CreatedAt    time.Time   `json:"created_at"`
 }
 
 type MentorshipBooking struct {
@@ -631,7 +655,7 @@ type MentorshipBooking struct {
 	Status    BookingStatus `json:"status"`
 	PaymentID *uuid.UUID    `json:"payment_id"`
 	Notes     pgtype.Text   `json:"notes"`
-	CreatedAt *time.Time    `json:"created_at"`
+	CreatedAt time.Time     `json:"created_at"`
 }
 
 type MentorshipChat struct {
@@ -691,7 +715,7 @@ type Payment struct {
 	StripePaymentIntentID string            `json:"stripe_payment_intent_id"`
 	StripeChargeID        pgtype.Text       `json:"stripe_charge_id"`
 	Purpose               pgtype.Text       `json:"purpose"`
-	CreatedAt             *time.Time        `json:"created_at"`
+	CreatedAt             time.Time         `json:"created_at"`
 	ReleaseDate           *time.Time        `json:"release_date"`
 }
 
@@ -704,8 +728,19 @@ type Refund struct {
 	ModeratorId    *uuid.UUID       `json:"moderatorId"`
 	RefundedAt     *time.Time       `json:"refunded_at"`
 	StripeRefundID pgtype.Text      `json:"stripe_refund_id"`
-	CreatedAt      *time.Time       `json:"created_at"`
+	CreatedAt      time.Time        `json:"created_at"`
 	UpdatedAt      *time.Time       `json:"updated_at"`
+}
+
+type Session struct {
+	ID        uuid.UUID   `json:"id"`
+	UserID    uuid.UUID   `json:"user_id"`
+	Token     string      `json:"token"`
+	ExpiresAt time.Time   `json:"expires_at"`
+	CreatedAt time.Time   `json:"created_at"`
+	UpdatedAt time.Time   `json:"updated_at"`
+	IpAddress pgtype.Text `json:"ip_address"`
+	UserAgent pgtype.Text `json:"user_agent"`
 }
 
 type Solution struct {
@@ -755,7 +790,7 @@ type SolverProfile struct {
 	Skills       []string       `json:"skills"`
 	AvgRating    pgtype.Numeric `json:"avg_rating"`
 	TaskSolved   pgtype.Int4    `json:"task_solved"`
-	CreatedAt    *time.Time     `json:"created_at"`
+	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    *time.Time     `json:"updated_at"`
 }
 
@@ -771,7 +806,7 @@ type Subscription struct {
 	Interval                 string           `json:"interval"`
 	NextBilling              pgtype.Timestamp `json:"next_billing"`
 	Price                    int32            `json:"price"`
-	CreatedAt                *time.Time       `json:"created_at"`
+	CreatedAt                time.Time        `json:"created_at"`
 }
 
 type Task struct {
@@ -799,11 +834,11 @@ type TaskCategory struct {
 }
 
 type TaskComment struct {
-	ID        uuid.UUID  `json:"id"`
-	TaskID    uuid.UUID  `json:"task_id"`
-	UserID    uuid.UUID  `json:"user_id"`
-	Content   string     `json:"content"`
-	CreatedAt *time.Time `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	TaskID    uuid.UUID `json:"task_id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Content   string    `json:"content"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type TaskDeadline struct {
@@ -839,17 +874,18 @@ type TaskFile struct {
 }
 
 type User struct {
-	ID                  uuid.UUID        `json:"id"`
-	Name                string           `json:"name"`
-	Email               string           `json:"email"`
-	Password            pgtype.Text      `json:"password"`
-	Role                Role             `json:"role"`
-	StripeCustomerID    pgtype.Text      `json:"stripe_customer_id"`
-	StripeAccountID     pgtype.Text      `json:"stripe_account_id"`
-	StripeAccountLinked bool             `json:"stripe_account_linked"`
-	EmailVerified       pgtype.Timestamp `json:"emailVerified"`
-	Image               pgtype.Text      `json:"image"`
-	CreatedAt           time.Time        `json:"created_at"`
+	ID                  uuid.UUID   `json:"id"`
+	Name                string      `json:"name"`
+	Email               string      `json:"email"`
+	Password            pgtype.Text `json:"password"`
+	Role                Role        `json:"role"`
+	StripeCustomerID    pgtype.Text `json:"stripe_customer_id"`
+	StripeAccountID     pgtype.Text `json:"stripe_account_id"`
+	StripeAccountLinked bool        `json:"stripe_account_linked"`
+	EmailVerified       bool        `json:"emailVerified"`
+	Image               pgtype.Text `json:"image"`
+	CreatedAt           time.Time   `json:"created_at"`
+	UpdatedAt           time.Time   `json:"updated_at"`
 }
 
 type UserDetail struct {
@@ -863,9 +899,11 @@ type UserDetail struct {
 	UpdatedAt           *time.Time  `json:"updated_at"`
 }
 
-type VerificationToken struct {
-	ID      uuid.UUID   `json:"id"`
-	Email   pgtype.Text `json:"email"`
-	Token   pgtype.Text `json:"token"`
-	Expires time.Time   `json:"expires"`
+type Verification struct {
+	ID         uuid.UUID `json:"id"`
+	Identifier string    `json:"identifier"`
+	Value      string    `json:"value"`
+	ExpiresAt  time.Time `json:"expires_at"`
+	CreatedAt  time.Time `json:"createdAt"`
+	UpdatedAt  time.Time `json:"updatedAt"`
 }

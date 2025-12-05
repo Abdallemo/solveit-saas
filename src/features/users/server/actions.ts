@@ -9,16 +9,20 @@ import {
   UserSubscriptionTable,
   UserTable,
 } from "@/drizzle/schemas";
+import { parseDrizzleQuery, Selector } from "@/drizzle/utils";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import {
+  PartialUserTableColumns,
   publicUserColumns,
   publicUserType,
   UserRole,
 } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
+import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { to } from "@/lib/utils/async";
 import { count, eq, sql, sum } from "drizzle-orm";
+import Stripe from "stripe";
 
 //* User Types
 
@@ -298,55 +302,28 @@ export async function getUserById(id: string) {
   }
 }
 
-type UpdateById = {
-  id: string;
-  email?: never;
-  data: UserUpdateData;
-};
-
-type UpdateByEmail = {
-  email: string;
-  id?: never;
-  data: UserUpdateData;
-};
-
-type UpdateUserParams = UpdateById | UpdateByEmail;
-
-export async function UpdateUserField(parms: UpdateUserParams) {
-  try {
-    if (parms.email) {
-      await db
-        .update(UserTable)
-        .set(parms.data)
-        .where(eq(UserTable.email, parms.email));
-      return;
-    }
-    if (parms.id) {
-      await db
-        .update(UserTable)
-        .set(parms.data)
-        .where(eq(UserTable.id, parms.id));
-      return;
-    }
-  } catch (error) {}
+export async function UpdateUserField(
+  selector: Selector<typeof UserTable>,
+  data: PartialUserTableColumns,
+) {
+  const { column, value } = parseDrizzleQuery(UserTable, selector);
+  const [_, error] = await to(
+    db.update(UserTable).set(data).where(eq(column, value)),
+  );
+  if (error) {
+    logger.error(
+      `failed to update user table :${JSON.stringify(selector)}\t cause: ${(error as Error).cause}`,
+      {
+        message: (error as Error).message,
+        cause: (error as Error).cause,
+      },
+    );
+    return error;
+  } else {
+    logger.info(`successfully updated user ${JSON.stringify(selector)} field`);
+    return null;
+  }
 }
-
-// export async function DeleteUserField(id:string , email:string,field:Schemas) {
-//   field.
-//   try {
-//     if (parms.email) {
-//       await db.delete(field).where(eq())
-//       return;
-//     }
-//     if (parms.id) {
-//       await db.update(users).set(parms.data).where(eq(users.id, parms.id));
-//       return;
-//     }
-//   } catch (error) {
-//     console.log(error);
-//   }
-// }
-// DeleteUserField("dsdssd",'dssdsdsd',)
 
 export async function getServerUserRoleById({ id }: { id: string }) {}
 
@@ -396,11 +373,19 @@ export async function createStripeCustomer(user: publicUserType) {
           userId: user.id,
         },
       });
-      await UpdateUserField({
-        id: user.id,
-        data: { stripeCustomerId: newCustomer.id },
-      });
+      await UpdateUserField(
+        { id: user.id },
+        { stripeCustomerId: newCustomer.id },
+      );
       return newCustomer.id;
     })(),
   );
+}
+export async function StripeAccountUpdateHanlder(account: Stripe.Account) {
+  if (account.capabilities && account.capabilities.transfers === "active") {
+    const error = await UpdateUserField(
+      { stripeAccountId: account.id },
+      { stripeAccountLinked: true },
+    );
+  }
 }

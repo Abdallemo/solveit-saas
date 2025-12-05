@@ -201,10 +201,12 @@ export async function CreateUserStripeConnectAccount(
     },
   });
 
-  await UpdateUserField({
-    id: user.id!,
-    data: { stripeAccountId: account.id },
-  });
+  await UpdateUserField(
+    {
+      id: user.id!,
+    },
+    { stripeAccountId: account.id },
+  );
 }
 export async function handleUserOnboarding(values: OnboardingFormData) {
   try {

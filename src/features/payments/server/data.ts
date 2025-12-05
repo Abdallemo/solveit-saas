@@ -10,7 +10,7 @@ import { redirect, RedirectType } from "next/navigation";
 
 export async function getRefundDetails(refundId: string) {
   const [data, err] = await to(
-    await db.query.RefundTable.findFirst({
+    db.query.RefundTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, refundId),
       with: {
         taskRefund: {

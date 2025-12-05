@@ -38,7 +38,7 @@ func (q *Queries) AddSolverToTaskBlockList(ctx context.Context, arg AddSolverToT
 }
 
 const getUsers = `-- name: GetUsers :many
-SELECT id, name, email, password, role, stripe_customer_id, stripe_account_id, stripe_account_linked, "emailVerified", image, created_at
+SELECT id, name, email, password, role, stripe_customer_id, stripe_account_id, stripe_account_linked, "emailVerified", image, created_at, updated_at
 FROM users
 `
 
@@ -63,6 +63,7 @@ func (q *Queries) GetUsers(ctx context.Context) ([]User, error) {
 			&i.EmailVerified,
 			&i.Image,
 			&i.CreatedAt,
+			&i.UpdatedAt,
 		); err != nil {
 			return nil, err
 		}
