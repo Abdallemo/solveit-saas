@@ -10,7 +10,6 @@ import Link from "next/link";
 export default async function PosterAccountPage() {
   const { session } = await isAuthorized(["POSTER"]);
   let refress = await getServerReturnUrl();
-
   const isOauthUser = await isUserAccountOauth(session?.user.id);
   const cards = await getAllCustomerPaymentMethods(session?.user.id);
   return (

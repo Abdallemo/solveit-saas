@@ -256,10 +256,12 @@ export async function createTaksPaymentCheckoutSession(values: {
         },
       });
       customerId = newCustomer.id;
-      await UpdateUserField({
-        id: user.id,
-        data: { stripeCustomerId: customerId },
-      });
+      await UpdateUserField(
+        {
+          id: user.id,
+        },
+        { stripeCustomerId: customerId },
+      );
     }
     const session = await stripe.checkout.sessions.create({
       mode: "payment",

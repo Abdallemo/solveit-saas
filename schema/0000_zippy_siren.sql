@@ -3,8 +3,8 @@ CREATE TYPE "public"."feedback_category" AS ENUM('TASK', 'MENTORING');--> statem
 CREATE TYPE "public"."status" AS ENUM('PENDING', 'SENT');--> statement-breakpoint
 CREATE TYPE "public"."method" AS ENUM('SYSTEM', 'EMAIL');--> statement-breakpoint
 CREATE TYPE "public"."payment_porpose" AS ENUM('Task Payment', 'Mentor Booking');--> statement-breakpoint
-CREATE TYPE "public"."payment_status" AS ENUM('HOLD', 'RELEASED', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUNDED');--> statement-breakpoint
-CREATE TYPE "public"."refund_status" AS ENUM('PENDING', 'PROCESSING', 'REFUNDED', 'REJECTED', 'FAILED', 'PENDING_POSTER_ACTION');--> statement-breakpoint
+CREATE TYPE "public"."payment_status" AS ENUM('HOLD', 'RELEASED', 'SUCCEEDED', 'FAILED', 'CANCELED', 'REFUNDED', 'PENDING_USER_ACTION');--> statement-breakpoint
+CREATE TYPE "public"."refund_status" AS ENUM('PENDING', 'PROCESSING', 'REFUNDED', 'REJECTED', 'FAILED', 'PENDING_USER_ACTION');--> statement-breakpoint
 CREATE TYPE "public"."task_status" AS ENUM('OPEN', 'ASSIGNED', 'IN_PROGRESS', 'COMPLETED', 'SUBMITTED');--> statement-breakpoint
 CREATE TYPE "public"."visibility" AS ENUM('public', 'private');--> statement-breakpoint
 CREATE TYPE "public"."tier" AS ENUM('POSTER', 'SOLVER', 'SOLVER++');--> statement-breakpoint
@@ -12,16 +12,19 @@ CREATE TYPE "public"."role" AS ENUM('ADMIN', 'MODERATOR', 'POSTER', 'SOLVER');--
 CREATE TYPE "public"."file_status" AS ENUM('PENDING', 'PROCESSING', 'COMPLETED', 'FAILED');--> statement-breakpoint
 CREATE SEQUENCE "public"."ai_test_amount_sequence" INCREMENT BY 1 MINVALUE 1 MAXVALUE 9223372036854775807 START WITH 1 CACHE 1;--> statement-breakpoint
 CREATE TABLE "account" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"userId" uuid NOT NULL,
-	"type" text NOT NULL,
-	"provider" text NOT NULL,
-	"providerAccountId" text NOT NULL,
-	"refresh_token" text,
-	"access_token" text,
-	"expires_at" integer,
-	"token_type" text,
+	"accountId" text NOT NULL,
+	"providerId" text NOT NULL,
+	"accessToken" text,
+	"refreshToken" text,
+	"accessTokenExpiresAt" timestamp with time zone,
+	"refreshTokenExpiresAt" timestamp with time zone,
 	"scope" text,
-	"id_token" text,
+	"idToken" text,
+	"password" text,
+	"createdAt" timestamp with time zone,
+	"updatedAt" timestamp with time zone,
 	"session_state" text
 );
 --> statement-breakpoint
@@ -47,7 +50,19 @@ CREATE TABLE "blocked_tasks" (
 	"user_id" uuid NOT NULL,
 	"task_id" uuid NOT NULL,
 	"reason" text,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
+CREATE TABLE "blogs" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"title" text NOT NULL,
+	"url" text NOT NULL,
+	"description" text NOT NULL,
+	"content" jsonb NOT NULL,
+	"category" text NOT NULL,
+	"author" uuid NOT NULL,
+	"publishedAt" timestamp with time zone DEFAULT now() NOT NULL,
+	"readTime" integer NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "feedback" (
@@ -59,8 +74,8 @@ CREATE TABLE "feedback" (
 	"task_id" uuid,
 	"rating" integer DEFAULT 0 NOT NULL,
 	"comment" text,
-	"created_at" timestamp with time zone DEFAULT now(),
-	CONSTRAINT "feedback_source_check" CHECK ((feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR 
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	CONSTRAINT "feedback_source_check" CHECK ((feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR
           (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL))
 );
 --> statement-breakpoint
@@ -74,6 +89,14 @@ CREATE TABLE "global_media_files" (
 	"uploaded_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
+CREATE TABLE "jwks" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"publicKey" text NOT NULL,
+	"privateKey" text NOT NULL,
+	"createdAt" timestamp with time zone NOT NULL,
+	"expires_at" timestamp with time zone
+);
+--> statement-breakpoint
 CREATE TABLE "mentorship_bookings" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"solver_id" uuid NOT NULL,
@@ -82,7 +105,7 @@ CREATE TABLE "mentorship_bookings" (
 	"status" "booking_status" DEFAULT 'PENDING' NOT NULL,
 	"payment_id" uuid,
 	"notes" text,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "mentorship_chat_files" (
@@ -117,7 +140,7 @@ CREATE TABLE "mentorship_profiles" (
 	"title" text DEFAULT '' NOT NULL,
 	"description" text DEFAULT '' NOT NULL,
 	"rate_per_hour" real DEFAULT 0 NOT NULL,
-	"available_times" json DEFAULT '[]'::json NOT NULL,
+	"available_times" jsonb DEFAULT '[]'::jsonb NOT NULL,
 	"is_published" boolean DEFAULT false NOT NULL,
 	"timezone" text DEFAULT 'Asia/Kuala_Lumpur' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
@@ -128,10 +151,10 @@ CREATE TABLE "mentor_session" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"booking_id" uuid NOT NULL,
 	"session_date" date NOT NULL,
-	"time_slot" json NOT NULL,
+	"time_slot" jsonb NOT NULL,
 	"session_start" timestamp with time zone NOT NULL,
 	"session_end" timestamp with time zone NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "payments" (
@@ -142,7 +165,7 @@ CREATE TABLE "payments" (
 	"stripe_payment_intent_id" text NOT NULL,
 	"stripe_charge_id" text,
 	"purpose" text,
-	"created_at" timestamp with time zone DEFAULT now(),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"release_date" timestamp with time zone,
 	CONSTRAINT "payments_stripe_payment_intent_id_unique" UNIQUE("stripe_payment_intent_id")
 );
@@ -156,7 +179,7 @@ CREATE TABLE "refunds" (
 	"moderatorId" uuid,
 	"refunded_at" timestamp with time zone,
 	"stripe_refund_id" text,
-	"created_at" timestamp with time zone DEFAULT now(),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
@@ -170,6 +193,18 @@ CREATE TABLE "ai_rules" (
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "session" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"token" text NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"created_at" timestamp with time zone NOT NULL,
+	"updated_at" timestamp with time zone NOT NULL,
+	"ip_address" text,
+	"user_agent" text,
+	CONSTRAINT "session_token_unique" UNIQUE("token")
+);
+--> statement-breakpoint
 CREATE TABLE "solution_files" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"solution_id" uuid NOT NULL,
@@ -180,7 +215,7 @@ CREATE TABLE "solutions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"workspace_id" uuid NOT NULL,
 	"task_id" uuid NOT NULL,
-	"content" json,
+	"content" jsonb,
 	"file_url" text,
 	"is_final" boolean DEFAULT false,
 	"created_at" timestamp with time zone DEFAULT now(),
@@ -193,7 +228,7 @@ CREATE TABLE "solver_profile" (
 	"skills" text[] DEFAULT '{}',
 	"avg_rating" numeric(3, 1) DEFAULT '0o0' NOT NULL,
 	"task_solved" integer DEFAULT 0,
-	"created_at" timestamp with time zone DEFAULT now(),
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
@@ -209,7 +244,7 @@ CREATE TABLE "task_comments" (
 	"task_id" uuid NOT NULL,
 	"user_id" uuid NOT NULL,
 	"content" text NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "task_deadline" (
@@ -224,12 +259,12 @@ CREATE TABLE "task_drafts" (
 	"user_id" uuid NOT NULL,
 	"title" text DEFAULT '' NOT NULL,
 	"description" text DEFAULT '' NOT NULL,
-	"content" json DEFAULT '{}' NOT NULL,
+	"content" jsonb DEFAULT '{}' NOT NULL,
 	"contentText" text DEFAULT '' NOT NULL,
 	"category" text DEFAULT '' NOT NULL,
 	"deadline" text DEFAULT '12h' NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
-	"uploadedFiles" json DEFAULT '[]' NOT NULL,
+	"uploadedFiles" jsonb DEFAULT '[]' NOT NULL,
 	"visibility" "visibility" DEFAULT 'public' NOT NULL,
 	"price" integer DEFAULT 10 NOT NULL,
 	CONSTRAINT "task_drafts_user_id_unique" UNIQUE("user_id")
@@ -250,7 +285,7 @@ CREATE TABLE "tasks" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" text NOT NULL,
 	"description" text NOT NULL,
-	"content" json NOT NULL,
+	"content" jsonb NOT NULL,
 	"price" integer NOT NULL,
 	"poster_id" uuid NOT NULL,
 	"solver_id" uuid,
@@ -270,8 +305,8 @@ CREATE TABLE "user_details" (
 	"first_name" text,
 	"last_name" text,
 	"date_of_birth" date,
-	"address" json,
-	"business" json,
+	"address" jsonb,
+	"business" jsonb,
 	"updated_at" timestamp with time zone DEFAULT now()
 );
 --> statement-breakpoint
@@ -287,7 +322,7 @@ CREATE TABLE "subscription" (
 	"interval" text DEFAULT 'month' NOT NULL,
 	"next_billing" timestamp,
 	"price" integer DEFAULT 0 NOT NULL,
-	"created_at" timestamp with time zone DEFAULT now()
+	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "users" (
@@ -299,18 +334,20 @@ CREATE TABLE "users" (
 	"stripe_customer_id" text,
 	"stripe_account_id" text,
 	"stripe_account_linked" boolean DEFAULT false NOT NULL,
-	"emailVerified" timestamp,
+	"emailVerified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint
-CREATE TABLE "verificationToken" (
+CREATE TABLE "verification" (
 	"id" uuid DEFAULT gen_random_uuid() NOT NULL,
-	"email" text,
-	"token" text,
-	"expires" timestamp with time zone NOT NULL,
-	CONSTRAINT "verificationToken_token_unique" UNIQUE("token")
+	"identifier" text NOT NULL,
+	"value" text NOT NULL,
+	"expires_at" timestamp with time zone NOT NULL,
+	"createdAt" timestamp with time zone NOT NULL,
+	"updatedAt" timestamp with time zone NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "solution_workspace_files" (
@@ -332,7 +369,7 @@ CREATE TABLE "solution_workspaces" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"task_id" uuid NOT NULL,
 	"solver_id" uuid NOT NULL,
-	"content" json DEFAULT '{}',
+	"content" jsonb DEFAULT '{}',
 	"contentText" text DEFAULT '' NOT NULL,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL
 );
@@ -360,6 +397,7 @@ ALTER TABLE "account" ADD CONSTRAINT "account_userId_users_id_fk" FOREIGN KEY ("
 ALTER TABLE "ai_test_sandbox" ADD CONSTRAINT "ai_test_sandbox_admin_id_users_id_fk" FOREIGN KEY ("admin_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "blocked_tasks" ADD CONSTRAINT "blocked_tasks_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "blocked_tasks" ADD CONSTRAINT "blocked_tasks_task_id_tasks_id_fk" FOREIGN KEY ("task_id") REFERENCES "public"."tasks"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "blogs" ADD CONSTRAINT "blogs_author_users_id_fk" FOREIGN KEY ("author") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feedback" ADD CONSTRAINT "feedback_poster_id_users_id_fk" FOREIGN KEY ("poster_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feedback" ADD CONSTRAINT "feedback_solver_id_users_id_fk" FOREIGN KEY ("solver_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "feedback" ADD CONSTRAINT "feedback_mentor_booking_id_mentorship_bookings_id_fk" FOREIGN KEY ("mentor_booking_id") REFERENCES "public"."mentorship_bookings"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
@@ -374,11 +412,12 @@ ALTER TABLE "mentorship_chats" ADD CONSTRAINT "mentorship_chats_sent_by_users_id
 ALTER TABLE "mentorship_chats" ADD CONSTRAINT "mentorship_chats_sent_to_users_id_fk" FOREIGN KEY ("sent_to") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mentorship_profiles" ADD CONSTRAINT "mentorship_profiles_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "mentor_session" ADD CONSTRAINT "mentor_session_booking_id_mentorship_bookings_id_fk" FOREIGN KEY ("booking_id") REFERENCES "public"."mentorship_bookings"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "payments" ADD CONSTRAINT "payments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "payments" ADD CONSTRAINT "payments_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "refunds" ADD CONSTRAINT "refunds_payment_id_payments_id_fk" FOREIGN KEY ("payment_id") REFERENCES "public"."payments"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "refunds" ADD CONSTRAINT "refunds_task_id_tasks_id_fk" FOREIGN KEY ("task_id") REFERENCES "public"."tasks"("id") ON DELETE set null ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "refunds" ADD CONSTRAINT "refunds_moderatorId_users_id_fk" FOREIGN KEY ("moderatorId") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "ai_rules" ADD CONSTRAINT "ai_rules_admin_id_users_id_fk" FOREIGN KEY ("admin_id") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "session" ADD CONSTRAINT "session_user_id_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "solution_files" ADD CONSTRAINT "solution_files_solution_id_solutions_id_fk" FOREIGN KEY ("solution_id") REFERENCES "public"."solutions"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "solution_files" ADD CONSTRAINT "solution_files_workspace_file_id_solution_workspace_files_id_fk" FOREIGN KEY ("workspace_file_id") REFERENCES "public"."solution_workspace_files"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "solutions" ADD CONSTRAINT "solutions_workspace_id_solution_workspaces_id_fk" FOREIGN KEY ("workspace_id") REFERENCES "public"."solution_workspaces"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint

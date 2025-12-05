@@ -1,5 +1,6 @@
-import { UserRoleType } from "@/drizzle/schemas";
+import { UserRoleType, UserTable } from "@/drizzle/schemas";
 import { auth } from "@/lib/auth";
+import { InferInsertModel } from "drizzle-orm";
 export type UserRole = UserRoleType;
 
 function createSelection<T extends Record<string, true>>(selection: T): T {
@@ -46,3 +47,7 @@ export type Address = {
 export type Business = {
   mcc?: string;
 };
+
+export type PartialUserTableColumns = Partial<
+  InferInsertModel<typeof UserTable>
+>;

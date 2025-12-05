@@ -55,8 +55,8 @@ func (q *Queries) GetAllTaskDrafts(ctx context.Context, updatedAt time.Time) ([]
 const getAvailbleTasks = `-- name: GetAvailbleTasks :many
 SELECT id, title, description, content, price, poster_id, solver_id, visibility, category_id, payment_id, deadline, created_at, updated_at, task_status, assigned_at
 FROM tasks
-WHERE task_status = 'ASSIGNED'
-  OR task_status = 'IN_PROGRESS'
+WHERE (task_status = 'ASSIGNED'
+  OR task_status = 'IN_PROGRESS')
   AND assigned_at IS NOT NULL
 LIMIT $1
 `

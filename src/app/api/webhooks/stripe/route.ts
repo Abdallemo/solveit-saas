@@ -13,15 +13,14 @@ import {
   updateUserSubscription,
 } from "@/features/subscriptions/server/action";
 
-import db from "@/drizzle/db";
 import {
   PaymentPorposeEnumType,
   UserSubscriptionTable,
-  UserTable,
 } from "@/drizzle/schemas";
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { updateMentorBooking } from "@/features/mentore/server/action";
 import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
+import { StripeAccountUpdateHanlder } from "@/features/users/server/actions";
 import { logger } from "@/lib/logging/winston";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
@@ -70,7 +69,7 @@ export async function POST(request: NextRequest) {
         await handleDelete(event.data.object);
         break;
       case "account.updated":
-        await hadleStripeConnect(event.data.object);
+        await StripeAccountUpdateHanlder(event.data.object);
         break;
 
       default:
@@ -330,16 +329,4 @@ async function handleMentorBooking(
     return;
   }
   await updateMentorBooking(bookingId, paymentId);
-}
-async function hadleStripeConnect(account: Stripe.Account) {
-  const d = await db
-    .update(UserTable)
-    .set({
-      stripeAccountLinked:
-        account.capabilities?.transfers === "pending" ||
-        account.capabilities?.transfers === "inactive"
-          ? false
-          : true,
-    })
-    .where(eq(UserTable.stripeAccountId, account.id));
 }
