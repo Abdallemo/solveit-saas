@@ -1,17 +1,6 @@
-import { execSync } from "child_process";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  generateBuildId: async () => {
-    try {
-      const commitHash = execSync("git rev-parse HEAD").toString().trim();
-      return commitHash;
-    } catch (e) {
-      console.error("Failed to get Git hash for build ID. Using default.", e);
-      return "next-build-id-fallback";
-    }
-  },
-
   images: {
     remotePatterns: [
       {
