@@ -1,7 +1,7 @@
 import { env } from "@/env/server";
 import winston from "winston";
 
-const isProduction = env.NODE_ENV;
+const isProduction = process.env.NODE_ENV;
 
 const httpTransportHost = isProduction ? "127.0.0.1" : "localhost";
 const httpTransportPort = env.NEXT_PORT;

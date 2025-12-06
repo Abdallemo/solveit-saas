@@ -38,7 +38,6 @@ export const env = createEnv({
       return lowerVal === "true" || lowerVal === "1";
     }),
     NEXT_PORT: z.string().transform((val) => Number(val)),
-    NODE_ENV: z.string(),
   },
   experimental__runtimeEnv: process.env,
 });
