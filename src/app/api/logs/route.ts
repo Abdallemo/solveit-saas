@@ -3,6 +3,7 @@ import { logTable } from "@/drizzle/schemas";
 import { NextRequest } from "next/server";
 
 export async function POST(req: NextRequest) {
+  console.log("hit logs");
   const body = await req.json();
 
   const level: string = body.level;

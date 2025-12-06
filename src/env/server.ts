@@ -33,6 +33,12 @@ export const env = createEnv({
     Turn_API_Token: z.string(),
     CLOUDFLARE_ACCOUNT_ID: z.string(),
     REDIS_URL: z.string(),
+    STRIPE_TEST_MODE: z.string().transform((val) => {
+      const lowerVal = val.toLowerCase();
+      return lowerVal === "true" || lowerVal === "1";
+    }),
+    NEXT_PORT: z.string().transform((val) => Number(val)),
+    NODE_ENV: z.string(),
   },
   experimental__runtimeEnv: process.env,
 });

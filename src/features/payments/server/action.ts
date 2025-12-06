@@ -6,7 +6,6 @@ import {
   PaymentTable,
   RefundTable,
   TaskTable,
-  UserDetails,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
@@ -26,13 +25,14 @@ import {
   getWalletInfo,
 } from "@/features/tasks/server/data";
 import {
+  CreateUserDetailField,
   getUserById,
   UpdateUserField,
-  UserDbType,
 } from "@/features/users/server/actions";
 import {
   OnboardingFormData,
   publicUserColumns,
+  User,
 } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import {
@@ -44,13 +44,14 @@ import {
 } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
+import { to } from "@/lib/utils/async";
 import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
 import { addDays, isBefore, subYears } from "date-fns";
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getRefundDetails } from "./data";
-import { refundType } from "./types";
+import { refundType, StripeConnectConfig } from "./types";
 export type cardsType = Awaited<
   ReturnType<typeof getAllCustomerPaymentMethods>
 >;
@@ -161,92 +162,89 @@ export async function handlerStripeConnect() {
 }
 export async function CreateUserStripeConnectAccount(
   values: OnboardingFormData,
-  user: UserDbType,
+  user: User,
 ) {
-  const account = await stripe.accounts.create({
-    type: "standard",
-    email: user.email!,
-    business_type: "individual",
-
-    capabilities: {
-      card_payments: { requested: true },
-      transfers: { requested: true },
-    },
-    individual: {
-      first_name: values.first_name,
-      last_name: values.last_name,
-      email: user.email!,
-      dob: {
-        day: values.dob?.getDate()!,
-        month: values.dob?.getMonth()! + 1,
-        year: values.dob?.getFullYear()!,
+  let [account, err] = await to(
+    stripe.accounts.create({
+      ...StripeConnectConfig(values, user),
+    }),
+  );
+  if (err) {
+    logger.error(
+      `Stripe Account Connec Failed cause : ${(err as Error).message}`,
+      {
+        message: (err as Error).message,
+        cause: (err as Error).cause,
       },
-      address: values.address,
-      phone: "+15555550123",
-      id_number: "000000000",
-      verification: {
-        document: {
-          front: "file_identity_document_success",
-        },
-      },
-    },
-    business_profile: {
-      mcc:
-        values.business_profile.mcc === "5734"
-          ? values.business_profile.mcc
-          : "5734",
-      product_description:
-        "SolveIt is a student job board where students post and solve academic tasks.",
-      url: env.PRODUCTION_URL,
-    },
-  });
-
-  await UpdateUserField(
+    );
+    return new Error("Stripe Account Connec Failed.");
+  }
+  err = await UpdateUserField(
     {
       id: user.id!,
     },
-    { stripeAccountId: account.id },
+    { stripeAccountId: account?.id },
   );
+  if (err) {
+    logger.error(
+      `Failed to Update User Stripe field. cause :${(err as Error).message}`,
+      {
+        message: (err as Error).message,
+        cause: (err as Error).cause,
+      },
+    );
+    return new Error("Failed to Update User field");
+  }
+  return null;
 }
-export async function handleUserOnboarding(values: OnboardingFormData) {
+export async function handleUserOnboarding(
+  values: OnboardingFormData,
+): Promise<{ error: string | null }> {
   try {
-    if (!values) throw new Error("all fields are required");
-    const { user } = await isAuthorized(["POSTER", "SOLVER"]);
-    if (!user) throw new UnauthorizedError();
-    if (user.userDetails.onboardingCompleted)
-      throw new Error("Already record exist");
+    if (!values) return { error: "all fields are required" };
+    const {
+      session: { user },
+    } = await isAuthorized(["POSTER", "SOLVER"]);
+
+    if (!user) return { error: new UnauthorizedError().message };
+    if (user.onboardingCompleted) return { error: "Already record exist" };
     const dob =
       values.dob instanceof Date ? values.dob : new Date(values.dob as any);
     const minDate = new Date("1900-01-01");
     const maxDate = subYears(new Date(), 13);
 
     if (dob > maxDate || dob < minDate) {
-      throw new Error(
-        "You must be at least 13 years of age to use the platform and receive funds",
-      );
+      return {
+        error:
+          "You must be at least 13 years of age to use the platform and receive funds",
+      };
     }
+    let err = await CreateUserStripeConnectAccount({ ...values, dob }, user);
+    if (err) return { error: "Something went wrong" };
 
-    await CreateUserStripeConnectAccount({ ...values, dob }, user);
+    err = await CreateUserDetailField({
+      userId: user.id,
+      address: values.address,
+      business: values.business_profile,
+      dateOfBirth: toYMD(dob),
+      firstName: values.first_name,
+      lastName: values.last_name,
+    });
+    if (err) return { error: "Something went wrong" };
 
-    await db
-      .update(UserDetails)
-      .set({
-        userId: user.id,
-        address: values.address,
-        business: values.business_profile,
-        dateOfBirth: toYMD(dob),
-        firstName: values.first_name,
-        lastName: values.last_name,
-        onboardingCompleted: true,
-      })
-      .where(eq(UserDetails.userId, user.id));
+    err = await UpdateUserField({ id: user.id }, { onboardingCompleted: true });
+    if (err) return { error: "Something went wrong" };
+
     revalidateTag(`user-${user.id}`);
+    return {
+      error: null,
+    };
   } catch (error) {
     logger.error("unable to save user details", {
       message: (error as Error).message,
       stack: (error as Error).stack,
     });
-    throw new Error("something went wrong");
+    return { error: "Something went wrong" };
   }
 }
 export async function refundFunds(paymentId: string) {

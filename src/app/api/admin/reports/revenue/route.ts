@@ -3,7 +3,7 @@ import { getRevenueDataV1 } from "@/features/tasks/server/data";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(req: NextRequest) {
-  const { user, Auth } = await isAuthorized(["ADMIN"], { useResponse: true });
+  const { Auth } = await isAuthorized(["ADMIN"], { useResponse: true });
   if (Auth.isAuthError) {
     return Auth.response;
   }
@@ -11,6 +11,6 @@ export async function GET(req: NextRequest) {
   let from = req.nextUrl.searchParams.get("from");
   let to = req.nextUrl.searchParams.get("to");
   const data = await getRevenueDataV1(from!, to!);
-  console.log(data);
+
   return NextResponse.json(data);
 }

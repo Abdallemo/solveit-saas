@@ -1,13 +1,9 @@
 "use server";
 import { UserRoleType as UserRole } from "@/drizzle/schemas";
-import {
-  DeleteUserFromDb,
-  getUserById,
-  UserDbType,
-} from "@/features/users/server/actions";
-import { Session } from "@/features/users/server/user-types";
+import { DeleteUserFromDb, getUserById } from "@/features/users/server/actions";
+import { Session, User } from "@/features/users/server/user-types";
 import { auth } from "@/lib/auth";
-import { DEFAULTREVALIDATEDURATION, withCache } from "@/lib/cache";
+import { DEFAULTREVALIDATEDURATION } from "@/lib/cache";
 
 import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
@@ -66,13 +62,13 @@ const createFailureAuth = (): UnauthorizedRespType => ({
 export async function isAuthorized(
   whichRole: UserRole[],
   options?: { useCache?: boolean; revalidate?: number; useResponse?: false },
-): Promise<{ user: UserDbType; session: Session }>;
+): Promise<{ user: User; session: Session }>;
 
 export async function isAuthorized(
   whichRole: UserRole[],
   options: { useCache?: boolean; revalidate?: number; useResponse: true },
 ): Promise<{
-  user: UserDbType | null;
+  user: User | null;
   session: Session | null;
   Auth: UnauthorizedRespType;
 }>;
@@ -114,16 +110,8 @@ export async function isAuthorized(
   const userId: string = user.id;
   const userRole: UserRole = user.role as UserRole;
 
-  const userDb = (await withCache({
-    callback: () => getUserById(userId),
-    tag: "user-data-cache",
-    dep: [userId],
-    enabled: options?.useCache,
-    revalidate: options.revalidate,
-  })()) as UserDbType;
-
   if (!user.emailVerified) {
-    return handleFailure(`/${userDb.id}/account-deactivated`);
+    return handleFailure(`/${userId}/account-deactivated`);
   }
 
   if (!whichRole.includes(userRole)) {
@@ -133,12 +121,12 @@ export async function isAuthorized(
 
   if (options.useResponse) {
     return {
-      user: userDb,
+      user,
       session: session,
       Auth: createSuccessAuth(),
     };
   }
-  return { user: userDb, session: session };
+  return { user, session: session };
 }
 export async function DeleteUserAccount() {
   console.log("delete trigered");

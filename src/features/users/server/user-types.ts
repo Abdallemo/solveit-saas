@@ -1,4 +1,4 @@
-import { UserRoleType, UserTable } from "@/drizzle/schemas";
+import { UserDetails, UserRoleType, UserTable } from "@/drizzle/schemas";
 import { auth } from "@/lib/auth";
 import { InferInsertModel } from "drizzle-orm";
 export type UserRole = UserRoleType;
@@ -51,3 +51,7 @@ export type Business = {
 export type PartialUserTableColumns = Partial<
   InferInsertModel<typeof UserTable>
 >;
+export type PartialUserDetailsTableColumns = Partial<
+  InferInsertModel<typeof UserDetails>
+>;
+export type UserDetailsTableColumns = InferInsertModel<typeof UserDetails>;

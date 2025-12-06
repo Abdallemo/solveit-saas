@@ -1,9 +1,10 @@
+import { env } from "@/env/server";
 import winston from "winston";
 
-const isProduction = process.env.NODE_ENV === "production";
+const isProduction = env.NODE_ENV;
 
 const httpTransportHost = isProduction ? "127.0.0.1" : "localhost";
-const httpTransportPort = isProduction ? 8080 : 3000;
+const httpTransportPort = env.NEXT_PORT;
 
 const consoleFormat = winston.format.printf(({ level, message, timestamp }) => {
   const levelColor =
@@ -21,13 +22,13 @@ export const logger = winston.createLogger({
   level: "info",
   format: winston.format.combine(
     winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-    winston.format.json()
+    winston.format.json(),
   ),
   transports: [
     new winston.transports.Console({
       format: winston.format.combine(
         winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss" }),
-        consoleFormat
+        consoleFormat,
       ),
     }),
     new winston.transports.Http({

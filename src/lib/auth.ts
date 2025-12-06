@@ -1,6 +1,5 @@
 import db from "@/drizzle/db";
 import * as schema from "@/drizzle/schemas";
-import { UserDetails } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { getVerificationEmailBody } from "@/features/auth/register/components/emailVerificationMessage";
 import { Notifier } from "@/features/notifications/server/notifier";
@@ -63,10 +62,6 @@ export const auth = betterAuth({
         after: async (user) => {
           try {
             await CreateUserSubsciption({ tier: "POSTER", userId: user.id });
-            await db.insert(UserDetails).values({
-              userId: user.id,
-              onboardingCompleted: false,
-            });
           } catch (e) {
             console.error("Failed to create user relations", e);
           }
@@ -79,7 +74,7 @@ export const auth = betterAuth({
     additionalFields: {
       role: {
         type: "string",
-        required: false,
+        required: true,
         defaultValue: "POSTER",
       },
       stripeAccountId: {
@@ -91,6 +86,11 @@ export const auth = betterAuth({
         type: "boolean",
         required: false,
         fieldName: "stripeAccountLinked",
+      },
+      onboardingCompleted: {
+        type: "boolean",
+        required: false,
+        fieldName: "onboardingCompleted",
       },
     },
   },

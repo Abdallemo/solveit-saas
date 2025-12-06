@@ -12,6 +12,7 @@ import { useTheme } from "next-themes";
 import { useState, useTransition } from "react";
 import AccountSubscption from "../Account-subscption";
 
+import UserPreferencesLoading from "@/app/dashboard/poster/account/loading";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -39,7 +40,7 @@ export default function AccountComponent({
   isOauthUser: boolean;
   cards: cardsType;
 }) {
-  const { user } = useCurrentUser();
+  const { user, state: isLoading } = useCurrentUser();
   const [emailNotification, SetEmailNotification] = useState<boolean>(false);
   const [pushNotification, setPushNotification] = useState<boolean>(false);
   const [isPending, startTransition] = useTransition();
@@ -60,7 +61,7 @@ export default function AccountComponent({
       //     },
       //   }),
     });
-
+  if (isLoading) return <UserPreferencesLoading />;
   return (
     <div className="w-full  mt-5" suppressHydrationWarning>
       <div className="flex flex-col items-center gap-5 px-6 ">

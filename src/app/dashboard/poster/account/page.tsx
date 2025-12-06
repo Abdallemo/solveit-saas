@@ -8,10 +8,10 @@ import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default async function PosterAccountPage() {
-  const { session } = await isAuthorized(["POSTER"]);
+  const { user } = await isAuthorized(["POSTER"]);
   let refress = await getServerReturnUrl();
-  const isOauthUser = await isUserAccountOauth(session?.user.id);
-  const cards = await getAllCustomerPaymentMethods(session?.user.id);
+  const isOauthUser = await isUserAccountOauth(user.id);
+  const cards = await getAllCustomerPaymentMethods(user.id);
   return (
     <div className="w-full">
       <div className="border-b bg-sidebar/95 backdrop-blur supports-backdrop-filter:bg-sidebar/60 sticky top-0 z-50">

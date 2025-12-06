@@ -301,7 +301,6 @@ CREATE TABLE "tasks" (
 --> statement-breakpoint
 CREATE TABLE "user_details" (
 	"user_id" uuid PRIMARY KEY NOT NULL,
-	"onboarding_completed" boolean DEFAULT false NOT NULL,
 	"first_name" text,
 	"last_name" text,
 	"date_of_birth" date,
@@ -334,6 +333,7 @@ CREATE TABLE "users" (
 	"stripe_customer_id" text,
 	"stripe_account_id" text,
 	"stripe_account_linked" boolean DEFAULT false NOT NULL,
+	"onboarding_completed" boolean DEFAULT false NOT NULL,
 	"emailVerified" boolean DEFAULT false NOT NULL,
 	"image" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,

@@ -112,7 +112,9 @@ export const UserTable = pgTable(
     stripeAccountLinked: boolean("stripe_account_linked")
       .notNull()
       .default(false),
-
+    onboardingCompleted: boolean("onboarding_completed")
+      .notNull()
+      .default(false),
     emailVerified: boolean("emailVerified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {
@@ -135,7 +137,6 @@ export const UserDetails = pgTable("user_details", {
     .primaryKey()
     .notNull()
     .references(() => UserTable.id, { onDelete: "cascade" }),
-  onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
   firstName: text("first_name"),
   lastName: text("last_name"),
   dateOfBirth: date("date_of_birth"),
@@ -199,6 +200,27 @@ export const VerificationTable = pgTable("verification", {
     mode: "date",
     withTimezone: true,
   }).notNull(),
+});
+
+export const SessionTable = pgTable("session", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+});
+
+export const JWKSTable = pgTable("jwks", {
+  id: uuid("id").primaryKey().notNull().defaultRandom(),
+  publicKey: text("publicKey").notNull(),
+  privateKey: text("privateKey").notNull(),
+  createdAt: timestamp("createdAt", { withTimezone: true }).notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }),
 });
 
 export const UserSubscriptionTable = pgTable(
@@ -871,27 +893,6 @@ export const logTable = pgTable("logs", {
   level: varchar("level", { length: 10 }).notNull(),
   message: text("message").notNull(),
   error: text("error").default(""),
-});
-
-export const SessionTable = pgTable("session", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id")
-    .notNull()
-    .references(() => UserTable.id, { onDelete: "cascade" }),
-  token: text("token").notNull().unique(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
-  createdAt: timestamp("created_at", { withTimezone: true }).notNull(),
-  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull(),
-  ipAddress: text("ip_address"),
-  userAgent: text("user_agent"),
-});
-
-export const JWKSTable = pgTable("jwks", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  publicKey: text("publicKey").notNull(),
-  privateKey: text("privateKey").notNull(),
-  createdAt: timestamp("createdAt", { withTimezone: true }).notNull(),
-  expiresAt: timestamp("expires_at", { withTimezone: true }),
 });
 
 //* RELATINOS
