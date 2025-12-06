@@ -7,12 +7,6 @@ import { DashboardClientProviders } from "@/hooks/provider/DashboardClientProvid
 import { StripeSubscriptionContextType } from "@/hooks/provider/stripe-subscription-provider";
 import { cookies } from "next/headers";
 import DashboardSkeleton from "./loading";
-const dbFlags = {
-  monacoEditor: false,
-  experimental3DViewer: false,
-  aiSummarizer: false,
-  pdfPreview: false,
-} as const;
 
 export default async function DashboardLayout({
   children,
@@ -27,9 +21,9 @@ export default async function DashboardLayout({
 }
 
 async function DashboardLayoutContent({ children }: { children: ReactNode }) {
-  const { user, session } = await isAuthorized(
+  const { user } = await isAuthorized(
     ["ADMIN", "MODERATOR", "POSTER", "SOLVER"],
-    { useCache: false }
+    { useCache: false },
   );
 
   const cookieStore = await cookies();
@@ -84,9 +78,9 @@ async function DashboardLayoutContent({ children }: { children: ReactNode }) {
       defaultSidebarOpen={defaultOpen}
       serverProps={{
         user: user,
-        sessionUser: session?.user,
         allNotifications: allNotifications,
-      }}>
+      }}
+    >
       {children}
     </DashboardClientProviders>
   );

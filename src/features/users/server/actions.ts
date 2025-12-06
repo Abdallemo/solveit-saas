@@ -5,16 +5,21 @@ import {
   PaymentTable,
   RefundTable,
   TaskTable,
+  UserDetails,
   UserRoleType,
   UserSubscriptionTable,
   UserTable,
 } from "@/drizzle/schemas";
 import { parseDrizzleQuery, Selector } from "@/drizzle/utils";
+import { env } from "@/env/server";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import {
+  PartialUserDetailsTableColumns,
   PartialUserTableColumns,
   publicUserColumns,
   publicUserType,
+  UserDetailsTableColumns,
   UserRole,
 } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
@@ -324,7 +329,47 @@ export async function UpdateUserField(
     return null;
   }
 }
+export async function UpdateUserDetailField(
+  selector: Selector<typeof UserDetails>,
+  data: PartialUserDetailsTableColumns,
+) {
+  const { column, value } = parseDrizzleQuery(UserDetails, selector);
+  const [_, error] = await to(
+    db.update(UserDetails).set(data).where(eq(column, value)),
+  );
+  if (error) {
+    logger.error(
+      `failed to update user Details table :${JSON.stringify(selector)}\t cause: ${(error as Error).cause}`,
+      {
+        message: (error as Error).message,
+        cause: (error as Error).cause,
+      },
+    );
+    return error;
+  } else {
+    logger.info(
+      `successfully updated user details ${JSON.stringify(selector)} field`,
+    );
+    return null;
+  }
+}
 
+export async function CreateUserDetailField(values: UserDetailsTableColumns) {
+  const [_, error] = await to(db.insert(UserDetails).values(values));
+  if (error) {
+    logger.error(
+      `failed to insert into user Details  table :${(error as Error).message} \t cause: ${(error as Error).cause}`,
+      {
+        message: (error as Error).message,
+        cause: (error as Error).cause,
+      },
+    );
+    return error;
+  } else {
+    logger.info(`successfully created user details `);
+    return null;
+  }
+}
 export async function getServerUserRoleById({ id }: { id: string }) {}
 
 export async function getServerUserSubscriptionById(id: string | undefined) {
@@ -388,4 +433,37 @@ export async function StripeAccountUpdateHanlder(account: Stripe.Account) {
       { stripeAccountLinked: true },
     );
   }
+}
+
+export async function deleteInactiveStripeAccounts() {
+  await isAuthorized(["ADMIN"]);
+  if (!env.STRIPE_TEST_MODE) {
+    console.log("Test Mode is Disabled! returning...");
+    return;
+  }
+  console.log("Fetching accounts...");
+  const accounts = await stripe.accounts.list({ limit: 100 });
+
+  console.log(`Found ${accounts.data.length} total accounts.`);
+
+  for (const account of accounts.data) {
+    const transferStatus = account.capabilities?.transfers;
+
+    const isActive = transferStatus === "active";
+
+    if (!isActive) {
+      try {
+        await stripe.accounts.del(account.id);
+        console.log(
+          `🗑️  Deleted ${account.id} (Card Status: ${transferStatus})`,
+        );
+      } catch (e: any) {
+        console.error(`Error deleting ${account.id}:`, e.message);
+      }
+    } else {
+      console.log(`Keeping ${account.id} (Active)`);
+    }
+  }
+
+  console.log("\nCleanup completed!");
 }

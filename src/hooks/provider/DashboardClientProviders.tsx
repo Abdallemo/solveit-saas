@@ -17,8 +17,7 @@ import NotificationDropDown, {
   Message,
 } from "@/features/notifications/components/notificationDropDown";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
-import { UserDbType } from "@/features/users/server/actions";
-import { Session } from "@/features/users/server/user-types";
+import { User } from "@/features/users/server/user-types";
 import { Suspense } from "react";
 import { useIsMounted } from "../useIsMounted";
 
@@ -30,8 +29,7 @@ const dbFlags = {
 } as const;
 
 interface UserSessionProps {
-  user: UserDbType;
-  sessionUser: Session["user"];
+  user: User;
   allNotifications: Message[];
 }
 
@@ -49,7 +47,7 @@ export function DashboardClientProviders({
   serverProps,
 }: DashboardClientProvidersProps) {
   const isMounted = useIsMounted();
-  const { user, sessionUser, allNotifications } = serverProps;
+  const { user, allNotifications } = serverProps;
 
   const sidebarStyles = {
     "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -59,12 +57,12 @@ export function DashboardClientProviders({
   return (
     <StripeSubscriptionProvider value={stripeData}>
       <NotificationProvider
-        user={sessionUser}
+        user={user}
         initailAllNotifications={allNotifications}
       >
         <SidebarProvider defaultOpen={defaultSidebarOpen} style={sidebarStyles}>
           {(user.role === "SOLVER" || user.role === "POSTER") &&
-          !user.userDetails.onboardingCompleted ? (
+          !user.onboardingCompleted ? (
             <div className="relative flex flex-col justify-center items-center h-screen w-full bg-linear-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
               <Motion3DBackground />
               <OnboardingForm />
@@ -72,7 +70,7 @@ export function DashboardClientProviders({
           ) : (
             <div className="flex h-screen w-full">
               <Suspense fallback={<AppSidebarSkeleton />}>
-                <DashboardSidebar user={sessionUser} />
+                <DashboardSidebar user={user} />
               </Suspense>
               <div className="flex flex-col flex-1 ">
                 <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
@@ -83,9 +81,9 @@ export function DashboardClientProviders({
                     </div>
                     <div className="flex gap-2 justify-center items-center">
                       {user.role === "SOLVER" && isMounted && (
-                        <WalletDropdownMenu user={sessionUser} />
+                        <WalletDropdownMenu user={user} />
                       )}
-                      <NotificationDropDown user={sessionUser} />
+                      <NotificationDropDown user={user} />
                     </div>
                   </div>
                 </header>

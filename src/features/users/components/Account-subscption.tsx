@@ -13,7 +13,7 @@ export default function AccountSubscption() {
   const { subTier, price } = useStripeSubscription();
 
   const { user } = useCurrentUser();
-  const { role } = user!;
+  const { role } = user;
 
   return (
     <CardWrapper
@@ -91,7 +91,8 @@ function PlanChange({ tier }: { tier: TierType }) {
               const url = (await CreateUserSubSessionPortal())!;
               router.push(url);
             })
-          }>
+          }
+        >
           {isPending ? <Loader2 className="animate-spin" /> : "Manage"}
         </Button>
       ) : null}

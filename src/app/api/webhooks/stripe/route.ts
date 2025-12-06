@@ -71,6 +71,8 @@ export async function POST(request: NextRequest) {
       case "account.updated":
         await StripeAccountUpdateHanlder(event.data.object);
         break;
+      case "account.application.deauthorized":
+        break;
 
       default:
         logger.debug(`Unhandled event type ${event.type}`);

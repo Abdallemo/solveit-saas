@@ -1,5 +1,5 @@
 {
-  "id": "8ce75c00-2c65-40b6-a79a-fff12d138450",
+  "id": "c3fd888e-8dec-478a-bc59-a70099be66e7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -2752,13 +2752,6 @@
           "primaryKey": true,
           "notNull": true
         },
-        "onboarding_completed": {
-          "name": "onboarding_completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "first_name": {
           "name": "first_name",
           "type": "text",
@@ -2992,6 +2985,13 @@
         },
         "stripe_account_linked": {
           "name": "stripe_account_linked",
+          "type": "boolean",
+          "primaryKey": false,
+          "notNull": true,
+          "default": false
+        },
+        "onboarding_completed": {
+          "name": "onboarding_completed",
           "type": "boolean",
           "primaryKey": false,
           "notNull": true,

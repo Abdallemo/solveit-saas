@@ -82,7 +82,7 @@ const defaultValues = {
 export default function OnboardingForm() {
   const [onboarding, saveOnboarding] = useLocalStorage<OnboardingFormData>(
     "onboarding",
-    defaultValues
+    defaultValues,
   );
   const [currentStep, setCurrentStep] = useLocalStorage("steps", 1);
   const form = useForm<OnboardingFormData>({
@@ -92,12 +92,14 @@ export default function OnboardingForm() {
   const maxDate = subYears(new Date(), 13);
   const { mutateAsync: saveOnboardingDb, isPending } = useMutation({
     mutationFn: handleUserOnboarding,
-    onSuccess: () => {
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error);
+      }
       setCurrentStep(1);
       form.reset(defaultValues);
       saveOnboarding(defaultValues);
     },
-    onError: (e) => toast.error(e.message),
   });
   const formValues = form.watch();
   useEffect(() => {
@@ -224,8 +226,9 @@ export default function OnboardingForm() {
                         variant={"outline"}
                         className={cn(
                           "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}>
+                          !field.value && "text-muted-foreground",
+                        )}
+                      >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {field.value ? (
                           format(field.value, "PPP")
@@ -244,9 +247,7 @@ export default function OnboardingForm() {
                       />
                     </PopoverContent>
                   </Popover>
-                  <FormDescription>
-                    must be 13 years and above
-                  </FormDescription>
+                  <FormDescription>must be 13 years and above</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -324,7 +325,8 @@ export default function OnboardingForm() {
                       <FormLabel>Country</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        defaultValue={field.value}>
+                        defaultValue={field.value}
+                      >
                         <SelectTrigger className="w-full">
                           <SelectValue placeholder="Select country" />
                         </SelectTrigger>
@@ -386,17 +388,19 @@ export default function OnboardingForm() {
                   step.id === currentStep
                     ? "text-primary"
                     : step.id < currentStep
-                    ? "text-green-600"
-                    : "text-muted-foreground"
-                }`}>
+                      ? "text-green-600"
+                      : "text-muted-foreground"
+                }`}
+              >
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-medium ${
                     step.id === currentStep
                       ? "bg-primary text-primary-foreground"
                       : step.id < currentStep
-                      ? "bg-green-600 text-white"
-                      : "bg-muted text-muted-foreground"
-                  }`}>
+                        ? "bg-green-600 text-white"
+                        : "bg-muted text-muted-foreground"
+                  }`}
+                >
                   {step.id < currentStep ? "✓" : step.id}
                 </div>
                 <span className="hidden sm:block text-sm font-medium">
@@ -425,7 +429,8 @@ export default function OnboardingForm() {
               variant="outline"
               onClick={prevStep}
               disabled={currentStep === 1}
-              className="flex items-center space-x-2 bg-transparent w-1/2">
+              className="flex items-center space-x-2 bg-transparent w-1/2"
+            >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous</span>
             </Button>
@@ -434,7 +439,8 @@ export default function OnboardingForm() {
               <Button
                 type="button"
                 onClick={nextStep}
-                className="flex items-center space-x-2 w-1/2">
+                className="flex items-center space-x-2 w-1/2"
+              >
                 <span>Continue</span>
                 <ChevronRight className="w-4 h-4" />
               </Button>
@@ -443,7 +449,8 @@ export default function OnboardingForm() {
                 <Button
                   disabled={isPending}
                   type="submit"
-                  className="flex items-center space-x-2 w-full">
+                  className="flex items-center space-x-2 w-full"
+                >
                   {isPending && <Loader2 className="animate-spin" />}
                   <span>Complete Setup</span>
                 </Button>

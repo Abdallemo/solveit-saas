@@ -882,6 +882,7 @@ type User struct {
 	StripeCustomerID    pgtype.Text `json:"stripe_customer_id"`
 	StripeAccountID     pgtype.Text `json:"stripe_account_id"`
 	StripeAccountLinked bool        `json:"stripe_account_linked"`
+	OnboardingCompleted bool        `json:"onboarding_completed"`
 	EmailVerified       bool        `json:"emailVerified"`
 	Image               pgtype.Text `json:"image"`
 	CreatedAt           time.Time   `json:"created_at"`
@@ -889,14 +890,13 @@ type User struct {
 }
 
 type UserDetail struct {
-	UserID              uuid.UUID   `json:"user_id"`
-	OnboardingCompleted bool        `json:"onboarding_completed"`
-	FirstName           pgtype.Text `json:"first_name"`
-	LastName            pgtype.Text `json:"last_name"`
-	DateOfBirth         pgtype.Date `json:"date_of_birth"`
-	Address             []byte      `json:"address"`
-	Business            []byte      `json:"business"`
-	UpdatedAt           *time.Time  `json:"updated_at"`
+	UserID      uuid.UUID   `json:"user_id"`
+	FirstName   pgtype.Text `json:"first_name"`
+	LastName    pgtype.Text `json:"last_name"`
+	DateOfBirth pgtype.Date `json:"date_of_birth"`
+	Address     []byte      `json:"address"`
+	Business    []byte      `json:"business"`
+	UpdatedAt   *time.Time  `json:"updated_at"`
 }
 
 type Verification struct {
