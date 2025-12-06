@@ -52,9 +52,15 @@ import {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
 import { generateRefundNotificationEmail } from "@/lib/email/templates/refunds";
-import { TaskNotFoundError, UnauthorizedError } from "@/lib/Errors";
+import {
+  DatabaseError,
+  ServiceLayerErrorType,
+  TaskNotFoundError,
+  UnauthorizedError,
+} from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
+import { to } from "@/lib/utils/async";
 import {
   getCurrentServerTime,
   parseDeadlineV2,
@@ -482,37 +488,75 @@ export async function addSolverToTaskBlockList(
     });
   }
 }
-export async function createCatagory(name: string) {
-  await db.insert(TaskCategoryTable).values({
-    name,
-  });
-  withRevalidateTag("category-data-cache");
-}
-export async function deleteCatagory(id: string) {
-  try {
-    await db.delete(TaskCategoryTable).where(eq(TaskCategoryTable.id, id));
-    withRevalidateTag("category-data-cache");
-  } catch (error) {
-    throw new Error("unable to delete category");
+export async function createCatagory(name: string): ServiceLayerErrorType {
+  const [_, error] = await to(
+    db.insert(TaskCategoryTable).values({
+      name,
+    }),
+  );
+  if (error) {
+    if (DatabaseError.isDuplicateKeyError(error)) {
+      return {
+        error: "The provided catagory value conflicts with an existing record.",
+      };
+    }
+    return { error: "unable to create deadline" };
   }
+
+  withRevalidateTag("category-data-cache");
+  return { error: null };
 }
-export async function createDeadline(deadline: string) {
+export async function deleteCatagory(id: string): ServiceLayerErrorType {
+  const [_, error] = await to(
+    db.delete(TaskCategoryTable).where(eq(TaskCategoryTable.id, id)),
+  );
+  if (error) {
+    logger.error(
+      `unable to delete category. cause:${(error as Error).message}`,
+      {
+        message: (error as Error).message,
+        cause: (error as Error).cause,
+      },
+    );
+    return {
+      error: "unable to delete category",
+    };
+  }
+  withRevalidateTag("category-data-cache");
+  return {
+    error: null,
+  };
+}
+export async function createDeadline(deadline: string): ServiceLayerErrorType {
   const match = deadline.match(/^(\d+)([hdwmy])$/);
   if (!match) {
-    throw new Error("invalid deadline format");
+    return { error: "invalid deadline format" };
   }
-  await db.insert(TaskDeadlineTable).values({
-    deadline,
-  });
+  const [_, error] = await to(
+    db.insert(TaskDeadlineTable).values({
+      deadline,
+    }),
+  );
+  if (error) {
+    if (DatabaseError.isDuplicateKeyError(error)) {
+      return {
+        error: "The provided deadline value conflicts with an existing record.",
+      };
+    }
+    return { error: "unable to create deadline" };
+  }
   withRevalidateTag("deadline-data-cache");
+  return { error: null };
 }
-export async function deleteDeadline(id: string) {
-  try {
-    await db.delete(TaskDeadlineTable).where(eq(TaskDeadlineTable.id, id));
-    withRevalidateTag("deadline-data-cache");
-  } catch (error) {
-    throw new Error("unable to delete deadline");
+export async function deleteDeadline(id: string): ServiceLayerErrorType {
+  const [_, error] = await to(
+    db.delete(TaskDeadlineTable).where(eq(TaskDeadlineTable.id, id)),
+  );
+  if (error) {
+    return { error: "unable to delete deadline" };
   }
+  withRevalidateTag("deadline-data-cache");
+  return { error: null };
 }
 
 export async function autoSaveDraftWorkspace(

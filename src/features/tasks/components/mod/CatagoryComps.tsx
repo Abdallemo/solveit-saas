@@ -47,10 +47,13 @@ export default function CreateCategoryDialog({
   const [open, setOpen] = useState(false);
   const { mutateAsync: createCatagoryMutation, isPending } = useMutation({
     mutationFn: createCatagory,
-    onSuccess: () => {
-      toast.success("Successfully created", { id: "create-catagory" });
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error, { id: "create-catagory" });
+      } else {
+        toast.success("Successfully created", { id: "create-catagory" });
+      }
     },
-    onError: (e) => toast.error(e.message, { id: "create-catagory" }),
   });
   const form = useForm<CategoryFormData>({
     resolver: zodResolver(categorySchema),
@@ -115,12 +118,14 @@ export default function CreateCategoryDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}>
+                onClick={() => setOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={form.formState.isSubmitting || isPending}>
+                disabled={form.formState.isSubmitting || isPending}
+              >
                 {form.formState.isSubmitting
                   ? "Creating..."
                   : "Create Category"}
@@ -136,16 +141,17 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
   const { mutateAsync: deleteCatagoryMutation, isPending: isDeleting } =
     useMutation({
       mutationFn: deleteCatagory,
-      onSuccess: () => {
-        toast.success("Successfully deleted", { id: "delete-catagory" });
+      onSuccess: ({ error }) => {
+        if (error) {
+          toast.error(error, { id: "delete-catagory" });
+        } else {
+          toast.success("Successfully deleted", { id: "delete-catagory" });
+        }
       },
-      onError: (e) => toast.error(e.message, { id: "delete-catagory" }),
     });
   const handleDelete = async () => {
     await deleteCatagoryMutation(category.id);
   };
-  console.log(category)
-
   return (
     <Card className="group hover:shadow-md transition-shadow duration-200">
       <CardHeader className="pb-3">
@@ -163,7 +169,8 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
             size="sm"
             disabled={isDeleting}
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10">
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
@@ -172,7 +179,7 @@ export function CategoryCard({ category }: { category: CatagoryType }) {
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <span>Tasks: {category.taskCount}</span>
           <span>
-            Created: {(new Date(category.createdAt)).toLocaleDateString()}
+            Created: {new Date(category.createdAt).toLocaleDateString()}
           </span>
         </div>
       </CardContent>

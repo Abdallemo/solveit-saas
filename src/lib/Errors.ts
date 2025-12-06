@@ -13,7 +13,7 @@ export class SubscriptionError extends Error {
 }
 export class MentorError extends Error {
   constructor(
-    message = "Please upgrade your subscription to solver++ to access this feature"
+    message = "Please upgrade your subscription to solver++ to access this feature",
   ) {
     super(message);
     this.name = "MentorError";
@@ -40,7 +40,7 @@ export class DisputeRefundedError extends Error {
 }
 export class DisputeUnauthorizedError extends Error {
   constructor(
-    message = "You are not the assigned moderator for this dispute. Please contact the moderator currently working on it for assistance."
+    message = "You are not the assigned moderator for this dispute. Please contact the moderator currently working on it for assistance.",
   ) {
     super(message);
     this.name = "DisputeUnauthorizedError";
@@ -55,7 +55,7 @@ export class TaskNotFoundError extends Error {
       headline: "Task Not Found",
       message:
         "The requested task could not be found. It may have been removed, or the ID provided is invalid.",
-    }
+    },
   ) {
     super(data.message);
     this.name = "TaskNotFoundError";
@@ -73,7 +73,7 @@ export class DisputeNotFoundError extends Error {
       headline: "Dispute Not Found",
       message:
         "The requested dispute could not be found. It may have been removed, resolved, or the ID provided is invalid.",
-    }
+    },
   ) {
     super(data.message);
     this.name = "DisputeNotFoundError";
@@ -91,10 +91,58 @@ export class SessionNotFoundError extends Error {
       headline: "Unable to fetch the session info",
       message:
         "The requested sessino could not be found. It may have been removed,  or the ID provided is invalid.",
-    }
+    },
   ) {
     super(data.message);
     this.name = "SessionNotFoundError";
     this.data = data;
   }
 }
+export class DatabaseError extends Error {
+  public static readonly UNIQUE_VIOLATION_CODE = "23505";
+
+  public readonly dbCode: string | undefined;
+  public readonly dbDetail: string | undefined;
+
+  constructor(
+    message: string = "A database operation failed.",
+    originalError?: any,
+  ) {
+    super(message);
+    this.name = "DatabaseError";
+    if (originalError && typeof originalError === "object") {
+      if ("code" in originalError) {
+        this.dbCode = originalError.code;
+      }
+      if ("detail" in originalError) {
+        this.dbDetail = originalError.detail;
+      }
+    }
+  }
+
+  /**
+   * Static method to check if a raw error is a Unique Constraint Violation (PostgreSQL code '23505').
+   */
+  static isDuplicateKeyError(error: any): boolean {
+    return (
+      error &&
+      typeof error === "object" &&
+      "code" in error &&
+      error.code === DatabaseError.UNIQUE_VIOLATION_CODE
+    );
+  }
+}
+
+export class DuplicateKeyError extends DatabaseError {
+  constructor(
+    message: string = "A record with this unique value already exists.",
+    originalError?: any,
+  ) {
+    super(message, originalError);
+    this.name = "DuplicateKeyError";
+  }
+}
+
+export type ServiceLayerErrorType = Promise<{
+  error: string | null;
+}>;
