@@ -20,6 +20,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { createDeadline, deleteDeadline } from "@/features/tasks/server/action";
+import { DeadlineType } from "@/features/tasks/server/task-types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { FolderIcon, Plus, Trash2 } from "lucide-react";
@@ -27,8 +29,6 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
 import { z } from "zod";
-import { createDeadline, deleteDeadline } from "../../server/action";
-import { DeadlineType } from "../../server/task-types";
 
 const deadlineSchema = z.object({
   deadline: z.string().regex(/^(\d+)([hdwmy])$/, {
@@ -46,10 +46,13 @@ export default function CreateDeadlineDialog({
   const [open, setOpen] = useState(false);
   const { mutateAsync: createDeadlineMutation, isPending } = useMutation({
     mutationFn: createDeadline,
-    onSuccess: () => {
-      toast.success("Successfully created", { id: "create-catagory" });
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error, { id: "create-catagory" });
+      } else {
+        toast.success("Successfully created", { id: "create-catagory" });
+      }
     },
-    onError: (e) => toast.error(e.message, { id: "create-catagory" }),
   });
   const form = useForm<DeadlineFormData>({
     resolver: zodResolver(deadlineSchema),
@@ -114,12 +117,14 @@ export default function CreateDeadlineDialog({
               <Button
                 type="button"
                 variant="outline"
-                onClick={() => setOpen(false)}>
+                onClick={() => setOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
                 type="submit"
-                disabled={form.formState.isSubmitting || isPending}>
+                disabled={form.formState.isSubmitting || isPending}
+              >
                 {form.formState.isSubmitting
                   ? "Creating..."
                   : "Create Deadline"}
@@ -135,10 +140,13 @@ export function DeadlineCard({ deadline }: { deadline: DeadlineType }) {
   const { mutateAsync: deleteDeadlineMutation, isPending: isDeleting } =
     useMutation({
       mutationFn: deleteDeadline,
-      onSuccess: () => {
-        toast.success("Successfully deleted", { id: "delete-catagory" });
+      onSuccess: ({ error }) => {
+        if (error) {
+          toast.error(error, { id: "delete-catagory" });
+        } else {
+          toast.success("Successfully deleted", { id: "delete-catagory" });
+        }
       },
-      onError: (e) => toast.error(e.message, { id: "delete-catagory" }),
     });
   const handleDelete = async () => {
     await deleteDeadlineMutation(deadline.id);
@@ -161,7 +169,8 @@ export function DeadlineCard({ deadline }: { deadline: DeadlineType }) {
             disabled={isDeleting}
             size="sm"
             onClick={handleDelete}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10">
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
             <Trash2 className="w-4 h-4" />
           </Button>
         </div>
