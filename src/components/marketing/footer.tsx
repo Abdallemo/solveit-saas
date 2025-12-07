@@ -1,5 +1,5 @@
-import Link from "next/link"
-import { Github, Twitter, Linkedin } from "lucide-react"
+import { Github, Linkedin, Twitter } from "lucide-react";
+import Link from "next/link";
 
 export default function Footer() {
   return (
@@ -7,21 +7,29 @@ export default function Footer() {
       <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
         <div className="flex-1 space-y-4 text-wrap">
           <h2 className="font-bold">SolevIt</h2>
-          <p className="text-sm text-muted-foreground ">Revolutionizing academic collaboration with AI-powered task matching and a student-driven job board for UTHM.</p>
+          <p className="text-sm text-muted-foreground ">
+            Revolutionizing academic collaboration with AI-powered task matching
+            and a student-driven job board for UTHM.
+          </p>
         </div>
         <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
-          
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Company</h3>
             <ul className="space-y-3 text-sm">
               <li>
-                <Link href="/about" className="text-muted-foreground transition-colors hover:text-primary">
+                <Link
+                  href="/about-us"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                >
                   About Us
                 </Link>
               </li>
               <li>
-                <Link href="/careers" className="text-muted-foreground transition-colors hover:text-primary">
-                  Careers
+                <Link
+                  href="/blog"
+                  className="text-muted-foreground transition-colors hover:text-primary"
+                >
+                  Blog
                 </Link>
               </li>
             </ul>
@@ -29,21 +37,24 @@ export default function Footer() {
           <div className="space-y-4">
             <h3 className="text-sm font-medium">Connect</h3>
             <div className="flex space-x-4">
-              <Link target="_blank"
+              <Link
+                target="_blank"
                 href="https://github.com/abdallemo"
                 className="text-muted-foreground transition-colors hover:text-primary"
               >
                 <Github className="h-5 w-5" />
                 <span className="sr-only">GitHub</span>
               </Link>
-              <Link target="_blank"
+              <Link
+                target="_blank"
                 href="https://twitter.com/EngAbmo"
                 className="text-muted-foreground transition-colors hover:text-primary"
               >
                 <Twitter className="h-5 w-5" />
                 <span className="sr-only">Twitter</span>
               </Link>
-              <Link target="_blank"
+              <Link
+                target="_blank"
                 href="https://linkedin.com/abdallemo"
                 className="text-muted-foreground transition-colors hover:text-primary"
               >
@@ -60,6 +71,5 @@ export default function Footer() {
         </p>
       </div>
     </footer>
-  )
+  );
 }
-

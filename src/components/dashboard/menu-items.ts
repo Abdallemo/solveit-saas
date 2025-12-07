@@ -7,10 +7,8 @@ import {
   LifeBuoy,
   LucideAlertTriangle,
   LucideBadgeDollarSign,
-  LucideBarChart3,
   LucideBrain,
   LucideCalendar,
-  LucideChartLine,
   LucideClipboardCheck,
   LucideClipboardList,
   LucideClipboardPlus,
@@ -27,7 +25,6 @@ import {
   LucideSearch,
   LucideSettings,
   LucideShieldCheck,
-  LucideTrendingUp,
   LucideUserPlus,
   LucideUsers,
   PackageOpen,
@@ -237,12 +234,12 @@ export const MenuItemsPoster: MenuItem[] = [
         url: "/dashboard/poster/disputes",
         icon: LucideFileQuestion,
       },
-      {
-        type: "link",
-        title: "Task Analytics",
-        url: "/dashboard/poster/task-analytics",
-        icon: LucideBarChart3,
-      },
+      // {
+      //   type: "link",
+      //   title: "Task Analytics",
+      //   url: "/dashboard/poster/task-analytics",
+      //   icon: LucideBarChart3,
+      // },
     ],
   },
   {
@@ -341,26 +338,26 @@ export const MenuItemsSolver: MenuItem[] = [
       },
     ],
   },
-  {
-    type: "category",
-    title: "Reputation & Reports",
-    url: "/dashboard/solver/reputation",
-    icon: LucideChartLine,
-    child: [
-      {
-        type: "link",
-        title: "My Reputation",
-        url: "/dashboard/solver/reputation",
-        icon: LucideTrendingUp,
-      },
-      {
-        type: "link",
-        title: "My Analytics",
-        url: "/dashboard/solver/analysis",
-        icon: LucideBarChart3,
-      },
-    ],
-  },
+  // {
+  //   type: "category",
+  //   title: "Reputation & Reports",
+  //   url: "/dashboard/solver/reputation",
+  //   icon: LucideChartLine,
+  //   child: [
+  //     {
+  //       type: "link",
+  //       title: "My Reputation",
+  //       url: "/dashboard/solver/reputation",
+  //       icon: LucideTrendingUp,
+  //     },
+  //     {
+  //       type: "link",
+  //       title: "My Analytics",
+  //       url: "/dashboard/solver/analysis",
+  //       icon: LucideBarChart3,
+  //     },
+  //   ],
+  // },
 ];
 
 export const navSecondary = [

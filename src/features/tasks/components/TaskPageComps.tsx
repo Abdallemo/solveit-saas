@@ -14,7 +14,7 @@ export default function TaskPageComps({
   if (!task) throw new TaskNotFoundError();
   return (
     <main className="flex flex-col w-full h-full gap-5 items-center p-10 ">
-      <div className="w-full flex flex-col items-end ">
+      <div className="w-full flex flex-col ">
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
           <PostingEditor
             content={task?.content}
@@ -23,7 +23,7 @@ export default function TaskPageComps({
           />
         </Suspense>
       </div>
-      <div className="w-full flex flex-col items-center">
+      <div className="w-full flex flex-col items-center pb-5">
         <FilesTable files={task.taskFiles} scope={task} scopeType="task" />
       </div>
     </main>

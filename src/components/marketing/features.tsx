@@ -42,7 +42,7 @@ export const features = [
 export default function Features() {
   return (
     <section className="space-y-16 py-24 md:py-32" id="features">
-      <div className="mx-auto max-w-[58rem] text-center">
+      <div className="mx-auto max-w-232 text-center">
         <h2 className="font-bold text-3xl leading-[1.1] sm:text-3xl md:text-5xl">
           AI-Powered Task Collaboration
         </h2>
@@ -55,7 +55,8 @@ export default function Features() {
         {features.map((feature) => (
           <div
             key={feature.name}
-            className="relative overflow-hidden rounded-lg border bg-sidebar p-8">
+            className="relative overflow-hidden rounded-lg border bg-sidebar p-8"
+          >
             <div className="flex items-center gap-4">
               <feature.icon className="h-8 w-8" />
               <h3 className="font-bold">{feature.name}</h3>

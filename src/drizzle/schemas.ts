@@ -936,6 +936,15 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   mentorSystemDetail: many(MentorshipProfileTable, {
     relationName: "mentorSystemDetail",
   }),
+  postedBlogs: many(BlogTable, {
+    relationName: "postedBlogs",
+  }),
+}));
+export const blogsRelation = relations(BlogTable, ({ one }) => ({
+  blogAuthor: one(UserTable, {
+    fields: [BlogTable.author],
+    references: [UserTable.id],
+  }),
 }));
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({

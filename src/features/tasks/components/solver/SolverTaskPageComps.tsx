@@ -24,6 +24,8 @@ export default function SolverTaskPageComps({
         {!isBlocked && task.status === "OPEN" && (
           <AssignTaskButton taskId={task.id} userId={currentUser.id!} />
         )}
+      </div>
+      <div className="w-full flex flex-col gap-4">
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
           <PostingEditor
             content={task?.content}
@@ -32,7 +34,7 @@ export default function SolverTaskPageComps({
           />
         </Suspense>
       </div>
-      <div className="w-full flex flex-col items-center">
+      <div className="w-full flex flex-col items-center pb-5">
         <FilesTable files={task.taskFiles} scope={task} scopeType="task" />
       </div>
     </main>

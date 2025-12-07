@@ -2,6 +2,7 @@
 
 import db from "@/drizzle/db";
 import {
+  BlogTable,
   PaymentTable,
   RefundTable,
   TaskTable,
@@ -15,6 +16,8 @@ import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import {
+  BlogPostFormData,
+  blogPostSchema,
   PartialUserDetailsTableColumns,
   PartialUserTableColumns,
   publicUserColumns,
@@ -23,6 +26,7 @@ import {
   UserRole,
 } from "@/features/users/server/user-types";
 import { withRevalidateTag } from "@/lib/cache";
+import { ServiceLayerErrorType } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { to } from "@/lib/utils/async";
@@ -466,4 +470,45 @@ export async function deleteInactiveStripeAccounts() {
   }
 
   console.log("\nCleanup completed!");
+}
+
+export async function PublishBlogs(
+  data: BlogPostFormData,
+): ServiceLayerErrorType {
+  const { user } = await isAuthorized(["ADMIN", "MODERATOR"]);
+  const { success, data: parsedData } = blogPostSchema.safeParse(data);
+  if (!success) {
+    return { error: "all fields are required" };
+  }
+  const [_, err] = await to(
+    db.insert(BlogTable).values({
+      author: user.id,
+      ...parsedData,
+      url: parsedData.slug,
+      description: parsedData.excerpt,
+    }),
+  );
+  if (err) {
+    return { error: "failed to publish! try again" };
+  }
+  return {
+    error: null,
+  };
+}
+export async function getAllBlogs() {
+  const { user } = await isAuthorized(["ADMIN", "MODERATOR"]);
+  const [blogs, error] = await to(
+    db.query.BlogTable.findMany({
+      where: (tb, fn) => fn.eq(tb.author, user.id),
+      with: {
+        blogAuthor: {
+          columns: publicUserColumns,
+        },
+      },
+    }),
+  );
+  if (error) {
+    return [];
+  }
+  return blogs;
 }

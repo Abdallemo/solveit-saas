@@ -82,7 +82,7 @@ export default function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
-                href="#pricing"
+                href="/#pricing"
               >
                 Pricing
               </NavigationMenuLink>
@@ -94,7 +94,7 @@ export default function Navbar() {
                   <ListItem href="/blog" title="Blog">
                     Latest articles and updates.
                   </ListItem>
-                  <ListItem href="#faq" title="FAQ">
+                  <ListItem href="/#faq" title="FAQ">
                     Frequently asked questions.
                   </ListItem>
                 </ul>

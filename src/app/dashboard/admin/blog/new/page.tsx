@@ -13,55 +13,22 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PostingEditor from "@/features/tasks/components/richTextEdito/BlogTiptap";
-import { MIN_CONTENT_LENGTH } from "@/features/tasks/server/task-types";
-import { calculateEditorTextLength } from "@/lib/utils/utils";
+import { PublishBlogs } from "@/features/users/server/actions";
+import {
+  BlogPostFormData,
+  blogPostSchema,
+} from "@/features/users/server/user-types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Save, Send } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const blogPostSchema = z.object({
-  title: z.string().min(1, "Title is required").max(200, "Title is too long"),
-  slug: z
-    .string()
-    .min(1, "Slug is required")
-    .regex(
-      /^[a-z0-9-]+$/,
-      "Slug can only contain lowercase letters, numbers, and hyphens"
-    ),
-  excerpt: z
-    .string()
-    .min(1, "Excerpt is required")
-    .max(500, "Excerpt is too long"),
-  content: z
-    .unknown()
-    .refine(
-      (val) => {
-        const content = val as JSONContent;
-        const textLength = calculateEditorTextLength(content);
-        return textLength >= MIN_CONTENT_LENGTH;
-      },
-      {
-        message: `Task content is too short. Please provide at least ${MIN_CONTENT_LENGTH} characters.`,
-      }
-    )
-    .transform((val) => val as JSONContent),
-  category: z.string().min(1, "Category is required"),
-  authorName: z.string().min(1, "Author name is required"),
-  authorRole: z.string().min(1, "Author role is required"),
-  readTime: z.coerce.number().min(1, "Read time must be at least 1 minute"),
-  publishedAt: z.string().optional(),
-});
-
-type BlogPostFormData = z.infer<typeof blogPostSchema>;
 
 export default function NewBlogPostPage() {
   const router = useRouter();
-  const [isPublishing, setIsPublishing] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
 
   const form = useForm({
@@ -72,13 +39,20 @@ export default function NewBlogPostPage() {
       excerpt: "",
       content: {},
       category: "",
-      authorName: "",
-      authorRole: "",
       readTime: 5,
-      publishedAt: new Date().toISOString().split("T")[0],
     },
   });
-
+  const { mutateAsync: publishBlogMutation, isPending: isPublishing } =
+    useMutation({
+      mutationFn: PublishBlogs,
+      onSuccess: ({ error }) => {
+        if (error) {
+          toast.error(error, { id: "blog-post" });
+        } else {
+          toast.success("successfully published", { id: "blog-post" });
+        }
+      },
+    });
   const handleTitleChange = (title: string) => {
     const slug = title
       .toLowerCase()
@@ -90,28 +64,8 @@ export default function NewBlogPostPage() {
   };
 
   async function onSubmit(data: BlogPostFormData) {
-    setIsPublishing(true);
-
-    try {
-      // TODO: Call your server action here
-
-      console.log("[v0] Blog post data:", data);
-      console.log("[v0] Is draft:", isDraft);
-
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      toast.success(
-        isDraft
-          ? "Draft saved successfully!"
-          : "Blog post published successfully!"
-      );
-      router.push("/dashboard/admin/blog");
-    } catch (error) {
-      console.error("[v0] Error submitting blog post:", error);
-      toast.error("Failed to save blog post. Please try again.");
-    } finally {
-      setIsPublishing(false);
-    }
+    await publishBlogMutation(data);
+    router.push("/dashboard/admin/blog");
   }
 
   const handleSaveDraft = () => {
@@ -143,7 +97,8 @@ export default function NewBlogPostPage() {
             <Button
               variant="outline"
               onClick={handleSaveDraft}
-              disabled={isPublishing}>
+              disabled={isPublishing}
+            >
               <Save className="h-4 w-4" />
               Save Draft
             </Button>
@@ -156,7 +111,6 @@ export default function NewBlogPostPage() {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        
         <div className="flex-1 border-r flex flex-col min-w-0">
           <div className="flex-1 overflow-y-auto overflow-x-auto">
             <div className="px-6 py-6 min-w-fit">
@@ -194,7 +148,8 @@ export default function NewBlogPostPage() {
                   <Button variant="ghost" size="sm" asChild>
                     <a
                       href="#"
-                      className="text-xs text-muted-foreground hover:text-foreground">
+                      className="text-xs text-muted-foreground hover:text-foreground"
+                    >
                       Auto Suggest with AI
                     </a>
                   </Button>
@@ -279,24 +234,10 @@ export default function NewBlogPostPage() {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="publishedAt"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Publish Date</FormLabel>
-                        <FormControl>
-                          <Input type="date" {...field} className="text-sm" />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               </div>
 
-              <div className="px-6 py-6 border-b">
+              <div className="px-6 py-6 ">
                 <h3 className="font-semibold mb-4 text-sm">Excerpt</h3>
                 <FormField
                   control={form.control}
@@ -315,47 +256,6 @@ export default function NewBlogPostPage() {
                     </FormItem>
                   )}
                 />
-              </div>
-
-              <div className="px-6 py-6">
-                <h3 className="font-semibold mb-4 text-sm">Author</h3>
-                <div className="space-y-4">
-                  <FormField
-                    control={form.control}
-                    name="authorName"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Name</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="John Doe"
-                            {...field}
-                            className="text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
-                  <FormField
-                    control={form.control}
-                    name="authorRole"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel className="text-xs">Role</FormLabel>
-                        <FormControl>
-                          <Input
-                            placeholder="Career Advisor"
-                            {...field}
-                            className="text-sm"
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
               </div>
             </form>
           </Form>
