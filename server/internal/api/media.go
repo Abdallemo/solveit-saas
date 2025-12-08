@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"log"
+	"mime/multipart"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -73,99 +73,91 @@ func (s *Server) handleDeleteMedia(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
-	response := uploadResp{}
-	err := r.ParseMultipartForm(32 << 20)
-	if err != nil {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
 		sendHTTPError(w, "Unable to parse form", http.StatusBadRequest)
 		return
 	}
 
 	files := r.MultipartForm.File["files"]
 	scope := r.FormValue("scope")
-	var uploadedFiles []FileMeta
-	failedFiles := []failedFileError{}
 	id := uuid.New()
 
+	uploaded := []FileMeta{}
+	failed := []failedFileError{}
+
 	for _, fileHeader := range files {
-		if fileHeader.Size >= 01<<20 {
-			failedFiles = append(failedFiles, failedFileError{
-				File: FileMeta{
-					FileName:        fileHeader.Filename,
-					FileType:        fileHeader.Header.Get("Content-Type"),
-					FileSize:        float64(fileHeader.Size),
-					FilePath:        "",
-					StorageLocation: "",
-				},
-				Error: "Exceeded server limit (50MB)",
+		if err := validateSize(fileHeader); err != nil {
+			failed = append(failed, failedFileError{
+				File:  buildFileMeta(fileHeader, "", ""),
+				Error: err.Error(),
 			})
 			continue
 		}
 
-		file, err := fileHeader.Open()
+		key, publicURL, err := s.uploadFileToS3(fileHeader, scope, id)
 		if err != nil {
-			log.Println("file open error:", err)
-			failedFiles = append(failedFiles, failedFileError{
-				File: FileMeta{
-					FileName:        fileHeader.Filename,
-					FileType:        fileHeader.Header.Get("Content-Type"),
-					FileSize:        float64(fileHeader.Size),
-					FilePath:        "",
-					StorageLocation: "",
-				},
-				Error: fmt.Sprintf("file open error:%s", err),
+			failed = append(failed, failedFileError{
+				File:  buildFileMeta(fileHeader, "", ""),
+				Error: fmt.Sprintf("upload error: %v", err),
 			})
 			continue
 		}
 
-		key := fmt.Sprintf("%s/%s-%s", scope, id.String(), fileHeader.Filename)
-
-		_, err = s.s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
-			Bucket:      aws.String("solveit"),
-			Key:         aws.String(key),
-			Body:        file,
-			ContentType: aws.String(fileHeader.Header.Get("Content-Type")),
-		})
-		file.Close()
-
-		if err != nil {
-			log.Println("upload error:", err)
-			failedFiles = append(failedFiles, failedFileError{
-				File: FileMeta{
-					FileName:        fileHeader.Filename,
-					FileType:        fileHeader.Header.Get("Content-Type"),
-					FileSize:        float64(fileHeader.Size),
-					FilePath:        "",
-					StorageLocation: "",
-				},
-				Error: fmt.Sprintf("upload error::%s", err),
-			})
-			continue
-		}
-
-		publicURL := fmt.Sprintf("%s/%s", PublicS3Location, key)
-
-		uploadedFiles = append(uploadedFiles, FileMeta{
-			FileName:        fileHeader.Filename,
-			FileType:        fileHeader.Header.Get("Content-Type"),
-			FileSize:        float64(fileHeader.Size),
-			FilePath:        key,
-			StorageLocation: publicURL,
-		})
+		uploaded = append(uploaded, buildFileMeta(fileHeader, key, publicURL))
 	}
-	response = uploadResp{
-		FailedFiles:   failedFiles,
-		UploadedFiles: uploadedFiles,
+
+	status := http.StatusOK
+	if len(failed) > 0 {
+		status = http.StatusMultiStatus
 	}
-	if len(uploadedFiles) == 0 && len(failedFiles) > 0 {
-		w.WriteHeader(http.StatusMultiStatus)
-	} else if len(failedFiles) > 0 {
-		w.WriteHeader(http.StatusMultiStatus)
-	} else {
-		w.WriteHeader(http.StatusOK)
-	}
+
 	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	json.NewEncoder(w).Encode(uploadResp{UploadedFiles: uploaded, FailedFiles: failed})
+}
 
-	json.NewEncoder(w).Encode(response)
+func validateSize(fh *multipart.FileHeader) error {
+	if fh.Size >= 50<<20 { // 50MB
+		return fmt.Errorf("Exceeded server limit (50MB)")
+	}
+	return nil
+}
+func (s *Server) uploadFileToS3(
+	fh *multipart.FileHeader,
+	scope string,
+	id uuid.UUID,
+) (key string, publicURL string, err error) {
+
+	file, err := fh.Open()
+	if err != nil {
+		return "", "", fmt.Errorf("file open error: %v", err)
+	}
+	defer file.Close()
+
+	key = fmt.Sprintf("%s/%s-%s", scope, id.String(), fh.Filename)
+
+	_, err = s.s3Client.PutObject(context.TODO(), &s3.PutObjectInput{
+		Bucket:      aws.String("solveit"),
+		Key:         aws.String(key),
+		Body:        file,
+		ContentType: aws.String(fh.Header.Get("Content-Type")),
+	})
+	if err != nil {
+		return "", "", err
+	}
+
+	publicURL = fmt.Sprintf("%s/%s", PublicS3Location, key)
+	return key, publicURL, nil
+}
+
+func buildFileMeta(fh *multipart.FileHeader, key, publicURL string) FileMeta {
+	return FileMeta{
+		FileName:        fh.Filename,
+		FileType:        fh.Header.Get("Content-Type"),
+		FileSize:        float64(fh.Size),
+		FilePath:        key,
+		StorageLocation: publicURL,
+	}
 }
 
 func (s *Server) handleMediaDownload(w http.ResponseWriter, r *http.Request) {

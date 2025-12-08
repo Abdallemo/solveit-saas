@@ -1,9 +1,13 @@
 import { UserRoleType } from "@/drizzle/schemas";
-import { getServerSession } from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import { redirect } from "next/navigation";
 export default async function Page() {
-  const session = await getServerSession();
-  const useRole = session?.user.role as UserRoleType;
+  const { user } = await isAuthorized([
+    "SOLVER",
+    "ADMIN",
+    "MODERATOR",
+    "POSTER",
+  ]);
 
   const roleRedirectMap: Record<UserRoleType, string> = {
     POSTER: "/dashboard/poster",
@@ -12,8 +16,8 @@ export default async function Page() {
     ADMIN: "/dashboard/admin",
   };
 
-  if (useRole && roleRedirectMap[useRole]) {
-    redirect(roleRedirectMap[useRole]);
+  if (roleRedirectMap[user.role]) {
+    redirect(roleRedirectMap[user.role]);
   }
   return null;
 }

@@ -14,19 +14,25 @@ func (w *Worker) StartFileGarbageCollectorJob(ctx context.Context, timeBetweenCh
 	ticker := time.NewTicker(timeBetweenChecks)
 	log.Println("Starting Background Job for file garbage collection")
 	defer ticker.Stop()
-	go w.runCleanupWithLock(ctx)
+	go w.runCleanup(ctx)
 	for {
 		select {
 		case <-ctx.Done():
 			log.Println("File garbage collection shutting down...")
 			return
 		case <-ticker.C:
-			go w.runCleanupWithLock(ctx)
+			go w.runCleanup(ctx)
 		}
 	}
 }
 
 func (w *Worker) runCleanup(ctx context.Context) {
+	if !w.mu.TryLock() {
+		log.Println("Skipping scheduled garbage collection. Previous run is still active.")
+		return
+	}
+	defer w.mu.Unlock()
+
 	wg := &sync.WaitGroup{}
 	wg.Add(2)
 
@@ -42,15 +48,6 @@ func (w *Worker) runCleanup(ctx context.Context) {
 
 	wg.Wait()
 	log.Println("Garbage collection cycle finished.")
-}
-
-func (w *Worker) runCleanupWithLock(ctx context.Context) {
-	if !w.mu.TryLock() {
-		log.Println("Skipping scheduled garbage collection. Previous run is still active.")
-		return
-	}
-	defer w.mu.Unlock()
-	w.runCleanup(ctx)
 }
 
 func (w *Worker) deleteUnreferencedS3Files(ctx context.Context) {

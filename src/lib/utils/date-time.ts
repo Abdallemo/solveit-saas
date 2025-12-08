@@ -45,6 +45,36 @@ export const timeOptions = [
   "22:00",
 ];
 
+export enum Time {
+  Nanosecond = 1,
+  Microsecond = 1000 * Nanosecond,
+  Millisecond = 1000 * Microsecond,
+  /** Second in Nanosecond  */
+  Second = 1000 * Millisecond,
+  /** Minute in Nanosecond  */
+  Minute = 60 * Second,
+  /** Hour in Nanosecond  */
+  Hour = 60 * Minute,
+  /** Day in Nanosecond  */
+  Day = 24 * Hour,
+  Week = 7 * Day,
+}
+
+export namespace Time {
+  /**
+   * Converts a duration (in Nanoseconds) to Milliseconds.
+   */
+  export function toMs(durationNs: number): number {
+    return durationNs / Time.Millisecond;
+  }
+  /**
+   * Converts a duration (in Nanoseconds) to Seconds.
+   */
+  export function toSec(durationNs: number): number {
+    return durationNs / Time.Second;
+  }
+}
+
 export function toYMD(date: Date): string {
   return format(date, "yyyy-MM-dd");
 }

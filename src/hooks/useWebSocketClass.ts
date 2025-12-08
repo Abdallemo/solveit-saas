@@ -1,4 +1,3 @@
-// useWebSocket.ts (SIMPLIFIED FIX)
 import { ConnectionState, SocketClient } from "@/lib/ws/SocketClient";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -14,7 +13,7 @@ interface UseWebSocketOptions<MsgType extends object> {
 
 export function useWebSocket<MsgType extends object>(
   url: string,
-  options: UseWebSocketOptions<MsgType>
+  options: UseWebSocketOptions<MsgType>,
 ) {
   const [connectionState, setConnectionState] =
     useState<ConnectionState>("connecting");

@@ -24,7 +24,7 @@ func (w *Worker) StartDeadlineEnforcerJob(ctx context.Context, concurrency int, 
 	log.Println("Starting Background Job for task deadline enforcement")
 	defer ticker.Stop()
 
-	go w.runDeadlineCheckWithLock(ctx, concurrency)
+	go w.runDeadlineCheck(ctx, concurrency)
 
 	for {
 		select {
@@ -32,21 +32,18 @@ func (w *Worker) StartDeadlineEnforcerJob(ctx context.Context, concurrency int, 
 			log.Println("Task deadline enforcement shutting down...")
 			return
 		case <-ticker.C:
-			go w.runDeadlineCheckWithLock(ctx, concurrency)
+			go w.runDeadlineCheck(ctx, concurrency)
 		}
 	}
 }
 
-func (w *Worker) runDeadlineCheckWithLock(ctx context.Context, concurrency int) {
+func (w *Worker) runDeadlineCheck(ctx context.Context, concurrency int) {
 	if !w.mu.TryLock() {
 		log.Println("Skipping scheduled deadline check. Previous run is still active.")
 		return
 	}
 	defer w.mu.Unlock()
-	w.runDeadlineCheck(ctx, concurrency)
-}
 
-func (w *Worker) runDeadlineCheck(ctx context.Context, concurrency int) {
 	log.Println("Running scheduled task deadline check.")
 
 	tasks, err := w.store.GetAvailbleTasks(ctx, int32(concurrency))

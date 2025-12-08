@@ -171,9 +171,3 @@ func (h *WsHub) sendToChannel(channelID string, payload any) {
 	}
 	h.conns[channelID] = active
 }
-
-func (h *WsHub) sendToChannels(channelIDs []string, payload any) {
-	for _, id := range channelIDs {
-		h.sendToChannel(id, payload)
-	}
-}

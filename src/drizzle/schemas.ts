@@ -500,7 +500,7 @@ export const RefundTable = pgTable(
     id: uuid("id").primaryKey().defaultRandom(),
     paymentId: uuid("payment_id")
       .notNull()
-      .references(() => PaymentTable.id),
+      .references(() => PaymentTable.id, { onDelete: "cascade" }),
     taskId: uuid("task_id").references(() => TaskTable.id, {
       onDelete: "set null",
     }),
@@ -763,7 +763,7 @@ export const MentorshipChatTable = pgTable(
       .references(() => UserTable.id, { onDelete: "cascade" }),
     sentTo: uuid("sent_to")
       .notNull()
-      .references(() => UserTable.id, { onDelete: "no action" }),
+      .references(() => UserTable.id, { onDelete: "cascade" }),
     readAt: timestamp("read_at", { mode: "date", withTimezone: true }),
     pending: boolean("pending"),
     isDeleted: boolean("is_deleted").default(false),
@@ -944,6 +944,7 @@ export const blogsRelation = relations(BlogTable, ({ one }) => ({
   blogAuthor: one(UserTable, {
     fields: [BlogTable.author],
     references: [UserTable.id],
+    relationName: "postedBlogs",
   }),
 }));
 

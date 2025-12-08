@@ -25,14 +25,25 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
+import {
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { DeleteUserAccount } from "@/features/auth/server/actions";
 import {
   cardsType,
   ManageUserCreditCardPortal,
 } from "@/features/payments/server/action";
+import { authClient } from "@/lib/auth-client";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
+import z from "zod";
 export default function AccountComponent({
   isOauthUser,
   cards,
@@ -41,16 +52,75 @@ export default function AccountComponent({
   cards: cardsType;
 }) {
   const { user, state: isLoading } = useCurrentUser();
-  const [emailNotification, SetEmailNotification] = useState<boolean>(false);
-  const [pushNotification, setPushNotification] = useState<boolean>(false);
+  const [emailNotification, SetEmailNotification] = useState<boolean>(true);
+  const [pushNotification, setPushNotification] = useState<boolean>(true);
   const [isPending, startTransition] = useTransition();
-
+  const [newName, setNewName] = useState("");
+  const formSchema = z
+    .object({
+      currentPassword: z.string().min(1, "Current password is required"),
+      newPassword: z.string().min(8, "Password must be at least 8 characters"),
+      confirmPassword: z.string().min(1, "Please confirm your password"),
+    })
+    .refine((data) => data.newPassword === data.confirmPassword, {
+      message: "Passwords do not match",
+      path: ["confirmPassword"],
+    });
+  const { mutateAsync: changePasswordAction, isPending: isChanginPassword } =
+    useMutation({
+      mutationFn: async (data: z.infer<typeof formSchema>) => {
+        return await authClient.changePassword({
+          newPassword: data.newPassword,
+          currentPassword: data.currentPassword,
+        });
+      },
+      onSuccess: ({ data, error }) => {
+        if (error) {
+          toast.error(error.message, { id: "change-password" });
+          return;
+        }
+        toast.success("successfully changed ");
+        form.reset();
+      },
+    });
+  const { mutateAsync: updateName, isPending: isUpdatingName } = useMutation({
+    mutationFn: async (name: string) => {
+      return await authClient.updateUser({
+        name: name,
+      });
+    },
+    onSuccess: ({ data, error }) => {
+      if (error) {
+        toast.error(error.message, { id: "change-password" });
+        return;
+      }
+      toast.success("successfully updated ");
+    },
+  });
   const router = useRouter();
   const { setTheme, theme } = useTheme();
   const [open, setOpen] = useState(false);
+
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      currentPassword: "",
+      newPassword: "",
+      confirmPassword: "",
+    },
+  });
   const { mutateAsync: DeleteAccountMutation, isPending: isDeleting } =
     useMutation({
       mutationFn: DeleteUserAccount,
+      onSuccess: async () => {
+        await authClient.signOut({
+          fetchOptions: {
+            onSuccess: () => {
+              router.push("/login");
+            },
+          },
+        });
+      },
       // onError: () =>
       //   toast.error("something went wrong try again", {
       //     action: {
@@ -61,6 +131,10 @@ export default function AccountComponent({
       //     },
       //   }),
     });
+
+  const onSubmit = async (data: z.infer<typeof formSchema>) => {
+    await changePasswordAction(data);
+  };
   if (isLoading) return <UserPreferencesLoading />;
   return (
     <div className="w-full  mt-5" suppressHydrationWarning>
@@ -77,10 +151,7 @@ export default function AccountComponent({
               >
                 cancel
               </Button>
-              <Button
-                variant={"success"}
-                onClick={() => toast.success("saved")}
-              >
+              <Button variant={"success"} onClick={() => updateName(newName)}>
                 save
               </Button>
             </>
@@ -92,10 +163,14 @@ export default function AccountComponent({
                 <>
                   <div className="space-y-2">
                     <Label htmlFor="firstName">First name</Label>
-                    <Input id="firstName" defaultValue={user?.name ?? ""} />
+                    <Input
+                      id="firstName"
+                      defaultValue={user?.name ?? ""}
+                      onChange={(e) => setNewName(e.target.value)}
+                    />
                     <Label htmlFor="email">Email</Label>
                     <Input
-                      disabled={isOauthUser}
+                      disabled
                       id="email"
                       type="email"
                       defaultValue={user?.email ?? ""}
@@ -227,53 +302,101 @@ export default function AccountComponent({
         />
 
         {!isOauthUser && (
-          <CardWrapper
-            title="Security"
-            sections={[
-              {
-                children: (
-                  <div className="flex flex-col gap-3">
-                    <Label htmlFor="current-password">Current Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="current-password"
-                      type="password"
-                      autoComplete="new-password"
-                    />
-                    <Label htmlFor="new-password">New Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="new-password"
-                      type="password"
-                    />
-
-                    <Label htmlFor="confirm-password">Confirm Password</Label>
-                    <Input
-                      disabled={isOauthUser}
-                      id="confirm-password"
-                      type="password"
-                    />
-                  </div>
-                ),
-              },
-            ]}
-            footer={
-              <>
-                <Button
-                  variant={"secondary"}
-                  onClick={() => toast.error("cancled")}
-                >
-                  cancel
-                </Button>
-                <Button
-                  variant={"success"}
-                  onClick={() => toast.success("saved")}
-                >
-                  save
-                </Button>
-              </>
-            }
-          />
+          <FormProvider {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="contents">
+              <CardWrapper
+                title="Security"
+                sections={[
+                  {
+                    children: (
+                      <div className="flex flex-col gap-3 w-full">
+                        <FormField
+                          control={form.control}
+                          name="currentPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Current Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="password"
+                                  disabled={isOauthUser}
+                                  autoComplete="current-password"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="newPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>New Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="password"
+                                  disabled={isOauthUser}
+                                  autoComplete="new-password"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="confirmPassword"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Confirm Password</FormLabel>
+                              <FormControl>
+                                <Input
+                                  {...field}
+                                  type="password"
+                                  disabled={isOauthUser}
+                                  autoComplete="new-password"
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      </div>
+                    ),
+                  },
+                ]}
+                footer={
+                  <>
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      onClick={() => {
+                        form.reset();
+                        toast.error("Cancelled");
+                      }}
+                      disabled={isChanginPassword}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="success"
+                      disabled={isOauthUser || isChanginPassword}
+                    >
+                      {isChanginPassword ? (
+                        <Loader2 className="animate-spin" />
+                      ) : (
+                        <>Save</>
+                      )}
+                    </Button>
+                  </>
+                }
+              />
+            </form>
+          </FormProvider>
         )}
         <CardWrapper
           title="Payment Methods"

@@ -3,11 +3,11 @@ import * as schema from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import { getVerificationEmailBody } from "@/features/auth/register/components/emailVerificationMessage";
 import { Notifier } from "@/features/notifications/server/notifier";
-import { CreateUserSubsciption } from "@/features/subscriptions/server/db";
+import { CreateUserSubsciption } from "@/features/subscriptions/server/action";
+import { Time } from "@/lib/utils/utils";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { jwt } from "better-auth/plugins";
-
 export const auth = betterAuth({
   database: drizzleAdapter(db, {
     provider: "pg",
@@ -25,7 +25,10 @@ export const auth = betterAuth({
       generateId: "uuid",
     },
   },
-
+  session: {
+    expiresIn: Time.toSec(6 * Time.Hour),
+    updateAge: Time.toSec(1 * Time.Hour),
+  },
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: true,
@@ -82,6 +85,7 @@ export const auth = betterAuth({
         required: false,
         fieldName: "stripeAccountId",
       },
+
       stripeAccountLinked: {
         type: "boolean",
         required: false,
@@ -91,6 +95,11 @@ export const auth = betterAuth({
         type: "boolean",
         required: false,
         fieldName: "onboardingCompleted",
+      },
+      stripeCustomerId: {
+        type: "string",
+        required: false,
+        fieldName: "stripeCustomerId",
       },
     },
   },

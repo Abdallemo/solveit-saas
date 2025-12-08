@@ -35,7 +35,7 @@ func (w *Worker) StartDraftMediaCleanupJob(ctx context.Context, timeBetweenCheck
 			for _, draftTask := range taskDrafts {
 				wg.Add(1)
 
-				go process(wg, w.store, w.s3, draftTask)
+				go runCleanup(wg, w.store, w.s3, draftTask)
 
 			}
 			wg.Wait()
@@ -43,7 +43,7 @@ func (w *Worker) StartDraftMediaCleanupJob(ctx context.Context, timeBetweenCheck
 	}
 }
 
-func process(wg *sync.WaitGroup, store *database.Queries, s3client *s3.Client, draftTask database.TaskDraft) {
+func runCleanup(wg *sync.WaitGroup, store *database.Queries, s3client *s3.Client, draftTask database.TaskDraft) {
 	defer wg.Done()
 	files := []api.FileMeta{}
 	_, err := json.Marshal(draftTask.UploadedFiles)

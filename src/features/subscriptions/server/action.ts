@@ -1,6 +1,9 @@
 "use server";
 
-import { getServerUserSession } from "@/features/auth/server/actions";
+import {
+  getServerUserSession,
+  isAuthorized,
+} from "@/features/auth/server/actions";
 import {
   createStripeCustomer,
   getServerUserSubscriptionById,
@@ -9,18 +12,16 @@ import {
 import { stripe, SubPriceMap } from "@/lib/stripe";
 import { redirect } from "next/navigation";
 
-import { TierType } from "@/drizzle/schemas";
+import db from "@/drizzle/db";
+import { TierType, UserSubscriptionTable, UserTable } from "@/drizzle/schemas";
 import { env } from "@/env/server";
-import * as db from "@/features/subscriptions/server/db";
+import { UserRole } from "@/features/users/server/user-types";
 import { logger } from "@/lib/logging/winston";
+import { to } from "@/lib/utils/async";
 import { headers } from "next/headers";
 import Stripe from "stripe";
-export const {
-  CancelUserSubscription,
-  CreateUserSubsciption,
-  updateUserSubscription,
-  getAllSubscriptions,
-} = db;
+
+import { eq, SQL } from "drizzle-orm";
 
 export async function getServerReturnUrl() {
   const headersList = await headers();
@@ -35,20 +36,9 @@ export async function getServerReturnUrl() {
 export async function createStripeCheckoutSession(tier: TierType) {
   const referer = await getServerReturnUrl();
   try {
-    const currentUser = await getServerUserSession(); //next_auth
-    if (!currentUser?.id) redirect("/login");
-    const userSubscription = await getServerUserSubscriptionById(
-      currentUser?.id!,
-    );
-
+    const { user } = await isAuthorized(["POSTER", "SOLVER"]);
     if (!SubPriceMap[tier]) throw new Error("Plan not found");
     const stripePriceId = SubPriceMap[tier];
-
-    if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier !== "POSTER") return;
-    const user = await getUserById(currentUser.id!);
-    if (!user || !user.id) return;
-    if (!currentUser.email || !currentUser!.id) return;
 
     let customerId = user.stripeCustomerId;
     if (!user.stripeCustomerId) {
@@ -73,7 +63,7 @@ export async function createStripeCheckoutSession(tier: TierType) {
       payment_method_types: ["card"],
       subscription_data: {
         metadata: {
-          userId: currentUser!.id,
+          userId: user.id,
         },
       },
     });
@@ -89,9 +79,8 @@ export async function createStripeCheckoutSession(tier: TierType) {
 
 export async function upgradeSolverToPlus(userId: string) {
   const return_url = await getServerReturnUrl();
-  const user = await getUserById(userId);
-  if (!user || !user.id) return;
-  console.log("passed userid :", userId);
+  const { user } = await isAuthorized(["SOLVER"]);
+
   const subscription = await getServerUserSubscriptionById(userId);
   if (
     !subscription?.stripeSubscriptionId ||
@@ -100,13 +89,22 @@ export async function upgradeSolverToPlus(userId: string) {
     throw new Error("User does not have an active subscription");
   }
 
-  const solverPlusPriceId = env.STRIPE_SOLVER_PLUS_PRICE_ID;
-  console.log("found solver+ pirce id :", solverPlusPriceId);
-  console.log(JSON.stringify(subscription));
-  const session = await stripe.billingPortal.sessions.create({
-    customer: user.stripeCustomerId!,
-    return_url,
-  });
+  const [session, error] = await to(
+    stripe.billingPortal.sessions.create({
+      customer: user.stripeCustomerId!,
+      return_url,
+    }),
+  );
+  if (error) {
+    logger.error(
+      `failed to generate stripe Billing Portal for user ${userId}. cause ${error.message}`,
+      {
+        message: error.message,
+        cause: error.cause,
+      },
+    );
+    throw new Error("Unable to Create Stripe Session ");
+  }
   redirect(session.url);
 }
 
@@ -167,4 +165,60 @@ export async function CreateUserSubSessionPortal() {
     return_url: referer,
   });
   return portalSession.url;
+}
+
+export async function updateUserSubscription(
+  values: typeof UserSubscriptionTable.$inferInsert,
+  role: UserRole,
+  id: string,
+  stripeCustomerId: string,
+) {
+  try {
+    await db.transaction(async (dx) => {
+      await dx
+        .update(UserSubscriptionTable)
+        .set(values)
+        .where(eq(UserSubscriptionTable.userId, id))
+        .returning();
+      await dx
+        .update(UserTable)
+        .set({ role: role, stripeCustomerId: stripeCustomerId })
+        .where(eq(UserTable.id, id));
+    });
+
+    logger.info(`Sucessfully Updated User ${id}'s Subscription`);
+  } catch (error) {
+    logger.error(
+      "unable to update user subscription cause: ",
+      (error as Error).message,
+      {
+        message: (error as Error).message,
+        cause: (error as Error).cause,
+      },
+    );
+    throw new Error("unable to update user subscription cause: ", {
+      cause: error,
+    });
+  }
+}
+
+export async function CancelUserSubscription(
+  where: SQL,
+  values: typeof UserSubscriptionTable.$inferInsert,
+  id?: string,
+) {
+  await db.transaction(async (dx) => {
+    await dx.update(UserSubscriptionTable).set(values).where(where);
+
+    await dx
+      .update(UserTable)
+      .set({ role: "POSTER", stripeCustomerId: null })
+      .where(eq(UserTable.id, id!));
+  });
+}
+
+export async function CreateUserSubsciption(
+  values: typeof UserSubscriptionTable.$inferInsert,
+) {
+  await db.insert(UserSubscriptionTable).values(values);
 }

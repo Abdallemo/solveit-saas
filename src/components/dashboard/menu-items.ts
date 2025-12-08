@@ -363,12 +363,12 @@ export const MenuItemsSolver: MenuItem[] = [
 export const navSecondary = [
   {
     title: "Support",
-    url: "#",
+    url: "/dashboard/support",
     icon: LifeBuoy,
   },
   {
     title: "Feedback",
-    url: "#",
+    url: "/dashboard/feadback",
     icon: Send,
   },
 ];

@@ -7,7 +7,6 @@ import {
   MentorshipChatTable,
   MentorshipProfileTable,
   MentorshipSessionTable,
-  PaymentPorposeEnumType,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
@@ -20,13 +19,13 @@ import {
   BookingFormData,
   bookingSchema,
   MentorListigWithAvailbelDates,
+  stripeTaskCheckoutParamsConf,
 } from "@/features/mentore/server/types";
 import { Notifier } from "@/features/notifications/server/notifier";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import {
+  createStripeCustomer,
   getServerUserSubscriptionById,
-  getUserById,
-  UpdateUserField,
 } from "@/features/users/server/actions";
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
@@ -37,6 +36,7 @@ import {
 } from "@/lib/Errors";
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
+import { to } from "@/lib/utils/async";
 import {
   calculateSlotDuration,
   daysInWeek,
@@ -320,12 +320,11 @@ export async function createMentorBookingPaymentCheckout(values: {
 }) {
   const referer = await getServerReturnUrl();
   try {
-    const { session: Session } = await isAuthorized(["POSTER"]);
-    const { user: currentUser } = Session;
     const { data, mentor } = values;
-    if (!currentUser.id) throw new Error("unAuthorized");
+    const { user } = await isAuthorized(["POSTER"]);
+    const userId = user.id;
+
     const validData = bookingSchema.safeParse(data);
-    const userId = currentUser.id;
     if (!validData.success) throw new Error("all fields are requred");
     if (validData.data.sessions.length === 0) return;
 
@@ -334,95 +333,36 @@ export async function createMentorBookingPaymentCheckout(values: {
       return sum + mentor.ratePerHour * duration;
     }, 0);
 
-    const user = await getUserById(userId);
-
-    if (!user || !user.id) return;
     let customerId = user.stripeCustomerId;
+
     if (!user.stripeCustomerId) {
-      const newCustomer = await stripe.customers.create({
-        email: currentUser.email!,
-        name: user.name ?? "",
-        metadata: {
-          userId: userId,
-        },
-      });
-      customerId = newCustomer.id;
-      await UpdateUserField(
-        {
-          id: user.id,
-        },
-        { stripeCustomerId: customerId },
-      );
+      const [newCustomerId, error] = await createStripeCustomer(user);
+      if (error) {
+        throw new Error("internal Server Error");
+      }
+      customerId = newCustomerId;
     }
-    let bookingId = "";
-    await db.transaction(async (tx) => {
-      const result = await tx
-        .insert(MentorshipBookingTable)
-        .values({
-          posterId: userId,
-          solverId: mentor.userId,
-          price: totalPrice,
-          notes: data.notes,
-          status: "PENDING",
-        })
-        .returning({ bookingId: MentorshipBookingTable.id });
-      bookingId = result[0].bookingId;
-      logger.warn(
-        "when assigned from the db transaction bookingId: " + bookingId,
-      );
 
-      await Promise.all(
-        data.sessions.map((session) =>
-          tx.insert(MentorshipSessionTable).values({
-            bookingId: bookingId,
-            sessionDate: format(session.date, "yyyy-MM-dd"),
-            timeSlot: session.slot,
-            sessionStart: new Date(session.sessionStart),
-            sessionEnd: new Date(session.sessionEnd),
-          }),
-        ),
-      );
+    const [newBookingId, error] = await createPendingMentorshipBooking({
+      data,
+      posterId: userId,
+      solverId: mentor.userId,
+      totalPrice,
     });
+    if (error) {
+      throw new Error("internal Server Error");
+    }
+    const bookingId = newBookingId;
     logger.warn("before creating checkout sessoin bookingId: " + bookingId);
+
     const session = await stripe.checkout.sessions.create({
-      mode: "payment",
-      customer: customerId!,
-
-      line_items: [
-        {
-          price_data: {
-            currency: "myr",
-            product_data: {
-              name: "Mentor Booking" as PaymentPorposeEnumType,
-            },
-            unit_amount: totalPrice * 100,
-          },
-
-          quantity: 1,
-        },
-      ],
-
-      payment_method_types: ["card"],
-      payment_method_options: {
-        card: {
-          setup_future_usage: "off_session",
-        },
-      },
-      payment_intent_data: {
-        setup_future_usage: "off_session",
-      },
-
-      metadata: {
-        userId,
-        type: "Mentor Booking" as PaymentPorposeEnumType,
+      ...stripeTaskCheckoutParamsConf({
         bookingId,
-      },
-      cancel_url: `${referer}?booking_id=${bookingId}`,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/sessions/?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
-      saved_payment_method_options: {
-        allow_redisplay_filters: ["always", "limited", "unspecified"],
-        payment_method_save: "enabled",
-      },
+        customerId: customerId!,
+        referer,
+        totalPrice,
+        userId,
+      }),
     });
 
     if (!session.url) throw new Error("Failed to create checkout session");
@@ -696,4 +636,46 @@ export async function deleteFileFromChatSessionDb(
     console.error(error);
     throw new Error("Something went Wrong", { cause: error });
   }
+}
+
+async function createPendingMentorshipBooking({
+  data,
+  posterId,
+  solverId,
+  totalPrice,
+}: {
+  totalPrice: number;
+  data: BookingFormData;
+  posterId: string;
+  solverId: string;
+}) {
+  return await to(
+    db.transaction(async (tx) => {
+      const result = await tx
+        .insert(MentorshipBookingTable)
+        .values({
+          posterId,
+          solverId,
+          price: totalPrice,
+          notes: data.notes,
+          status: "PENDING",
+        })
+        .returning({ bookingId: MentorshipBookingTable.id });
+      const bookingId = result[0].bookingId;
+      logger.warn("Temperory Saved Booking in Pending Status " + bookingId);
+
+      await Promise.all(
+        data.sessions.map((session) =>
+          tx.insert(MentorshipSessionTable).values({
+            bookingId: bookingId,
+            sessionDate: format(session.date, "yyyy-MM-dd"),
+            timeSlot: session.slot,
+            sessionStart: new Date(session.sessionStart),
+            sessionEnd: new Date(session.sessionEnd),
+          }),
+        ),
+      );
+      return bookingId;
+    }),
+  );
 }

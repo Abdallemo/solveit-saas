@@ -21,7 +21,7 @@ import {
   PartialUserDetailsTableColumns,
   PartialUserTableColumns,
   publicUserColumns,
-  publicUserType,
+  User,
   UserDetailsTableColumns,
   UserRole,
 } from "@/features/users/server/user-types";
@@ -406,18 +406,18 @@ export async function isUserAccountOauth(userId: string): Promise<boolean> {
       with: { account: true },
     });
 
-    return !!user?.account;
+    return user?.account.providerId !== "credential";
   } catch (error) {
     console.error("Error checking if user is OAuth:", error);
     return false;
   }
 }
-export async function createStripeCustomer(user: publicUserType) {
+export async function createStripeCustomer(user: User) {
   return await to(
     (async () => {
       const newCustomer = await stripe.customers.create({
-        email: user.email!,
-        name: user.name!,
+        email: user.email,
+        name: user.name,
         metadata: {
           userId: user.id,
         },

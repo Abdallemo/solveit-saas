@@ -1,6 +1,6 @@
 "use server";
 import { UserRoleType as UserRole } from "@/drizzle/schemas";
-import { DeleteUserFromDb, getUserById } from "@/features/users/server/actions";
+import { DeleteUserFromDb } from "@/features/users/server/actions";
 import { Session, User } from "@/features/users/server/user-types";
 import { auth } from "@/lib/auth";
 import { DEFAULTREVALIDATEDURATION } from "@/lib/cache";
@@ -130,15 +130,14 @@ export async function isAuthorized(
 }
 export async function DeleteUserAccount() {
   console.log("delete trigered");
-  const user = await getServerUserSession();
 
-  if (!user || !user.id) return;
-
-  const existingUser = await getUserById(user.id);
-
-  if (!existingUser || !existingUser.id) return;
+  const { user } = await isAuthorized([
+    "SOLVER",
+    "ADMIN",
+    "MODERATOR",
+    "POSTER",
+  ]);
 
   await DeleteUserFromDb(user.id);
   revalidateTag(`user-${user.id}`);
-  await auth.api.signOut();
 }

@@ -20,8 +20,7 @@ type ReqContent struct {
 	Content string `json:"content"`
 }
 
-// Rules are short and written by humans. Interpret them naturally and precisely.//=>my old one
-// Rules are absolute and written by humans. Your sole purpose is to check for explicit violation of these rules, not to interpret general intent.
+// Defines all Rules to the openai modal
 const (
 	SystemRule       = "You are an AI task assistant. Always output JSON. \n"
 	ModerationPrompt = `
