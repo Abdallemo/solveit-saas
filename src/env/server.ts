@@ -33,6 +33,7 @@ export const env = createEnv({
     Turn_API_Token: z.string(),
     CLOUDFLARE_ACCOUNT_ID: z.string(),
     REDIS_URL: z.string(),
+    STRIPE_CONNECT_WEBHOOK_SECRET: z.string(),
     STRIPE_TEST_MODE: z.string().transform((val) => {
       const lowerVal = val.toLowerCase();
       return lowerVal === "true" || lowerVal === "1";

@@ -20,7 +20,6 @@ import {
 import { getServerUserSession } from "@/features/auth/server/actions";
 import { updateMentorBooking } from "@/features/mentore/server/action";
 import { getPaymentByPaymentIntentId } from "@/features/payments/server/action";
-import { StripeAccountUpdateHanlder } from "@/features/users/server/actions";
 import { logger } from "@/lib/logging/winston";
 import { eq } from "drizzle-orm";
 import type Stripe from "stripe";
@@ -46,7 +45,6 @@ export async function POST(request: NextRequest) {
         await handleCheckout(event);
         break;
       case "payment_method.updated":
-        console.log(event);
         const paymentMethod = event.data.object;
         const res = await stripe.paymentMethods.update(paymentMethod.id, {
           allow_redisplay: "always",
@@ -68,12 +66,6 @@ export async function POST(request: NextRequest) {
       case "customer.subscription.deleted":
         await handleDelete(event.data.object);
         break;
-      case "account.updated":
-        await StripeAccountUpdateHanlder(event.data.object);
-        break;
-      case "account.application.deauthorized":
-        break;
-
       default:
         logger.debug(`Unhandled event type ${event.type}`);
         break;
