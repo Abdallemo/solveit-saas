@@ -41,7 +41,7 @@ export function DemoVideo() {
           </p>
         </div>
 
-        <video src={"/Demo.mp4"} autoPlay muted controls />
+        <video src={"/Demo.mp4"} autoPlay muted controls loop />
       </div>
     </section>
   );
