@@ -1,74 +1,113 @@
 import { Github, Linkedin, Twitter } from "lucide-react";
 import Link from "next/link";
 
+const footerLinks = {
+  product: [
+    { name: "Features", href: "/#features" },
+    { name: "Pricing", href: "/#pricing" },
+    { name: "FAQ", href: "/#faq" },
+  ],
+  company: [
+    { name: "About Us", href: "/about-us" },
+    { name: "Blog", href: "/blog" },
+  ],
+  legal: [
+    { name: "Privacy", href: "/privacy-policy" },
+    { name: "Terms", href: "/terms-of-service" },
+  ],
+};
+
+const socialLinks = [
+  { name: "GitHub", href: "https://github.com/abdallemo", icon: Github },
+  { name: "Twitter", href: "https://twitter.com/EngAbmo", icon: Twitter },
+  { name: "LinkedIn", href: "https://linkedin.com/abdallemo", icon: Linkedin },
+];
+
 export default function Footer() {
   return (
     <footer className="border-t">
-      <div className="container flex flex-col gap-8 py-8 md:flex-row md:py-12">
-        <div className="flex-1 space-y-4 text-wrap">
-          <h2 className="font-bold">SolevIt</h2>
-          <p className="text-sm text-muted-foreground ">
-            Revolutionizing academic collaboration with AI-powered task matching
-            and a student-driven job board for UTHM.
-          </p>
-        </div>
-        <div className="grid flex-1 grid-cols-2 gap-12 sm:grid-cols-3">
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Company</h3>
-            <ul className="space-y-3 text-sm">
-              <li>
+      <div className="container max-w-screen-xl py-12 md:py-16">
+        <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
+          {/* Brand */}
+          <div className="lg:col-span-2">
+            <Link href="/" className="inline-block">
+              <h2 className="text-xl font-bold">SolveIt</h2>
+            </Link>
+            <p className="mt-4 max-w-sm text-sm text-muted-foreground">
+              Revolutionizing academic collaboration with AI-powered task
+              matching and secure payments for students.
+            </p>
+            <div className="mt-6 flex gap-4">
+              {socialLinks.map((social) => (
                 <Link
-                  href="/about-us"
-                  className="text-muted-foreground transition-colors hover:text-primary"
+                  key={social.name}
+                  href={social.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-muted-foreground transition-colors hover:text-foreground"
                 >
-                  About Us
+                  <social.icon className="h-5 w-5" />
+                  <span className="sr-only">{social.name}</span>
                 </Link>
-              </li>
-              <li>
-                <Link
-                  href="/blog"
-                  className="text-muted-foreground transition-colors hover:text-primary"
-                >
-                  Blog
-                </Link>
-              </li>
-            </ul>
-          </div>
-          <div className="space-y-4">
-            <h3 className="text-sm font-medium">Connect</h3>
-            <div className="flex space-x-4">
-              <Link
-                target="_blank"
-                href="https://github.com/abdallemo"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Github className="h-5 w-5" />
-                <span className="sr-only">GitHub</span>
-              </Link>
-              <Link
-                target="_blank"
-                href="https://twitter.com/EngAbmo"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Twitter className="h-5 w-5" />
-                <span className="sr-only">Twitter</span>
-              </Link>
-              <Link
-                target="_blank"
-                href="https://linkedin.com/abdallemo"
-                className="text-muted-foreground transition-colors hover:text-primary"
-              >
-                <Linkedin className="h-5 w-5" />
-                <span className="sr-only">LinkedIn</span>
-              </Link>
+              ))}
             </div>
           </div>
+
+          {/* Links */}
+          <div>
+            <h3 className="font-semibold">Product</h3>
+            <ul className="mt-4 space-y-3">
+              {footerLinks.product.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold">Company</h3>
+            <ul className="mt-4 space-y-3">
+              {footerLinks.company.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="font-semibold">Legal</h3>
+            <ul className="mt-4 space-y-3">
+              {footerLinks.legal.map((link) => (
+                <li key={link.name}>
+                  <Link
+                    href={link.href}
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    {link.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
-      </div>
-      <div className="container border-t py-6">
-        <p className="text-center text-sm text-muted-foreground">
-          © {new Date().getFullYear()} SolveIt, Inc. All rights reserved.
-        </p>
+
+        <div className="mt-12 border-t pt-8">
+          <p className="text-center text-sm text-muted-foreground">
+            © {new Date().getFullYear()} SolveIt, Inc. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   );

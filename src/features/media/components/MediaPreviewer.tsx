@@ -4,7 +4,7 @@ import ZoomableImage from "@/components/ImageZoomble";
 import { VideoPlayer } from "@/components/VidoePlayer";
 import {
   editorConfOptions,
-  MonacoEditor
+  MonacoEditor,
 } from "@/components/editors/MonocaEditor";
 import { CodeEditorDialog } from "@/components/editors/MonocaWraper";
 import { useDownloadFile } from "@/hooks/useFile";
@@ -16,7 +16,7 @@ import {
   isDoc,
   isImage,
   isUnsupportedExtention,
-  isVideo
+  isVideo,
 } from "@/lib/utils/utils";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -106,7 +106,8 @@ export default function MediaPreviewer({
         activeFile={{
           name: filePreview.fileName,
           type: filePreview.fileType,
-        }}>
+        }}
+      >
         <VideoPlayer
           src={filePreview.storageLocation}
           className="w-full h-full aspect-video"
@@ -123,7 +124,8 @@ export default function MediaPreviewer({
         activeFile={{
           name: filePreview.fileName,
           type: filePreview.fileType,
-        }}>
+        }}
+      >
         <audio src={filePreview.storageLocation} autoPlay controls />
       </FileDialogDialog>
     );
@@ -137,7 +139,8 @@ export default function MediaPreviewer({
         activeFile={{
           name: filePreview.fileName,
           type: filePreview.fileType,
-        }}>
+        }}
+      >
         <ZoomableImage
           alt={filePreview.fileName}
           src={filePreview.storageLocation}
@@ -157,12 +160,12 @@ export default function MediaPreviewer({
           name: filePreview.fileName,
           type: filePreview.fileType,
         }}
-        mode="editor">
+        mode="editor"
+      >
         <MonacoEditor
           files={fileRecords}
           currentFile={filePreview.fileName}
           onChange={handleFilesChange}
-          onSave={handleSave}
           onFileAdd={handleFileAdd}
           onFileDelete={handleFileDelete}
           height="100%"
@@ -178,7 +181,7 @@ export default function MediaPreviewer({
     return (
       <iframe
         src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-          filePreview?.storageLocation!
+          filePreview?.storageLocation!,
         )}`}
         className="w-full h-full rounded-lg shadow-md border"
       />

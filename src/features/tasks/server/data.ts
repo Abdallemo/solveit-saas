@@ -34,6 +34,7 @@ import type {
 import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
+import { to } from "@/lib/utils/async";
 import { toYMD } from "@/lib/utils/utils";
 import { formatDistance, isPast, subDays } from "date-fns";
 import {
@@ -1143,4 +1144,37 @@ export async function getRevenueDataV1(from: string, to: string) {
     increasePercentageInRange: increasePercentage,
     totalRevenueInRange,
   };
+}
+export async function isFeedbackSubmited(
+  taskId?: string,
+  mentorBookingId?: string, // Assuming this should be optional again for clarity
+) {
+  console.log(
+    "passed taskId:",
+    taskId,
+    "passed mentorBookingId:",
+    mentorBookingId,
+  );
+
+  let queryPromise;
+
+  if (taskId) {
+    queryPromise = db.query.FeedbackTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.taskId, taskId),
+    });
+  } else if (mentorBookingId) {
+    queryPromise = db.query.FeedbackTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.mentorBookingId, mentorBookingId),
+    });
+  } else {
+    queryPromise = Promise.resolve(null);
+  }
+
+  const [data, error] = await to(queryPromise);
+
+  if (error) {
+    return false;
+  }
+
+  return !!data;
 }

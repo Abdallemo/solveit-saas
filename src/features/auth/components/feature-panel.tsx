@@ -1,6 +1,6 @@
 "use client";
 
-import { features } from "@/components/marketing/features";
+import { features } from "@/components/marketing/mockdata";
 import { AnimatePresence, motion } from "framer-motion";
 import { Bot } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -62,12 +62,14 @@ export default function FeaturePanelWithAnimation() {
           className="mb-12"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, staggerChildren: 0.1 }}>
+          transition={{ duration: 0.6, staggerChildren: 0.1 }}
+        >
           <motion.div
             className="flex items-center gap-2 mb-4"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}>
+            transition={{ duration: 0.5 }}
+          >
             <Bot className="w-6 h-6 text-primary" />
             <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider">
               AI-Powered Task Collaboration
@@ -77,14 +79,16 @@ export default function FeaturePanelWithAnimation() {
             className="text-4xl font-bold text-foreground mb-4 text-balance"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.1 }}>
+            transition={{ duration: 0.6, delay: 0.1 }}
+          >
             Discover how SolveIt revolutionizes task management
           </motion.h2>
           <motion.p
             className="text-lg text-muted-foreground text-pretty"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, delay: 0.2 }}>
+            transition={{ duration: 0.6, delay: 0.2 }}
+          >
             Secure payments, and academic collaboration with cutting-edge AI
             technology.
           </motion.p>
@@ -99,7 +103,8 @@ export default function FeaturePanelWithAnimation() {
               animate={{ opacity: 1, x: 0, scale: 1 }}
               exit={{ opacity: 0, x: -20, scale: 0.95 }}
               transition={{ duration: 0.5, ease: "easeOut" }}
-              whileHover={{ scale: 1.02, y: -2 }}>
+              whileHover={{ scale: 1.02, y: -2 }}
+            >
               <div className="flex items-start gap-4">
                 <motion.div
                   className="flex-shrink-0"
@@ -110,7 +115,8 @@ export default function FeaturePanelWithAnimation() {
                     delay: 0.2,
                     type: "spring",
                     stiffness: 200,
-                  }}>
+                  }}
+                >
                   <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                     <CurrentIcon className="w-6 h-6 text-primary" />
                   </div>
@@ -121,7 +127,8 @@ export default function FeaturePanelWithAnimation() {
                       className="text-xl font-semibold text-foreground"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      transition={{ duration: 0.4, delay: 0.3 }}>
+                      transition={{ duration: 0.4, delay: 0.3 }}
+                    >
                       {features[currentFeature].name}
                     </motion.h3>
                     {/* <motion.span
@@ -137,7 +144,8 @@ export default function FeaturePanelWithAnimation() {
                     className="text-muted-foreground text-pretty"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.4, delay: 0.5 }}>
+                    transition={{ duration: 0.4, delay: 0.5 }}
+                  >
                     {features[currentFeature].description}
                   </motion.p>
                 </div>
@@ -177,7 +185,8 @@ export default function FeaturePanelWithAnimation() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.4 }}
-              whileHover={{ scale: 1.01, y: -1 }}>
+              whileHover={{ scale: 1.01, y: -1 }}
+            >
               <div className="flex items-start gap-4">
                 <motion.img
                   src={
@@ -195,14 +204,16 @@ export default function FeaturePanelWithAnimation() {
                     className="text-foreground font-medium mb-2 text-pretty"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.2 }}>
+                    transition={{ duration: 0.4, delay: 0.2 }}
+                  >
                     {testimonials[currentTestimonial].quote}
                   </motion.blockquote>
                   <motion.div
                     className="text-sm text-muted-foreground"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
-                    transition={{ duration: 0.4, delay: 0.3 }}>
+                    transition={{ duration: 0.4, delay: 0.3 }}
+                  >
                     <span className="font-medium">
                       {testimonials[currentTestimonial].author}
                     </span>

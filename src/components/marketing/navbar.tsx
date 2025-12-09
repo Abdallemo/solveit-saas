@@ -73,7 +73,7 @@ export default function Navbar() {
             <NavigationMenuItem>
               <NavigationMenuLink
                 className={navigationMenuTriggerStyle()}
-                href="#features"
+                href="/#features"
               >
                 Features
               </NavigationMenuLink>
@@ -185,19 +185,19 @@ export default function Navbar() {
           className="md:hidden absolute top-full left-0 right-0 bg-background border-t border-border/40 p-4 space-y-2"
         >
           <Link
-            href="#features"
+            href="/#features"
             className="block py-2 px-4 rounded hover:bg-accent"
           >
             Features
           </Link>
           <Link
-            href="/about"
+            href="/about-us"
             className="block py-2 px-4 rounded hover:bg-accent"
           >
             About Us
           </Link>
           <Link
-            href="#pricing"
+            href="/#pricing"
             className="block py-2 px-4 rounded hover:bg-accent"
           >
             Pricing
@@ -206,7 +206,7 @@ export default function Navbar() {
             <div className="font-medium mb-1">Resources</div>
             <div className="pl-4 space-y-2">
               <Link
-                href="/blogs"
+                href="/blog"
                 className="block py-1 text-sm rounded hover:bg-accent"
               >
                 Blog
@@ -227,7 +227,7 @@ export default function Navbar() {
           </div>
 
           <div className="pt-4 border-t border-border/40 flex items-center space-x-4">
-            <Link href="/contact" className="flex-1">
+            <Link href="/contact-us" className="flex-1">
               <Button variant="ghost" size="sm" className="w-full">
                 Contact Us
               </Button>

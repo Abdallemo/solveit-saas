@@ -74,12 +74,16 @@ export const BookingSatatusEnum = pgEnum("booking_status", [
   "CANCELED",
 ]);
 
-export const FeedbackType = pgEnum("feedback_category", ["TASK", "MENTORING"]);
+export const FeedbackCategory = pgEnum("feedback_category", [
+  "TASK",
+  "MENTORING",
+]);
 export const TaskVisibility = pgEnum("visibility", ["public", "private"]);
 export type taskTableType = typeof TaskTable.$inferInsert;
 export type PaymentPorposeType = (typeof PaymentPorposeEnum.enumValues)[number];
 export type TierType = (typeof TierEnum.enumValues)[number];
 export type UserRoleType = (typeof UserRole.enumValues)[number];
+export type FeedbackType = (typeof FeedbackCategory.enumValues)[number];
 export type TaskCategoryType = typeof TaskCategoryTable.$inferSelect;
 export type TaskType = typeof TaskTable.$inferSelect;
 export type taskFileType = typeof TaskFileTable.$inferSelect;
@@ -309,7 +313,7 @@ export const FeedbackTable = pgTable(
     solverId: uuid("solver_id")
       .references(() => UserTable.id, { onDelete: "cascade" })
       .notNull(),
-    feedbackType: FeedbackType("feedback_type").notNull(),
+    feedbackType: FeedbackCategory("feedback_type").notNull(),
     mentorBookingId: uuid("mentor_booking_id").references(
       () => MentorshipBookingTable.id,
     ),

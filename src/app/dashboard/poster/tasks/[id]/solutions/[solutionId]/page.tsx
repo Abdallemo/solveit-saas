@@ -1,7 +1,10 @@
 import { CommentProvider } from "@/contexts/TaskCommentProvider";
 import { isAuthorized } from "@/features/auth/server/actions";
 import SolutionPageComps from "@/features/tasks/components/solutionPageComps";
-import { getSolutionById } from "@/features/tasks/server/data";
+import {
+  getSolutionById,
+  isFeedbackSubmited,
+} from "@/features/tasks/server/data";
 
 export default async function SolutionPage({
   params,
@@ -10,14 +13,20 @@ export default async function SolutionPage({
 }) {
   const { solutionId } = await params;
   const solution = await getSolutionById(solutionId);
-  const { session } = await isAuthorized(["POSTER"]);
+  const { session, user } = await isAuthorized(["POSTER"]);
+  const isFeedbackSumbited = await isFeedbackSubmited(solution.taskId);
+  console.log(isFeedbackSumbited);
   return (
     <CommentProvider
       taskComments={solution.taskSolution.taskComments}
       taskId={solution.taskId}
       userId={session?.user.id}
     >
-      <SolutionPageComps solution={solution} />
+      <SolutionPageComps
+        solution={solution}
+        user={user}
+        isFeedbackSumbited={isFeedbackSumbited}
+      />
     </CommentProvider>
   );
 }

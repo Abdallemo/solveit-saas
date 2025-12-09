@@ -85,11 +85,8 @@ export default function TaskCreationPage({
     },
   );
   async function handleSugestions() {
-    toast.loading("Ai Suggesting...", { id: "autosuggestion" });
     const res = await autoSuggest({
       content: contentText,
-    }).finally(() => {
-      toast.dismiss("autosuggestion");
     });
 
     updateDraft({
@@ -103,7 +100,9 @@ export default function TaskCreationPage({
       description: res.description,
       category: res.category,
       price: res.price,
+      content: draft.content,
     });
+
     toast.dismiss("autosuggestion");
   }
 
@@ -203,7 +202,7 @@ export default function TaskCreationPage({
     }
   }
   function onError(errors: FieldErrors<TaskSchema>) {
-    console.warn("Validation errors ❌", errors);
+    console.warn("Validation errors ", errors);
     setIsSheetOpen(true);
 
     const firstErrorField = Object.keys(errors)[0];
@@ -217,7 +216,6 @@ export default function TaskCreationPage({
         filePreview={filePreview}
         onClose={() => setFilePreview(null)}
       />
-
       <header className="border-b p-4 flex items-center justify-between">
         <div className="">
           <h1 className="text-2xl font-semibold">Post a Task</h1>

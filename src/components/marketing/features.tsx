@@ -1,69 +1,42 @@
-import {
-  BadgeCheck,
-  Bot,
-  Handshake,
-  MessageCircleCode,
-  UserCheck,
-} from "lucide-react";
+"use client";
 
-export const features = [
-  {
-    name: "AI Task Matching",
-    description:
-      "Smart matching system connects students with relevant academic tasks using AI-driven categorization.",
-    icon: Bot,
-  },
-  {
-    name: "Secure & Fair Collaboration",
-    description:
-      "Built-in measures promote academic integrity while enabling fair and transparent peer-to-peer task handling.",
-    icon: BadgeCheck,
-  },
-  {
-    name: "Skill & Reputation Growth",
-    description:
-      "Earn reputation, build your portfolio, and get recognized for consistent quality and effort.",
-    icon: UserCheck,
-  },
-  {
-    name: "Mentorship & Communication",
-    description:
-      "Students can offer mentorship, connect through messages, and grow academically together.",
-    icon: MessageCircleCode,
-  },
-  {
-    name: "Verified UTHM Environment",
-    description:
-      "Exclusively for UTHM students with verified IDs to ensure a trusted and safe community.",
-    icon: Handshake,
-  },
-];
+import { motion } from "framer-motion";
+import { features } from "./mockdata";
 
 export default function Features() {
   return (
-    <section className="space-y-16 py-24 md:py-32" id="features">
-      <div className="mx-auto max-w-232 text-center">
-        <h2 className="font-bold text-3xl leading-[1.1] sm:text-3xl md:text-5xl">
-          AI-Powered Task Collaboration
-        </h2>
-        <p className="mt-4 text-muted-foreground sm:text-lg">
-          Discover how SolveIt revolutionizes task management, secure payments,
-          and academic collaboration with cutting-edge AI technology.
-        </p>
-      </div>
-      <div className="mx-auto grid max-w-5xl grid-cols-1 gap-8 md:grid-cols-2">
-        {features.map((feature) => (
-          <div
-            key={feature.name}
-            className="relative overflow-hidden rounded-lg border bg-sidebar p-8"
-          >
-            <div className="flex items-center gap-4">
-              <feature.icon className="h-8 w-8" />
-              <h3 className="font-bold">{feature.name}</h3>
-            </div>
-            <p className="mt-2 text-muted-foreground">{feature.description}</p>
-          </div>
-        ))}
+    <section id="features" className="lg:py-20 ">
+      <div className="container max-w-7xl">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">
+            Everything You Need to Succeed
+          </h2>
+          <p className="mt-4 text-lg text-muted-foreground max-w-2xl mx-auto">
+            Powerful tools designed specifically for student collaboration and
+            secure academic assistance.
+          </p>
+        </div>
+
+        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {features.map((feature, index) => (
+            <motion.div
+              key={feature.name}
+              className="group relative rounded-2xl border bg-background p-8 transition-colors hover:border-primary/50"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ duration: 0.4, delay: index * 0.1 }}
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-primary/10 text-primary transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
+                <feature.icon className="h-6 w-6" />
+              </div>
+              <h3 className="text-lg font-semibold">{feature.name}</h3>
+              <p className="mt-2 text-muted-foreground">
+                {feature.description}
+              </p>
+            </motion.div>
+          ))}
+        </div>
       </div>
     </section>
   );

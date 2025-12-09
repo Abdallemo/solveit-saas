@@ -281,3 +281,15 @@ html {
     animation: shimmer-wave 1s infinite linear;
   }
 }
+@keyframes scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll linear infinite;
+}

@@ -2,6 +2,8 @@
 import db, { DBTransaction } from "@/drizzle/db";
 import {
   BlockedTasksTable,
+  FeedbackTable,
+  FeedbackType,
   PaymentPorposeEnumType,
   PaymentPorposeType,
   PaymentStatusType,
@@ -1045,4 +1047,41 @@ export async function deleteDraftFile(values: {
   } catch (error) {
     throw new Error("unable to delete ");
   }
+}
+export async function submitFeadback({
+  comment,
+  feedbackType,
+  solverId,
+  mentorBookingId,
+  taskId,
+  posterId,
+  rating,
+}: {
+  solverId: string;
+  posterId: string;
+  feedbackType: FeedbackType;
+  taskId?: string;
+  mentorBookingId?: string;
+  comment: string;
+  rating: number;
+}): ServiceLayerErrorType {
+  const { user } = await isAuthorized(["POSTER"]);
+  if (user.id !== posterId) {
+    return { error: "you are not the task owner" };
+  }
+  const [_, error] = await to(
+    db.insert(FeedbackTable).values({
+      feedbackType,
+      posterId,
+      solverId,
+      comment,
+      mentorBookingId,
+      taskId,
+      rating,
+    }),
+  );
+  if (error) {
+    return { error: "Failed to sumbit feedback! please try again" };
+  }
+  return { error: null };
 }

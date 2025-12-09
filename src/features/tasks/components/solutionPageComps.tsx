@@ -1,4 +1,5 @@
 "use client";
+import { FeedbackController } from "@/components/dashboard/FeedbackController";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,13 +24,14 @@ import {
   acceptSolution,
   createTaskComment,
   requestRefund,
+  submitFeadback,
 } from "@/features/tasks/server/action";
 import {
   SolutionById,
   taskRefundSchema,
   taskRefundSchemaType,
 } from "@/features/tasks/server/task-types";
-import useCurrentUser from "@/hooks/useCurrentUser";
+import { User } from "@/features/users/server/user-types";
 import { formatDateAndTimeNUTC } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
@@ -197,10 +199,13 @@ function RequestRefundDialog({ solution }: { solution: SolutionById }) {
 
 export default function SolutionPageComps({
   solution,
+  user,
+  isFeedbackSumbited,
 }: {
   solution: SolutionById;
+  user: User;
+  isFeedbackSumbited: boolean;
 }) {
-  const { user } = useCurrentUser();
   const { comments, setComments, send } = useComments();
   const [comment, setComment] = useState("");
   const latestCommentRef = useRef<HTMLDivElement>(null);
@@ -245,6 +250,23 @@ export default function SolutionPageComps({
       }
     },
   });
+  const { mutateAsync: submitFeadbackMutation, isPending: isSubmiting } =
+    useMutation({
+      mutationFn: submitFeadback,
+      onMutate: () => {
+        toast.loading("submitting..", { id: "feedback-submition" });
+      },
+
+      onSuccess: ({ error }) => {
+        if (error) {
+          toast.error(error, { id: "feedback-submition" });
+          return;
+        }
+        toast.success("Thanks for your feedback.", {
+          id: "feedback-submition",
+        });
+      },
+    });
   async function handleSendComment() {
     if (!comment.trim()) return;
     setComment("");
@@ -259,6 +281,19 @@ export default function SolutionPageComps({
 
   return (
     <div className="flex w-full h-full bg-background/10">
+      {solution.taskSolution.posterId === user.id && (
+        <FeedbackController
+          isSubmiting={isSubmiting}
+          feedbackType="TASK"
+          onSubmitFeedback={async (data) => {
+            await submitFeadbackMutation(data);
+          }}
+          posterId={solution.taskSolution.posterId}
+          hasFeedbackAlready={isFeedbackSumbited}
+          solverId={solution.taskSolution.solverId!}
+          taskId={solution.taskSolution.id}
+        />
+      )}
       <div className="flex-1 p-8 gap-3 flex flex-col">
         <Card className="mb-6 h-[700px]">
           <CardHeader>
