@@ -30,7 +30,7 @@ export default function DemoSection() {
 }
 export function DemoVideo() {
   return (
-    <section id="demo" className="lg:py-10">
+    <section id="demo" className="pb-20 lg:py-10">
       <div className="container max-w-7xl">
         <div className="text-center mb-16">
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl md:text-5xl">

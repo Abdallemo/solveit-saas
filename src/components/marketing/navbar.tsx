@@ -211,12 +211,7 @@ export default function Navbar() {
               >
                 Blog
               </Link>
-              <Link
-                href="/resources"
-                className="block py-1 text-sm rounded hover:bg-accent"
-              >
-                Resources
-              </Link>
+
               <Link
                 href="/faq"
                 className="block py-1 text-sm rounded hover:bg-accent"
