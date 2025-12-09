@@ -48,27 +48,41 @@ export async function CreateUser(values: registerInferedTypes) {
 }
 export async function DeleteUserFromDb(id: string) {
   if (id) {
-    const s = await db.transaction(async (tx) => {
-      await tx
-        .update(TaskTable)
-        .set({
-          solverId: null,
-          assignedAt: null,
-          status: "OPEN",
-          updatedAt: new Date(),
-        })
-        .where(eq(TaskTable.solverId, id));
-      await tx
-        .delete(UserSubscriptionTable)
-        .where(eq(UserSubscriptionTable.userId, id));
-      const deletedAcount = await tx
-        .delete(UserTable)
-        .where(eq(UserTable.id, id))
-        .returning({ accountId: UserTable.stripeAccountId });
-      if (deletedAcount.length > 0 && deletedAcount[0].accountId) {
-        await stripe.accounts.del(deletedAcount[0].accountId!);
+    const [deletedAcount, error] = await to(
+      db.transaction(async (tx) => {
+        await tx
+          .update(TaskTable)
+          .set({
+            solverId: null,
+            assignedAt: null,
+            status: "OPEN",
+            updatedAt: new Date(),
+          })
+          .where(eq(TaskTable.solverId, id));
+        await tx
+          .delete(UserSubscriptionTable)
+          .where(eq(UserSubscriptionTable.userId, id));
+        return await tx
+          .delete(UserTable)
+          .where(eq(UserTable.id, id))
+          .returning({ accountId: UserTable.stripeAccountId });
+      }),
+    );
+    if (error) {
+      logger.info(`deleted user ${id} from databse`);
+    }
+    if (
+      deletedAcount &&
+      deletedAcount.length > 0 &&
+      deletedAcount[0].accountId
+    ) {
+      const [_, error] = await to(
+        stripe.accounts.del(deletedAcount[0].accountId),
+      );
+      if (error) {
+        logger.error(`failed to delete user from stripe`);
       }
-    });
+    }
   }
 }
 export async function getUserByEmail(email: string) {
@@ -436,6 +450,7 @@ export async function StripeAccountUpdateHanlder(account: Stripe.Account) {
       { stripeAccountId: account.id },
       { stripeAccountLinked: true },
     );
+    logger.info("stripe account is linked");
   }
 }
 
