@@ -1,33 +1,110 @@
+// Package middleware implements and hold all server middleware logic
 package middleware
 
 import (
+	"context"
 	"errors"
-	"github/abdallemo/solveit-saas/internal/utils"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
-	"strings"
+	"time"
 
+	"github.com/google/uuid"
+	"github.com/lestrrat-go/httprc/v3"
+	"github.com/lestrrat-go/jwx/v3/jwk"
+	"github.com/lestrrat-go/jwx/v3/jwt"
 	"github.com/rs/cors"
 )
 
-type Middleware func(http.Handler) http.Handler
+const UserIDKey string = "userID"
 
-var CoresOptions = cors.Options{
-	AllowedOrigins:   []string{utils.GetenvWithDefault("NEXTAUTH_URL", "http://localhost:3000")},
-	AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
-	AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-	AllowCredentials: true,
-	MaxAge:           5 * 60,
+// MiddlewareFunc is the standard signature for middleware
+type MiddlewareFunc func(http.Handler) http.Handler
+
+type Middleware struct {
+	jwksURL     string
+	fetcher     *jwk.CachedFetcher
+	corsHandler *cors.Cors
 }
 
-func CORS() Middleware {
-	c := cors.New(CoresOptions)
+func NewMiddleware(jwksURL string, allowedOrigins []string) (*Middleware, error) {
+	ctx := context.Background()
+
+	client := httprc.NewClient()
+	cache, err := jwk.NewCache(ctx, client)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create jwk cache: %w", err)
+	}
+
+	if err := cache.Register(ctx, jwksURL, jwk.WithConstantInterval(15*time.Minute)); err != nil {
+		return nil, fmt.Errorf("failed to register jwks url: %w", err)
+	}
+
+	c := cors.New(cors.Options{
+		AllowedOrigins:   allowedOrigins,
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	})
+
+	return &Middleware{
+		jwksURL:     jwksURL,
+		fetcher:     jwk.NewCachedFetcher(cache),
+		corsHandler: c,
+	}, nil
+}
+
+func (m *Middleware) IsAuthorized(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		keyset, err := m.fetcher.Fetch(r.Context(), m.jwksURL)
+		if err != nil {
+			log.Printf("failed to fetch JWKS: %v", err)
+			http.Error(w, "auth system unavailable", http.StatusServiceUnavailable)
+			return
+		}
+
+		token, err := jwt.ParseRequest(
+			r,
+			jwt.WithKeySet(keyset),
+			jwt.WithValidate(true),
+		)
+		if err != nil {
+			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
+			return
+		}
+
+		sub, exists := token.Subject()
+		if !exists {
+			http.Error(w, "token missing subject claim", http.StatusUnauthorized)
+			return
+		}
+		ctx := context.WithValue(r.Context(), UserIDKey, sub)
+
+		next.ServeHTTP(w, r.WithContext(ctx))
+	})
+}
+
+func (m *Middleware) IsAuthorizedWs(r *http.Request) error {
+	cookie, err := r.Cookie("session_token")
+	if err != nil {
+		return errors.New("unauthorized: session token not found")
+	}
+
+	if cookie.Value != os.Getenv("GO_API_AUTH") {
+		return errors.New("unauthorized: invalid session token")
+	}
+	return nil
+}
+
+func (m *Middleware) CORS() MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
-		return c.Handler(next)
+		return m.corsHandler.Handler(next)
 	}
 }
 
-func CreateStack(xs ...Middleware) Middleware {
+func (m *Middleware) CreateStack(xs ...MiddlewareFunc) MiddlewareFunc {
 	return func(next http.Handler) http.Handler {
 		for i := len(xs) - 1; i >= 0; i-- {
 			x := xs[i]
@@ -36,33 +113,15 @@ func CreateStack(xs ...Middleware) Middleware {
 		return next
 	}
 }
-func IsAuthorized(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		authHeader := r.Header.Get("Authorization")
-		if authHeader == "" {
-			http.Error(w, "missing Authorization header", http.StatusBadRequest)
-			return
-		}
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			http.Error(w, "invalid Authorization format", http.StatusBadRequest)
-			return
-		}
 
-		token := strings.TrimPrefix(authHeader, "Bearer ")
-		if token != os.Getenv("GO_API_AUTH") {
-			http.Error(w, "invalid Authorization Token", http.StatusUnauthorized)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-func IsAuthorizedWs(r *http.Request) error {
-	cookie, err := r.Cookie("session_token")
+func GetUserID(ctx context.Context) (uuid.UUID, error) {
+	id, ok := ctx.Value(UserIDKey).(string)
+	if !ok {
+		return uuid.UUID{}, fmt.Errorf("User not authenticated")
+	}
+	userUUID, err := uuid.Parse(id)
 	if err != nil {
-		return errors.New("unauthorized: session token not found")
+		return uuid.UUID{}, fmt.Errorf("Invalid user ID format")
 	}
-	if cookie.Value != os.Getenv("GO_API_AUTH") {
-		return errors.New("unauthorized: invalid session token")
-	}
-	return nil
+	return userUUID, nil
 }

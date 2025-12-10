@@ -147,7 +147,8 @@ function AddFileInput({
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 hover:bg-green-500/20 hover:text-green-600"
-          onClick={handleAdd}>
+          onClick={handleAdd}
+        >
           <Check className="w-3 h-3" />
         </Button>
         <Button
@@ -155,7 +156,8 @@ function AddFileInput({
           variant="ghost"
           size="sm"
           className="h-8 w-8 p-0 hover:bg-red-500/20 hover:text-red-600"
-          onClick={onCancel}>
+          onClick={onCancel}
+        >
           <X className="w-3 h-3" />
         </Button>
       </div>
@@ -255,7 +257,8 @@ export function MonacoEditor({
 
   return (
     <div
-      className={`flex h-full border rounded-lg overflow-hidden bg-background ${className}`}>
+      className={`flex h-full border rounded-lg overflow-hidden bg-background ${className}`}
+    >
       {sidebar && (
         <div className="w-64 bg-muted/30 border-r flex flex-col">
           <div className="p-3 border-b bg-background/50 flex items-center justify-between">
@@ -273,7 +276,8 @@ export function MonacoEditor({
                 size="sm"
                 className="h-7 w-7 p-0 hover:bg-primary/10"
                 onClick={() => setShowAddInput(!showAddInput)}
-                title="Add new file">
+                title="Add new file"
+              >
                 <Plus className="w-3.5 h-3.5" />
               </Button>
             )}
@@ -303,7 +307,8 @@ export function MonacoEditor({
                       ? "bg-accent border-r-2 border-primary"
                       : ""
                   }`}
-                  onClick={() => handleFileSelect(filename)}>
+                  onClick={() => handleFileSelect(filename)}
+                >
                   <div className="flex items-center gap-2 min-w-0 flex-1">
                     <FileIcon filename={filename} />
                     <span className="truncate font-medium">{filename}</span>
@@ -317,7 +322,8 @@ export function MonacoEditor({
                       onClick={(e) => {
                         e.stopPropagation();
                         handleFileDelete(filename);
-                      }}>
+                      }}
+                    >
                       <X className="w-3 h-3" />
                     </Button>
                   )}
@@ -345,7 +351,8 @@ export function MonacoEditor({
                 size="sm"
                 className="h-7 px-2 hover:bg-primary/10"
                 onClick={handleSave}
-                title="Save file">
+                title="Save file"
+              >
                 <Save className="w-3 h-3 mr-1" />
                 Save
               </Button>

@@ -1,10 +1,9 @@
 "use server";
 import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
-import { env } from "@/env/server";
 import { createTransporter } from "@/lib/email/createTransporter";
 import { generateSystemEmailTemplate } from "@/lib/email/templates/basicSystem";
-import { GoHeaders } from "@/lib/go-config";
+import { goServerApi } from "@/lib/go-api/server";
 import { logger } from "@/lib/logging/winston";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -41,9 +40,9 @@ export async function processSystemNotification({
       read: false,
     })
     .returning();
-  await fetch(`${env.GO_API_URL}/send-notification`, {
+
+  await goServerApi.request("/send-notification", {
     method: "POST",
-    headers: GoHeaders,
     body: JSON.stringify(result[0]),
   });
   return;

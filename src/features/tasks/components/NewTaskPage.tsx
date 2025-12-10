@@ -49,7 +49,6 @@ export default function TaskCreationPage({
     price,
     title,
     visibility,
-    uploadedFiles,
     contentText,
   } = draft;
   const currentUser = useCurrentUser();
@@ -124,7 +123,6 @@ export default function TaskCreationPage({
       price,
       visibility,
       deadline,
-      uploadedFiles,
     ],
     delay: 250,
   });
@@ -186,7 +184,6 @@ export default function TaskCreationPage({
         price,
         visibility,
         deadline,
-        uploadedFiles,
       );
       toast.dismiss("file-upload");
       await createTaksPaymentCheckoutSession({

@@ -22,7 +22,7 @@ interface VideoPlayerProps {
 export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const [isPlaying, setIsPlaying] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
@@ -123,23 +123,26 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
       ref={containerRef}
       className={cn(
         "relative group bg-background rounded-lg overflow-hidden",
-        className
+        className,
       )}
       onMouseEnter={() => setShowControls(true)}
-      onMouseLeave={() => setShowControls(isPlaying ? false : true)}>
+      onMouseLeave={() => setShowControls(isPlaying ? false : true)}
+    >
       <video
         ref={videoRef}
         src={src}
         poster={poster}
         className="w-full h-full"
         onClick={togglePlay}
+        autoPlay
       />
 
       <div
         className={cn(
           "absolute bottom-0 left-0 right-0 bg-gradient-to-t from-background/95 to-transparent p-4 transition-opacity duration-300",
-          showControls ? "opacity-100" : "opacity-0"
-        )}>
+          showControls ? "opacity-100" : "opacity-0",
+        )}
+      >
         <Slider
           value={[currentTime]}
           max={duration || 100}
@@ -154,7 +157,8 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
             size="icon"
             type="button"
             onClick={togglePlay}
-            className="h-8 w-8 text-foreground hover:bg-accent">
+            className="h-8 w-8 text-foreground hover:bg-accent"
+          >
             {isPlaying ? (
               <Pause className="h-4 w-4" />
             ) : (
@@ -174,7 +178,8 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
               variant="ghost"
               size="icon"
               onClick={toggleMute}
-              className="h-8 w-8 text-foreground hover:bg-accent">
+              className="h-8 w-8 text-foreground hover:bg-accent"
+            >
               {isMuted ? (
                 <VolumeX className="h-4 w-4" />
               ) : (
@@ -195,7 +200,8 @@ export function VideoPlayer({ src, className, poster }: VideoPlayerProps) {
             size="icon"
             type="button"
             onClick={toggleFullscreen}
-            className="h-8 w-8 text-foreground hover:bg-accent">
+            className="h-8 w-8 text-foreground hover:bg-accent"
+          >
             {isFullscreen ? (
               <Minimize className="h-4 w-4" />
             ) : (

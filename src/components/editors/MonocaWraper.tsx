@@ -37,7 +37,7 @@ export function CodeEditorDialog({
       }
       if (e.key === "Tab" && dialogRef.current) {
         const focusableEls = dialogRef.current.querySelectorAll<HTMLElement>(
-          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
         );
 
         const firstEl = focusableEls[0];
@@ -72,7 +72,8 @@ export function CodeEditorDialog({
         className={`bg-background rounded-lg shadow-2xl focus:outline-none ${
           isFullscreen ? "w-full h-full" : "w-[90%] h-[80%]"
         } flex flex-col`}
-        tabIndex={-1}>
+        tabIndex={-1}
+      >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -88,7 +89,8 @@ export function CodeEditorDialog({
                 type="button"
                 variant="ghost"
                 size="sm"
-                onClick={() => setIsFullscreen(!isFullscreen)}>
+                onClick={() => setIsFullscreen(!isFullscreen)}
+              >
                 {isFullscreen ? (
                   <Minimize2 className="w-4 h-4" />
                 ) : (
@@ -121,7 +123,9 @@ export function CodeEditorDialog({
             </div>
           </div>
 
-          <div className="flex-1 overflow-auto bg-background">{children}</div>
+          <div className="flex-1 overflow-auto bg-background relative">
+            {children}
+          </div>
 
           <div className="border-background bg-sidebar border-t px-4 py-2">
             <div className="flex items-center justify-between text-xs text-gray-500 dark:text-gray-400">

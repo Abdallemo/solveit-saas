@@ -8,7 +8,7 @@ export const publicRoutes = [
   "/contact-us",
   "/blog",
   "/privacy-policy",
-  "/terms-of-service"
+  "/terms-of-service",
 ];
 /**
  * an array of routes that used for authentication
@@ -30,6 +30,7 @@ export const publicApiRoutes = [
   "/api/webhooks/stripe/platform",
   "/api/webhooks/stripe/taskPayment",
   "/api/logs",
+  "/api/auth/jwks",
   // "/api/webrtc",
 ];
 

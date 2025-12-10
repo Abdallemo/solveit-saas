@@ -1,11 +1,13 @@
-import { uploadFiles, UploadOptions } from "@/features/media/server/action";
+import { UploadOptions, UploadResponse } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { goClientApi } from "@/lib/go-api/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 type FileUploadProps = {
   successMsg?: boolean;
   onSucessAction?: (data: UploadedFileMeta[], variables: UploadOptions) => void;
 };
+
 export function useFileUpload({
   onSucessAction,
   successMsg = true,
@@ -16,11 +18,28 @@ export function useFileUpload({
     data: uploadedFilesData,
     error: uploadError,
   } = useMutation({
-    mutationFn: async (values: UploadOptions) => {
-      const { response, error } = await uploadFiles(values);
-      if (error) {
-        throw new Error(error);
+    mutationFn: async ({ files, scope, url, extraBody }: UploadOptions) => {
+      const formData = new FormData();
+      files.forEach((file) => {
+        formData.append("files", file);
+      });
+      formData.append("scope", scope);
+
+      if (extraBody) {
+        Object.entries(extraBody).forEach(([key, value]) => {
+          formData.append(key, String(value));
+        });
       }
+      const res = await goClientApi.request<UploadResponse>(url, {
+        method: "POST",
+        body: formData,
+      });
+
+      if (res.error || !res.data) {
+        throw new Error(res.error || "failed to upload");
+      }
+      const response = res.data;
+
       if (response.failed_files && response.failed_files.length > 0) {
         response.failed_files.forEach((failedFile) => {
           toast.error(
@@ -138,14 +157,17 @@ export function useDownloadFile() {
       key: string;
       fileName: string;
     }) => {
-      const res = await fetch(
-        `/api/media/download-proxy?key=${encodeURIComponent(key)}`,
+      const res = await goClientApi.request<Blob>(
+        `/media/download?key=${encodeURIComponent(key)}`,
+        {
+          method: "GET",
+          headers: {},
+        },
+        "blob",
       );
-      if (!res.ok) throw new Error("Failed to download file");
+      if (res.error || !res.data) throw new Error("Failed to download file");
 
-      const blob = await res.blob();
-
-      return { blob, fileName };
+      return { blob: res.data, fileName };
     },
     onMutate: ({ fileName, key }) => {
       toast.loading("preparing to downlad..", {
@@ -183,16 +205,21 @@ export function useFileStream(key: string | null) {
         throw new Error("Key is required for fetching file content.");
       }
 
-      const res = await fetch(`/api/media?key=${encodeURIComponent(key)}`, {
-        method: "GET",
-      });
-      if (!res.ok) {
-        const errorText = await res.text();
+      const res = await goClientApi.request<string>(
+        `/media?key=${encodeURIComponent(key)}`,
+        {
+          method: "GET",
+          cache: "no-store",
+        },
+        "text",
+      );
+
+      if (res.error || !res.data) {
         throw new Error(
-          `Failed to fetch file content: ${errorText || res.statusText}`,
+          `Failed to fetch file content: ${res.error || res.status}`,
         );
       }
-      const content = await res.text();
+      const content = res.data;
 
       return content;
     },

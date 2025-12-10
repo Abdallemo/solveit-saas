@@ -69,12 +69,13 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
   return (
     <div
       ref={containerRef}
-      className="relative flex items-center justify-center w-full h-full bg-transparent select-none"
+      className="relative flex items-center justify-center w-full h-full bg-transparent select-none "
       style={{ overflow: "hidden", cursor: scale > 1 ? "grab" : "default" }}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseLeave={handleMouseLeave}>
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="absolute top-3 right-3 z-20 flex gap-2">
         <Button
           type="button"
@@ -84,7 +85,8 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
           onClick={(e) => {
             e.stopPropagation();
             zoomOut();
-          }}>
+          }}
+        >
           <Minus className="h-4 w-4" />
         </Button>
         <Button
@@ -95,7 +97,8 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
           onClick={(e) => {
             e.stopPropagation();
             reset();
-          }}>
+          }}
+        >
           1:1
         </Button>
         <Button
@@ -106,7 +109,8 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
           onClick={(e) => {
             e.stopPropagation();
             zoomIn();
-          }}>
+          }}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>

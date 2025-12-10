@@ -333,7 +333,6 @@ export async function saveDraftTask(
   price: number,
   visibility: "public" | "private",
   deadline: string,
-  uploadedFiles: UploadedFileMeta[] = [],
 ) {
   const now = new Date();
   try {
@@ -352,7 +351,6 @@ export async function saveDraftTask(
           price,
           visibility,
           deadline,
-          uploadedFiles,
           updatedAt: now,
           contentText,
         })
@@ -367,7 +365,6 @@ export async function saveDraftTask(
         price,
         visibility,
         deadline,
-        uploadedFiles,
         contentText,
       });
     }
@@ -376,6 +373,34 @@ export async function saveDraftTask(
     });
   } catch (e) {
     await db.delete(TaskDraftTable).where(eq(TaskDraftTable.userId, userId));
+  }
+}
+export async function saveDraftTaskFiles(
+  uploadedFiles: UploadedFileMeta[] = [],
+  userId: string,
+) {
+  let [currentFiles, err] = await to(
+    db.query.TaskDraftTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.userId, userId),
+      columns: {
+        uploadedFiles: true,
+      },
+    }),
+  );
+  if (err) {
+    logger.error(
+      `failed to fetch draft uploaded files,cause:${(err as Error).message}`,
+    );
+  }
+  const [_, error] = await to(
+    db.update(TaskDraftTable).set({
+      uploadedFiles: [...(currentFiles?.uploadedFiles || []), ...uploadedFiles],
+    }),
+  );
+  if (error) {
+    logger.error(
+      `failed to update draft uploaded files,cause:${(err as Error).message}`,
+    );
   }
 }
 export async function assignTaskToSolverById(values: {

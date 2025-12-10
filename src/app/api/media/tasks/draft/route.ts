@@ -1,8 +1,7 @@
 import db from "@/drizzle/db";
 import { TaskDraftTable } from "@/drizzle/schemas";
-import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
-import { GoHeaders } from "@/lib/go-config";
+import { goServerApi } from "@/lib/go-api/server";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -19,13 +18,12 @@ export async function DELETE(req: NextRequest) {
     return new Response("Missing key", { status: 400 });
   }
   try {
-    const res = await fetch(`${env.GO_API_URL}/media`, {
+    const res = await goServerApi.request("/media", {
       method: "DELETE",
-      headers: GoHeaders,
       body: JSON.stringify({ key }),
     });
 
-    if (!res.ok || !res.body) {
+    if (res.error) {
       return new Response("Failed to delete file", { status: res.status });
     }
     await db

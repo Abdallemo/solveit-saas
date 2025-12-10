@@ -4,7 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github/abdallemo/solveit-saas/internal/database"
+	"github/abdallemo/solveit-saas/internal/middleware"
 	"io"
+	"log"
 	"mime/multipart"
 	"net/http"
 	"path/filepath"
@@ -82,29 +85,7 @@ func (s *Server) handleUploadMedia(w http.ResponseWriter, r *http.Request) {
 	scope := r.FormValue("scope")
 	id := uuid.New()
 
-	uploaded := []FileMeta{}
-	failed := []failedFileError{}
-
-	for _, fileHeader := range files {
-		if err := validateSize(fileHeader); err != nil {
-			failed = append(failed, failedFileError{
-				File:  buildFileMeta(fileHeader, "", ""),
-				Error: err.Error(),
-			})
-			continue
-		}
-
-		key, publicURL, err := s.uploadFileToS3(fileHeader, scope, id)
-		if err != nil {
-			failed = append(failed, failedFileError{
-				File:  buildFileMeta(fileHeader, "", ""),
-				Error: fmt.Sprintf("upload error: %v", err),
-			})
-			continue
-		}
-
-		uploaded = append(uploaded, buildFileMeta(fileHeader, key, publicURL))
-	}
+	uploaded, failed := s.processBatchUpload(files, scope, id)
 
 	status := http.StatusOK
 	if len(failed) > 0 {
@@ -225,4 +206,113 @@ func (s *Server) handleMedia(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Printf("Error during streaming: %v\n", err)
 	}
+}
+
+func (s *Server) processBatchUpload(files []*multipart.FileHeader,
+	scope string, id uuid.UUID) ([]FileMeta, []failedFileError) {
+	uploaded := []FileMeta{}
+	failed := []failedFileError{}
+
+	for _, fileHeader := range files {
+		if err := validateSize(fileHeader); err != nil {
+			failed = append(failed, failedFileError{
+				File:  buildFileMeta(fileHeader, "", ""),
+				Error: err.Error(),
+			})
+			continue
+		}
+
+		key, publicURL, err := s.uploadFileToS3(fileHeader, scope, id)
+		if err != nil {
+			failed = append(failed, failedFileError{
+				File:  buildFileMeta(fileHeader, "", ""),
+				Error: fmt.Sprintf("upload error: %v", err),
+			})
+			continue
+		}
+
+		uploaded = append(uploaded, buildFileMeta(fileHeader, key, publicURL))
+	}
+
+	return uploaded, failed
+}
+
+func (s *Server) handleSaveDraftWithFiles(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		sendHTTPError(w, "Unable to parse form", http.StatusBadRequest)
+		return
+	}
+
+	files := r.MultipartForm.File["files"]
+	userId, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		sendHTTPError(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	id := uuid.New()
+
+	uploaded, failed := s.processBatchUpload(files, "task", id)
+	upladedByte, _ := json.Marshal(uploaded)
+
+	s.store.SaveDraftTaskFiles(r.Context(), database.SaveDraftTaskFilesParams{
+		UserID:  userId,
+		Column1: upladedByte,
+	})
+	sendHTTPResp(w, uploadResp{UploadedFiles: uploaded, FailedFiles: failed}, 200)
+}
+func (s *Server) handleSaveSolutionWorkspaceWithFiles(w http.ResponseWriter, r *http.Request) {
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		sendHTTPError(w, "Unable to parse form", http.StatusBadRequest)
+		return
+	}
+
+	files := r.MultipartForm.File["files"]
+	scope := r.FormValue("scope")
+	workspaceId, err := uuid.Parse(r.FormValue("workspaceId"))
+	if err != nil {
+		sendHTTPError(w, err.Error(), http.StatusBadRequest)
+	}
+
+	userId, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		sendHTTPError(w, err.Error(), http.StatusUnauthorized)
+		return
+	}
+
+	id := uuid.New()
+
+	uploaded, failed := s.processBatchUpload(files, scope, id)
+
+	fileNames, fileTypes, fileLocations, filePaths := []string{}, []string{}, []string{}, []string{}
+	fileSizes := []int32{}
+
+	for _, f := range uploaded {
+		fileNames = append(fileNames, f.FileName)
+		fileTypes = append(fileTypes, f.FileType)
+		fileSizes = append(fileSizes, int32(f.FileSize))
+		fileLocations = append(fileLocations, f.StorageLocation)
+		filePaths = append(filePaths, f.FilePath)
+	}
+
+	if len(uploaded) > 0 {
+		err := s.store.SaveFileToWorkspaceDB(r.Context(), database.SaveFileToWorkspaceDBParams{
+			WorkspaceID:  workspaceId,
+			UploadedByID: userId,
+			Column3:      fileNames,
+			Column4:      fileTypes,
+			Column5:      fileSizes,
+			Column6:      fileLocations,
+			Column7:      filePaths,
+		})
+
+		if err != nil {
+
+			log.Printf("failed to save file metadata to DB: %v", err)
+			sendHTTPError(w, "Failed to save file records", http.StatusInternalServerError)
+			return
+		}
+	}
+
+	sendHTTPResp(w, uploadResp{UploadedFiles: uploaded, FailedFiles: failed}, 200)
 }

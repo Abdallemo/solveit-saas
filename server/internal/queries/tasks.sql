@@ -28,3 +28,25 @@ WHERE id = $1;
 -- name: GetTaskCategories :many
 SELECT name
 FROM task_categories;
+-- name: SaveDraftTaskFiles :exec
+UPDATE task_drafts
+SET "uploadedFiles" = COALESCE("uploadedFiles", '[]'::jsonb) || $1::jsonb
+WHERE user_id = $2;
+-- name: SaveFileToWorkspaceDB :exec
+INSERT INTO solution_workspace_files (
+workspace_id,
+uploaded_by_id,
+file_name,
+file_type,
+file_size,
+file_location,
+file_path)
+SELECT
+  $1,
+  $2,
+  unnest($3::text[]),
+  unnest($4::text[]),
+  unnest($5::int[]),
+  unnest($6::text[]),
+  unnest($7::text[])
+;

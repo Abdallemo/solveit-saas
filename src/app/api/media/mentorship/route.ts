@@ -1,9 +1,8 @@
 import db from "@/drizzle/db";
 import { MentorshipChatFilesTable } from "@/drizzle/schemas";
-import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
 import { deleteFileFromChatSessionDb } from "@/features/mentore/server/action";
-import { GoHeaders } from "@/lib/go-config";
+import { goServerApi } from "@/lib/go-api/server";
 import { eq } from "drizzle-orm";
 import { NextRequest } from "next/server";
 
@@ -29,15 +28,15 @@ export async function DELETE(req: NextRequest) {
     if (!file) {
       return new Response("File not found", { status: 400 });
     }
-    const res = await fetch(`${env.GO_API_URL}/media`, {
+
+    const res = await goServerApi.request("/media", {
       method: "DELETE",
-      headers: GoHeaders,
       body: JSON.stringify({ key: file.filePath }),
     });
-
-    if (!res.ok || !res.body) {
+    if (res.error) {
       return new Response("Failed to delete file", { status: res.status });
     }
+
     await deleteFileFromChatSessionDb(file.id, session?.user.id!);
 
     return new Response("Successfully Deleted", { status: res.status });

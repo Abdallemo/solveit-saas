@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useWorkspace } from "@/contexts/WorkspaceContext";
-import { env } from "@/env/client";
-import { saveFileToWorkspaceDB } from "@/features/tasks/server/action";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import {
   useDeleteFileGeneric,
@@ -16,6 +14,7 @@ import { cn } from "@/lib/utils/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
+import { WorkspaceUploadedFileMeta } from "../server/media-types";
 import { FileChatCardComps } from "./FileHelpers";
 
 interface FileUploadProps {
@@ -57,41 +56,33 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
 
     const fileArray = Array.from(newFiles);
 
-    for (const file of fileArray) {
-      console.log("in the for loop");
-      try {
-        toast.loading("uploading..", { id: "file-upload" });
-        const [uploadedMeta] = await uploadMutate({
-          files: [file],
-          scope: "workspace",
-          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
-        });
+    setUploadingFiles(() => [...fileArray]);
 
-        setUploadingFiles((prev) => [...prev, file]);
-        toast.dismiss("file-upload");
-
-        const savedFile = await saveFileToWorkspaceDB({
-          fileName: file.name,
-          fileType: file.type,
-          fileSize: file.size,
-          filePath: uploadedMeta.filePath,
-          storageLocation: uploadedMeta.storageLocation,
+    try {
+      const uploadedMeta = await uploadMutate({
+        files: fileArray,
+        scope: "workspace",
+        url: `/media/upload/solution-worksapce-file`,
+        extraBody: {
           workspaceId: currentWorkspace?.id!,
+        },
+      });
+      const newFiles: WorkspaceUploadedFileMeta[] = uploadedMeta.map((u) => {
+        return {
+          ...u,
           isDraft: true,
-          uploadedById,
-        });
-
-        setUploadedFiles((prev) => [...prev, savedFile!]);
-
-        setTimeout(() => {
-          setUploadingFiles((prev) => prev.filter((f) => f.name !== file.name));
-        }, 100);
-
-        toast.success(`Uploaded ${file.name}`);
-      } catch (err) {
-        console.error(err);
-        toast.error(`Failed to upload ${file.name}`);
-      }
+          uploadedById: currentWorkspace?.solverId!,
+          workspaceId: currentWorkspace?.id!,
+          id: Math.random().toString(),
+          uploadedAt: new Date(),
+        };
+      });
+      console.log("new files", newFiles);
+      setUploadedFiles((prev) => [...prev, ...newFiles]);
+    } catch (e) {
+      console.log(e);
+    } finally {
+      setUploadingFiles([]);
     }
 
     inputRef.current!.value = "";

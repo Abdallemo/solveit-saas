@@ -1,7 +1,6 @@
 "use client";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import { env } from "@/env/client";
 import { saveMediaFileToDb } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
@@ -44,7 +43,7 @@ export default function PostingEditor({
     const res = await uploadMutate({
       files: [file],
       scope: "editor-images",
-      url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+      url: "/media",
     });
     if (res.length > 0) {
       await saveMedia(res[0]);

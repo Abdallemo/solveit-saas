@@ -4,9 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { NewuseTask } from "@/contexts/TaskContext";
-import { env } from "@/env/client";
 
-import { saveDraftTask } from "@/features/tasks/server/action";
 import {
   useDeleteFileGeneric,
   useDownloadFile,
@@ -29,18 +27,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const [isDragging, setIsDragging] = useState(false);
 
-  const {
-    category,
-    content,
-    deadline,
-    description,
-    price,
-    title,
-    visibility,
-    userId,
-    contentText,
-  } = draft;
-
   const { uploadMutate } = useFileUpload({});
 
   const { mutateAsync: deleteFile } = useDeleteFileGeneric("draft_task");
@@ -56,26 +42,15 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
       const uploadedMeta = await uploadMutate({
         files: fileArray,
         scope: "task",
-        url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+        url: "/media/upload/draft-task-file",
       });
 
       const newUploadedFiles = [
         ...(draft.uploadedFiles || []),
         ...uploadedMeta,
       ];
+
       updateDraft({ uploadedFiles: newUploadedFiles });
-      await saveDraftTask(
-        title,
-        description,
-        JSON.stringify(content),
-        contentText,
-        userId,
-        category,
-        price,
-        visibility,
-        deadline,
-        newUploadedFiles,
-      );
     } catch (err) {
       console.error(err);
       setUploadingFiles(() => []);

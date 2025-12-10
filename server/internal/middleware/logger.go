@@ -1,4 +1,3 @@
-// Package middleware implements and hold all server middleware logic
 package middleware
 
 import (

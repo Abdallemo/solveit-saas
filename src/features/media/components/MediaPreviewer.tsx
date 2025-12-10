@@ -21,6 +21,7 @@ import {
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UploadedFileMeta } from "../server/media-types";
+import { AudioPlayer } from "./AudioPlayer";
 
 type MediaPreviewerProps = {
   filePreview: UploadedFileMeta | null;
@@ -126,7 +127,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <audio src={filePreview.storageLocation} autoPlay controls />
+        <AudioPlayer src={filePreview.storageLocation} />
       </FileDialogDialog>
     );
   }
@@ -179,12 +180,21 @@ export default function MediaPreviewer({
   }
   if (isDoc(fileExtention(filePreview?.fileName!))) {
     return (
-      <iframe
-        src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-          filePreview?.storageLocation!,
-        )}`}
-        className="w-full h-full rounded-lg shadow-md border"
-      />
+      <FileDialogDialog
+        isOpen={isFileOpen}
+        onClose={handleClose}
+        activeFile={{
+          name: filePreview.fileName,
+          type: filePreview.fileType,
+        }}
+      >
+        <iframe
+          src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
+            filePreview?.storageLocation!,
+          )}`}
+          className="w-full h-full rounded-lg shadow-md border object-cover"
+        />
+      </FileDialogDialog>
     );
   }
 

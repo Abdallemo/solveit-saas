@@ -7,9 +7,8 @@ import {
   RulesTable,
 } from "@/drizzle/schemas";
 import { pgFormatDateYMD } from "@/drizzle/utils";
-import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
-import { GoHeaders } from "@/lib/go-config";
+import { goServerApi } from "@/lib/go-api/server";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
 import {
@@ -156,17 +155,14 @@ export async function validateContentWithAi(
     | { content: string; adminMode: false },
 ): Promise<openaiResAdminType | openaiResUserType> {
   try {
-    const res = await fetch(`${env.GO_API_URL}/openai?task=moderation`, {
+    const res = await goServerApi.request("openai?task=moderation", {
       method: "POST",
-      headers: { ...GoHeaders },
       body: JSON.stringify(fields),
     });
-    if (!res.ok) {
-      console.error(res.json());
-      throw new Error("unable to fetch");
+    if (res.error) {
+      throw new Error("unable to fetch: " + res.error);
     }
-    const data = await res.json();
-    const validatedData = openaiResSchema.safeParse(data);
+    const validatedData = openaiResSchema.safeParse(res.data);
     if (!validatedData.success) {
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");
@@ -186,17 +182,16 @@ export async function validateContentWithAi(
 }
 export async function autoSuggestWithAi(fields: { content: string }) {
   try {
-    const res = await fetch(`${env.GO_API_URL}/openai?task=autosuggestion`, {
+    const res = await goServerApi.request("openai?task=autosuggestion", {
       method: "POST",
-      headers: { ...GoHeaders },
+
       body: JSON.stringify(fields),
     });
-    if (!res.ok) {
-      console.error(res.json());
-      throw new Error("unable to fetch");
+
+    if (res.error) {
+      throw new Error("unable to fetch: " + res.error);
     }
-    const data = await res.json();
-    const validatedData = autoSuggestResSchema.safeParse(data);
+    const validatedData = autoSuggestResSchema.safeParse(res.data);
     if (!validatedData.success) {
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");

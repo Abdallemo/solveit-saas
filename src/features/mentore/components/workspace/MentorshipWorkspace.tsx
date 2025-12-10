@@ -1,6 +1,5 @@
 "use client";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
-import { env } from "@/env/client";
 import useCurrentUser from "@/hooks/useCurrentUser";
 import { useFileUpload } from "@/hooks/useFile";
 import { useMentorshipCall } from "@/hooks/useVideoCall";
@@ -82,7 +81,7 @@ export default function MentorshipWorkspace({
 
   const isPostSession = sessionTimeUtils.isAfterSession(
     { sessionEnd: session.sessionEnd },
-    new Date()
+    new Date(),
   );
 
   const handleSendMessage = async () => {
@@ -107,7 +106,7 @@ export default function MentorshipWorkspace({
         const uploadedMeta = await uploadMutate({
           files,
           scope: "mentorship",
-          url: `${env.NEXT_PUBLIC_GO_API_URL}/media`,
+          url: "/media",
         });
         sendMessage({
           message: "",

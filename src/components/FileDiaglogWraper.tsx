@@ -30,7 +30,7 @@ export function FileDialogDialog({
       }
       if (e.key === "Tab" && dialogRef.current) {
         const focusableEls = dialogRef.current.querySelectorAll<HTMLElement>(
-          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])"
+          "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
         );
 
         const firstEl = focusableEls[0];
@@ -62,8 +62,9 @@ export function FileDialogDialog({
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        className={`bg-background rounded-lg shadow-2xl focus:outline-none ${"w-[70%] h-[70%]"} flex flex-col`}
-        tabIndex={-1}>
+        className={`bg-background rounded-lg shadow-2xl focus:outline-none w-full max-w-6xl h-[90vh] flex flex-col `}
+        tabIndex={-1}
+      >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
@@ -82,8 +83,8 @@ export function FileDialogDialog({
           </div>
         </div>
 
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="flex-1 overflow-auto bg-background py-4 mx-auto">
+        <div className="flex-1 flex flex-col overflow-hidden ">
+          <div className="flex-1 overflow-hidden bg-background w-full relative">
             {children}
           </div>
 

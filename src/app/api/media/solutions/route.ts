@@ -1,8 +1,7 @@
 import db from "@/drizzle/db";
 import { WorkspaceFilesTable } from "@/drizzle/schemas";
-import { env } from "@/env/server";
 import { isAuthorized } from "@/features/auth/server/actions";
-import { GoHeaders } from "@/lib/go-config";
+import { goServerApi } from "@/lib/go-api/server";
 import { eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { NextRequest } from "next/server";
@@ -26,15 +25,16 @@ export async function DELETE(req: NextRequest) {
     if (!file) {
       return new Response("File not found", { status: 400 });
     }
-    const res = await fetch(`${env.GO_API_URL}/media`, {
+
+    const res = await goServerApi.request("/media", {
       method: "DELETE",
-      headers: GoHeaders,
       body: JSON.stringify({ key: file.filePath }),
     });
 
-    if (!res.ok || !res.body) {
+    if (res.error) {
       return new Response("Failed to delete file", { status: res.status });
     }
+
     await db
       .delete(WorkspaceFilesTable)
       .where(eq(WorkspaceFilesTable.id, file.id));

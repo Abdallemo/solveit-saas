@@ -1,5 +1,5 @@
 {
-  "id": "c3fd888e-8dec-478a-bc59-a70099be66e7",
+  "id": "e8304983-8ccf-4a7f-9218-da111a458c33",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1090,7 +1090,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -1581,7 +1581,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         },
         "refunds_task_id_tasks_id_fk": {
