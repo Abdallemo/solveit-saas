@@ -308,12 +308,12 @@ export const MenuItemsSolver: MenuItem[] = [
         icon: LucideFileQuestion,
       },
 
-      {
-        type: "link",
-        title: "Earnings",
-        url: "/dashboard/solver/earnings",
-        icon: LucideDollarSign,
-      },
+      // {
+      //   type: "link",
+      //   title: "Earnings",
+      //   url: "/dashboard/solver/earnings",
+      //   icon: LucideDollarSign,
+      // },
     ],
   },
   {
