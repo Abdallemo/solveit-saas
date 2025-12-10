@@ -7,8 +7,8 @@ export const publicRoutes = [
   "/about-us",
   "/contact-us",
   "/blog",
-  "privacy-policy",
-  "terms-of-service"
+  "/privacy-policy",
+  "/terms-of-service"
 ];
 /**
  * an array of routes that used for authentication
