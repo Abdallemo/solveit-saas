@@ -155,7 +155,6 @@ export async function validateContentWithAi(
     | { content: string; adminMode: true }
     | { content: string; adminMode: false },
 ): Promise<openaiResAdminType | openaiResUserType> {
-  console.log("data :", JSON.stringify(fields));
   try {
     const res = await fetch(`${env.GO_API_URL}/openai?task=moderation`, {
       method: "POST",
@@ -186,7 +185,6 @@ export async function validateContentWithAi(
   }
 }
 export async function autoSuggestWithAi(fields: { content: string }) {
-  console.log("data :", JSON.stringify(fields));
   try {
     const res = await fetch(`${env.GO_API_URL}/openai?task=autosuggestion`, {
       method: "POST",
