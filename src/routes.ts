@@ -2,7 +2,14 @@
  * an array of routes that is accessible to the public
  * these dont require authenitcaton nor authorization
  */
-export const publicRoutes = ["/", "/about-us", "/contact-us", "/blog"];
+export const publicRoutes = [
+  "/",
+  "/about-us",
+  "/contact-us",
+  "/blog",
+  "privacy-policy",
+  "terms-of-service"
+];
 /**
  * an array of routes that used for authentication
  * these will redirect loggin users to their dashboard
