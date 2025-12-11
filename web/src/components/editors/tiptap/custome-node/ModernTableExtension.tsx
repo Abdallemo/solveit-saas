@@ -30,7 +30,7 @@ function createAddButton(
   editor: Editor,
   pos: number,
   width: number,
-  height: number
+  height: number,
 ) {
   const wrapper = document.createElement("div");
   wrapper.style.cssText =
@@ -41,12 +41,11 @@ function createAddButton(
   const xOffset = type === "col" ? width - 15 : width / 2 - 10;
   const yOffset = type === "col" ? height / 2 - 10 : height - 15;
 
-  widget.className = `absolute flex items-center justify-center w-5 h-5 
-    bg-popover text-popover-foreground border border-border 
+  widget.className = `absolute flex items-center justify-center w-5 h-5
+    bg-popover text-popover-foreground border border-border
     rounded-full shadow-lg cursor-pointer hover:bg-accent pointer-events-auto`;
 
   widget.style.transform = `translate(${xOffset}px, ${yOffset}px)`;
-
 
   widget.setAttribute("contenteditable", "false");
   widget.type = "button";
@@ -122,10 +121,10 @@ function tableUIPlugin(editor: Editor): Plugin {
                   editor,
                   currentHover.pos,
                   currentHover.width,
-                  currentHover.height
+                  currentHover.height,
                 ),
-                { side: 1, key: "col-btn" }
-              )
+                { side: 1, key: "col-btn" },
+              ),
             );
             decorations.push(
               Decoration.widget(
@@ -135,10 +134,10 @@ function tableUIPlugin(editor: Editor): Plugin {
                   editor,
                   currentHover.pos,
                   currentHover.width,
-                  currentHover.height
+                  currentHover.height,
                 ),
-                { side: 1, key: "row-btn" }
-              )
+                { side: 1, key: "row-btn" },
+              ),
             );
           }
         }
@@ -167,14 +166,11 @@ function tableUIPlugin(editor: Editor): Plugin {
 
           if (!cell) return false;
 
-          // Get Dimensions for positioning
           const rect = cell.getBoundingClientRect();
           const cellPos = view.posAtDOM(cell, 0);
 
           const currentState = tableUIKey.getState(view.state);
 
-          // Recursion Fix: Only update if pos changes OR dimensions change significantly (>1px)
-          // This prevents the infinite loop from sub-pixel rendering shifts
           const prev = currentState?.hoveredCell;
           const isSamePos = prev && prev.pos === cellPos;
           const isSameSize =
@@ -188,7 +184,7 @@ function tableUIPlugin(editor: Editor): Plugin {
                 pos: cellPos,
                 width: rect.width,
                 height: rect.height,
-              })
+              }),
             );
           }
 

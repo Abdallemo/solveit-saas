@@ -76,7 +76,7 @@ export default function PostingEditor({
   return (
     <div
       className={cn(
-        "border rounded-md flex flex-col h-[690px] md:h-[700px] lg:h-[780px] overflow-auto",
+        "border rounded-md flex flex-col `h-172.5 md:h-175 lg:h-195 overflow-auto",
         className,
       )}
     >

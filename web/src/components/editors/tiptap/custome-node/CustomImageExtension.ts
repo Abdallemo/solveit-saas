@@ -8,12 +8,12 @@ type CleanupFunction = (resourceId: string) => Promise<void>;
 
 export const CustomImageExtension = (
   uploadMedia: UploadFunction,
-  cleanupMedia: CleanupFunction
+  cleanupMedia: CleanupFunction,
 ) =>
   ResizableImage.extend({
     addAttributes() {
       return {
-      src: { default: null },
+        src: { default: null },
         alt: { default: null },
         title: { default: null },
         width: { default: "100%" }, // Required for ResizableImage
@@ -24,14 +24,13 @@ export const CustomImageExtension = (
         "data-id": { default: null },
       };
     },
-    
 
-    addOptions() {
-      const parentDefuat = this.parent?.() || {};
-      parentDefuat.defaultHeight = 200;
-      parentDefuat.defaultWidth = 200;
-      return parentDefuat;
-    },
+    // addOptions() {
+    //   const parentDefuat = this.parent?.() || {};
+    //   parentDefuat.defaultHeight = 200;
+    //   parentDefuat.defaultWidth = 200;
+    //   return parentDefuat;
+    // },
     addCommands() {
       const parentCommands = this.parent?.() || {};
 
@@ -48,7 +47,7 @@ export const CustomImageExtension = (
               chain()
                 .focus()
                 .insertContent(
-                  `<img src="${localUrl}" data-temp-id="${tempId}" alt="Uploading image..." />`
+                  `<img src="${localUrl}" data-temp-id="${tempId}" alt="Uploading image..." />`,
                 )
                 .run();
 
@@ -69,7 +68,7 @@ export const CustomImageExtension = (
                           "data-id": filePath,
                           "data-keep-ratio": true,
                           alt: fileName || "",
-                        })
+                        }),
                       );
                       return false;
                     }
@@ -131,8 +130,8 @@ export const CustomImageExtension = (
                 cleanupMedia(resourceId).catch((error) =>
                   console.error(
                     `Cleanup failed for ID: ${resourceId} (True Deletion)`,
-                    error
-                  )
+                    error,
+                  ),
                 );
               }
             });

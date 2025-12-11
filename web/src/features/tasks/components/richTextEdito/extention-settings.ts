@@ -1,4 +1,5 @@
 import { CustomImageExtension } from "@/components/editors/tiptap/custome-node/CustomImageExtension";
+// We will fix the ModernTableExtension import in the next file
 import { ModernTableExtension } from "@/components/editors/tiptap/custome-node/ModernTableExtension";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
@@ -10,6 +11,8 @@ import TextAlign from "@tiptap/extension-text-align";
 import StarterKit from "@tiptap/starter-kit";
 import { createLowlight } from "lowlight";
 
+// Removed: TableRow, TableHeader, TableCell imports (handled by ModernTableExtension internally now)
+
 type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
 
@@ -19,9 +22,6 @@ interface CustomExtensionDependencies {
   lowlight: ReturnType<typeof createLowlight>;
 }
 
-/**
- * Creates a configured array of Tiptap extensions for the blog editor.
- */
 export const createBlogExtensions = ({
   uploadMedia,
   cleanupMedia,
@@ -30,23 +30,23 @@ export const createBlogExtensions = ({
   return [
     StarterKit.configure({
       codeBlock: false,
-
       bulletList: { HTMLAttributes: { class: "list-disc ml-3" } },
       orderedList: { HTMLAttributes: { class: "list-decimal ml-3" } },
     }),
 
     Link,
-    ModernTableExtension.configure({ resizable: true }),
 
+    // ModernTableExtension extends Table, so it includes Row/Header/Cell automatically
+    ModernTableExtension.configure({ resizable: true }),
     TableCell,
     TableHeader,
     TableRow,
     BubbleMenu,
 
-
     TextAlign.configure({
       types: ["heading", "paragraph"],
     }),
+
     Highlight,
 
     CodeBlockLowlight.configure({

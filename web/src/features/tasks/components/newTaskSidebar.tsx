@@ -215,11 +215,7 @@ function SideBarForm({ isPending }: { isPending: boolean }) {
                 <SelectGroup>
                   {isLoading && <Loader2 className="animate-spin" />}
                   {fetchedDeadlines?.map((de) => (
-                    <SelectItem
-                      key={de.id}
-                      value={de.deadline}
-                      className="text-white"
-                    >
+                    <SelectItem key={de.id} value={de.deadline}>
                       {de.deadline}
                     </SelectItem>
                   ))}
