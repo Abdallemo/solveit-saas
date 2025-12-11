@@ -1,1 +1,0 @@
-export const SOLVER_MIN_WITHDRAW_AMOUNT= 30
