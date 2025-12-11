@@ -87,7 +87,8 @@ export type ArchiveType =
   | "lzh";
 export type DocType = "doc" | "docx" | "xls" | "xlsx" | "csv" | "pptx";
 export type CodeType = keyof typeof extensionToLanguage;
-export type Pdf = "pdf";
+export type PdfType = "pdf";
+export type ThreeDType = "glb" | "gltf" | "usdz";
 export type supportedExtentionTypes =
   | ImageType
   | AudioType
@@ -95,11 +96,14 @@ export type supportedExtentionTypes =
   | ArchiveType
   | DocType
   | CodeType
-  | Pdf;
+  | PdfType
+  | ThreeDType;
 
 const imageExtensions: ImageType[] = ["jpg", "jpeg", "png", "gif", "svg"];
 const videoExtensions: VideoType[] = ["mp4", "mov"];
 const audioExtensions: AudioType[] = ["mp3", "wav"];
+const pdfExtensions: PdfType[] = ["pdf"];
+const threeDExtensions: ThreeDType[] = ["glb", "gltf", "usdz"];
 const docExtensions: DocType[] = ["csv", "doc", "docx", "xls", "xlsx", "pptx"];
 const codeExtensions: CodeType[] = [
   "js",
@@ -164,6 +168,8 @@ const supportedExtentions: supportedExtentionTypes[] = [
   ...audioExtensions,
   ...videoExtensions,
   ...imageExtensions,
+  ...threeDExtensions,
+  ...pdfExtensions,
 ];
 
 export function getFileExtension(fileName: string) {
@@ -176,7 +182,6 @@ export function getFileExtension(fileName: string) {
   if (lastDotIndex <= 0) {
     return "";
   }
-  console.log(trimmedName.substring(lastDotIndex + 1))
   return trimmedName.substring(lastDotIndex + 1);
 }
 
@@ -192,7 +197,6 @@ export function removeFileExtension(fileName: string) {
   }
   return trimmedName.substring(0, lastDotIndex);
 }
-
 
 export function fileExtention(fileName: string) {
   return getFileExtension(fileName) as supportedExtentionTypes;
@@ -278,7 +282,7 @@ export function isImage(ext: supportedExtentionTypes): ext is ImageType {
   return imageExtensions.includes(ext as ImageType);
 }
 export function isUnsupportedExtention(
-  ext: supportedExtentionTypes
+  ext: supportedExtentionTypes,
 ): ext is supportedExtentionTypes {
   return !supportedExtentions.includes(ext as supportedExtentionTypes);
 }
@@ -290,6 +294,12 @@ export function isAudio(ext: supportedExtentionTypes): ext is AudioType {
 }
 export function isDoc(ext: supportedExtentionTypes): ext is DocType {
   return docExtensions.includes(ext as DocType);
+}
+export function isPDF(ext: supportedExtentionTypes): ext is PdfType {
+  return pdfExtensions.includes(ext as PdfType);
+}
+export function isThreeD(ext: supportedExtentionTypes): ext is ThreeDType {
+  return threeDExtensions.includes(ext as ThreeDType);
 }
 export function isCode(ext: supportedExtentionTypes): ext is CodeType {
   return codeExtensions.includes(ext as CodeType);

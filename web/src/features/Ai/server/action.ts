@@ -259,9 +259,7 @@ export async function saveAdminAiSandboxTests({
         content,
       });
     }
-  } catch (error) {
-    console.log(error);
-  }
+  } catch (error) {}
 }
 export type AdminAiSandboxTestsType = Exclude<
   Awaited<ReturnType<typeof getAdminAiSandboxTests>>,

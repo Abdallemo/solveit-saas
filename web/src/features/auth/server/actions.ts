@@ -129,8 +129,6 @@ export async function isAuthorized(
   return { user, session: session };
 }
 export async function DeleteUserAccount() {
-  console.log("delete trigered");
-
   const { user } = await isAuthorized([
     "SOLVER",
     "ADMIN",

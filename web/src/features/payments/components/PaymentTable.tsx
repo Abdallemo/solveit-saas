@@ -89,7 +89,7 @@ export function GetPaymentStatusBadge(status: PaymentStatusType) {
 }
 
 function NewPaymentColumns(
-  handleOpenDialog: (payment: paymentType) => void
+  handleOpenDialog: (payment: paymentType) => void,
 ): ColumnDef<paymentType>[] {
   return [
     {
@@ -158,9 +158,8 @@ function NewPaymentColumns(
         return (
           <Button
             variant={"ghost"}
-            onClick={() =>
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }>
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Release Date <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -176,7 +175,7 @@ function NewPaymentColumns(
             month: "2-digit",
             minute: "2-digit",
             year: "numeric",
-          }
+          },
         );
       },
     },
@@ -186,9 +185,8 @@ function NewPaymentColumns(
         return (
           <Button
             variant={"ghost"}
-            onClick={() =>
-              column.toggleSorting(column.getIsSorted() === "asc")
-            }>
+            onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+          >
             Created At <ArrowUpDown className="ml-2 h-4 w-4" />
           </Button>
         );
@@ -202,7 +200,7 @@ function NewPaymentColumns(
             day: "numeric",
             hour: "2-digit",
             minute: "2-digit",
-          }
+          },
         );
       },
     },
@@ -224,7 +222,8 @@ function NewPaymentColumns(
                 onClick={() => {
                   navigator.clipboard.writeText(payment.id);
                   toast.info("copied to clipboard");
-                }}>
+                }}
+              >
                 Copy Payment ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -233,7 +232,8 @@ function NewPaymentColumns(
                   onSelect={(e) => {
                     e.preventDefault();
                   }}
-                  onClick={() => handleOpenDialog(payment)}>
+                  onClick={() => handleOpenDialog(payment)}
+                >
                   <span className="text-yellow-400 font-semibold">
                     Release Payment
                   </span>
@@ -260,7 +260,7 @@ export function PaymentTable({ data }: PaymentTableProps) {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [selectedPayment, setSelectedPayment] = useState<paymentType | null>(
-    null
+    null,
   );
   const [confirmInput, setConfirmInput] = useState("");
 
@@ -274,7 +274,6 @@ export function PaymentTable({ data }: PaymentTableProps) {
   }, []);
 
   const handleReleasePayment = () => {
-    console.log(`Releasing payment for ID: ${selectedPayment?.id}`);
     setIsDialogOpen(false);
   };
 
@@ -327,7 +326,8 @@ export function PaymentTable({ data }: PaymentTableProps) {
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(!!value)
-                    }>
+                    }
+                  >
                     {column.id}
                   </DropdownMenuCheckboxItem>
                 );
@@ -346,7 +346,7 @@ export function PaymentTable({ data }: PaymentTableProps) {
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -358,12 +358,13 @@ export function PaymentTable({ data }: PaymentTableProps) {
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}>
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -373,7 +374,8 @@ export function PaymentTable({ data }: PaymentTableProps) {
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center">
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -386,14 +388,16 @@ export function PaymentTable({ data }: PaymentTableProps) {
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}>
+          disabled={!table.getCanPreviousPage()}
+        >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}>
+          disabled={!table.getCanNextPage()}
+        >
           Next
         </Button>
       </div>
@@ -447,7 +451,8 @@ export function PaymentTable({ data }: PaymentTableProps) {
                 type="submit"
                 variant={"success"}
                 disabled={confirmInput !== "I confirm"}
-                onClick={handleReleasePayment}>
+                onClick={handleReleasePayment}
+              >
                 Release
               </Button>
             </DialogFooter>

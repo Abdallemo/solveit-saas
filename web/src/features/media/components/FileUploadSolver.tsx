@@ -77,10 +77,8 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
           uploadedAt: new Date(),
         };
       });
-      console.log("new files", newFiles);
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     } catch (e) {
-      console.log(e);
     } finally {
       setUploadingFiles([]);
     }
@@ -164,7 +162,6 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
               <div key={file.id} className="w-70">
                 <FileChatCardComps
                   action={() => {
-                    console.log("Opening preview for:", file.fileName);
                     setFilePreview({
                       fileName: file.fileName,
                       filePath: file.filePath,

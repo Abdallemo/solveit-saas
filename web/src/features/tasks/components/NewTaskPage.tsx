@@ -159,8 +159,6 @@ export default function TaskCreationPage({
         content: jsonContent,
         contentText: textContent,
       });
-
-      console.log("Debounced Update Triggered");
     },
     200,
     [updateDraft, form],

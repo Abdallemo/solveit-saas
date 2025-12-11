@@ -32,6 +32,5 @@ export default async function page({
       </>
     );
   }
-  console.log(`before redirecting current worksapce ${workspace.id}`);
   return redirect(`/dashboard/solver/workspace/${workspace.id}`);
 }

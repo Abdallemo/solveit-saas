@@ -151,9 +151,7 @@ export default function MentorChatBuble({
                   );
                 });
                 send({ ...chat, messageType: "chat_deleted" });
-              } catch (error) {
-                console.log("failed to delte");
-              }
+              } catch (error) {}
             }}
           />
         ))}

@@ -293,3 +293,64 @@ html {
 .animate-scroll {
   animation: scroll linear infinite;
 }
+
+@keyframes grid-move {
+  0% {
+    transform: translate(0, 0);
+  }
+  100% {
+    transform: translate(40px, 40px);
+  }
+}
+
+.cube-wrapper {
+  width: 50px;
+  height: 50px;
+  animation: cube-rotate 3s ease-in-out infinite;
+}
+
+.cube {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  transform-style: preserve-3d;
+}
+
+.cube-face {
+  position: absolute;
+  width: 50px;
+  height: 50px;
+  border: 2px solid var(--border);
+  background: var(--muted);
+  opacity: 0.5;
+  backdrop-filter: blur(4px);
+}
+
+.front {
+  transform: translateZ(25px);
+}
+.back {
+  transform: rotateY(180deg) translateZ(25px);
+}
+.right {
+  transform: rotateY(90deg) translateZ(25px);
+}
+.left {
+  transform: rotateY(-90deg) translateZ(25px);
+}
+.top {
+  transform: rotateX(90deg) translateZ(25px);
+}
+.bottom {
+  transform: rotateX(-90deg) translateZ(25px);
+}
+
+@keyframes cube-rotate {
+  0%,
+  100% {
+    transform: rotateX(-20deg) rotateY(0deg);
+  }
+  50% {
+    transform: rotateX(-20deg) rotateY(360deg);
+  }
+}

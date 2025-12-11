@@ -44,7 +44,6 @@ export function MentorChatArea({
 
         if (chat.chatOwner.id !== user?.id) {
           seenRef.current.add(id);
-          console.log("Message from OTHER user visible:", chat.message);
           // TODO:  mark-as-read mutation
         }
       });

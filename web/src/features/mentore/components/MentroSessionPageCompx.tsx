@@ -29,15 +29,14 @@ export function SessionsList({
   useEffect(() => {
     const { manager } = useWebRTCStore.getState();
     if (manager) {
-      console.log("[SessionList] Found active manager, ending call...");
       manager.leaveCall();
     }
   }, []);
-  
+
   const { user } = useCurrentUser();
   const [globalFilter, setGlobalFilter] = useState("");
   const [collapsedBookings, setCollapsedBookings] = useState<Set<string>>(
-    new Set()
+    new Set(),
   );
   const path = usePathname();
   const userTz = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -63,7 +62,7 @@ export function SessionsList({
         booking.id.toLowerCase().includes(searchTerm) ||
         booking.status.toLowerCase().includes(searchTerm) ||
         booking.bookedSessions.some((session) =>
-          session.sessionDate.toLowerCase().includes(searchTerm)
+          session.sessionDate.toLowerCase().includes(searchTerm),
         )
       );
     });
@@ -102,10 +101,12 @@ export function SessionsList({
             return (
               <div
                 key={booking.id}
-                className="border rounded-lg overflow-hidden">
+                className="border rounded-lg overflow-hidden"
+              >
                 <div
                   className="flex items-center justify-between p-3 cursor-pointer hover:bg-muted/50 transition-colors"
-                  onClick={() => toggleBookingCollapse(booking.id)}>
+                  onClick={() => toggleBookingCollapse(booking.id)}
+                >
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="flex items-center gap-2 shrink-0">
                       {isCollapsed ? (
@@ -133,7 +134,8 @@ export function SessionsList({
                         #{booking.id.slice(-8)}
                       </span>
                       <Badge
-                        className={`${getColorClass(booking.status)} text-xs`}>
+                        className={`${getColorClass(booking.status)} text-xs`}
+                      >
                         {booking.status}
                       </Badge>
                       <div className="flex items-center gap-1 text-xs text-muted-foreground">
@@ -161,7 +163,7 @@ export function SessionsList({
                     {booking.bookedSessions.map((session, index) => {
                       const localStart = toZonedTime(
                         session.sessionStart!,
-                        userTz
+                        userTz,
                       );
                       const localEnd = toZonedTime(session.sessionEnd!, userTz);
                       return (
@@ -171,7 +173,8 @@ export function SessionsList({
                             index !== booking.bookedSessions.length - 1
                               ? "border-b"
                               : ""
-                          }`}>
+                          }`}
+                        >
                           <div className="flex items-center gap-3 flex-1 min-w-0">
                             <div className="flex items-center gap-3 shrink-0">
                               <div className="relative flex items-center justify-center">
@@ -213,7 +216,8 @@ export function SessionsList({
                             <Button asChild size="sm" className="h-8 text-xs">
                               <Link
                                 className="transition-colors duration-200"
-                                href={`${path}/${session.id}`}>
+                                href={`${path}/${session.id}`}
+                              >
                                 Join →
                               </Link>
                             </Button>

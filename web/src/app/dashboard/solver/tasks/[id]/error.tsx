@@ -10,7 +10,6 @@ type ErrorProps = {
 };
 
 export default function Error({ error, reset }: ErrorProps) {
-  console.log(error.name);
   if (error.name === TaskNotFoundError.name) {
     return (
       <div className="flex h-full flex-col items-center justify-center text-center gap-4">

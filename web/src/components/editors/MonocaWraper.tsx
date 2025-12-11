@@ -64,13 +64,13 @@ export function CodeEditorDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center p-4 z-50 bg-black/50">
+    <div className="fixed inset-0 flex items-center justify-center py-2 z-50 backdrop-blur-[2px] h-screen">
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        className={`bg-background rounded-lg shadow-2xl focus:outline-none ${
-          isFullscreen ? "w-full h-full" : "w-[90%] h-[80%]"
+        className={` bg-background rounded-lg shadow-2xl focus:outline-none ${
+          isFullscreen ? "w-full h-full" : "w-full h-[90vh] max-w-6xl"
         } flex flex-col`}
         tabIndex={-1}
       >

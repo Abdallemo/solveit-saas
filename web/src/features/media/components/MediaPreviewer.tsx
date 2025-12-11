@@ -15,14 +15,25 @@ import {
   isCode,
   isDoc,
   isImage,
+  isPDF,
+  isThreeD,
   isUnsupportedExtention,
   isVideo,
 } from "@/lib/utils/utils";
+import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { UploadedFileMeta } from "../server/media-types";
 import { AudioPlayer } from "./AudioPlayer";
+import { ThreeDPlayerLoading } from "./ThreeDPlayerLoading";
 
+const ThreeDPlayer = dynamic(
+  () => import("./ThreeDPlayer").then((mod) => mod.ThreeDPlayer),
+  {
+    ssr: false,
+    loading: () => <ThreeDPlayerLoading />,
+  },
+);
 type MediaPreviewerProps = {
   filePreview: UploadedFileMeta | null;
   onClose?: () => void;
@@ -83,7 +94,6 @@ export default function MediaPreviewer({
 
   const handleFileAdd = (filename: string) => {
     setFiles((prev) => ({ ...prev, [filename]: "" }));
-    console.log(`Added new file: ${filename}`);
   };
 
   const handleFileDelete = (filename: string) => {
@@ -92,7 +102,6 @@ export default function MediaPreviewer({
       delete newFiles[filename];
       return newFiles;
     });
-    console.log(`Deleted file: ${filename}`);
   };
 
   if (!filePreview) return null;
@@ -193,6 +202,41 @@ export default function MediaPreviewer({
             filePreview?.storageLocation!,
           )}`}
           className="w-full h-full rounded-lg shadow-md border object-cover"
+        />
+      </FileDialogDialog>
+    );
+  }
+  if (isPDF(ext)) {
+    return (
+      <FileDialogDialog
+        isOpen={isFileOpen}
+        onClose={handleClose}
+        activeFile={{
+          name: filePreview.fileName,
+          type: filePreview.fileType,
+        }}
+      >
+        <iframe
+          src={filePreview.storageLocation}
+          className="w-full h-full rounded-lg border-none"
+        />
+      </FileDialogDialog>
+    );
+  }
+
+  if (isThreeD(ext)) {
+    return (
+      <FileDialogDialog
+        isOpen={isFileOpen}
+        onClose={handleClose}
+        activeFile={{
+          name: filePreview.fileName,
+          type: filePreview.fileType,
+        }}
+      >
+        <ThreeDPlayer
+          src={filePreview.storageLocation}
+          alt={filePreview.fileName}
         />
       </FileDialogDialog>
     );

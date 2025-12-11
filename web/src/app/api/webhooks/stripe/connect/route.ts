@@ -27,7 +27,6 @@ export async function POST(request: NextRequest) {
       case "account.application.deauthorized":
         break;
       case "capability.updated":
-        console.log(event.data.object);
         break;
       default:
         logger.debug(`Unhandled event type ${event.type}`);

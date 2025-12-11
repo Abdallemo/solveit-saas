@@ -53,8 +53,6 @@ export async function POST(request: NextRequest) {
             email: userSession?.email!,
           },
         });
-
-        console.log("res", res);
         break;
       case "customer.subscription.updated":
         await handleUpdate(event.data.object);
@@ -96,7 +94,6 @@ async function handleCreate(subscription: string | Stripe.Subscription) {
     const customerId = typeof customer === "string" ? customer : customer.id;
 
     logger.info("Inserting subscription for user:", { userId: userId });
-    console.log("---------------customer Id: " + customerId);
     await updateUserSubscription(
       {
         tier: "SOLVER",
@@ -128,7 +125,6 @@ async function handleUpdate(subscription: Stripe.Subscription) {
     typeof subscription.customer === "string"
       ? subscription.customer
       : subscription.customer.id;
-  console.log("TIER TO :", tierSelected);
   if (tierSelected === undefined) {
     logger.warn("Unknown price ID in subscription update:");
     return;

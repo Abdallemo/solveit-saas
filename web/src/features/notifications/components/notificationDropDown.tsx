@@ -85,7 +85,6 @@ export default function NotificationDropDown({ user }: { user: User }) {
   };
 
   const handleMarkAllAsRead = async () => {
-    console.log("Mark all as read clicked");
     toast.loading("loading..", { id: "mark-all-as-read" });
     setMessages((prev) =>
       prev.map((msg) => {
@@ -103,7 +102,6 @@ export default function NotificationDropDown({ user }: { user: User }) {
 
     e.preventDefault();
     e.stopPropagation();
-    console.log("Delete notification:", notificationId);
     toast.loading("deleting..", { id: "delete-notification" });
     await deleteNotificationMuta({ id: notificationId, receiverId: userId! });
   };

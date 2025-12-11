@@ -15,7 +15,6 @@ export default async function SolutionPage({
   const solution = await getSolutionById(solutionId);
   const { session, user } = await isAuthorized(["POSTER"]);
   const isFeedbackSumbited = await isFeedbackSubmited(solution.taskId);
-  console.log(isFeedbackSumbited);
   return (
     <CommentProvider
       taskComments={solution.taskSolution.taskComments}

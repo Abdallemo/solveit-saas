@@ -13,6 +13,6 @@ export default async function Page({
   if (user.emailVerified) {
     redirect(`/dashboard/`);
   }
-  console.log(deletedAccountId);
+
   return <DetectionComps />;
 }

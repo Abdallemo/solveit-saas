@@ -122,7 +122,6 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
         toast.success("Link copied to clipboard", { duration: 2000 });
         break;
       case "delete":
-        console.log("Delete file:", file.id);
         break;
       default:
         break;
@@ -181,17 +180,20 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem
-                      onClick={() => handleFileAction("view", file)}>
+                      onClick={() => handleFileAction("view", file)}
+                    >
                       <Eye className="mr-2 h-4 w-4" />
                       View
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFileAction("download", file)}>
+                      onClick={() => handleFileAction("download", file)}
+                    >
                       <Download className="mr-2 h-4 w-4" />
                       Download
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => handleFileAction("copy", file)}>
+                      onClick={() => handleFileAction("copy", file)}
+                    >
                       <Copy className="mr-2 h-4 w-4" />
                       Copy Link
                     </DropdownMenuItem>
@@ -202,7 +204,8 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             onClick={() => handleFileAction("delete", file)}
-                            className="text-red-600">
+                            className="text-red-600"
+                          >
                             <Trash2 className="mr-2 h-4 w-4" />
                             Delete
                           </DropdownMenuItem>
