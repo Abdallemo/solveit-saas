@@ -57,7 +57,7 @@ export function FileDialogDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="absolute inset-0 flex items-center justify-center py-2 z-50 bg-black/50">
+    <div className="fixed inset-0 flex items-center justify-center py-2 z-50   backdrop-blur-[2px] h-screen">
       <div
         ref={dialogRef}
         role="dialog"
