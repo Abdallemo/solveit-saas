@@ -1,0 +1,130 @@
+import { PaymentPorposeEnumType } from "@/drizzle/schemas";
+import { env } from "@/env/server";
+import {
+  getMentorBookingSessions,
+  getMentorListigProfile,
+  getMentorListigWithAvailbelDates,
+  getMentorListigWithAvailbelDatesV2,
+  getMentorSession,
+} from "@/features/mentore/server/action";
+import Stripe from "stripe";
+import { z } from "zod";
+export type AvailabilitySlot = {
+  day: string;
+  start: string;
+  end: string;
+};
+
+export type MentorListType = Exclude<
+  Awaited<ReturnType<typeof getMentorListigProfile>>,
+  any[]
+>;
+export type MentorListigWithAvailbelDates = Awaited<
+  ReturnType<typeof getMentorListigWithAvailbelDates>
+>[number];
+export type MentorListigWithAvailbelDatesV2 = Awaited<
+  ReturnType<typeof getMentorListigWithAvailbelDatesV2>
+>[number];
+export type MentorBookingSessions = Awaited<
+  ReturnType<typeof getMentorBookingSessions>
+>;
+export type MentorSession = Exclude<
+  Awaited<ReturnType<typeof getMentorSession>>,
+  undefined
+>["session"];
+export type MentorChatSession = Exclude<
+  Awaited<ReturnType<typeof getMentorSession>>,
+  undefined
+>["chats"][number];
+
+export const bookingSchema = z.object({
+  sessions: z
+    .array(
+      z.object({
+        date: z.date(),
+        slot: z.object({
+          day: z.string(),
+          start: z.string(),
+          end: z.string(),
+        }),
+        sessionStart: z.string(),
+        sessionEnd: z.string(),
+        mentorTimezone: z.string(),
+      }),
+    )
+    .min(1, "Please select at least one session."),
+  notes: z.string().optional(),
+});
+
+export type BookingFormData = z.infer<typeof bookingSchema>;
+export type mentorListingFormData = z.infer<typeof mentorListingSchema>;
+
+export const mentorListingSchema = z.object({
+  displayName: z
+    .string()
+    .min(5, { message: "names should be at least 5 charecter long" }),
+  title: z
+    .string()
+    .min(5, { message: "title should be at least 5 charecter long" }),
+  description: z
+    .string()
+    .min(5, { message: "description should be at least 5 charecter long" }),
+  ratePerHour: z.coerce
+    .number()
+    .min(2, { message: "hourly rate should be at least RM2" }),
+});
+
+export function stripeTaskCheckoutParamsConf({
+  customerId,
+  totalPrice,
+  bookingId,
+  referer,
+  userId,
+}: {
+  customerId: string;
+  totalPrice: number;
+  userId: string;
+  bookingId: string;
+  referer: string;
+}): Stripe.Checkout.SessionCreateParams {
+  return {
+    mode: "payment",
+    customer: customerId,
+
+    line_items: [
+      {
+        price_data: {
+          currency: "myr",
+          product_data: {
+            name: "Mentor Booking" as PaymentPorposeEnumType,
+          },
+          unit_amount: totalPrice * 100,
+        },
+
+        quantity: 1,
+      },
+    ],
+
+    payment_method_types: ["card"],
+    payment_method_options: {
+      card: {
+        setup_future_usage: "off_session",
+      },
+    },
+    payment_intent_data: {
+      setup_future_usage: "off_session",
+    },
+
+    metadata: {
+      userId,
+      type: "Mentor Booking" as PaymentPorposeEnumType,
+      bookingId,
+    },
+    cancel_url: `${referer}?booking_id=${bookingId}`,
+    success_url: `${env.NEXTAUTH_URL}/dashboard/poster/sessions/?session_id={CHECKOUT_SESSION_ID}&booking_id=${bookingId}`,
+    saved_payment_method_options: {
+      allow_redisplay_filters: ["always", "limited", "unspecified"],
+      payment_method_save: "enabled",
+    },
+  } satisfies Stripe.Checkout.SessionCreateParams;
+}
