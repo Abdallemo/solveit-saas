@@ -18,7 +18,10 @@ import {
   notifyRefundComplete,
   notifyTaskReopen,
 } from "@/features/notifications/server/utils";
-import { SOLVER_MIN_WITHDRAW_AMOUNT } from "@/features/payments/server/constants";
+import {
+  getNewReleaseDate,
+  SOLVER_MIN_WITHDRAW_AMOUNT,
+} from "@/features/payments/server/constants";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import {
   getModeratorDisputes,
@@ -46,7 +49,7 @@ import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { to } from "@/lib/utils/async";
 import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
-import { addDays, isBefore, subYears } from "date-fns";
+import { isBefore, subYears } from "date-fns";
 import { and, eq, inArray } from "drizzle-orm";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
@@ -477,7 +480,6 @@ export async function rejectRefund(refundId: string) {
         success: null,
       };
     }
-    const releaseDate = addDays(Date.now(), 7);
     await db.transaction(async (dx) => {
       await dx
         .update(RefundTable)
@@ -489,7 +491,10 @@ export async function rejectRefund(refundId: string) {
 
       await dx
         .update(PaymentTable)
-        .set({ status: "PENDING_USER_ACTION", releaseDate })
+        .set({
+          status: "PENDING_USER_ACTION",
+          releaseDate: getNewReleaseDate(),
+        })
         .where(eq(PaymentTable.id, refund.paymentId));
       await dx
         .delete(BlockedTasksTable)

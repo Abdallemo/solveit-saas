@@ -65,13 +65,28 @@ export default function TaskCreationPage({
     onMutate: () => {
       toast.loading("checking content againt our rules....", { id: "openai" });
     },
-    onSuccess: (d) => {
+    onSuccess: ({ violatesRules }) => {
+      if (violatesRules) {
+        toast.warning(
+          <div className="flex flex-col gap-2">
+            <span className="font-semibold">
+              Your task violates our posting rules. Try again.
+            </span>
+            <span>
+              If you believe this is a mistake, reach out to our support team.
+            </span>
+          </div>,
+
+          { id: "openai" },
+        );
+        return;
+      }
       toast.success("valid content", {
         id: "openai",
       });
     },
     onError: (er) => {
-      toast.error(er.message);
+      toast.error(er.message, { id: "openai" });
     },
   });
   const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
@@ -153,25 +168,10 @@ export default function TaskCreationPage({
 
   async function onSubmit(data: TaskSchema) {
     try {
-      const ruleRes = await validateContent({
+      await validateContent({
         content: contentText,
         adminMode: false,
       });
-      if (ruleRes.violatesRules) {
-        toast.warning(
-          <div className="flex flex-col gap-2">
-            <span className="font-semibold">
-              Your task violates our posting rules. Try again.
-            </span>
-            <span>
-              If you believe this is a mistake, reach out to our support team.
-            </span>
-          </div>,
-
-          { id: "openai" },
-        );
-        return;
-      }
 
       const lastUpdDraft = await saveDraftTask(
         title,

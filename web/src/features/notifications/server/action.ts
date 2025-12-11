@@ -28,7 +28,7 @@ export async function processSystemNotification({
   receiverId,
   sender,
 }: systemNotType) {
-  logger.info("in App notification");
+  logger.info(`in app notification send to ${receiverId}`);
   const result = await db
     .insert(notifications)
     .values({
@@ -57,7 +57,8 @@ export async function sendNotificationByEmail({
   receiverEmail,
   sender,
 }: emaiProps) {
-  logger.info("Email notification");
+  logger.info(`Email notification send to ${receiverEmail}`);
+
   const transporter = await createTransporter();
 
   const mailOptions = {

@@ -110,16 +110,12 @@ export async function upgradeSolverToPlus(userId: string) {
 
 export async function createCancelSession() {
   const referer = await getServerReturnUrl();
-  const currentUser = await getServerUserSession(); //next_auth
-  if (!currentUser?.id) redirect("/login");
-
-  logger.info("creating cancel Session for User: " + currentUser.id, {
-    userId: currentUser.id,
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
+  logger.info("creating cancel Session for User: " + user.id, {
+    userId: user.id,
   });
-  const user = await getUserById(currentUser.id);
-  if (!user || !user.id) return;
 
-  const subscription = await getServerUserSubscriptionById(currentUser.id);
+  const subscription = await getServerUserSubscriptionById(user.id);
   if (!subscription || !subscription.stripeSubscriptionId) return;
 
   if (!user?.stripeCustomerId || !subscription.stripeSubscriptionId) return;

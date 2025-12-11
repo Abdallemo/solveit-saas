@@ -29,6 +29,7 @@ import {
 import { deleteFileFromR2 } from "@/features/media/server/action";
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { Notifier } from "@/features/notifications/server/notifier";
+import { getNewReleaseDate } from "@/features/payments/server/constants";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
 import { SolutionError } from "@/features/tasks/lib/errors";
 import {
@@ -63,19 +64,9 @@ import {
 import { logger } from "@/lib/logging/winston";
 import { stripe } from "@/lib/stripe";
 import { to } from "@/lib/utils/async";
-import {
-  getCurrentServerTime,
-  parseDeadlineV2,
-  truncateText,
-} from "@/lib/utils/utils";
+import { parseDeadlineV2, truncateText } from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
-import {
-  addDays,
-  differenceInMilliseconds,
-  isAfter,
-  isBefore,
-  isPast,
-} from "date-fns";
+import { differenceInMilliseconds, isAfter, isBefore, isPast } from "date-fns";
 import { and, eq, inArray, isNull } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -882,11 +873,9 @@ export async function acceptSolution(solution: SolutionById) {
       };
     }
 
-    const releaseDate = addDays(getCurrentServerTime(), 7);
-
     await db
       .update(PaymentTable)
-      .set({ status: "PENDING_USER_ACTION", releaseDate: releaseDate })
+      .set({ status: "PENDING_USER_ACTION", releaseDate: getNewReleaseDate() })
       .where(eq(PaymentTable.id, paymentId));
 
     Notifier()
