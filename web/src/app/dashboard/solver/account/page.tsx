@@ -36,7 +36,7 @@ export default async function SolverAccountPage() {
           </div>
         </div>
       </div>
-      <AccountComponent isOauthUser={isOauthUser} cards={cards} />;
+      <AccountComponent isOauthUser={isOauthUser} cards={cards} />
     </div>
   );
 }
