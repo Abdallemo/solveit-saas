@@ -13,7 +13,7 @@ SolveIt connects students in a secure and structured environment to **post, pick
 * **AI moderation:** Automatic detection of cheating and inappropriate content
 * **Structured workspace:** Organize and submit solutions seamlessly
 
-![SolveIt Dashboard](https://github.com/user-attachments/assets/c9b08c9f-f487-44ec-b4cd-38ac3b72e714)
+![SolveIt Dashboard](https://github.com/user-attachments/assets/bb5ee234-75cd-4e5d-9904-648dc25f7d7b)
 
 
 ---
