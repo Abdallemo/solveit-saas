@@ -64,6 +64,7 @@ const steps = [
   },
   { id: 4, title: "Business", icon: Building, description: "Business details" },
 ];
+
 const defaultValues = {
   first_name: "",
   last_name: "",
@@ -79,6 +80,7 @@ const defaultValues = {
     mcc: "",
   },
 };
+
 export default function OnboardingForm() {
   const [onboarding, saveOnboarding] = useLocalStorage<OnboardingFormData>(
     "onboarding",
@@ -141,14 +143,17 @@ export default function OnboardingForm() {
     return true;
   };
 
-  const nextStep = async () => {
+  const nextStep = async (e: React.MouseEvent) => {
+    // Prevent default to ensure no form submission triggers accidentally
+    e.preventDefault(); 
     const isValid = await validateStep(currentStep);
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
   };
 
-  const prevStep = () => {
+  const prevStep = (e: React.MouseEvent) => {
+    e.preventDefault();
     if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
@@ -417,47 +422,48 @@ export default function OnboardingForm() {
       </div>
 
       <Form {...form}>
-        <Card className=" flex flex-col">
-          <CardContent className="p-8">
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              {renderStepContent()}
-            </form>
-          </CardContent>
-          <CardFooter className="flex items-center justify-between  gap-1">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={prevStep}
-              disabled={currentStep === 1}
-              className="flex items-center space-x-2 bg-transparent w-1/2"
-            >
-              <ChevronLeft className="w-4 h-4" />
-              <span>Previous</span>
-            </Button>
-
-            {currentStep < steps.length ? (
+        {/* Changed: Single form wrapping the card */}
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="flex flex-col">
+            {/* Changed: Removed nested form inside CardContent */}
+            <CardContent className="p-8">{renderStepContent()}</CardContent>
+            <CardFooter className="flex items-center justify-between gap-2">
               <Button
                 type="button"
-                onClick={nextStep}
-                className="flex items-center space-x-2 w-1/2"
+                variant="outline"
+                onClick={prevStep}
+                disabled={currentStep === 1}
+                // Changed: flex-1 ensures proper 50% split without overflow
+                className="flex items-center justify-center space-x-2 bg-transparent flex-1 min-w-0"
               >
-                <span>Continue</span>
-                <ChevronRight className="w-4 h-4" />
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
               </Button>
-            ) : (
-              <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
+
+              {currentStep < steps.length ? (
+                <Button
+                  type="button"
+                  onClick={nextStep}
+                  // Changed: flex-1 for safe width
+                  className="flex items-center justify-center space-x-2 flex-1 min-w-0"
+                >
+                  <span>Continue</span>
+                  <ChevronRight className="w-4 h-4" />
+                </Button>
+              ) : (
+                // Changed: No nested form here, just the submit button
                 <Button
                   disabled={isPending}
                   type="submit"
-                  className="flex items-center space-x-2 w-full"
+                  className="flex items-center justify-center space-x-2 flex-1 min-w-0"
                 >
                   {isPending && <Loader2 className="animate-spin" />}
                   <span>Complete Setup</span>
                 </Button>
-              </form>
-            )}
-          </CardFooter>
-        </Card>
+              )}
+            </CardFooter>
+          </Card>
+        </form>
       </Form>
     </div>
   );
