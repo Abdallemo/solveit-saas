@@ -65,7 +65,7 @@ export default function AvailbleTimeSelection({
           {availableTimes.map((slot, index) => (
             <div
               key={index}
-              className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg border">
+              className="flex flex-wrap sm:flex-nowrap items-center gap-3 p-3 bg-muted/30 rounded-lg border">
               <Select
                 value={slot.day}
                 onValueChange={(value) =>
