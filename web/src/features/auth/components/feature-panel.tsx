@@ -52,7 +52,7 @@ export default function FeaturePanelWithAnimation() {
 
   return (
     <div className="relative h-full bg-gradient-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 pointer-events-none">
         <Motion3DBackground />
       </div>
 
@@ -131,14 +131,6 @@ export default function FeaturePanelWithAnimation() {
                     >
                       {features[currentFeature].name}
                     </motion.h3>
-                    {/* <motion.span
-                      className="text-sm font-medium text-white bg-primary px-3 py-1 rounded-full"
-                      initial={{ opacity: 0, scale: 0.8 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      transition={{ duration: 0.4, delay: 0.4, type: "spring" }}
-                    >
-                      {features[currentFeature].stats}
-                    </motion.span> */}
                   </div>
                   <motion.p
                     className="text-muted-foreground text-pretty"
@@ -226,30 +218,6 @@ export default function FeaturePanelWithAnimation() {
           </AnimatePresence>
         </div>
 
-        {/* <motion.div
-          className="grid grid-cols-3 gap-6"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.8, staggerChildren: 0.1 }}
-        >
-          {[
-            { value: "2,500+", label: "UTHM Students" },
-            { value: "99.9%", label: "Success Rate" },
-            { value: "24/7", label: "AI Matching" },
-          ].map((stat, index) => (
-            <motion.div
-              key={index}
-              className="text-center"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.4, delay: 0.9 + index * 0.1 }}
-              whileHover={{ scale: 1.05, y: -2 }}
-            >
-              <div className="text-2xl font-bold text-foreground">{stat.value}</div>
-              <div className="text-sm text-muted-foreground">{stat.label}</div>
-            </motion.div>
-          ))}
-        </motion.div> */}
       </div>
     </div>
   );
@@ -257,8 +225,9 @@ export default function FeaturePanelWithAnimation() {
 export function Motion3DBackground() {
   return (
     <>
+      {/*Fixed the ghost click prevenetor*/}
       <motion.div
-        className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl"
+        className="absolute top-20 left-10 w-32 h-32 bg-primary/10 rounded-full blur-xl pointer-events-none"
         animate={{
           scale: [1, 1.2, 1],
           opacity: [0.3, 0.6, 0.3],
@@ -272,7 +241,7 @@ export function Motion3DBackground() {
         }}
       />
       <motion.div
-        className="absolute bottom-32 right-16 w-24 h-24 bg-accent/20 rounded-full blur-lg"
+        className="absolute bottom-32 right-16 w-24 h-24 bg-accent/20 rounded-full blur-lg pointer-events-none"
         animate={{
           y: [0, -20, 0],
           scale: [1, 1.1, 1],
@@ -286,7 +255,7 @@ export function Motion3DBackground() {
         }}
       />
       <motion.div
-        className="absolute top-1/2 left-1/4 w-16 h-16 bg-muted/30 rounded-full blur-md"
+        className="absolute top-1/2 left-1/4 w-16 h-16 bg-muted/30 rounded-full blur-md pointer-events-none"
         animate={{
           opacity: [0.2, 0.5, 0.2],
           scale: [0.8, 1.2, 0.8],
