@@ -447,8 +447,8 @@ export default function OnboardingForm() {
                   // Changed: flex-1 for safe width
                   className="flex items-center justify-center space-x-2 flex-1 min-w-0"
                 >
-                  <span>Continue</span>
                   <ChevronRight className="w-4 h-4" />
+                  <span>Continue</span>
                 </Button>
               ) : (
                 // Changed: No nested form here, just the submit button
