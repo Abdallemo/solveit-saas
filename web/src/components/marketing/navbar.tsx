@@ -28,6 +28,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { ModeToggle } from "../toggle";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Skeleton } from "../ui/skeleton";
+import Logo from "./logo";
 export default function Navbar() {
   const { user, state: isLoading } = useCurrentUser();
 
@@ -64,9 +65,9 @@ export default function Navbar() {
   return (
     <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 flex justify-between px-2 rounded-lg">
       <div className="container flex h-14 max-w-screen-2xl items-center">
-        <Link href="/" className="mr-6 flex items-center space-x-2 shrink-0">
-          <span className="font-bold">SolveIt</span>
-        </Link>
+        <div className="mr-6">
+          <Logo />
+        </div>
 
         <NavigationMenu className="flex-1 hidden md:flex">
           <NavigationMenuList>
