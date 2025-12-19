@@ -19,14 +19,14 @@ export const metadata: Metadata = {
   openGraph: {
     title: "SolveIt - Student Task & Mentoring Job Board",
     description:
-      "Don't just find a job—solve a problem. Join the peer-to-peer platform for academic collaboration and expert mentoring.",
+      "The AI-powered marketplace for student tasks and mentoring. Solve problems, earn reputation, and grow.",
     url: env.NEXTAUTH_URL,
     siteName: "SolveIt",
-    locale: "en_US",
+    locale: "en_MY",
     type: "website",
     images: [
       {
-        url: "/og-v1.png",
+        url: "/og-v1compressed.jpg",
         alt: "SolveIt - Peer-to-Peer Academic Solutions",
         width: 1200,
         height: 630,
@@ -37,7 +37,7 @@ export const metadata: Metadata = {
   twitter: {
     card: "summary_large_image",
     title: "SolveIt - Peer-to-Peer Academic Solutions",
-    images: ["/og-v1.png"],
+    images: ["/og-v1compressed.jpg"],
     description:
       "The AI-powered marketplace for student tasks and mentoring. Solve problems, earn reputation, and grow.",
   },
