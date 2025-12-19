@@ -31,7 +31,7 @@ This document tracks SolveIt’s progress. It distinguishes **core Functional/Us
 - [x] **FR-AM-2**: Admin can promote/demote to Moderator.
 - [x] **FR-AM-3**: Admin can soft-ban/suspend accounts.
 - [x] **FR-AM-4**: Admin can view all tasks & statuses.
-- [ ] ⏳ **FR-AM-5**: Moderators can view/manage flagged/reported tasks (basic stub present).
+- [ ] **FR-AM-5**: Moderators can view/manage flagged/reported tasks (basic stub present).
 
 ### A.3 Escrow & Refunds
 
