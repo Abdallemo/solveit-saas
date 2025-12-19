@@ -5,7 +5,6 @@ This document tracks SolveIt’s progress. It distinguishes **core Functional/Us
 **Status Legend**
 
 - [x] Done
-- [ ] ⏳ Partial / In progress
 - [ ] Not started
 
 ---
@@ -106,45 +105,21 @@ This document tracks SolveIt’s progress. It distinguishes **core Functional/Us
 
 ---
 
-## C) Additional Enhancements (My Add-Ons)
-
-> These are **not** required by the FYP spec; they’re extra polish/engineering work.
-
 ### C.1 System Monitoring & DX
 
 - [x] Winston logging integration.
-- [x] ⏳ Real-time error streaming API to Admin (≈90% complete).
+- [x] Real-time error streaming API to Admin 
 - [x] Auto-save to draft for task posting.
 - [x] Full payment status handling (e.g., `hold`, `released`, timeout logic).
 
 ### C.2 Advanced Viewers & Tools
 
 - [x] Monaco editor integration (code viewer/editor).
-- [ ] PDF viewer.
-- [ ] 3D model viewer.
+- [x] PDF viewer.
+- [c] 3D model viewer.
 
 ### C.3 AI & Matching
 
-- [x] AI task categorization & skill matching ( scope).
+- [x] AI task categorization 
 - [x] AI content moderation rule set + configurable thresholds.
 
-### C.4 Comms & UX
-
-- [x] Session logging/history for mentoring.
-- [x] Call quality stats & reconnection logic.
-- [x] Nice-to-have: email notifications alongside in-app.
-
----
-
-## D) Snapshot Summary
-
-- **Done:** Many PSM cores — Auth, Posting, Escrow (hold + auto-release), Workspace, Solver Dashboard, Subscriptions, most Admin basics, real-time notifications.
-- **Partial:** Refund workflow (user request + hold done; mod decision UI/flow pending), Dispute handling, Admin monitoring/health, Error streaming (≈90%), Moderator tooling stubs.
-- **Not Started:** Mentoring (chat/video), AI features (categorization/moderation/mentoring), Analytics reports, Admin subscription refunds/cancellations, full moderator refund decisions.
-
----
-
-## E) Notes
-
-- Mentoring (chat + video) and OpenAI integrations are ** priorities**; once done, you’ll have ample time to add Monaco/PDF/3D viewers and polish.
-- Keep this file in the repo (e.g., `docs/progress.md`) and update checkboxes as you ship features.
