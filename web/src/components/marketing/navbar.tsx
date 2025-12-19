@@ -214,7 +214,7 @@ export default function Navbar() {
               </Link>
 
               <Link
-                href="/faq"
+                href="/#faq"
                 className="block py-1 text-sm rounded hover:bg-accent"
               >
                 FAQ
