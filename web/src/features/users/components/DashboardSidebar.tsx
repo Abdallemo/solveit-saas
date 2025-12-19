@@ -35,6 +35,7 @@ import ProfileSkeleton from "@/components/profile-loading-skeleton";
 import { UserRole } from "@/features/users/server/user-types";
 import { NavSecondary } from "./NavSecondary";
 import { NavUser } from "./User_nav_bar";
+import Logo from "@/components/marketing/logo";
 
 const roleMenuMap: Record<UserRole, MenuItem[]> = {
   POSTER: MenuItemsPoster,
@@ -89,12 +90,8 @@ export default function DashboardSidebar({ user }: { user: User }) {
           <SidebarMenuItem>
             <SidebarMenuButton size="lg" asChild>
               <Link href="/">
-                <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
-                  <GalleryVerticalEnd className="size-4" />
-                </div>
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span className="font-medium">Solveit</span>
-                  <span className="">v1.0.0</span>
+                  <Logo link={false} />
                 </div>
               </Link>
             </SidebarMenuButton>
