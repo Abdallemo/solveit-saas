@@ -6,8 +6,16 @@ import { User } from "@/features/users/server/user-types";
 import { TaskNotFoundError } from "@/lib/Errors";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
-import PostingEditor from "../richTextEdito/BlogTiptap";
-
+//import PostingEditor from "../richTextEdito/BlogTiptap";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 export default function SolverTaskPageComps({
   task,
   currentUser,

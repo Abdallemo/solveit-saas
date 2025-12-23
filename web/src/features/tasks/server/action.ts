@@ -297,7 +297,7 @@ export async function createTaksPaymentCheckoutSession(values: {
         draftTaskId: draftTaskId,
       },
       cancel_url: `${env.NEXTAUTH_URL}/dashboard/poster/new-task?cancel=true`,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/your-tasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
+      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/your-tasks/?id=${draftTaskId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
         payment_method_save: "enabled",

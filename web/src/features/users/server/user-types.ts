@@ -93,3 +93,14 @@ export const blogPostSchema = z.object({
 
 export type BlogPostFormData = z.infer<typeof blogPostSchema>;
 export type BlogsWithUser = Awaited<ReturnType<typeof getAllBlogs>>;
+
+export type UserMetadata = {
+  stripeAccountLinked: boolean;
+  onboardingCompleted: boolean;
+  agreedOnTerms: boolean;
+};
+export const defaultUserMetadata: UserMetadata = {
+  agreedOnTerms: false,
+  onboardingCompleted: false,
+  stripeAccountLinked: false,
+};

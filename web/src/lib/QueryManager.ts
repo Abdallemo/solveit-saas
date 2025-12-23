@@ -14,7 +14,7 @@ class QueryParamManager {
 
   private constructor() {
     this.params = new URLSearchParams(
-      typeof window !== "undefined" ? window.location.search : ""
+      typeof window !== "undefined" ? window.location.search : "",
     );
     if (typeof window !== "undefined") this.startListening();
   }

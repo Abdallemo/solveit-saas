@@ -4,7 +4,16 @@ import { TaskNotFoundError } from "@/lib/Errors";
 import { Loader2 } from "lucide-react";
 import { Suspense } from "react";
 import { PosterTaskReturn } from "../server/task-types";
-import PostingEditor from "./richTextEdito/BlogTiptap";
+import { Skeleton } from "@/components/ui/skeleton";
+import dynamic from "next/dynamic";
+//import PostingEditor from "./richTextEdito/MainTiptapEditor";
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 
 export default function TaskPageComps({
   task,

@@ -30,7 +30,7 @@ import {
   PosterTasksFiltred,
   SolverAssignedTaskType,
 } from "@/features/tasks/server/task-types";
-import useQueryParam from "@/hooks/useQueryParms";
+import useQueryParam, { useDebouncedQueryParam } from "@/hooks/useQueryParms";
 import { cn, getColorClass } from "@/lib/utils/utils";
 import { debounce } from "lodash";
 import {
@@ -43,18 +43,31 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import TaskLoading from "@/app/dashboard/solver/tasks/loading";
+import TaskLoading, {
+  TaskCardsSkeleton,
+} from "@/app/dashboard/solver/tasks/loading";
 import { User } from "@/features/users/server/user-types";
 import { useQuery } from "@tanstack/react-query";
 import { tasksQuery } from "../client/queries";
 import PaginationControls from "./PaginatedControls";
 import GetStatusBadge from "./taskStatusBadge";
+type TaskViewType = "PosterTasks" | "AllTasks" | "SolverTasks";
 
+const taskViewURLGenetor: Record<
+  TaskViewType,
+  (posterTaskId: string, role: string) => string
+> = {
+  PosterTasks: (posterTaskId, role) =>
+    `/dashboard/${role}/your-tasks/${posterTaskId}`,
+  AllTasks: (posterTaskId, role) => `/dashboard/${role}/tasks/${posterTaskId}`,
+  SolverTasks: (posterTaskId, role) =>
+    `/dashboard/${role}/assigned-tasks/${posterTaskId}`,
+};
 type DisplayComponentProps = {
   filterType: "status" | "category";
   title: string;
   categoryMap: Record<string, string>;
-  type: "PosterTasks" | "AllTasks" | "SolverTasks";
+  type: TaskViewType;
   currentUser: User;
   limit: number;
 };
@@ -75,7 +88,14 @@ export default function DisplayListComponent({
   currentUser,
   limit,
 }: DisplayComponentProps) {
-  const [search, setSearch] = useQueryParam("search", "");
+  //const [search, setSearch] = useState("");
+  const {
+    draft: searchInput,
+    committed: search,
+    setDraft,
+    commit,
+  } = useDebouncedQueryParam("search", "");
+
   const [selectedValue, setSelectedValue] = useQueryParam(filterType, "");
   const [page, setPage] = useQueryParam("page", 1);
   const [open, setOpen] = useState(false);
@@ -94,17 +114,8 @@ export default function DisplayListComponent({
     }),
   );
 
-  const debouncedSetSearch = useMemo(
-    () =>
-      debounce((val: string) => {
-        setSearch(val);
-      }, 500),
-    [setSearch],
-  );
+  const taskLink = {};
 
-  if (isLoading) {
-    return <TaskLoading />;
-  }
   if (error) {
     throw error;
   }
@@ -130,17 +141,16 @@ export default function DisplayListComponent({
   function actionButtoneCheck(
     task: SolverAssignedTaskType | PosterTasksFiltred,
   ) {
+    const href = taskViewURLGenetor[type](
+      task.id,
+      currentUser.role.toLocaleLowerCase(),
+    );
     return (
       <div className="flex gap-2 w-full ">
         {"blockedSolvers" in task ? (
           <>
             <Button variant="outline" size="sm" asChild>
-              <Link
-                className="w-1/2 flex-1"
-                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
-                  task.id
-                }`}
-              >
+              <Link className="w-1/2 flex-1" href={href}>
                 <SquareArrowUpRight className="w-4 h-4 mr-1" />
                 Task Overview
               </Link>
@@ -162,41 +172,25 @@ export default function DisplayListComponent({
               </Link>
             </Button>
           </>
-        ) : task.status === "SUBMITTED" || task.status === "COMPLETED" ? (
+        ) : (
           <>
             <Button size="sm" asChild>
-              <Link
-                className="w-full flex-1"
-                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
-                  task.id
-                }`}
-              >
+              <Link className="w-full flex-1" href={href}>
                 View Task
               </Link>
             </Button>
-            <Button variant="outline" size="sm" asChild>
-              <Link
-                className="w-full flex-1"
-                href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
-                  task.id
-                }/solutions/${task.taskSolution.id}`}
-              >
-                <SquareArrowUpRight className="w-4 h-4 mr-1" />
-                View Solution
-              </Link>
-            </Button>
+            {(task.status === "SUBMITTED" || task.status === "COMPLETED") && (
+              <Button variant="outline" size="sm" asChild>
+                <Link
+                  className="w-full flex-1"
+                  href={`${href}/solutions/${task.taskSolution.id}`}
+                >
+                  <SquareArrowUpRight className="w-4 h-4 mr-1" />
+                  View Solution
+                </Link>
+              </Button>
+            )}
           </>
-        ) : (
-          <Button size="sm" asChild>
-            <Link
-              className="w-full flex-1"
-              href={`/dashboard/${currentUser?.role?.toLocaleLowerCase()}/tasks/${
-                task.id
-              }`}
-            >
-              View Task
-            </Link>
-          </Button>
         )}
       </div>
     );
@@ -277,8 +271,12 @@ export default function DisplayListComponent({
           <Input
             type="text"
             placeholder="Search tasks..."
-            defaultValue={search}
-            onChange={(e) => debouncedSetSearch(e.target.value)}
+            value={searchInput}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDraft(v);
+              commit(v);
+            }}
             className="flex-1"
           />
           <Button type="submit" className="shrink-0">
@@ -356,16 +354,14 @@ export default function DisplayListComponent({
           </Popover>
         </div>
       </div>
-
       {tasks.length > 0 ? (
-        <>
-          <CardsView />
-        </>
+        <CardsView />
       ) : (
         <div className="flex items-center justify-center text-muted-foreground py-24 border rounded-md bg-muted/30">
           No tasks found for this page or search query.
         </div>
       )}
+
       {(hasNext || hasPrevious) && (
         <PaginationControls
           hasNext={hasNext}

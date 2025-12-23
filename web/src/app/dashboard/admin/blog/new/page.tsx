@@ -12,7 +12,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import PostingEditor from "@/features/tasks/components/richTextEdito/BlogTiptap";
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 import { PublishBlogs } from "@/features/users/server/actions";
 import {
   BlogPostFormData,
@@ -26,6 +32,8 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function NewBlogPostPage() {
   const router = useRouter();

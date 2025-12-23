@@ -6,9 +6,7 @@ import { useEffect, useRef } from "react";
 import { toast } from "sonner";
 import { getDraftTask } from "../server/data";
 
-export default function useStripeSessionValidate(
-  prevDraftTask: string
-) {
+export default function useStripeSessionValidate(prevDraftTask: string) {
   const router = useRouter();
   const hasShownToast = useRef(false);
   const { user } = useCurrentUser();
@@ -23,17 +21,15 @@ export default function useStripeSessionValidate(
   });
   useEffect(() => {
     if (isLoadingTsk || hasShownToast.current) {
-      toast.loading("publishing..",{ id: "task-publish" })
       return;
     }
     if (!draftTaskExists) {
       toast.success("Task published successfully!", { id: "task-publish" });
       router.replace(window.location.pathname);
-      hasShownToast.current = true;
     } else if (prevDraftTask && draftTaskExists) {
       toast.error("Unable to publish the task", { id: "task-publish" });
       router.replace(window.location.pathname);
-      hasShownToast.current = true;
     }
+    hasShownToast.current = true;
   }, [router, draftTaskExists, isLoadingTsk, prevDraftTask]);
 }

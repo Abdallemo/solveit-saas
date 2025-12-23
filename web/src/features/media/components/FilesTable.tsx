@@ -39,8 +39,16 @@ import {
 import { useState } from "react";
 import { toast } from "sonner";
 import { FileIconComponent } from "./FileHelpers";
-import MediaPreviewer from "./MediaPreviewer";
+//import MediaPreviewer from "./MediaPreviewer";
 
+import dynamic from "next/dynamic";
+
+const MediaPreviewer = dynamic(
+  () => import("@/features/media/components/MediaPreviewer"),
+  {
+    ssr: false,
+  },
+);
 interface FileData {
   id: string;
   fileName: string;

@@ -1,5 +1,5 @@
 {
-  "id": "e8304983-8ccf-4a7f-9218-da111a458c33",
+  "id": "ffa00de3-bb3a-4d51-8221-a99f54a35c79",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -3023,6 +3023,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"agreedOnTerms\":false,\"onboardingCompleted\":false,\"stripeAccountLinked\":false}'::jsonb"
         }
       },
       "indexes": {
