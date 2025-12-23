@@ -57,7 +57,7 @@ export default function RootLayout({
     <ReactQueryProvider>
       <html lang="en">
         <body className={`${inter.variable} font-sans antialiased `}>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          <ThemeProvider attribute="class" defaultTheme="dark" enableSystem>
             <CookiesProvider>{children}</CookiesProvider>
             <Toaster position="top-center" richColors />
           </ThemeProvider>
