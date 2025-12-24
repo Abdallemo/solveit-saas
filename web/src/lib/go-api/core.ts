@@ -1,4 +1,4 @@
-import { UserRole } from "@/features/users/server/user-types";
+import { UserMetadata, UserRole } from "@/features/users/server/user-types";
 
 const MIN_TTL_SECONDS = 10;
 type jwkPayloadType = {
@@ -13,7 +13,7 @@ type jwkPayloadType = {
   stripeAccountId: string | null;
   stripeAccountLinked: boolean;
   onboardingCompleted: boolean;
-  stripeCustomerId: "cus_TZdagWiIm1jvig";
+  metadata: UserMetadata;
   id: string;
   sub: string;
   exp: number;

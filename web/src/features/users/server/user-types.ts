@@ -12,8 +12,12 @@ function createSelection<T extends Record<string, true>>(selection: T): T {
   return selection;
 }
 
-export type User = Omit<(typeof auth.$Infer.Session)["user"], "role"> & {
+export type User = Omit<
+  (typeof auth.$Infer.Session)["user"],
+  "role" | "metadata"
+> & {
   role: UserRole;
+  metadata: UserMetadata;
 };
 export type Session = Omit<typeof auth.$Infer.Session, "user"> & {
   user: User;
@@ -95,9 +99,9 @@ export type BlogPostFormData = z.infer<typeof blogPostSchema>;
 export type BlogsWithUser = Awaited<ReturnType<typeof getAllBlogs>>;
 
 export type UserMetadata = {
-  stripeAccountLinked: boolean;
-  onboardingCompleted: boolean;
-  agreedOnTerms: boolean;
+  stripeAccountLinked?: boolean;
+  onboardingCompleted?: boolean;
+  agreedOnTerms?: boolean;
 };
 export const defaultUserMetadata: UserMetadata = {
   agreedOnTerms: false,

@@ -315,7 +315,6 @@ export async function getUserById(id: string) {
         ...publicUserColumns,
         stripeAccountId: true,
         stripeCustomerId: true,
-        stripeAccountLinked: true,
       },
     });
     return result;
@@ -330,8 +329,14 @@ export async function UpdateUserField(
   data: PartialUserTableColumns,
 ) {
   const { column, value } = parseDrizzleQuery(UserTable, selector);
+  const updatePayload: any = { ...data };
+  if (updatePayload.metadata) {
+    updatePayload.metadata = sql`${UserTable.metadata} || ${JSON.stringify(
+      updatePayload.metadata,
+    )}::jsonb`;
+  }
   const [_, error] = await to(
-    db.update(UserTable).set(data).where(eq(column, value)),
+    db.update(UserTable).set(updatePayload).where(eq(column, value)),
   );
   if (error) {
     logger.error(
@@ -448,7 +453,7 @@ export async function StripeAccountUpdateHanlder(account: Stripe.Account) {
   if (account.capabilities && account.capabilities.transfers === "active") {
     const error = await UpdateUserField(
       { stripeAccountId: account.id },
-      { stripeAccountLinked: true },
+      { metadata: { stripeAccountLinked: true } },
     );
     logger.info("stripe account is linked");
   }

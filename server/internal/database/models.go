@@ -874,20 +874,18 @@ type TaskFile struct {
 }
 
 type User struct {
-	ID                  uuid.UUID   `json:"id"`
-	Name                string      `json:"name"`
-	Email               string      `json:"email"`
-	Password            pgtype.Text `json:"password"`
-	Role                Role        `json:"role"`
-	StripeCustomerID    pgtype.Text `json:"stripe_customer_id"`
-	StripeAccountID     pgtype.Text `json:"stripe_account_id"`
-	StripeAccountLinked bool        `json:"stripe_account_linked"`
-	OnboardingCompleted bool        `json:"onboarding_completed"`
-	EmailVerified       bool        `json:"emailVerified"`
-	Image               pgtype.Text `json:"image"`
-	CreatedAt           time.Time   `json:"created_at"`
-	UpdatedAt           time.Time   `json:"updated_at"`
-	Metadata            []byte      `json:"metadata"`
+	ID               uuid.UUID   `json:"id"`
+	Name             string      `json:"name"`
+	Email            string      `json:"email"`
+	Password         pgtype.Text `json:"password"`
+	Role             Role        `json:"role"`
+	StripeCustomerID pgtype.Text `json:"stripe_customer_id"`
+	StripeAccountID  pgtype.Text `json:"stripe_account_id"`
+	EmailVerified    bool        `json:"emailVerified"`
+	Image            pgtype.Text `json:"image"`
+	CreatedAt        time.Time   `json:"created_at"`
+	UpdatedAt        time.Time   `json:"updated_at"`
+	Metadata         []byte      `json:"metadata"`
 }
 
 type UserDetail struct {

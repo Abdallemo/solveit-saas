@@ -149,13 +149,10 @@ export async function createCancelSession() {
 }
 
 export async function CreateUserSubSessionPortal() {
-  const { id } = (await getServerUserSession())!;
-  const referer = await getServerReturnUrl();
-  if (id == null) return;
-  const user = await getUserById(id);
-
+  const { user } = await isAuthorized(["POSTER", "SOLVER"]);
   if (user?.stripeCustomerId == null) return;
 
+  const referer = await getServerReturnUrl();
   const portalSession = await stripe.billingPortal.sessions.create({
     customer: user?.stripeCustomerId,
     return_url: referer,

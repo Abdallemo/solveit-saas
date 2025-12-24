@@ -5,9 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github/abdallemo/solveit-saas/internal/user"
+	"github/abdallemo/solveit-saas/internal/utils"
 	"log"
 	"net/http"
 	"os"
+
 	"time"
 
 	"github.com/google/uuid"
@@ -17,7 +20,9 @@ import (
 	"github.com/rs/cors"
 )
 
-const UserIDKey string = "userID"
+type contextKey string
+
+const UserClaim contextKey = "UserClaim"
 
 // MiddlewareFunc is the standard signature for middleware
 type MiddlewareFunc func(http.Handler) http.Handler
@@ -74,13 +79,13 @@ func (m *Middleware) IsAuthorized(next http.Handler) http.Handler {
 			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
 		}
-
-		sub, exists := token.Subject()
-		if !exists {
-			http.Error(w, "token missing subject claim", http.StatusUnauthorized)
+		user, err := utils.ExtractUserClaims(token)
+		if err != nil {
+			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
 		}
-		ctx := context.WithValue(r.Context(), UserIDKey, sub)
+
+		ctx := context.WithValue(r.Context(), UserClaim, user)
 
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
@@ -115,11 +120,11 @@ func (m *Middleware) CreateStack(xs ...MiddlewareFunc) MiddlewareFunc {
 }
 
 func GetUserID(ctx context.Context) (uuid.UUID, error) {
-	id, ok := ctx.Value(UserIDKey).(string)
+	user, ok := ctx.Value(UserClaim).(*user.UserClaims)
 	if !ok {
 		return uuid.UUID{}, fmt.Errorf("User not authenticated")
 	}
-	userUUID, err := uuid.Parse(id)
+	userUUID, err := uuid.Parse(user.ID)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("Invalid user ID format")
 	}

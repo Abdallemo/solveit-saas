@@ -118,12 +118,6 @@ export const UserTable = pgTable(
     role: UserRole("role").default("POSTER").notNull().$type<UserRoleType>(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
-    stripeAccountLinked: boolean("stripe_account_linked")
-      .notNull()
-      .default(false),
-    onboardingCompleted: boolean("onboarding_completed")
-      .notNull()
-      .default(false),
     emailVerified: boolean("emailVerified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {

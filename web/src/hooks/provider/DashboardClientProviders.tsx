@@ -18,8 +18,13 @@ import NotificationDropDown, {
 } from "@/features/notifications/components/notificationDropDown";
 import DashboardSidebar from "@/features/users/components/DashboardSidebar";
 import { User } from "@/features/users/server/user-types";
-import { Suspense } from "react";
+import { Suspense, useState } from "react";
 import { useIsMounted } from "../useIsMounted";
+import { TermsOfServiceDialog } from "@/components/marketing/terms-of-service-dialog";
+import { useMutation } from "@tanstack/react-query";
+import { UpdateUserField } from "@/features/users/server/actions";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const dbFlags = {
   monacoEditor: false,
@@ -47,7 +52,20 @@ export function DashboardClientProviders({
   serverProps,
 }: DashboardClientProvidersProps) {
   const isMounted = useIsMounted();
+
   const { user, allNotifications } = serverProps;
+  const router = useRouter();
+  const { mutateAsync: handleAccept, isPending } = useMutation({
+    mutationFn: async () => {
+      await UpdateUserField(
+        { id: user.id },
+        { metadata: { agreedOnTerms: true } },
+      );
+    },
+    onSuccess: () => {
+      router.refresh();
+    },
+  });
 
   const sidebarStyles = {
     "--sidebar-width": "calc(var(--spacing) * 72)",
@@ -62,16 +80,27 @@ export function DashboardClientProviders({
       >
         <SidebarProvider defaultOpen={defaultSidebarOpen} style={sidebarStyles}>
           {(user.role === "SOLVER" || user.role === "POSTER") &&
-          !user.onboardingCompleted ? (
+          !user.metadata.onboardingCompleted ? (
+            <>
+              <div className="relative flex flex-col justify-center items-center h-screen w-full bg-linear-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
+                <Motion3DBackground />
+                <OnboardingForm />
+              </div>
+            </>
+          ) : !user.metadata.agreedOnTerms ? (
             <div className="relative flex flex-col justify-center items-center h-screen w-full bg-linear-to-br from-primary/5 via-background to-accent/10 overflow-hidden">
               <Motion3DBackground />
-              <OnboardingForm />
+              <TermsOfServiceDialog
+                onAccept={handleAccept}
+                isPending={isPending}
+              />
             </div>
           ) : (
-            <div className="flex h-screen w-full">
+            <div className="flex h-screen w-screen">
               <Suspense fallback={<AppSidebarSkeleton />}>
                 <DashboardSidebar user={user} />
               </Suspense>
+
               <div className="flex flex-col flex-1 ">
                 <header className="sticky top-0 z-50 bg-background/95 backdrop-blur supports-backdrop-filter:bg-background/60 border-b">
                   <div className=" flex h-14 items-center px-4 sm:px-6 justify-between">
