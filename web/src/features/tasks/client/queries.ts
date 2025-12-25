@@ -36,7 +36,6 @@ export const tasksQuery = (params: tasksQueryParams) =>
     queryKey: [
       "tasks",
       {
-        title: params.title,
         search: params.search,
         selectedValue: params.selectedValue,
         type: params.type,

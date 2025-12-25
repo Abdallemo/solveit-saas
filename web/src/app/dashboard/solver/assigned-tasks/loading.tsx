@@ -1,7 +1,5 @@
-import TaskLoading from "../tasks/loading";
+import TasksLoading from "../tasks/loading";
 
 export default function Loading() {
-  return (
-    <TaskLoading />
-  )
+  return <TasksLoading />;
 }

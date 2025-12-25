@@ -1,5 +1,5 @@
-import TaskLoading from "@/app/dashboard/solver/tasks/loading";
+import TasksLoading from "@/app/dashboard/solver/tasks/loading";
 
 export default function Loading() {
-  return <TaskLoading />;
+  return <TasksLoading />;
 }

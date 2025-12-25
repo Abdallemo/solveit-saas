@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function TaskLoading() {
+export default function TasksLoading() {
   return (
     <div className="flex flex-col px-6 py-8 gap-4 overflow-x-hidden w-full h-full">
       <div className="flex items-center justify-between">
@@ -23,7 +23,6 @@ export default function TaskLoading() {
         <Skeleton className="h-10 w-[200px]" />
       </div>
 
-      {/* Use the cards skeleton here */}
       <div className="h-[670px] max-h-[670px]">
         <TaskCardsSkeleton />
       </div>

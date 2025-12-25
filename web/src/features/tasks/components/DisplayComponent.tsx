@@ -43,7 +43,7 @@ import {
 import Link from "next/link";
 import { useMemo, useState } from "react";
 
-import TaskLoading, {
+import TasksLoading, {
   TaskCardsSkeleton,
 } from "@/app/dashboard/solver/tasks/loading";
 import { User } from "@/features/users/server/user-types";
