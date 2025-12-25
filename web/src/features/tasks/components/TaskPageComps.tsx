@@ -22,7 +22,7 @@ export default function TaskPageComps({
 }) {
   if (!task) throw new TaskNotFoundError();
   return (
-    <main className="flex flex-col w-full h-full gap-5 items-center p-10 ">
+    <main className="grid grid-cols-1 w-full h-full gap-5 items-center p-10 ">
       <div className="w-full flex flex-col ">
         <Suspense fallback={<Loader2 className="animate-spin w-2" />}>
           <PostingEditor

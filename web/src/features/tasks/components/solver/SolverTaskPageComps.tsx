@@ -27,7 +27,7 @@ export default function SolverTaskPageComps({
 }) {
   if (!task) throw new TaskNotFoundError();
   return (
-    <main className="flex flex-col w-full h-full gap-5 items-center p-10">
+    <main className="grid grid-cols-1 w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end gap-4">
         {!isBlocked && task.status === "OPEN" && (
           <AssignTaskButton taskId={task.id} userId={currentUser.id!} />
