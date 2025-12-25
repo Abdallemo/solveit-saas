@@ -108,4 +108,4 @@ export const defaultUserMetadata: UserMetadata = {
   onboardingCompleted: false,
   stripeAccountLinked: false,
 };
-export type BlogType = Awaited<ReturnType<typeof getBlogBySlug>>[number];
+export type BlogType = Exclude<Awaited<ReturnType<typeof getBlogBySlug>>, null>;
