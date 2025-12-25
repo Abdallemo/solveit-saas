@@ -12,7 +12,12 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardFooter,
+  CardHeader,
+} from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -303,7 +308,7 @@ export default function SolutionPageComps({
         />
       )}
       <div className="grid grid-cols-1 w-full gap-3 p-4 md:p-8 ">
-        <Card className="mb-6 h-[700px]">
+        <Card className=" mb-6 ">
           <CardHeader>
             <div className="flex items-center justify-between">
               <h2 className="text-2xl font-bold">Solution</h2>
@@ -335,17 +340,18 @@ export default function SolutionPageComps({
               </Suspense>
             </div>
 
-            <div className="flex items-center justify-end w-full px-2 ">
-              {solution.taskSolution.posterId === user?.id &&
-                solution.taskSolution.status !== "COMPLETED" &&
-                !solution.taskSolution.taskRefund && (
-                  <div className="flex items-center justify-center space-x-4 my-6 p-4 bg-background/10 rounded-lg ">
-                    <AcceptSolutionDialog solution={solution} />
-                    <RequestRefundDialog solution={solution} />
-                  </div>
-                )}
-            </div>
+            <div className=" justify-end w-full px-2 "></div>
           </CardContent>
+          <CardFooter className="">
+            {solution.taskSolution.posterId === user?.id &&
+              solution.taskSolution.status !== "COMPLETED" &&
+              !solution.taskSolution.taskRefund && (
+                <div className="w-full flex items-end justify-end space-x-4 my-6 p-4  ">
+                  <AcceptSolutionDialog solution={solution} />
+                  <RequestRefundDialog solution={solution} />
+                </div>
+              )}
+          </CardFooter>
         </Card>
         {solution.solutionFiles.length > 0 && (
           <div className="w-full min-w-0">
