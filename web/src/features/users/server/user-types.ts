@@ -5,7 +5,7 @@ import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
 import { InferInsertModel } from "drizzle-orm";
 import z from "zod";
-import { getAllBlogs } from "./actions";
+import { getAllOwnerBlog, getBlogBySlug } from "./actions";
 export type UserRole = UserRoleType;
 
 function createSelection<T extends Record<string, true>>(selection: T): T {
@@ -96,7 +96,7 @@ export const blogPostSchema = z.object({
 });
 
 export type BlogPostFormData = z.infer<typeof blogPostSchema>;
-export type BlogsWithUser = Awaited<ReturnType<typeof getAllBlogs>>;
+export type BlogsWithUser = Awaited<ReturnType<typeof getAllOwnerBlog>>;
 
 export type UserMetadata = {
   stripeAccountLinked?: boolean;
@@ -108,3 +108,4 @@ export const defaultUserMetadata: UserMetadata = {
   onboardingCompleted: false,
   stripeAccountLinked: false,
 };
+export type BlogType = Awaited<ReturnType<typeof getBlogBySlug>>[number];

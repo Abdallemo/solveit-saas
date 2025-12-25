@@ -9,6 +9,7 @@ import { revalidateTag } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
+import { hasAccess } from "./auth-uitls";
 
 //* session
 export async function getServerUserSession() {
@@ -114,7 +115,7 @@ export async function isAuthorized(
     return handleFailure(`/${userId}/account-deactivated`);
   }
 
-  if (!whichRole.includes(userRole)) {
+  if (!hasAccess(userRole, whichRole)) {
     console.log("redirecting user");
     return handleFailure(`/dashboard/${userRole.toLocaleLowerCase()}`);
   }

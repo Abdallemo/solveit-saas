@@ -41,6 +41,11 @@ Respond only in JSON format:
 - "description" ≤10 words
 - "price": (number type only)(choose fairly: 10-20 for simple, 20-30 for medium, 30-40 for complex,more complex etc..)
 - "category": EXACTLY from [%s], else ""`
+	AutoSuggestionBlogPrompt = `Given content , output JSON with:
+- "title" ≤7 words
+- "description" ≤15 words
+- "readTime": estimated read time of blog in min (e.g 10) minimum number is 1
+- "category": accurate catagory for the blog`
 )
 
 type ResContnet struct {
@@ -58,6 +63,12 @@ type ResAutoSuggest struct {
 	Category   string  `json:"category"`
 	Price      float64 `json:"price"`
 }
+type ResBlogAutoSuggest struct {
+	Title      string  `json:"title"`
+	Descripton string  `json:"description"`
+	Category   string  `json:"category"`
+	ReadTime   float64 `json:"readTime"`
+}
 
 func (s *Server) hanleOpenAi(w http.ResponseWriter, r *http.Request) {
 	content := ReqContent{}
@@ -66,12 +77,14 @@ func (s *Server) hanleOpenAi(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	ctx := r.Context()
-	task := r.URL.Query().Get("task")
-	switch task {
+	scope := r.URL.Query().Get("scope")
+	switch scope {
 	case "moderation":
 		handleModeration(s, ctx, w, &content)
 	case "autosuggestion":
 		handleAutoSuggestion(s, ctx, w, &content)
+	case "autosuggestion_blog":
+		handleBlogAutoSuggestion(s, ctx, w, &content)
 	default:
 		http.Error(w, "Invalid parameter: task not recognized", http.StatusBadRequest)
 		return
@@ -147,6 +160,27 @@ func handleAutoSuggestion(s *Server, ctx context.Context, w http.ResponseWriter,
 	s.SetCachedValue(ctx, cacheKey, resAutoSuggest, 24*time.Hour)
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(resAutoSuggest)
+}
+
+func handleBlogAutoSuggestion(s *Server, ctx context.Context, w http.ResponseWriter, content *ReqContent) {
+	resBlogAutoSuggest := ResBlogAutoSuggest{}
+	cacheKey := utils.MakeCacheKey("openai:autosuggestion_blog:", content.Content)
+
+	if s.GetCachedValue(ctx, cacheKey, &resBlogAutoSuggest) {
+		log.Println("using cached version for blog autosuggestion")
+		w.Header().Set("Content-Type", "application/json")
+		json.NewEncoder(w).Encode(resBlogAutoSuggest)
+		return
+	}
+
+	if err := NewOpenAiReq(ctx, s.openaiClient, AutoSuggestionBlogPrompt, content.Content, &resBlogAutoSuggest); err != nil {
+		log.Println("AI request failed:", err)
+		http.Error(w, "AI request failed, please try again later", http.StatusInternalServerError)
+	}
+	fmt.Printf("%+v\n", resBlogAutoSuggest)
+	s.SetCachedValue(ctx, cacheKey, resBlogAutoSuggest, 24*time.Hour)
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(resBlogAutoSuggest)
 }
 
 func NewOpenAiReq(ctx context.Context, openaiClient *openai.Client, prompt, content string, data any) error {

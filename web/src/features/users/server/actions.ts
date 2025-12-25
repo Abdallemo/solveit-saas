@@ -18,6 +18,7 @@ import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import {
   BlogPostFormData,
   blogPostSchema,
+  BlogType,
   PartialUserDetailsTableColumns,
   PartialUserTableColumns,
   publicUserColumns,
@@ -515,7 +516,7 @@ export async function PublishBlogs(
     error: null,
   };
 }
-export async function getAllBlogs() {
+export async function getAllOwnerBlog() {
   const { user } = await isAuthorized(["ADMIN", "MODERATOR"]);
   const [blogs, error] = await to(
     db.query.BlogTable.findMany({
@@ -528,6 +529,38 @@ export async function getAllBlogs() {
     }),
   );
   if (error) {
+    return [];
+  }
+  return blogs;
+}
+export async function getBlogBySlug(url: string) {
+  const [blog, error] = await to(
+    db.query.BlogTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.url, url),
+      with: {
+        blogAuthor: {
+          columns: publicUserColumns,
+        },
+      },
+    }),
+  );
+  if (error || !blog) {
+    return null;
+  }
+  return blog;
+}
+export async function getAllBlogs() {
+  const [blogs, error] = await to(
+    db.query.BlogTable.findMany({
+      orderBy: (tb, fn) => fn.desc(tb.publishedAt),
+      with: {
+        blogAuthor: {
+          columns: publicUserColumns,
+        },
+      },
+    }),
+  );
+  if (error || !blogs) {
     return [];
   }
   return blogs;

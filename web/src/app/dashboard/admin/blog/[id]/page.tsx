@@ -1,4 +1,3 @@
-import { BlogContentViewer } from "@/components/marketing/viewer";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -18,10 +17,10 @@ const PostingEditor = dynamic(
 export default async function BlogPostPage({
   params,
 }: {
-  params: Promise<{ slug: string }>;
+  params: Promise<{ id: string }>;
 }) {
-  const { slug } = await params;
-  const blog = await getBlogBySlug(slug);
+  const { id } = await params;
+  const blog = await getBlogBySlug(id);
 
   if (!blog) {
     notFound();
@@ -29,7 +28,7 @@ export default async function BlogPostPage({
 
   return (
     <div className="">
-      <div className="container mx-auto max-w-4xl px-6 py-8">
+      <div className="container mx-auto max-w-5xl px-6 py-4">
         <Link href="/blog">
           <Button variant="ghost" size="sm" className="gap-2 -ml-2">
             <ArrowLeft className="w-4 h-4" />
@@ -38,8 +37,8 @@ export default async function BlogPostPage({
         </Link>
       </div>
 
-      <article className="container mx-auto max-w-4xl px-6 ">
-        <div className="flex items-center gap-3  text-sm text-muted-foreground">
+      <article className="container mx-auto max-w-5xl px-6 pb-24">
+        <div className="flex items-center gap-3 mb-6 text-sm text-muted-foreground">
           <Badge variant="secondary">{blog.category}</Badge>
           <time dateTime={blog.publishedAt.toLocaleDateString()}>
             {new Date(blog.publishedAt).toLocaleDateString(undefined, {
@@ -72,7 +71,7 @@ export default async function BlogPostPage({
           content={blog.content}
           showMenuBar={false}
           editorOptions={{ editable: false }}
-          className="border-0"
+          className="border-0 "
         />
       </article>
     </div>

@@ -65,6 +65,8 @@ func (m *Middleware) IsAuthorized(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		keyset, err := m.fetcher.Fetch(r.Context(), m.jwksURL)
 		if err != nil {
+			log.Println(err)
+
 			log.Printf("failed to fetch JWKS: %v", err)
 			http.Error(w, "auth system unavailable", http.StatusServiceUnavailable)
 			return
@@ -76,11 +78,14 @@ func (m *Middleware) IsAuthorized(next http.Handler) http.Handler {
 			jwt.WithValidate(true),
 		)
 		if err != nil {
+			log.Println(err)
 			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
 		}
 		user, err := utils.ExtractUserClaims(token)
 		if err != nil {
+			log.Println(err)
+
 			http.Error(w, "invalid or expired token", http.StatusUnauthorized)
 			return
 		}

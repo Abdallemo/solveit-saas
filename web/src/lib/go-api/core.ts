@@ -91,16 +91,28 @@ export class GoApiClient {
 
       switch (responseType) {
         case "json":
-          data = await response.json().catch(() => null);
+          data = await response.json().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         case "text":
-          data = await response.text().catch(() => null);
+          data = await response.text().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         case "blob":
-          data = await response.blob().catch(() => null);
+          data = await response.blob().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         default:
-          data = await response.json().catch(() => null);
+          data = await response.json().catch((e) => {
+            console.log(e);
+            return null;
+          });
       }
 
       if (!response.ok) {

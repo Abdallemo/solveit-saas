@@ -125,11 +125,17 @@ export async function getAllAiRules() {
     logger.error("failed to fetch");
   }
 }
-const autoSuggestResSchema = z.object({
+const autoSuggestTaskResSchema = z.object({
   title: z.string(),
   description: z.string(),
   category: z.string(),
   price: z.number(),
+});
+const autoSuggestBlogResSchema = z.object({
+  title: z.string(),
+  description: z.string(),
+  category: z.string(),
+  readTime: z.number(),
 });
 const openaiResSchema = z.object({
   violatesRules: z.boolean(),
@@ -155,7 +161,7 @@ export async function validateContentWithAi(
     | { content: string; adminMode: false },
 ): Promise<openaiResAdminType | openaiResUserType> {
   try {
-    const res = await goServerApi.request("/openai?task=moderation", {
+    const res = await goServerApi.request("/openai?scope=moderation", {
       method: "POST",
       body: JSON.stringify(fields),
     });
@@ -180,9 +186,9 @@ export async function validateContentWithAi(
     throw error;
   }
 }
-export async function autoSuggestWithAi(fields: { content: string }) {
+export async function autoSuggestTasWithAi(fields: { content: string }) {
   try {
-    const res = await goServerApi.request("/openai?task=autosuggestion", {
+    const res = await goServerApi.request("/openai?scope=autosuggestion", {
       method: "POST",
 
       body: JSON.stringify(fields),
@@ -191,7 +197,33 @@ export async function autoSuggestWithAi(fields: { content: string }) {
     if (res.error) {
       throw new Error("unable to fetch: " + res.error);
     }
-    const validatedData = autoSuggestResSchema.safeParse(res.data);
+    const validatedData = autoSuggestTaskResSchema.safeParse(res.data);
+    if (!validatedData.success) {
+      logger.error("Invalid API response schema. from go service");
+      throw new Error("Invalid API response schema.");
+    }
+    return validatedData.data;
+  } catch (error) {
+    logger.error("failed to fetch goapi openai");
+    throw error;
+  }
+}
+
+export async function autoSuggestBlogWithAi(fields: { content: string }) {
+  try {
+    console.log("context :", fields.content);
+    const res = await goServerApi.request("/openai?scope=autosuggestion_blog", {
+      method: "POST",
+
+      body: JSON.stringify(fields),
+    });
+
+    if (res.error) {
+      console.log(res.error);
+      throw new Error("unable to fetch: " + res.error);
+    }
+    console.log(res.data);
+    const validatedData = autoSuggestBlogResSchema.safeParse(res.data);
     if (!validatedData.success) {
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");

@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/form";
 import { NewuseTask } from "@/contexts/TaskContext";
 import {
-  autoSuggestWithAi,
+  autoSuggestTasWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
 //import MediaPreviewer from "@/features/media/components/MediaPreviewer";
@@ -107,7 +107,7 @@ export default function TaskCreationPage({
   });
   const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
     {
-      mutationFn: autoSuggestWithAi,
+      mutationFn: autoSuggestTasWithAi,
       onSuccess: (d) => {},
       onError: (er) => {
         toast.error(er.message);

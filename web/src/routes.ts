@@ -6,7 +6,7 @@ export const publicRoutes = [
   "/",
   "/about-us",
   "/contact-us",
-  "/blog",
+  "/blog/:path*",
   "/privacy-policy",
   "/terms-of-service",
 ];
@@ -25,13 +25,9 @@ export const authRoutes = [
  * these dont require authenitcaton but authorization
  */
 export const publicApiRoutes = [
-  "/api/auth",
-  "/api/webhooks/stripe/connect",
-  "/api/webhooks/stripe/platform",
-  "/api/webhooks/stripe/taskPayment",
+  "/api/auth/:path*",
+  "/api/webhooks/stripe/:path*",
   "/api/logs",
   "/api/auth/jwks",
   // "/api/webrtc",
 ];
-
-export const DEFAULT_LOGIN_REDIRECT = "/dashboard";

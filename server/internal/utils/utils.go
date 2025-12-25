@@ -4,6 +4,7 @@ package utils
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"github/abdallemo/solveit-saas/internal/user"
 	"log"
@@ -66,7 +67,19 @@ func ExtractUserClaims(t jwt.Token) (*user.UserClaims, error) {
 	_ = t.Get("stripeCustomerId", &claims.StripeCustomerID)
 
 	if err := t.Get("metadata", &claims.Metadata); err != nil {
-		return nil, errors.New("missing or invalid metadata claim")
+		var rawMetadata map[string]any
+		if err := t.Get("metadata", &rawMetadata); err != nil {
+			return nil, errors.New("missing or invalid metadata claim")
+		}
+
+		jsonBytes, err := json.Marshal(rawMetadata)
+		if err != nil {
+			return nil, errors.New("failed to marshal metadata")
+		}
+
+		if err := json.Unmarshal(jsonBytes, &claims.Metadata); err != nil {
+			return nil, errors.New("failed to unmarshal metadata into struct")
+		}
 	}
 
 	return claims, nil
