@@ -9,6 +9,9 @@ import { Suspense } from "react";
 //import PostingEditor from "../richTextEdito/BlogTiptap";
 import { Skeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
+import { useQuery } from "@tanstack/react-query";
+import { getTasksbyIdWithFiles } from "../../server/data";
+import TaskLoading from "@/app/dashboard/solver/tasks/[id]/loading";
 const PostingEditor = dynamic(
   () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
   {
@@ -17,15 +20,20 @@ const PostingEditor = dynamic(
   },
 );
 export default function SolverTaskPageComps({
-  task,
   currentUser,
-  isBlocked,
+  id,
 }: {
-  task: SolverTaskReturn | null;
   currentUser: User;
-  isBlocked: boolean;
+  id: string;
 }) {
+  const { data: task, isPending } = useQuery({
+    queryKey: ["task", id],
+    queryFn: async () => await getTasksbyIdWithFiles(id, "SOLVER"),
+  });
+  if (isPending) return <TaskLoading />;
+
   if (!task) throw new TaskNotFoundError();
+  const isBlocked = task ? (task.blockedSolvers ? true : false) : false;
   return (
     <main className="grid grid-cols-1 w-full h-full gap-5 items-center p-10">
       <div className="w-full flex flex-col items-end gap-4">

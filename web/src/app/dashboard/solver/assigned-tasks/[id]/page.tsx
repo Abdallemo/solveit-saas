@@ -7,16 +7,7 @@ export default async function Page({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const { session } = await isAuthorized(["SOLVER"]);
+  const { user } = await isAuthorized(["SOLVER"]);
 
-  const task = await getTasksbyIdWithFiles(id, "SOLVER");
-  const isBlocked = task ? (task.blockedSolvers ? true : false) : false;
-
-  return (
-    <SolverTaskPageComps
-      currentUser={session.user}
-      task={task}
-      isBlocked={isBlocked}
-    />
-  );
+  return <SolverTaskPageComps currentUser={user} id={id} />;
 }
