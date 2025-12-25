@@ -257,7 +257,7 @@ export function MonacoEditor({
 
   return (
     <div
-      className={`flex h-full border rounded-lg overflow-hidden bg-background ${className}`}
+      className={`flex h-full border rounded-lg overflow-scroll bg-background ${className}`}
     >
       {sidebar && (
         <div className="w-64 bg-muted/30 border-r flex flex-col">

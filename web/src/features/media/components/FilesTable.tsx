@@ -137,95 +137,99 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
   }
 
   return (
-    <div className="rounded-md border bg-background/10 w-full">
-      <Table className="bg-card">
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-[20px]"></TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Type</TableHead>
-            <TableHead>Size</TableHead>
-            <TableHead>Uploaded</TableHead>
-            <TableHead className="w-[20px]"></TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {files.map((file) => (
-            <TableRow key={file.id}>
-              <TableCell>
-                <FileIconComponent
-                  extension={
-                    file.fileName?.split(".").at(-1) as supportedExtentionTypes
-                  }
-                  className="h-4 w-4 text-primary flex-shrink-0"
-                />
-              </TableCell>
-              <TableCell>
-                <div className="font-medium">{file.fileName}</div>
-              </TableCell>
-              <TableCell>
-                <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sidebar-foreground text-muted">
-                  {file.fileType}
-                </span>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {formatFileSize(file.fileSize)}
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {file.uploadedAt
-                  ? formatDistanceToNow(new Date(file.uploadedAt), {
-                      addSuffix: true,
-                    })
-                  : "Unknown"}
-              </TableCell>
-              <TableCell>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0">
-                      <span className="sr-only">Open menu</span>
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem
-                      onClick={() => handleFileAction("view", file)}
-                    >
-                      <Eye className="mr-2 h-4 w-4" />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleFileAction("download", file)}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => handleFileAction("copy", file)}
-                    >
-                      <Copy className="mr-2 h-4 w-4" />
-                      Copy Link
-                    </DropdownMenuItem>
-                    {scope &&
-                      scopeType === "task" &&
-                      currentUser.user?.id === scope.posterId && (
-                        <>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleFileAction("delete", file)}
-                            className="text-red-600"
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
-                          </DropdownMenuItem>
-                        </>
-                      )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </TableCell>
+    <div className="flex flex-col rounded-md border w-full max-w-full overflow-hidden">
+      <div className="flex-1 w-full overflow-x-auto overflow-y-auto">
+        <Table className="bg-card min-w-full">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[20px] overflow-auto"></TableHead>
+              <TableHead className="whitespace-nowrap">Name</TableHead>
+              <TableHead className="whitespace-nowrap">Type</TableHead>
+              <TableHead className="whitespace-nowrap">Size</TableHead>
+              <TableHead className="whitespace-nowrap">Uploaded</TableHead>
+              <TableHead className="w-[20px] "></TableHead>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+          </TableHeader>
+          <TableBody>
+            {files.map((file) => (
+              <TableRow key={file.id}>
+                <TableCell>
+                  <FileIconComponent
+                    extension={
+                      file.fileName
+                        ?.split(".")
+                        .at(-1) as supportedExtentionTypes
+                    }
+                    className="h-4 w-4 text-primary flex-shrink-0"
+                  />
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <div className="font-medium">{file.fileName}</div>
+                </TableCell>
+                <TableCell className="whitespace-nowrap">
+                  <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-sidebar-foreground text-muted">
+                    {file.fileType}
+                  </span>
+                </TableCell>
+                <TableCell className="text-muted-foreground whitespace-nowrap">
+                  {formatFileSize(file.fileSize)}
+                </TableCell>
+                <TableCell className="text-muted-foreground whitespace-nowrap">
+                  {file.uploadedAt
+                    ? formatDistanceToNow(new Date(file.uploadedAt), {
+                        addSuffix: true,
+                      })
+                    : "Unknown"}
+                </TableCell>
+                <TableCell>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end">
+                      <DropdownMenuItem
+                        onClick={() => handleFileAction("view", file)}
+                      >
+                        <Eye className="mr-2 h-4 w-4" />
+                        View
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleFileAction("download", file)}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => handleFileAction("copy", file)}
+                      >
+                        <Copy className="mr-2 h-4 w-4" />
+                        Copy Link
+                      </DropdownMenuItem>
+                      {scope &&
+                        scopeType === "task" &&
+                        currentUser.user?.id === scope.posterId && (
+                          <>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                              onClick={() => handleFileAction("delete", file)}
+                              className="text-red-600"
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Delete
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
       <MediaPreviewer
         filePreview={filePreview}
         fileRecords={files}

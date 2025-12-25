@@ -26,7 +26,7 @@ const socialLinks = [
 export default function Footer() {
   return (
     <footer className="border-t">
-      <div className="container max-w-screen-xl py-12 md:py-16">
+      <div className="container max-w-7xl py-5 md:py-5">
         <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-5">
           {/* Brand */}
           <div className="lg:col-span-2">

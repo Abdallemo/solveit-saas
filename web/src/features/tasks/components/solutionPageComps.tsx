@@ -288,7 +288,7 @@ export default function SolutionPageComps({
   }
 
   return (
-    <div className="flex w-full h-full bg-background/10">
+    <div className="flex-1 w-full h-full ">
       {solution.taskSolution.posterId === user.id && (
         <FeedbackController
           isSubmiting={isSubmiting}
@@ -302,7 +302,7 @@ export default function SolutionPageComps({
           taskId={solution.taskSolution.id}
         />
       )}
-      <div className="flex-1 p-8 gap-3 flex flex-col">
+      <div className="grid grid-cols-1 w-full gap-3 p-4 md:p-8 ">
         <Card className="mb-6 h-[700px]">
           <CardHeader>
             <div className="flex items-center justify-between">
@@ -330,7 +330,7 @@ export default function SolutionPageComps({
                   content={solution.content!}
                   editorOptions={{ editable: false }}
                   showMenuBar={false}
-                  className="w-full"
+                  className="w-full border-0"
                 />
               </Suspense>
             </div>
@@ -348,10 +348,12 @@ export default function SolutionPageComps({
           </CardContent>
         </Card>
         {solution.solutionFiles.length > 0 && (
-          <FilesTable files={files} scope={solution} scopeType="solution" />
+          <div className="w-full min-w-0">
+            <FilesTable files={files} scope={solution} scopeType="solution" />
+          </div>
         )}
         {solution.taskSolution.posterId === user?.id && (
-          <Card className="lg:max-w-8xl">
+          <Card className="lg:max-w-8xl ">
             <CardHeader>
               <h3 className="text-lg font-medium text-foreground">comments</h3>
             </CardHeader>

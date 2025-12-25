@@ -75,16 +75,8 @@ export function CodeEditorDialog({
         tabIndex={-1}
       >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900 dark:text-white">
-                {activeFile?.name}
-              </span>
-              <Badge variant="outline" className="ml-2">
-                {mode === "sandbox" ? "Code Editor Sandbox" : "Code Editor"}
-              </Badge>
-            </div>
-            <div className="flex items-center gap-2">
+          <div className="flex items-end justify-end w-full">
+            <div>
               <Button
                 type="button"
                 variant="ghost"
@@ -105,24 +97,6 @@ export function CodeEditorDialog({
         </div>
 
         <div className="flex-1 flex flex-col overflow-hidden">
-          <div className="bg-sidebar border-b px-4 py-2">
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
-                <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-              </div>
-              <div className="text-sm text-foreground">
-                Monaco Code Editor {mode === "sandbox" && "- Read Only"}
-              </div>
-              {mode === "sandbox" && (
-                <div className="ml-auto text-xs text-gray-500 dark:text-gray-400">
-                  ⚠️ Sandbox Mode - No changes will be saved
-                </div>
-              )}
-            </div>
-          </div>
-
           <div className="flex-1 overflow-auto bg-background relative">
             {children}
           </div>

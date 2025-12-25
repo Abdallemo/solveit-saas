@@ -21,7 +21,7 @@ export default function BlogPageComps({
   return (
     <div className="">
       <div className="">
-        <div className="container mx-auto max-w-5xl px-6 py-10">
+        <div className="container mx-auto max-w-5xl px-5 py-12">
           <h1 className="text-4xl font-bold mb-3 text-balance">
             Latest News From Solveit team
           </h1>
