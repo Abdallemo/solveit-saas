@@ -67,8 +67,8 @@ export function FileDialogDialog({
       >
         <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-medium text-gray-900 dark:text-white">
+            <div className="flex items-center gap-2 justify-end w-full">
+              <span className="font-medium text-gray-900 dark:text-white break-all">
                 {activeFile?.name}
               </span>
               <Badge variant="outline" className="ml-2">
