@@ -85,21 +85,15 @@ export const auth = betterAuth({
         required: false,
         fieldName: "stripeAccountId",
       },
-
-      stripeAccountLinked: {
-        type: "boolean",
-        required: false,
-        fieldName: "stripeAccountLinked",
-      },
-      onboardingCompleted: {
-        type: "boolean",
-        required: false,
-        fieldName: "onboardingCompleted",
-      },
       stripeCustomerId: {
         type: "string",
         required: false,
         fieldName: "stripeCustomerId",
+      },
+      metadata: {
+        type: "json",
+        required: false,
+        fieldName: "metadata",
       },
     },
   },

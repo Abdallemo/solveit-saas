@@ -1,6 +1,11 @@
 import { UploadedFileMeta } from "@/features/media/server/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
-import { Address, Business } from "@/features/users/server/user-types";
+import {
+  Address,
+  Business,
+  defaultUserMetadata,
+  UserMetadata,
+} from "@/features/users/server/user-types";
 import { JSONContent } from "@tiptap/react";
 import { sql } from "drizzle-orm";
 import {
@@ -113,12 +118,6 @@ export const UserTable = pgTable(
     role: UserRole("role").default("POSTER").notNull().$type<UserRoleType>(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
-    stripeAccountLinked: boolean("stripe_account_linked")
-      .notNull()
-      .default(false),
-    onboardingCompleted: boolean("onboarding_completed")
-      .notNull()
-      .default(false),
     emailVerified: boolean("emailVerified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {
@@ -133,6 +132,10 @@ export const UserTable = pgTable(
     })
       .defaultNow()
       .notNull(),
+    metadata: jsonb("metadata")
+      .$type<UserMetadata>()
+      .notNull()
+      .default(defaultUserMetadata),
   },
   (user) => [index("user_role_idx").on(user.role)],
 );

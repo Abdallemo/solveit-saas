@@ -1,6 +1,6 @@
 {
-  "id": "ffa00de3-bb3a-4d51-8221-a99f54a35c79",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "6cf6d65d-e6b8-4419-a945-97e68d3b51dc",
+  "prevId": "ffa00de3-bb3a-4d51-8221-a99f54a35c79",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -2982,20 +2982,6 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
-        },
-        "stripe_account_linked": {
-          "name": "stripe_account_linked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "onboarding_completed": {
-          "name": "onboarding_completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
         },
         "emailVerified": {
           "name": "emailVerified",

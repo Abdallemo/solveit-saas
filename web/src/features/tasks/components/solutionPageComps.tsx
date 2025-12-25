@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { FormField } from "@/components/ui/form";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
 import { useComments } from "@/contexts/TaskCommentProvider";
 import { FilesTable } from "@/features/media/components/FilesTable";
@@ -36,12 +37,19 @@ import { formatDateAndTimeNUTC } from "@/lib/utils/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useMutation } from "@tanstack/react-query";
 import { CheckCircle, Loader2, Send, XCircle } from "lucide-react";
+import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import PostingEditor from "./richTextEdito/BlogTiptap";
-
+//import PostingEditor from "./richTextEdito/BlogTiptap";
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 function AcceptSolutionDialog({ solution }: { solution: SolutionById }) {
   const router = useRouter();
   const { mutateAsync: acceptSolutionMuta, isPending } = useMutation({

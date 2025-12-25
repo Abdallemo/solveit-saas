@@ -338,6 +338,7 @@ CREATE TABLE "users" (
 	"image" text,
 	"created_at" timestamp with time zone DEFAULT now() NOT NULL,
 	"updated_at" timestamp with time zone DEFAULT now() NOT NULL,
+	"metadata" jsonb DEFAULT '{"agreedOnTerms":false,"onboardingCompleted":false,"stripeAccountLinked":false}'::jsonb NOT NULL,
 	CONSTRAINT "users_email_unique" UNIQUE("email")
 );
 --> statement-breakpoint

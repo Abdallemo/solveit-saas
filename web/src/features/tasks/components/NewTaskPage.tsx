@@ -8,10 +8,10 @@ import {
 } from "@/components/ui/form";
 import { NewuseTask } from "@/contexts/TaskContext";
 import {
-  autoSuggestWithAi,
+  autoSuggestTasWithAi,
   validateContentWithAi,
 } from "@/features/Ai/server/action";
-import MediaPreviewer from "@/features/media/components/MediaPreviewer";
+//import MediaPreviewer from "@/features/media/components/MediaPreviewer";
 import NewTaskSidebar from "@/features/tasks/components/newTaskSidebar";
 import {
   createTaksPaymentCheckoutSession,
@@ -32,8 +32,24 @@ import { CircleAlert } from "lucide-react";
 import { useEffect, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import PostingEditor from "./richTextEdito/BlogTiptap";
+//import PostingEditor from "./richTextEdito/MainTiptapEditor";
 import { CustomeTextSerializersForAi } from "./richTextEdito/tiptap-ai-content-selized";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+const MediaPreviewer = dynamic(
+  () => import("@/features/media/components/MediaPreviewer"),
+  {
+    ssr: false,
+  },
+);
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 
 export default function TaskCreationPage({
   defaultValues,
@@ -91,7 +107,7 @@ export default function TaskCreationPage({
   });
   const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
     {
-      mutationFn: autoSuggestWithAi,
+      mutationFn: autoSuggestTasWithAi,
       onSuccess: (d) => {},
       onError: (er) => {
         toast.error(er.message);

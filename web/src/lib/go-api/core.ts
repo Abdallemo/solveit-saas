@@ -1,4 +1,4 @@
-import { UserRole } from "@/features/users/server/user-types";
+import { UserMetadata, UserRole } from "@/features/users/server/user-types";
 
 const MIN_TTL_SECONDS = 10;
 type jwkPayloadType = {
@@ -13,7 +13,7 @@ type jwkPayloadType = {
   stripeAccountId: string | null;
   stripeAccountLinked: boolean;
   onboardingCompleted: boolean;
-  stripeCustomerId: "cus_TZdagWiIm1jvig";
+  metadata: UserMetadata;
   id: string;
   sub: string;
   exp: number;
@@ -91,16 +91,28 @@ export class GoApiClient {
 
       switch (responseType) {
         case "json":
-          data = await response.json().catch(() => null);
+          data = await response.json().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         case "text":
-          data = await response.text().catch(() => null);
+          data = await response.text().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         case "blob":
-          data = await response.blob().catch(() => null);
+          data = await response.blob().catch((e) => {
+            console.log(e);
+            return null;
+          });
           break;
         default:
-          data = await response.json().catch(() => null);
+          data = await response.json().catch((e) => {
+            console.log(e);
+            return null;
+          });
       }
 
       if (!response.ok) {

@@ -5,15 +5,19 @@ import { calculateEditorTextLength } from "@/lib/utils/utils";
 import { JSONContent } from "@tiptap/react";
 import { InferInsertModel } from "drizzle-orm";
 import z from "zod";
-import { getAllBlogs } from "./actions";
+import { getAllOwnerBlog, getBlogBySlug } from "./actions";
 export type UserRole = UserRoleType;
 
 function createSelection<T extends Record<string, true>>(selection: T): T {
   return selection;
 }
 
-export type User = Omit<(typeof auth.$Infer.Session)["user"], "role"> & {
+export type User = Omit<
+  (typeof auth.$Infer.Session)["user"],
+  "role" | "metadata"
+> & {
   role: UserRole;
+  metadata: UserMetadata;
 };
 export type Session = Omit<typeof auth.$Infer.Session, "user"> & {
   user: User;
@@ -92,4 +96,16 @@ export const blogPostSchema = z.object({
 });
 
 export type BlogPostFormData = z.infer<typeof blogPostSchema>;
-export type BlogsWithUser = Awaited<ReturnType<typeof getAllBlogs>>;
+export type BlogsWithUser = Awaited<ReturnType<typeof getAllOwnerBlog>>;
+
+export type UserMetadata = {
+  stripeAccountLinked?: boolean;
+  onboardingCompleted?: boolean;
+  agreedOnTerms?: boolean;
+};
+export const defaultUserMetadata: UserMetadata = {
+  agreedOnTerms: false,
+  onboardingCompleted: false,
+  stripeAccountLinked: false,
+};
+export type BlogType = Exclude<Awaited<ReturnType<typeof getBlogBySlug>>, null>;

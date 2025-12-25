@@ -48,6 +48,7 @@ import {
   workspaceFileType,
 } from "@/features/tasks/server/task-types";
 import {
+  createStripeCustomer,
   getServerUserSubscriptionById,
   getUserById,
   UpdateUserField,
@@ -228,39 +229,23 @@ export async function createTaksPaymentCheckoutSession(values: {
   draftTaskId: string;
 }) {
   const { price, userId, deadlineStr, draftTaskId, content } = values;
-  const referer = await getServerReturnUrl();
+
   try {
+    const { user } = await isAuthorized(["POSTER"]);
     const res = await validateContentWithAi({
       content: content,
       adminMode: false,
     });
 
     if (res.violatesRules) return;
-    const currentUser = await getServerUserSession();
-    if (!currentUser?.id) redirect("/login");
-    const userSubscription = await getServerUserSubscriptionById(
-      currentUser?.id!,
-    );
-    const user = await getUserById(userId);
-    if (!user || !user.id) return;
-    if (!currentUser.email || !currentUser!.id) return;
-    if (userSubscription?.tier == "SOLVER") return;
+
     let customerId = user.stripeCustomerId;
     if (!user.stripeCustomerId) {
-      const newCustomer = await stripe.customers.create({
-        email: currentUser.email,
-        name: user.name ?? "",
-        metadata: {
-          userId: userId,
-        },
-      });
-      customerId = newCustomer.id;
-      await UpdateUserField(
-        {
-          id: user.id,
-        },
-        { stripeCustomerId: customerId },
-      );
+      const [newCustomer, error] = await createStripeCustomer(user);
+      if (error) {
+        return;
+      }
+      customerId = newCustomer;
     }
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
@@ -297,7 +282,7 @@ export async function createTaksPaymentCheckoutSession(values: {
         draftTaskId: draftTaskId,
       },
       cancel_url: `${env.NEXTAUTH_URL}/dashboard/poster/new-task?cancel=true`,
-      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/your-tasks/?session_id={CHECKOUT_SESSION_ID}&id=${draftTaskId}`,
+      success_url: `${env.NEXTAUTH_URL}/dashboard/poster/your-tasks/?id=${draftTaskId}`,
       saved_payment_method_options: {
         allow_redisplay_filters: ["always", "limited", "unspecified"],
         payment_method_save: "enabled",

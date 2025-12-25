@@ -1,8 +1,25 @@
+// Client component
 "use client";
+import { useEffect } from "react";
+import { toast } from "sonner";
+import { useRouter } from "next/navigation";
 
-import useStripeSessionValidate from "../lib/useStripeSessionValidate";
+export default function StripeCheckoutSuccessClient({
+  publishedSuccessfully,
+}: {
+  publishedSuccessfully: boolean;
+}) {
+  const router = useRouter();
 
-export default function StripeCheckoutSucessClient({ id }: { id: string }) {
-  useStripeSessionValidate(id);
-  return <></>;
+  useEffect(() => {
+    if (publishedSuccessfully) {
+      toast.success("Task published successfully!", { id: "task-publish" });
+    } else {
+      toast.error("Unable to publish the task", { id: "task-publish" });
+    }
+
+    router.replace(window.location.pathname);
+  }, [publishedSuccessfully, router]);
+
+  return null;
 }

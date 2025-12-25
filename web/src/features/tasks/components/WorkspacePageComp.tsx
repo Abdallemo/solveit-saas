@@ -37,8 +37,15 @@ import Link from "next/link";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import { FieldErrors, FormProvider, useForm } from "react-hook-form";
 import { toast } from "sonner";
-import PostingEditor from "./richTextEdito/BlogTiptap";
 
+import dynamic from "next/dynamic";
+const PostingEditor = dynamic(
+  () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
+  {
+    ssr: false,
+    loading: () => <Skeleton className="h-172.5 md:h-175 lg:h-195" />,
+  },
+);
 export default function WorkspacePageComp() {
   const {
     content,
@@ -209,7 +216,7 @@ export default function WorkspacePageComp() {
                 <Link
                   className="underline text-lg"
                   target="_blank"
-                  href={`/dashboard/solver/tasks/${currentWorkspace?.taskId}`}
+                  href={`/dashboard/solver/assigned-tasks/${currentWorkspace?.taskId}`}
                 >
                   {currentWorkspace?.task.title}
                 </Link>

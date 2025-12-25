@@ -9,7 +9,6 @@ type RealtimeTaskState = Omit<upcomingTasks, "deadlineDate"> & {
 };
 
 const calculateDue = (task: RealtimeTaskState) => {
-  console.log("[calculateDue]",task.deadlineDate)
   if (isPast(task.deadlineDate)) {
     return "Passed";
   }
@@ -20,7 +19,7 @@ const calculateDue = (task: RealtimeTaskState) => {
 };
 
 export default function useRealtimeDeadlines(
-  initialDeadlines: upcomingTasks[]
+  initialDeadlines: upcomingTasks[],
 ) {
   const initialClientState: RealtimeTaskState[] = initialDeadlines.map(
     (task) => {
@@ -31,11 +30,11 @@ export default function useRealtimeDeadlines(
 
       const due = calculateDue({ ...task, deadlineDate } as RealtimeTaskState);
       return { ...task, deadlineDate, due };
-    }
+    },
   );
   const [deadlineState, setDeadlineState] = useState(initialClientState);
   useEffect(() => {
-     if (typeof window === "undefined") return;
+    if (typeof window === "undefined") return;
     const interval = setInterval(() => {
       setDeadlineState((prev) =>
         prev.map((task) => {
@@ -46,7 +45,7 @@ export default function useRealtimeDeadlines(
           }
 
           return { ...task, due: newDue };
-        })
+        }),
       );
     }, 30000);
 

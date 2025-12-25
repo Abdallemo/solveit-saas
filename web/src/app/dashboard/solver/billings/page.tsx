@@ -1,16 +1,15 @@
 import { BillingGate } from "@/components/GateComponents";
-import { getServerUserSession } from "@/features/auth/server/actions";
+import { isAuthorized } from "@/features/auth/server/actions";
 import BillingStatusCard from "@/features/payments/components/BillingPageComps";
 import { handlerStripeConnect } from "@/features/payments/server/action";
-import { getUserById } from "@/features/users/server/actions";
 
 export default async function Page() {
-  const user = await getServerUserSession();
-  if (!user || !user.id) return;
-  const userDb = await getUserById(user.id);
-  if (!userDb) return;
-  if (!userDb.stripeAccountLinked)
+  const { user } = await isAuthorized(["SOLVER"]);
+
+  if (!user.metadata.stripeAccountLinked) {
     return <BillingGate action={handlerStripeConnect} />;
+  }
+
   return (
     <main className="bg-background p-6">
       <div className="max-w-4xl mx-auto">

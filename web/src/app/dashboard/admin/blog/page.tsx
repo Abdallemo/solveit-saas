@@ -7,13 +7,13 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { getAllBlogs } from "@/features/users/server/actions";
+import { getAllOwnerBlog } from "@/features/users/server/actions";
 import { formatDateAndTimeNUTC } from "@/lib/utils/date-time";
 import { ArrowRight, CalendarDays, Clock, Plus } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminBlogListPage() {
-  const posts = await getAllBlogs();
+  const posts = await getAllOwnerBlog();
   return (
     <div className="h-full bg-background">
       <header className="border-b">
@@ -70,7 +70,7 @@ export default async function AdminBlogListPage() {
                   </Link>
                 </CardTitle>
 
-                <CardDescription className="text-sm text-muted-foreground pt-2">
+                <CardDescription className="text-sm text-muted-foreground pt-2 break-all">
                   {post.description}
                 </CardDescription>
               </CardHeader>
@@ -85,7 +85,10 @@ export default async function AdminBlogListPage() {
                   </div>
 
                   <Button variant="ghost" size="sm" asChild>
-                    <Link href={`/blog/${post.url}`} className="gap-1">
+                    <Link
+                      href={`/dashboard/admin/blog/${post.url}/`}
+                      className="gap-1"
+                    >
                       Read more
                       <ArrowRight className="h-3 w-3" />
                     </Link>

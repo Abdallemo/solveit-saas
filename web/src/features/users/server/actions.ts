@@ -18,6 +18,7 @@ import { registerInferedTypes } from "@/features/auth/server/auth-types";
 import {
   BlogPostFormData,
   blogPostSchema,
+  BlogType,
   PartialUserDetailsTableColumns,
   PartialUserTableColumns,
   publicUserColumns,
@@ -315,7 +316,6 @@ export async function getUserById(id: string) {
         ...publicUserColumns,
         stripeAccountId: true,
         stripeCustomerId: true,
-        stripeAccountLinked: true,
       },
     });
     return result;
@@ -330,8 +330,14 @@ export async function UpdateUserField(
   data: PartialUserTableColumns,
 ) {
   const { column, value } = parseDrizzleQuery(UserTable, selector);
+  const updatePayload: any = { ...data };
+  if (updatePayload.metadata) {
+    updatePayload.metadata = sql`${UserTable.metadata} || ${JSON.stringify(
+      updatePayload.metadata,
+    )}::jsonb`;
+  }
   const [_, error] = await to(
-    db.update(UserTable).set(data).where(eq(column, value)),
+    db.update(UserTable).set(updatePayload).where(eq(column, value)),
   );
   if (error) {
     logger.error(
@@ -448,7 +454,7 @@ export async function StripeAccountUpdateHanlder(account: Stripe.Account) {
   if (account.capabilities && account.capabilities.transfers === "active") {
     const error = await UpdateUserField(
       { stripeAccountId: account.id },
-      { stripeAccountLinked: true },
+      { metadata: { stripeAccountLinked: true } },
     );
     logger.info("stripe account is linked");
   }
@@ -510,7 +516,7 @@ export async function PublishBlogs(
     error: null,
   };
 }
-export async function getAllBlogs() {
+export async function getAllOwnerBlog() {
   const { user } = await isAuthorized(["ADMIN", "MODERATOR"]);
   const [blogs, error] = await to(
     db.query.BlogTable.findMany({
@@ -523,6 +529,38 @@ export async function getAllBlogs() {
     }),
   );
   if (error) {
+    return [];
+  }
+  return blogs;
+}
+export async function getBlogBySlug(url: string) {
+  const [blog, error] = await to(
+    db.query.BlogTable.findFirst({
+      where: (tb, fn) => fn.eq(tb.url, url),
+      with: {
+        blogAuthor: {
+          columns: publicUserColumns,
+        },
+      },
+    }),
+  );
+  if (error || !blog) {
+    return null;
+  }
+  return blog;
+}
+export async function getAllBlogs() {
+  const [blogs, error] = await to(
+    db.query.BlogTable.findMany({
+      orderBy: (tb, fn) => fn.desc(tb.publishedAt),
+      with: {
+        blogAuthor: {
+          columns: publicUserColumns,
+        },
+      },
+    }),
+  );
+  if (error || !blogs) {
     return [];
   }
   return blogs;

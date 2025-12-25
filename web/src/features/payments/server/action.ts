@@ -210,7 +210,8 @@ export async function handleUserOnboarding(
     } = await isAuthorized(["POSTER", "SOLVER"]);
 
     if (!user) return { error: new UnauthorizedError().message };
-    if (user.onboardingCompleted) return { error: "Already record exist" };
+    if (user.metadata.onboardingCompleted)
+      return { error: "Already record exist" };
     const dob =
       values.dob instanceof Date ? values.dob : new Date(values.dob as any);
     const minDate = new Date("1900-01-01");
@@ -235,7 +236,10 @@ export async function handleUserOnboarding(
     });
     if (err) return { error: "Something went wrong" };
 
-    err = await UpdateUserField({ id: user.id }, { onboardingCompleted: true });
+    err = await UpdateUserField(
+      { id: user.id },
+      { metadata: { onboardingCompleted: true } },
+    );
     if (err) return { error: "Something went wrong" };
 
     revalidateTag(`user-${user.id}`);
@@ -437,7 +441,6 @@ export async function rejectRefund(refundId: string) {
             solver: {
               columns: {
                 email: true,
-                stripeAccountLinked: true,
                 stripeAccountId: true,
               },
             },
@@ -576,7 +579,7 @@ export async function requestWithdraw() {
         success: null,
       };
     }
-    if (!user.stripeAccountLinked) {
+    if (!user.metadata.stripeAccountLinked) {
       return {
         error: "please visit your billing and connect your account",
         success: null,

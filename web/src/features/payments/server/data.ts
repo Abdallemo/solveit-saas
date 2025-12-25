@@ -170,7 +170,7 @@ export async function manageStripeAccount() {
   if (!user || !user.stripeAccountId) {
     throw new Error("No connected Stripe account found.");
   }
-  if (user.stripeAccountLinked) {
+  if (user.metadata.stripeAccountLinked) {
     console.log(
       `User ${user.id} is linked. Redirecting to Standard Dashboard.`,
     );

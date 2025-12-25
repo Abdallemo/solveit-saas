@@ -3,11 +3,7 @@ import { getAllCategoryMap } from "@/features/tasks/server/data";
 
 import DisplayListComponent from "@/features/tasks/components/DisplayComponent";
 
-export default async function ServerWrapper({
-  searchParams,
-}: {
-  searchParams: Promise<{ page: string; category: string; search: string }>;
-}) {
+export default async function Page({}: {}) {
   const { session } = await isAuthorized(["POSTER"]);
 
   const categoryMap = await getAllCategoryMap();
