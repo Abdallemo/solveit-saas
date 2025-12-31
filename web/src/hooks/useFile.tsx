@@ -1,6 +1,6 @@
-import { UploadOptions, UploadResponse } from "@/features/media/server/action";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
-import { goClientApi } from "@/lib/go-api/client";
+import { UploadOptions, UploadResponse } from "@/features/media/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
+import { goApiClient } from "@/lib/go-api/client";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
 type FileUploadProps = {
@@ -18,23 +18,23 @@ export function useFileUpload({
     data: uploadedFilesData,
     error: uploadError,
   } = useMutation({
-    mutationFn: async ({ files, scope, url, extraBody }: UploadOptions) => {
+    mutationFn: async ({ files, url, extraBody }: UploadOptions) => {
       const formData = new FormData();
       files.forEach((file) => {
         formData.append("files", file);
       });
-      formData.append("scope", scope);
 
       if (extraBody) {
         Object.entries(extraBody).forEach(([key, value]) => {
           formData.append(key, String(value));
         });
       }
-      const res = await goClientApi.request<UploadResponse>(url, {
+      const res = await goApiClient.request<UploadResponse>(url, {
         method: "POST",
         body: formData,
       });
 
+      console.log("from uplload , res:", res);
       if (res.error || !res.data) {
         throw new Error(res.error || "failed to upload");
       }
@@ -86,7 +86,7 @@ type DeleteMediaEndpointScope =
   | "task"
   | "solution_workspace"
   | "mentorship_chat"
-  | "generic";
+  | "editor";
 export function useDeleteFileGeneric<
   Args extends Record<string, any> & {
     filePath: string;
@@ -96,39 +96,42 @@ export function useDeleteFileGeneric<
     mutationFn: async (args: Args) => {
       switch (type) {
         case "draft_task":
-          await fetch(
-            `/api/media/tasks/draft?key=${encodeURIComponent(args.filePath)}`,
+          return await goApiClient.request(
+            `/tasks/draft/files/${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
             },
+            "text",
           );
-          break;
+
         case "mentorship_chat":
-          await fetch(
-            `/api/media/mentorship?key=${encodeURIComponent(args.filePath)}`,
+          return await goApiClient.request(
+            `/chats/${encodeURIComponent(args.chatId)}/${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
             },
           );
-          break;
+
         case "solution_workspace":
-          await fetch(
-            `/api/media/solutions?key=${encodeURIComponent(args.filePath)}`,
+          return await goApiClient.request(
+            `/workspaces/${args.workspaceId}/files/${encodeURIComponent(args.filePath)}`,
             {
               method: "DELETE",
             },
           );
-          break;
+
         case "task":
           /**
            * Not Yet Needed
            */
           break;
-        case "generic":
-          await fetch(`/api/media?key=${encodeURIComponent(args.filePath)}`, {
-            method: "DELETE",
-          });
-          break;
+        case "editor":
+          return await goApiClient.request(
+            `/editor/files/${encodeURIComponent(args.filePath)}`,
+            {
+              method: "DELETE",
+            },
+          );
       }
     },
     onMutate: ({ filePath }) => {
@@ -137,6 +140,11 @@ export function useDeleteFileGeneric<
       });
     },
     onSuccess: (_data, { filePath }) => {
+      if (_data?.error) {
+        toast.error(_data?.error, {
+          id: `delete-file-${filePath}`,
+        });
+      }
       toast.success("File deleted successfully!", {
         id: `delete-file-${filePath}`,
       });
@@ -157,8 +165,8 @@ export function useDownloadFile() {
       key: string;
       fileName: string;
     }) => {
-      const res = await goClientApi.request<Blob>(
-        `/media/download?key=${encodeURIComponent(key)}`,
+      const res = await goApiClient.request<Blob>(
+        `/media/${encodeURIComponent(key)}?download=true`,
         {
           method: "GET",
           headers: {},
@@ -205,8 +213,8 @@ export function useFileStream(key: string | null) {
         throw new Error("Key is required for fetching file content.");
       }
 
-      const res = await goClientApi.request<string>(
-        `/media?key=${encodeURIComponent(key)}`,
+      const res = await goApiClient.request<string>(
+        `/media/${encodeURIComponent(key)}`,
         {
           method: "GET",
           cache: "no-store",

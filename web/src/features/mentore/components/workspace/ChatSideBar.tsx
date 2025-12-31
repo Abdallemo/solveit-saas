@@ -1,7 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileChatCardComps } from "@/features/media/components/FileHelpers";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeleteFileGeneric, useDownloadFile } from "@/hooks/useFile";
 import { FileText } from "lucide-react";
@@ -19,6 +19,7 @@ type allFilesType = {
   filePath: string;
   uploadedAt: Date | null;
   uploadedById: string;
+  isDeleted: boolean | null;
   chatId: string;
 }[];
 export default function ChatSideBar({
@@ -41,7 +42,6 @@ export default function ChatSideBar({
 
   filePreview: UploadedFileMeta | null;
 }) {
-  const { send } = useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
 
@@ -58,7 +58,7 @@ export default function ChatSideBar({
           <FileText className="h-4 w-4 text-primary" />
           <h3 className="font-medium">Shared Files</h3>
           <Badge variant="secondary" className="ml-auto">
-            {allFiles.length}
+            {allFiles.filter((f) => f.isDeleted == false).length}
           </Badge>
         </div>
       </div>
@@ -66,46 +66,45 @@ export default function ChatSideBar({
       <ScrollArea className="flex-1 h-0">
         {allFiles.length > 0 ? (
           <div className="flex flex-col w-full h-100 gap-2  ">
-            {allFiles.map((file) => (
-              <div key={file.id} className="w-70">
-                <FileChatCardComps
-                  key={file.id}
-                  file={{
-                    fileName: file.fileName,
-                    filePath: file.filePath,
-                    fileSize: file.fileSize,
-                    fileType: file.fileType,
-                    storageLocation: file.storageLocation,
-                  }}
-                  action={() => {
-                    setFilePreview(file);
-                  }}
-                  downloadAction={async (f) => {
-                    await downloadFile({
-                      fileName: f.fileName,
-                      key: f.filePath,
-                    });
-                  }}
-                  disabled={
-                    isRequestingDownload &&
-                    file.fileName === filePreview?.fileName
-                  }
-                  opt={{
-                    deleteDisable:
-                      isPostSession ||
-                      user?.id !== file.uploadedById ||
-                      isDeletingFile,
-                  }}
-                  deleteAction={async (f) => {
-                    await deleteFile({ filePath: f.filePath });
-                    const [deletedChat] = chat.filter(
-                      (c) => c.id === file.chatId,
-                    );
-                    send({ ...deletedChat, messageType: "chat_deleted" });
-                  }}
-                />
-              </div>
-            ))}
+            {allFiles.map(
+              (file) =>
+                !file.isDeleted && (
+                  <div key={file.id} className="w-70">
+                    <FileChatCardComps
+                      key={file.id}
+                      file={{
+                        fileName: file.fileName,
+                        filePath: file.filePath,
+                        fileSize: file.fileSize,
+                        fileType: file.fileType,
+                        storageLocation: file.storageLocation,
+                      }}
+                      action={() => {
+                        setFilePreview(file);
+                      }}
+                      downloadAction={async (f) => {
+                        await downloadFile({
+                          fileName: f.fileName,
+                          key: f.filePath,
+                        });
+                      }}
+                      disabled={
+                        isRequestingDownload &&
+                        file.fileName === filePreview?.fileName
+                      }
+                      opt={{
+                        deleteDisable:
+                          isPostSession ||
+                          user?.id !== file.uploadedById ||
+                          isDeletingFile,
+                      }}
+                      deleteAction={async (f) => {
+                        await deleteFile({ filePath: f.filePath });
+                      }}
+                    />
+                  </div>
+                ),
+            )}
           </div>
         ) : (
           <div className="p-8 text-center space-y-4">

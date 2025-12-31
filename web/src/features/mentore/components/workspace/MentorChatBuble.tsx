@@ -1,6 +1,6 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FileChatCardComps } from "@/features/media/components/FileHelpers";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { useDeleteFileGeneric, useDownloadFile } from "@/hooks/useFile";
 import { CheckCheck, User2 } from "lucide-react";
 import type React from "react";
@@ -33,7 +33,7 @@ export default function MentorChatBuble({
 }) {
   const { mutateAsync: downloadFile, isPending: isRequestingDownload } =
     useDownloadFile();
-  const { send, setChats } = useMentorshipSession();
+  const { setChats } = useMentorshipSession();
   const { mutateAsync: deleteFile, isPending: isDeletingFile } =
     useDeleteFileGeneric("mentorship_chat");
 
@@ -66,11 +66,13 @@ export default function MentorChatBuble({
         </AvatarFallback>
         <AvatarImage src={chat.chatOwner.image ?? ""} />
       </Avatar>
+
       <div
         className={`flex-1 space-y-2 flex flex-col min-w-0 max-w-sm md:max-w-lg xl:max-w-xl ${
           isCurrentUser ? "items-end" : "items-start"
         }`}
       >
+        {/* Header (Name + Time) */}
         <div
           className={`flex items-center gap-2 ${
             isCurrentUser ? "flex-row-reverse" : ""
@@ -92,20 +94,108 @@ export default function MentorChatBuble({
             )}
           </div>
         </div>
-        {chat.message && (
+
+        {!chat.isDeleted && (
           <div
-            className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
-              isCurrentUser
-                ? "bg-primary text-primary-foreground rounded-br-md"
-                : "bg-muted rounded-bl-md"
+            className={`flex flex-col gap-1 ${
+              isCurrentUser ? "items-end" : "items-start"
             }`}
           >
-            <p className="text-sm leading-relaxed break-all">{chat.message}</p>
+            {chat.message && (
+              <div
+                className={`rounded-2xl px-4 py-3 shadow-sm transition-all hover:shadow-md ${
+                  isCurrentUser
+                    ? `bg-primary text-primary-foreground ${
+                        chat.chatFiles.length > 0
+                          ? "rounded-br-sm rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl"
+                          : "rounded-br-md rounded-tl-2xl rounded-tr-2xl rounded-bl-2xl"
+                      }`
+                    : `bg-muted ${
+                        chat.chatFiles.length > 0
+                          ? "rounded-bl-sm rounded-tr-2xl rounded-tl-2xl rounded-br-2xl"
+                          : "rounded-bl-md rounded-tr-2xl rounded-tl-2xl rounded-br-2xl"
+                      }`
+                }`}
+              >
+                <p className="text-sm leading-relaxed break-all">
+                  {chat.message}
+                </p>
+              </div>
+            )}
+
+            {chat.chatFiles.length > 0 && (
+              <div
+                className={`flex flex-col gap-2 w-full ${
+                  isCurrentUser
+                    ? "items-end border-r-2 border-primary/40 pr-3 mr-1"
+                    : "items-start border-l-2 border-muted-foreground/20 pl-3 ml-1"
+                }`}
+              >
+                {chat.chatFiles.map((file) => (
+                  <>
+                    {!file.isDeleted ? (
+                      <FileChatCardComps
+                        key={file.id}
+                        disabled={
+                          isRequestingDownload &&
+                          file.fileName === filePreview?.fileName
+                        }
+                        file={{
+                          fileName: file.fileName,
+                          filePath: file.filePath,
+                          fileSize: file.fileSize,
+                          fileType: file.fileType,
+                          storageLocation: file.storageLocation,
+                        }}
+                        action={() => {
+                          setFilePreview(file);
+                        }}
+                        opt={{
+                          deleteDisable:
+                            isPostSession || user?.id !== file.uploadedById,
+                        }}
+                        downloadAction={async (f) => {
+                          await downloadFile({
+                            fileName: f.fileName,
+                            key: f.filePath,
+                          });
+                        }}
+                        deleteAction={async (f) => {
+                          try {
+                            await deleteFile({
+                              filePath: f.filePath,
+                              chatId: chat.id,
+                            });
+                          } catch (error) {}
+                        }}
+                      />
+                    ) : (
+                      file.isDeleted && (
+                        <div
+                          className={`rounded-2xl px-4 py-3 hover:shadow-md ${
+                            isCurrentUser
+                              ? "bg-primary/50 text-primary-foreground rounded-br-md"
+                              : "bg-muted/50 rounded-bl-md"
+                          }`}
+                        >
+                          <p className="text-sm leading-relaxed break-all">
+                            {isCurrentUser
+                              ? "you deleted this file"
+                              : "this file is deleted"}
+                          </p>
+                        </div>
+                      )
+                    )}
+                  </>
+                ))}
+              </div>
+            )}
           </div>
         )}
+
         {chat.isDeleted && (
           <div
-            className={`rounded-2xl px-4 py-3  hover:shadow-md ${
+            className={`rounded-2xl px-4 py-3 hover:shadow-md ${
               isCurrentUser
                 ? "bg-primary/50 text-primary-foreground rounded-br-md"
                 : "bg-muted/50 rounded-bl-md"
@@ -118,43 +208,7 @@ export default function MentorChatBuble({
             </p>
           </div>
         )}
-        {chat.chatFiles.map((file) => (
-          <FileChatCardComps
-            key={file.id}
-            disabled={
-              isRequestingDownload && file.fileName === filePreview?.fileName
-            }
-            file={{
-              fileName: file.fileName,
-              filePath: file.filePath,
-              fileSize: file.fileSize,
-              fileType: file.fileType,
-              storageLocation: file.storageLocation,
-            }}
-            action={() => {
-              setFilePreview(file);
-            }}
-            opt={{
-              deleteDisable: isPostSession || user?.id !== file.uploadedById,
-            }}
-            downloadAction={async (f) => {
-              await downloadFile({ fileName: f.fileName, key: f.filePath });
-            }}
-            deleteAction={async (f) => {
-              try {
-                await deleteFile({ filePath: f.filePath });
-                setChats((old) => {
-                  return old.map((c) =>
-                    c.id === chat.id
-                      ? { ...c, isDeleted: true, chatFiles: [] }
-                      : c,
-                  );
-                });
-                send({ ...chat, messageType: "chat_deleted" });
-              } catch (error) {}
-            }}
-          />
-        ))}
+
         {isLastBuble && <div ref={messageRef} />}
       </div>
     </div>

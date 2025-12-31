@@ -1,5 +1,5 @@
 "use client";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import {
   NewtaskDraftType,
   PartialTaskDraft,

@@ -11,9 +11,9 @@ import (
 
 	"github/abdallemo/solveit-saas/internal/api/websocket"
 	"github/abdallemo/solveit-saas/internal/database"
+	"github/abdallemo/solveit-saas/internal/utils"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 var re = regexp.MustCompile(`^(\d+)([hdwmy])$`)
@@ -87,7 +87,7 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 	blockedSolver, err := w.store.AddSolverToTaskBlockList(ctx, database.AddSolverToTaskBlockListParams{
 		UserID: *task.SolverID,
 		TaskID: task.ID,
-		Reason: pgtype.Text{String: "Missed Deadline", Valid: true},
+		Reason: utils.ToStringPtr("Missed Deadline"),
 	})
 	if err != nil {
 		log.Printf("Error adding solver to block list for task %v: %v", task.ID, err)
@@ -108,7 +108,7 @@ func (w *Worker) checkAndEnforceDeadline(ctx context.Context, task database.Task
 			Content:    notif.Content,
 			ReceiverID: notif.ReceiverID,
 			SenderID:   notif.SenderID,
-			Subject:    notif.Subject.String,
+			Subject:    *notif.Subject,
 			Method:     string(notif.Method),
 			Read:       notif.Read,
 			CreatedAt:  notif.CreatedAt.String(),
@@ -128,7 +128,7 @@ func (w *Worker) notifySolverAndResetTaskTx(ctx context.Context, SolverID uuid.U
 	notif, err := qtx.ProcessSystemNotification(ctx, database.ProcessSystemNotificationParams{
 		SenderID:   "solveit@org.com",
 		ReceiverID: SolverID.String(),
-		Subject:    pgtype.Text{String: "Blocked From A Task", Valid: true},
+		Subject:    utils.ToStringPtr("Blocked From A Task"),
 		Content:    fmt.Sprintf("You are blocked from task: %v. You can no longer submit it but you can still access your previous work.", Title),
 		Read:       false,
 	})

@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github/abdallemo/solveit-saas/internal/user"
 	"log"
 	"os"
 	"path/filepath"
 	"runtime"
 
+	"github.com/google/uuid"
 	"github.com/joho/godotenv"
 	"github.com/lestrrat-go/jwx/v3/jwt"
 )
@@ -84,3 +86,14 @@ func ExtractUserClaims(t jwt.Token) (*user.UserClaims, error) {
 
 	return claims, nil
 }
+
+func ParseUUID(key string) (uuid.UUID, error) {
+	id, err := uuid.Parse(key)
+	if err != nil {
+		return uuid.UUID{}, fmt.Errorf("Invalid format")
+	}
+	return id, nil
+}
+
+func ToStringPtr(s string) *string { return &s }
+func ToBoolPtr(b bool) *bool       { return &b }

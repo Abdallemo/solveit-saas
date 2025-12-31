@@ -13,7 +13,7 @@ import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import {
   AvailabilitySlot,
   BookingFormData,

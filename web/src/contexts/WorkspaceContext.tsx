@@ -2,7 +2,7 @@
 import {
   UploadedFileMeta,
   WorkspaceUploadedFileMeta,
-} from "@/features/media/server/media-types";
+} from "@/features/media/media-types";
 import { WorkpaceSchemReturnedType } from "@/features/tasks/server/task-types";
 import { publicUserType } from "@/features/users/server/user-types";
 import { JSONContent } from "@tiptap/react";
@@ -47,7 +47,7 @@ type WorkspaceContextType = {
 };
 
 const WorkspaceContext = createContext<WorkspaceContextType | undefined>(
-  undefined
+  undefined,
 );
 type WorkspacePorviderProps = {
   children: ReactNode;
@@ -86,7 +86,8 @@ export const WorkspaceProvider = ({
         currentWorkspace,
         setCurrentWorkspace,
         ...useComments(),
-      }}>
+      }}
+    >
       {children}
     </WorkspaceContext.Provider>
   );

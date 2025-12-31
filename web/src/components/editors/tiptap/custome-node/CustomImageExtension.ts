@@ -1,4 +1,4 @@
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { Node } from "@tiptap/pm/model"; // Added for correct typing
 import { Plugin } from "@tiptap/pm/state";
 import { ResizableImage } from "tiptap-extension-resizable-image";
@@ -54,7 +54,7 @@ export const CustomImageExtension = (
               uploadMedia(file)
                 .then(({ storageLocation, filePath, fileName, fileType }) => {
                   const publicUrl = storageLocation;
-
+                  console.log(filePath);
                   editor.state.doc.descendants((node, pos) => {
                     if (
                       node.type.name === "image" &&

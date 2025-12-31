@@ -32,21 +32,17 @@ FROM task_categories;
 UPDATE task_drafts
 SET "uploadedFiles" = COALESCE("uploadedFiles", '[]'::jsonb) || $1::jsonb
 WHERE user_id = $2;
--- name: SaveFileToWorkspaceDB :exec
-INSERT INTO solution_workspace_files (
-workspace_id,
-uploaded_by_id,
-file_name,
-file_type,
-file_size,
-file_location,
-file_path)
-SELECT
-  $1,
-  $2,
-  unnest($3::text[]),
-  unnest($4::text[]),
-  unnest($5::int[]),
-  unnest($6::text[]),
-  unnest($7::text[])
-;
+
+-- name: DeleteDraftTaskFile :exec
+WITH definition AS (
+  SELECT
+    sqlc.arg(file_path)::text as target_path ,
+    sqlc.arg(user_id)::uuid as target_user_id
+)
+UPDATE task_drafts
+SET "uploadedFiles" = (
+  SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+  FROM jsonb_array_elements("uploadedFiles") AS elem
+  WHERE elem->>'filePath' <> (SELECT target_path FROM definition)
+)
+WHERE user_id = (SELECT target_user_id FROM definition);

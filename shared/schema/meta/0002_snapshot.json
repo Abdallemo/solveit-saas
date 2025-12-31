@@ -1,6 +1,6 @@
 {
-  "id": "e8304983-8ccf-4a7f-9218-da111a458c33",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "816fb808-0ce9-46ad-bd10-414a54e9e445",
+  "prevId": "6cf6d65d-e6b8-4419-a945-97e68d3b51dc",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -435,6 +435,79 @@
       "checkConstraints": {},
       "isRLSEnabled": false
     },
+    "public.editor_files": {
+      "name": "editor_files",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "file_name": {
+          "name": "file_name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_type": {
+          "name": "file_type",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_size": {
+          "name": "file_size",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_location": {
+          "name": "file_location",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "file_path": {
+          "name": "file_path",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "uploaded_at": {
+          "name": "uploaded_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "media_files_filePath_idx": {
+          "name": "media_files_filePath_idx",
+          "columns": [
+            {
+              "expression": "file_path",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
     "public.feedback": {
       "name": "feedback",
       "schema": "",
@@ -562,79 +635,6 @@
           "value": "(feedback_type = 'TASK' AND task_id IS NOT NULL AND mentor_booking_id IS NULL) OR\n          (feedback_type = 'MENTORING' AND task_id IS NULL AND mentor_booking_id IS NOT NULL)"
         }
       },
-      "isRLSEnabled": false
-    },
-    "public.global_media_files": {
-      "name": "global_media_files",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "file_name": {
-          "name": "file_name",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "file_type": {
-          "name": "file_type",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "file_size": {
-          "name": "file_size",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "file_location": {
-          "name": "file_location",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "file_path": {
-          "name": "file_path",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "uploaded_at": {
-          "name": "uploaded_at",
-          "type": "timestamp with time zone",
-          "primaryKey": false,
-          "notNull": false,
-          "default": "now()"
-        }
-      },
-      "indexes": {
-        "media_files_filePath_idx": {
-          "name": "media_files_filePath_idx",
-          "columns": [
-            {
-              "expression": "file_path",
-              "isExpression": false,
-              "asc": true,
-              "nulls": "last"
-            }
-          ],
-          "isUnique": false,
-          "concurrently": false,
-          "method": "btree",
-          "with": {}
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "policies": {},
-      "checkConstraints": {},
       "isRLSEnabled": false
     },
     "public.jwks": {
@@ -2983,20 +2983,6 @@
           "primaryKey": false,
           "notNull": false
         },
-        "stripe_account_linked": {
-          "name": "stripe_account_linked",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
-        "onboarding_completed": {
-          "name": "onboarding_completed",
-          "type": "boolean",
-          "primaryKey": false,
-          "notNull": true,
-          "default": false
-        },
         "emailVerified": {
           "name": "emailVerified",
           "type": "boolean",
@@ -3023,6 +3009,13 @@
           "primaryKey": false,
           "notNull": true,
           "default": "now()"
+        },
+        "metadata": {
+          "name": "metadata",
+          "type": "jsonb",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'{\"agreedOnTerms\":false,\"onboardingCompleted\":false,\"stripeAccountLinked\":false}'::jsonb"
         }
       },
       "indexes": {

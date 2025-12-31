@@ -1,7 +1,7 @@
 import { CustomImageExtension } from "@/components/editors/tiptap/custome-node/CustomImageExtension";
 // We will fix the ModernTableExtension import in the next file
 import { ModernTableExtension } from "@/components/editors/tiptap/custome-node/ModernTableExtension";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";

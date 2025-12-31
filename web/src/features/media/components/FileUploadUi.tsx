@@ -41,8 +41,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
     try {
       const uploadedMeta = await uploadMutate({
         files: fileArray,
-        scope: "task",
-        url: "/media/upload/draft-task-file",
+        url: "/tasks/draft/files",
       });
 
       const newUploadedFiles = [

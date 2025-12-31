@@ -1,5 +1,4 @@
 import { cn } from "@/lib/utils/utils";
-import Image from "next/image";
 import Link from "next/link";
 
 export default function Logo({
@@ -12,7 +11,7 @@ export default function Logo({
   if (link) {
     return (
       <Link href={"/"} className="flex items-center gap-2">
-        <Image
+        <img
           src="/logo2.png"
           alt="SolveIt Logo"
           width={40}
@@ -27,7 +26,7 @@ export default function Logo({
 
   return (
     <div className="flex items-center gap-2">
-      <Image
+      <img
         src="/logo2.png"
         alt="SolveIt Logo"
         width={40}

@@ -6,34 +6,47 @@ import (
 	"log"
 	"net/http"
 
+	"github/abdallemo/solveit-saas/internal/ai"
 	"github/abdallemo/solveit-saas/internal/api/websocket"
-	"github/abdallemo/solveit-saas/internal/database"
+	"github/abdallemo/solveit-saas/internal/chat"
+	"github/abdallemo/solveit-saas/internal/editor"
+	"github/abdallemo/solveit-saas/internal/file"
 	"github/abdallemo/solveit-saas/internal/middleware"
+	"github/abdallemo/solveit-saas/internal/task"
 	"github/abdallemo/solveit-saas/internal/utils"
-
-	"github.com/aws/aws-sdk-go-v2/service/s3"
-	"github.com/go-redis/redis/v8"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/sashabaranov/go-openai"
+	"github/abdallemo/solveit-saas/internal/workspace"
 )
 
+type Services struct {
+	FileService      *file.Service
+	ChatService      *chat.Service
+	TaskService      *task.Service
+	AIService        *ai.Service
+	WorkspaceService *workspace.Service
+	EditorService    *editor.Service
+}
+
+type Configs struct {
+	addr string
+}
+
+func NewConfigs(addr string) *Configs {
+	return &Configs{
+		addr: addr,
+	}
+}
+
 type Server struct {
-	addr         string
-	WebSockets   *websocket.WebSockets
-	s3Client     *s3.Client
-	openaiClient *openai.Client
-	store        *database.Queries
-	redisClient  *redis.Client
-	dbConn       *pgxpool.Pool
-	middleware   *middleware.Middleware
+	configs *Configs
+	*Services
+	WebSockets *websocket.WebSockets
+
+	middleware *middleware.Middleware
 }
 
 func NewServer(
-	addr string, s3Client *s3.Client,
-	openaiClient *openai.Client,
-	store *database.Queries,
-	redisClient *redis.Client,
-	dbConn *pgxpool.Pool,
+	configs *Configs,
+	services *Services,
 ) *Server {
 	websocket := websocket.NewWebSockets()
 
@@ -48,14 +61,10 @@ func NewServer(
 		log.Fatalf("failed to init middleware: %v", err)
 	}
 	return &Server{
-		addr:         addr,
-		s3Client:     s3Client,
-		openaiClient: openaiClient,
-		store:        store,
-		redisClient:  redisClient,
-		dbConn:       dbConn,
-		WebSockets:   websocket,
-		middleware:   md,
+		configs:    configs,
+		WebSockets: websocket,
+		middleware: md,
+		Services:   services,
 	}
 }
 
@@ -79,10 +88,17 @@ func (s *Server) routes() http.Handler {
 	return globalStack(mux)
 }
 
-func sendHTTPResp(w http.ResponseWriter, payload any, statusCode int) {
+func WriteJSON(w http.ResponseWriter, payload any, statusCode int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
-	json.NewEncoder(w).Encode(payload)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		log.Printf("json encode error: %v", err)
+	}
+}
+func sendHTTPError(w http.ResponseWriter, message string, statusCode int) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(statusCode)
+	json.NewEncoder(w).Encode(JSONError{Message: message})
 }
 
 func (s *Server) registerWebsocketRoutes(mux *http.ServeMux) {
@@ -99,26 +115,27 @@ func (s *Server) registerPublicRoutes(mux *http.ServeMux) {
 
 func (s *Server) registerSecuredRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /send-notification", s.WebSockets.Notif.HandleSendNotification)
-	mux.HandleFunc("POST /media", s.handleUploadMedia)
-	mux.HandleFunc("DELETE /media", s.handleDeleteMedia)
-	mux.HandleFunc("GET /media/download", s.handleMediaDownload)
-	mux.HandleFunc("GET /media", s.handleMedia)
-	mux.HandleFunc("POST /media/upload/draft-task-file", s.handleSaveDraftWithFiles)
-	mux.HandleFunc("POST /media/upload/solution-worksapce-file", s.handleSaveSolutionWorkspaceWithFiles)
+
+	mux.HandleFunc("GET /media/{filePath}", s.handleGetFiles) //done
+
+	mux.HandleFunc("POST /tasks/draft/files", s.handleCreateDraftTaskFiles)             //done
+	mux.HandleFunc("DELETE /tasks/draft/files/{filePath}", s.handleDeleteDraftTaskFile) //yet
+
+	mux.HandleFunc("POST /editor/files", s.handleCreateEditorFiles)
+	mux.HandleFunc("DELETE /editor/files/{filePath}", s.handleDeleteEditorFile)
+
+	mux.HandleFunc("POST /chats", s.handleCreateChat)
+	mux.HandleFunc("DELETE /chats/{chatId}/{filePath}", s.handleDeleteChat)
+
+	mux.HandleFunc("POST /workspaces/{workspaceId}/files", s.handleCreateWorkspaceFiles)              //done
+	mux.HandleFunc("DELETE /workspaces/{workspaceId}/files/{filePath}", s.handleDeleteWorkspaceFiles) //yet
+
 	mux.HandleFunc("POST /openai", s.hanleOpenAi)
-	mux.HandleFunc("GET /protected", func(w http.ResponseWriter, r *http.Request) {
-		msg := struct {
-			Message string `json:"message"`
-		}{Message: "done"}
-
-		sendHTTPResp(w, &msg, 200)
-
-	})
 }
 
 func (s *Server) Run() error {
-	log.Printf("server running on port:%s", s.addr)
-	return http.ListenAndServe(s.addr, s.routes())
+	log.Printf("server running on port:%s", s.configs.addr)
+	return http.ListenAndServe(s.configs.addr, s.routes())
 }
 
 func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
@@ -126,5 +143,5 @@ func (s *Server) healthz(w http.ResponseWriter, r *http.Request) {
 		Message string `json:"message"`
 	}{Message: "alive"}
 
-	sendHTTPResp(w, &msg, 200)
+	WriteJSON(w, &msg, 200)
 }

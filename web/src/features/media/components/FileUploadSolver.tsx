@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils/utils";
 import { Upload } from "lucide-react";
 import { useRef, useState } from "react";
 import { toast } from "sonner";
-import { WorkspaceUploadedFileMeta } from "../server/media-types";
+import { WorkspaceUploadedFileMeta } from "@/features/media/media-types";
 import { FileChatCardComps } from "./FileHelpers";
 
 interface FileUploadProps {
@@ -61,11 +61,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
     try {
       const uploadedMeta = await uploadMutate({
         files: fileArray,
-        scope: "workspace",
-        url: `/media/upload/solution-worksapce-file`,
-        extraBody: {
-          workspaceId: currentWorkspace?.id!,
-        },
+        url: `/workspaces/${currentWorkspace?.id}/files`,
       });
       const newFiles: WorkspaceUploadedFileMeta[] = uploadedMeta.map((u) => {
         return {
@@ -176,6 +172,7 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
                     try {
                       await deleteFile({
                         filePath: file.filePath,
+                        workspaceId: currentWorkspace?.id,
                       });
                       setUploadedFiles((prev) =>
                         prev.filter((f) => f.filePath !== file.filePath),

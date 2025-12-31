@@ -8,7 +8,7 @@ import {
 } from "@/drizzle/schemas";
 import { pgFormatDateYMD } from "@/drizzle/utils";
 import { isAuthorized } from "@/features/auth/server/actions";
-import { goServerApi } from "@/lib/go-api/server";
+import { goApiClient } from "@/lib/go-api/server";
 import { logger } from "@/lib/logging/winston";
 import { DeleteKeysByPattern } from "@/lib/redis";
 import {
@@ -145,28 +145,37 @@ const openaiResSchema = z.object({
 });
 export type openaiResAdminType = z.infer<typeof openaiResSchema>;
 export type openaiResUserType = Pick<openaiResAdminType, "violatesRules">;
+type Result<T> =
+  | (T & { error: null })
+  | ({ [K in keyof T]: null } & { error: { message: string } });
 
 export async function validateContentWithAi(fields: {
   content: string;
   adminMode: true;
-}): Promise<openaiResAdminType>;
+}): Promise<Result<openaiResAdminType>>;
 export async function validateContentWithAi(fields: {
   content: string;
   adminMode: false;
-}): Promise<openaiResUserType>;
+}): Promise<Result<openaiResUserType>>;
 
 export async function validateContentWithAi(
   fields:
     | { content: string; adminMode: true }
     | { content: string; adminMode: false },
-): Promise<openaiResAdminType | openaiResUserType> {
+): Promise<Result<openaiResAdminType | openaiResUserType>> {
   try {
-    const res = await goServerApi.request("/openai?scope=moderation", {
+    const res = await goApiClient.request("/openai?scope=moderation", {
       method: "POST",
       body: JSON.stringify(fields),
     });
     if (res.error) {
-      throw new Error("unable to fetch: " + res.error);
+      return {
+        confidenceScore: null,
+        reason: null,
+        triggeredRules: null,
+        violatesRules: null,
+        error: { message: res.error },
+      };
     }
     const validatedData = openaiResSchema.safeParse(res.data);
     if (!validatedData.success) {
@@ -174,45 +183,70 @@ export async function validateContentWithAi(
       throw new Error("Invalid API response schema.");
     }
     if (fields.adminMode) {
-      return validatedData.data;
+      return { ...validatedData.data, error: null };
     } else {
       const allowedResponse: openaiResUserType = {
         violatesRules: validatedData.data.violatesRules,
       };
-      return allowedResponse;
+      return { ...allowedResponse, error: null };
     }
   } catch (error) {
     logger.error("failed to fetch goapi openai");
-    throw error;
+    return {
+      confidenceScore: null,
+      reason: null,
+      triggeredRules: null,
+      violatesRules: null,
+      error: { message: "failed to fetch" },
+    };
   }
 }
-export async function autoSuggestTasWithAi(fields: { content: string }) {
+type taskAiSuggestionType = {
+  category: string;
+  price: number;
+  title: string;
+  description: string;
+};
+export async function autoSuggestTasWithAi(fields: {
+  content: string;
+}): Promise<Result<taskAiSuggestionType>> {
   try {
-    const res = await goServerApi.request("/openai?scope=autosuggestion", {
+    const res = await goApiClient.request("/openai?scope=autosuggestion", {
       method: "POST",
-
       body: JSON.stringify(fields),
     });
 
     if (res.error) {
-      throw new Error("unable to fetch: " + res.error);
+      return {
+        category: null,
+        description: null,
+        price: null,
+        title: null,
+        error: { message: res.error },
+      };
     }
     const validatedData = autoSuggestTaskResSchema.safeParse(res.data);
     if (!validatedData.success) {
       logger.error("Invalid API response schema. from go service");
       throw new Error("Invalid API response schema.");
     }
-    return validatedData.data;
+    return { ...validatedData.data, error: null };
   } catch (error) {
     logger.error("failed to fetch goapi openai");
-    throw error;
+    return {
+      category: null,
+      description: null,
+      price: null,
+      title: null,
+      error: { message: "failed to fetch" },
+    };
   }
 }
 
 export async function autoSuggestBlogWithAi(fields: { content: string }) {
   try {
     console.log("context :", fields.content);
-    const res = await goServerApi.request("/openai?scope=autosuggestion_blog", {
+    const res = await goApiClient.request("/openai?scope=autosuggestion_blog", {
       method: "POST",
 
       body: JSON.stringify(fields),

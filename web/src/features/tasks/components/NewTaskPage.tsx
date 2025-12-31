@@ -81,7 +81,11 @@ export default function TaskCreationPage({
     onMutate: () => {
       toast.loading("checking content againt our rules....", { id: "openai" });
     },
-    onSuccess: ({ violatesRules }) => {
+    onSuccess: ({ violatesRules, error }) => {
+      if (error) {
+        toast.error(error.message, { id: "openai" });
+        return;
+      }
       if (violatesRules) {
         toast.warning(
           <div className="flex flex-col gap-2">
@@ -108,32 +112,31 @@ export default function TaskCreationPage({
   const { mutateAsync: autoSuggest, isPending: isAutoSeggesting } = useMutation(
     {
       mutationFn: autoSuggestTasWithAi,
-      onSuccess: (d) => {},
-      onError: (er) => {
-        toast.error(er.message);
+      onSuccess: ({ category, description, price, title, error }) => {
+        if (error) {
+          toast.error(error.message, { id: "openai-suggestion" });
+          return;
+        }
+        updateDraft({
+          category,
+          description,
+          price,
+          title,
+        });
+        form.reset({
+          title,
+          description,
+          category,
+          price,
+          content: draft.content,
+        });
       },
     },
   );
   async function handleSugestions() {
-    const res = await autoSuggest({
+    await autoSuggest({
       content: contentText,
     });
-
-    updateDraft({
-      category: res.category,
-      description: res.description,
-      price: res.price,
-      title: res.title,
-    });
-    form.reset({
-      title: res.title,
-      description: res.description,
-      category: res.category,
-      price: res.price,
-      content: draft.content,
-    });
-
-    toast.dismiss("autosuggestion");
   }
 
   useEffect(() => {

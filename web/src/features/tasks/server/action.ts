@@ -26,8 +26,7 @@ import {
   getServerUserSession,
   isAuthorized,
 } from "@/features/auth/server/actions";
-import { deleteFileFromR2 } from "@/features/media/server/action";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { Notifier } from "@/features/notifications/server/notifier";
 import { getNewReleaseDate } from "@/features/payments/server/constants";
 import { getServerReturnUrl } from "@/features/subscriptions/server/action";
@@ -592,29 +591,7 @@ export async function autoSaveDraftWorkspace(
     await db.delete(WorkspaceTable).where(eq(WorkspaceTable.taskId, taskId));
   }
 }
-export async function deleteFileFromWorkspace(fileId: string) {
-  try {
-    const file = await db.query.WorkspaceFilesTable.findFirst({
-      where: eq(WorkspaceFilesTable.id, fileId),
-    });
 
-    if (!file) {
-      return { error: "File not found" };
-    }
-    await deleteFileFromR2(file.filePath);
-    await db
-      .delete(WorkspaceFilesTable)
-      .where(eq(WorkspaceFilesTable.id, fileId));
-    revalidatePath(`workspace/${file.workspaceId}`);
-    return {
-      file: file.fileName,
-      success: `${truncateText(file.fileName, 10)} Deleted Successfuly`,
-    };
-  } catch (error) {
-    console.error(error);
-    throw new Error("Something went Wrong", { cause: error });
-  }
-}
 export async function saveFileToWorkspaceDB({
   fileName,
   fileType,
@@ -779,7 +756,6 @@ export async function handleTaskDeadline(
     solverWorksapce.solverId,
     solverWorksapce.taskId,
   );
-  console.log("in this");
   if (deadline && !isPast(deadline)) return;
 
   try {
@@ -1031,22 +1007,7 @@ export async function createTaskComment(values: {
     });
   }
 }
-export async function deleteDraftFile(values: {
-  filePath: string;
-  userId: string;
-}) {
-  const { filePath, userId } = values;
-  try {
-    await isAuthorized(["POSTER"]);
-    await deleteFileFromR2(filePath);
-    await db
-      .update(TaskDraftTable)
-      .set({ uploadedFiles: [] })
-      .where(eq(TaskDraftTable.userId, userId));
-  } catch (error) {
-    throw new Error("unable to delete ");
-  }
-}
+
 export async function submitFeadback({
   comment,
   feedbackType,

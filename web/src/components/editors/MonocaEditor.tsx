@@ -4,7 +4,7 @@ import type React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { useFileStream } from "@/hooks/useFile";
 import { getMonocaSupportedLanguage } from "@/lib/utils/utils";
 import { Editor } from "@monaco-editor/react";

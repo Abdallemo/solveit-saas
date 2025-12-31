@@ -6,9 +6,16 @@ import (
 	"runtime"
 	"time"
 
+	"github/abdallemo/solveit-saas/internal/ai"
 	"github/abdallemo/solveit-saas/internal/api"
+	"github/abdallemo/solveit-saas/internal/cache"
+	"github/abdallemo/solveit-saas/internal/chat"
+	"github/abdallemo/solveit-saas/internal/editor"
+	"github/abdallemo/solveit-saas/internal/file"
+	"github/abdallemo/solveit-saas/internal/task"
 	"github/abdallemo/solveit-saas/internal/utils"
 	"github/abdallemo/solveit-saas/internal/worker"
+	"github/abdallemo/solveit-saas/internal/workspace"
 
 	"github/abdallemo/solveit-saas/internal/database"
 
@@ -22,7 +29,8 @@ import (
 )
 
 func main() {
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
 	log.Println("Go version:", runtime.Version())
 
 	utils.LoadEnvs()
@@ -47,6 +55,7 @@ func main() {
 		log.Fatal("unable to connect to database:", err)
 	}
 	defer db.Close()
+	store := database.New(db)
 
 	opt, err := redis.ParseURL(utils.GetenvWithDefault("REDIS_URL", ""))
 	if err != nil {
@@ -65,7 +74,24 @@ func main() {
 
 	openaiClient := openai.NewClient(utils.GetenvWithDefault("OPENAI_API_KEY", ""))
 
-	server := api.NewServer(utils.GetenvWithDefault("GO_PORT", ":3030"), s3Client, openaiClient, database.New(db), redisClient, db)
+	fileService := file.NewService(s3Client)
+	chatService := chat.NewService(store, db, fileService)
+	taskService := task.NewTaskService(store, fileService)
+	workspaceService := workspace.NewService(store, fileService)
+	cacheService := cache.NewService(redisClient)
+	AIService := ai.NewService(openaiClient, store, cacheService)
+	editorService := editor.NewService(store, fileService)
+
+	srvCfg := api.NewConfigs(utils.GetenvWithDefault("GO_PORT", ":3030"))
+
+	server := api.NewServer(srvCfg, &api.Services{
+		FileService:      fileService,
+		ChatService:      chatService,
+		TaskService:      taskService,
+		AIService:        AIService,
+		WorkspaceService: workspaceService,
+		EditorService:    editorService,
+	})
 
 	worker := worker.NewWorker(database.New(db), s3Client, redisClient, server.WebSockets.Notif, db)
 	go worker.StartDeadlineEnforcerJob(ctx, 50, 10*time.Minute)

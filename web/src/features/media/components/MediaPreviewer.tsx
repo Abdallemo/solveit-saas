@@ -23,7 +23,7 @@ import {
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UploadedFileMeta } from "../server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { AudioPlayer } from "./AudioPlayer";
 import { ThreeDPlayerLoading } from "./ThreeDPlayerLoading";
 

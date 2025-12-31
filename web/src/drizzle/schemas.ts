@@ -1,4 +1,4 @@
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import {
   Address,
@@ -118,7 +118,7 @@ export const UserTable = pgTable(
     role: UserRole("role").default("POSTER").notNull().$type<UserRoleType>(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
-    emailVerified: boolean("emailVerified").notNull().default(false),
+    emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {
       mode: "date",
@@ -452,7 +452,7 @@ export const TaskFileTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
+    storageLocation: text("storage_location").notNull(),
     filePath: text("file_path").notNull(),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
@@ -464,14 +464,14 @@ export const TaskFileTable = pgTable(
     index("task_files_filePath_idx").on(taskFiles.filePath),
   ],
 );
-export const GlobalMediaFiles = pgTable(
-  "global_media_files",
+export const EditorFiles = pgTable(
+  "editor_files",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
+    storageLocation: text("storage_location").notNull(),
     filePath: text("file_path").notNull(),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
@@ -599,7 +599,7 @@ export const WorkspaceFilesTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
+    storageLocation: text("storage_location").notNull(),
     filePath: text("file_path").notNull(),
     isDraft: boolean("is_draft").default(true),
     uploadedAt: timestamp("uploaded_at", {
@@ -797,8 +797,9 @@ export const MentorshipChatFilesTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
+    storageLocation: text("storage_location").notNull(),
     filePath: text("file_path").notNull(),
+    isDeleted: boolean("is_deleted").default(false),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
       withTimezone: true,

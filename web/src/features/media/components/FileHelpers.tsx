@@ -10,7 +10,7 @@ import {
 
 import { Download, Loader2, X } from "lucide-react";
 import { SVGProps } from "react";
-import { UploadedFileMeta } from "../server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 
 export function FileIconComponent({
   extension,
@@ -57,7 +57,7 @@ export function FileChatCardComps({
     <div
       onClick={disabled ? undefined : action}
       className={cn(
-        "w-full relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card transition-all duration-200 group",
+        "min-w-0 relative overflow-hidden flex items-center gap-3 px-4 py-3 rounded-lg border border-border bg-card transition-all duration-200 group",
         !disabled && action
           ? "cursor-pointer hover:bg-muted"
           : "cursor-default opacity-70",

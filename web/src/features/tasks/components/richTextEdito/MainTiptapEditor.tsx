@@ -1,11 +1,9 @@
 "use client";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import { saveMediaFileToDb } from "@/features/media/server/action";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
 import { cn } from "@/lib/utils/cn";
-import { useMutation } from "@tanstack/react-query";
 import { Transaction } from "@tiptap/pm/state";
 import { Editor, EditorContent, JSONContent, useEditor } from "@tiptap/react";
 import { common, createLowlight } from "lowlight";
@@ -33,25 +31,20 @@ export default function PostingEditor({
   editorOptions = { editable: true },
 }: TiptapEditorProps) {
   const { uploadMutate } = useFileUpload({});
-  const { mutateAsync: saveMedia } = useMutation({
-    mutationFn: saveMediaFileToDb,
-  });
-  const { mutateAsync: deleteFile } = useDeleteFileGeneric("generic");
+
+  const { mutateAsync: deleteFile } = useDeleteFileGeneric("editor");
   const myMediaUploadFunction = async (
     file: File,
   ): Promise<UploadedFileMeta> => {
     const res = await uploadMutate({
       files: [file],
-      scope: "editor-images",
-      url: "/media",
+      url: "/editor/files",
     });
-    if (res.length > 0) {
-      await saveMedia(res[0]);
-    }
+    console.log(res);
     return res[0];
   };
   const myMediaCleanupFunction = async (resourceId: string): Promise<void> => {
-    return await deleteFile({ filePath: resourceId });
+    await deleteFile({ filePath: resourceId });
   };
   const lowlight = createLowlight(common);
   const extensions = createBlogExtensions({

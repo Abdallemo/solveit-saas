@@ -1,0 +1,1 @@
+ALTER TABLE "mentorship_chat_files" ADD COLUMN "is_deleted" boolean DEFAULT false;

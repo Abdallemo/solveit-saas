@@ -6,11 +6,9 @@
  * generating and responding to presigned URL requests.
  */
 
-
-
-/** **scope**: Defines the context for file operations ('workspace', 'task',...). 
+/** **scope**: Defines the context for file operations ('workspace', 'task',...).
 its extendable in the future  */
-export type scope = "workspace" | "task"
+export type scope = "workspace" | "task";
 
 export type WorkspaceUploadedFileMeta = {
   id: string;
@@ -34,19 +32,15 @@ export type UploadedFileMeta = {
   filePath: string;
   storageLocation: string;
 };
-/**GeneratePresignedUrlInput: Parameters for requesting an upload URL. */
-export type GeneratePresignedUrlInput = {
-  fileName: string;
-  fileType: string;
-  scope?: scope;
-};
 
-/** PresignedUrlResponse: The upload and public URLs returned by the server. */
-export type PresignedUrlResponse = {
-  uploadUrl: string;
-  filePath: string;
-  publicUrl: string;
-};
+type ExtraBody = Record<string, string | number | boolean>;
 
-/** current supported media upload limit per file upload in Migabyte format */
-export const MediaUploadLimit = 200
+export type UploadOptions = {
+  files: File[];
+  url: string;
+  extraBody?: ExtraBody;
+};
+export type UploadResponse = {
+  uploaded_files: UploadedFileMeta[];
+  failed_files: { file: UploadedFileMeta; error: string }[];
+};
