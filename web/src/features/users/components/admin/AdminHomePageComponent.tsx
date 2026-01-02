@@ -67,9 +67,9 @@ function getLogIcon(level: string) {
 }
 const quickActions = [
   { name: "Manage Users", href: "/dashboard/admin/users" },
-  { name: "Moderate Tasks", href: "/dashboard/admin/moderation" },
-  { name: "View Revenue Reports", href: "/dashboard/admin/revenue" },
-  { name: "System Logs", href: "/dashboard/admin/logs" },
+  { name: "Moderate Tasks", href: "/dashboard/admin/ai" },
+  { name: "View Reports", href: "/dashboard/admin/reports" },
+  { name: "Create New Blog", href: "/dashboard/admin/blog/new" },
 ];
 
 export default function AdminDashboard({
@@ -95,7 +95,8 @@ export default function AdminDashboard({
                 asChild
                 key={idx}
                 variant="outline"
-                className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl">
+                className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl"
+              >
                 <Link href={action.href}>
                   {action.name}
                   <ArrowRight className="w-4 h-4" />
@@ -133,7 +134,8 @@ export default function AdminDashboard({
                   users: usersConfig.users,
                   newUsers: usersConfig.newUsers,
                 }}
-                className="w-full h-full">
+                className="w-full h-full"
+              >
                 <BarChart accessibilityLayer data={statsData}>
                   <XAxis
                     dataKey="date"
@@ -178,7 +180,8 @@ export default function AdminDashboard({
             <div className="w-full h-40">
               <ChartContainer
                 config={{ subscriptions: usersConfig.subscriptions }}
-                className="w-full h-full">
+                className="w-full h-full"
+              >
                 <BarChart accessibilityLayer data={statsData}>
                   <XAxis
                     dataKey="date"
@@ -222,7 +225,8 @@ export default function AdminDashboard({
             <div className="w-full h-40">
               <ChartContainer
                 config={{ revenue: usersConfig.revenue }}
-                className="w-full h-full">
+                className="w-full h-full"
+              >
                 <LineChart accessibilityLayer data={statsData}>
                   <XAxis
                     dataKey="date"
@@ -305,11 +309,13 @@ export function ServerLogs({ serverLogs }: { serverLogs: PaginatedLogs }) {
           {allLogs.map((log) => (
             <div
               key={log.id}
-              className="flex items-center space-x-3 p-3 rounded-lg border bg-card ">
+              className="flex items-center space-x-3 p-3 rounded-lg border bg-card "
+            >
               <Badge
                 className={`${getLogLevelColor(
-                  log.level
-                )} flex items-center space-x-1 px-2 py-1`}>
+                  log.level,
+                )} flex items-center space-x-1 px-2 py-1`}
+              >
                 {getLogIcon(log.level)}
                 <span className="text-xs font-medium uppercase">
                   {log.level}
@@ -332,7 +338,8 @@ export function ServerLogs({ serverLogs }: { serverLogs: PaginatedLogs }) {
                 onClick={() => fetchNextPage()}
                 disabled={isFetchingNextPage}
                 className="w-full"
-                variant="outline">
+                variant="outline"
+              >
                 Load More Logs
               </Button>
             ) : (

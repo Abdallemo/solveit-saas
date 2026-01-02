@@ -124,6 +124,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="ghost"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().addRowBefore().run()}
         disabled={!editor.can().addRowBefore()}
         title="Insert row before"
@@ -133,6 +134,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="ghost"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().addRowAfter().run()}
         disabled={!editor.can().addRowAfter()}
         title="Insert row after"
@@ -145,6 +147,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="ghost"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().deleteRow().run()}
         disabled={!editor.can().deleteRow()}
         title="Delete row"
@@ -154,6 +157,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="ghost"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().deleteColumn().run()}
         disabled={!editor.can().deleteColumn()}
         title="Delete column"
@@ -166,6 +170,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="ghost"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().mergeOrSplit().run()}
         disabled={!editor.can().mergeOrSplit()}
         title="Merge/Split cells"
@@ -175,6 +180,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       <Button
         variant="destructive"
         size="icon"
+        type="button"
         onClick={() => editor.chain().focus().deleteTable().run()}
         title="Delete table"
       >
@@ -182,6 +188,7 @@ export default function TableBubbleMenu({ editor }: TableBubbleMenuProps) {
       </Button>
 
       <Toggle
+        type="button"
         pressed={editor.isActive("tableHeader")}
         onPressedChange={() => editor.chain().focus().toggleHeaderCell().run()}
         disabled={!editor.can().toggleHeaderCell()}

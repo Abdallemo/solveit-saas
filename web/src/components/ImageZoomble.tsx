@@ -115,7 +115,7 @@ export function ZoomableImage({ src, alt }: ZoomableImageProps) {
         </Button>
       </div>
 
-      <Image
+      <img
         src={src}
         alt={alt}
         draggable={false}

@@ -78,16 +78,16 @@ export default function ModeratorDashboard() {
   } = useQuery(moderatorResolvedTaskStatsQuery());
 
   const quickActions = [
-    { name: "Review Reports", href: `${path}/reports` },
-    { name: "Manage Users", href: `${path}/users` },
-    { name: "Audit Payments", href: `${path}/payments` },
-    { name: "View Logs", href: `${path}/logs` },
+    { name: "Category Managment", href: `${path}/categories` },
+    { name: "Deadline Managment", href: `${path}/deadline` },
+    { name: "User Reports", href: `${path}/user-reports` },
+    { name: "View Disputes", href: `${path}/disputes` },
   ];
 
   const renderChart = (
     isLoading: boolean,
     data: any[] | undefined,
-    chart: React.ReactNode
+    chart: React.ReactNode,
   ) => {
     if (isLoading) {
       return (
@@ -124,7 +124,8 @@ export default function ModeratorDashboard() {
                   asChild
                   key={idx}
                   variant="outline"
-                  className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl">
+                  className="flex-1 md:flex-none flex justify-between items-center px-6 py-3 rounded-xl"
+                >
                   <Link href={action.href}>
                     {action.name}
                     <ArrowRight className="w-4 h-4" />
@@ -152,7 +153,8 @@ export default function ModeratorDashboard() {
             <div className="text-3xl font-bold mb-2">
               {isModeratorTaskStatsLoading
                 ? "..."
-                : moderatorTaskStats?.reduce((sum, d) => sum + d.count, 0) ?? 0}
+                : (moderatorTaskStats?.reduce((sum, d) => sum + d.count, 0) ??
+                  0)}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Tasks created this week
@@ -175,7 +177,7 @@ export default function ModeratorDashboard() {
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="count" fill="var(--chart-1)" radius={4} />
                 </BarChart>
-              </ChartContainer>
+              </ChartContainer>,
             )}
           </CardContent>
         </Card>
@@ -194,10 +196,10 @@ export default function ModeratorDashboard() {
             <div className="text-3xl font-bold mb-2">
               {isModeratorReportedTaskStatsLoading
                 ? "..."
-                : moderatorReportedTaskStats?.reduce(
+                : (moderatorReportedTaskStats?.reduce(
                     (sum, d) => sum + d.count,
-                    0
-                  ) ?? 0}
+                    0,
+                  ) ?? 0)}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Total reported tasks this week
@@ -207,7 +209,8 @@ export default function ModeratorDashboard() {
               moderatorReportedTaskStats,
               <ChartContainer
                 config={reportedTasksConfig}
-                className="w-full h-40">
+                className="w-full h-40"
+              >
                 <BarChart accessibilityLayer data={moderatorReportedTaskStats}>
                   <XAxis
                     dataKey="date"
@@ -222,7 +225,7 @@ export default function ModeratorDashboard() {
                   <ChartLegend content={<ChartLegendContent />} />
                   <Bar dataKey="count" fill="var(--chart-3)" radius={4} />
                 </BarChart>
-              </ChartContainer>
+              </ChartContainer>,
             )}
           </CardContent>
         </Card>
@@ -240,10 +243,10 @@ export default function ModeratorDashboard() {
             <div className="text-3xl font-bold mb-2">
               {isModeratorResolvedTaskStatsLoading
                 ? "..."
-                : moderatorResolvedTaskStats?.reduce(
+                : (moderatorResolvedTaskStats?.reduce(
                     (sum, d) => sum + d.count,
-                    0
-                  ) ?? 0}
+                    0,
+                  ) ?? 0)}
             </div>
             <p className="text-sm text-muted-foreground mb-4">
               Reports resolved this week
@@ -253,11 +256,13 @@ export default function ModeratorDashboard() {
               moderatorResolvedTaskStats,
               <ChartContainer
                 config={resolvedTasksConfig}
-                className="w-full h-40">
+                className="w-full h-40"
+              >
                 <LineChart
                   accessibilityLayer
                   data={moderatorResolvedTaskStats}
-                  margin={{ left: 0, right: 0 }}>
+                  margin={{ left: 0, right: 0 }}
+                >
                   <XAxis
                     dataKey="date"
                     tickLine={false}
@@ -273,11 +278,11 @@ export default function ModeratorDashboard() {
                     dataKey="count"
                     stroke="var(--chart-2)"
                     strokeWidth={3}
-                    dot={{ r: 4 }} 
+                    dot={{ r: 4 }}
                     activeDot={{ r: 6 }}
                   />
                 </LineChart>
-              </ChartContainer>
+              </ChartContainer>,
             )}
           </CardContent>
         </Card>
