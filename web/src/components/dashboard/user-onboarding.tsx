@@ -39,6 +39,7 @@ import {
   MapPin,
   User,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
@@ -92,6 +93,7 @@ export default function OnboardingForm() {
   });
   const minDate = new Date("1900-01-01");
   const maxDate = subYears(new Date(), 13);
+  const router = useRouter();
   const { mutateAsync: saveOnboardingDb, isPending } = useMutation({
     mutationFn: handleUserOnboarding,
     onSuccess: ({ error }) => {
@@ -101,6 +103,7 @@ export default function OnboardingForm() {
       setCurrentStep(1);
       form.reset(defaultValues);
       saveOnboarding(defaultValues);
+      router.refresh();
     },
   });
   const formValues = form.watch();
@@ -145,7 +148,7 @@ export default function OnboardingForm() {
 
   const nextStep = async (e: React.MouseEvent) => {
     // Prevent default to ensure no form submission triggers accidentally
-    e.preventDefault(); 
+    e.preventDefault();
     const isValid = await validateStep(currentStep);
     if (isValid && currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
@@ -447,9 +450,8 @@ export default function OnboardingForm() {
                   // Changed: flex-1 for safe width
                   className="flex items-center justify-center space-x-2 flex-1 min-w-0"
                 >
-                   <span>Continue</span>
+                  <span>Continue</span>
                   <ChevronRight className="w-4 h-4" />
-                 
                 </Button>
               ) : (
                 // Changed: No nested form here, just the submit button

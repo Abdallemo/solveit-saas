@@ -987,10 +987,10 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   postedBlogs: many(BlogTable, {
     relationName: "postedBlogs",
   }),
-  productFeedbackOwner: many(BlogTable, {
+  productFeedbackOwner: many(ProductFeedbackTable, {
     relationName: "productFeedbackOwner",
   }),
-  supportRequestsOwner: many(BlogTable, {
+  supportRequestsOwner: many(SupportRequestsTable, {
     relationName: "supportRequestsOwner",
   }),
 }));
