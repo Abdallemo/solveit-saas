@@ -16,7 +16,7 @@ export default function WorksapceSkeleton() {
             </div>
 
             <div className="flex-1 overflow-auto p-4 pt-0">
-              <div className="border rounded-md flex flex-col h-[500px] lg:h-[800px]">
+              <div className="border rounded-md flex flex-col h-125 lg:h-200">
                 <div className="flex items-center gap-1 p-4 border-b rounded-t-lg">
                   <Skeleton className="h-10 w-10 rounded" />
                   <Skeleton className="h-10 w-10 rounded" />

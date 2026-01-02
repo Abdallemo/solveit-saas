@@ -41,8 +41,7 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
     try {
       const uploadedMeta = await uploadMutate({
         files: fileArray,
-        scope: "task",
-        url: "/media/upload/draft-task-file",
+        url: "/tasks/draft/files",
       });
 
       const newUploadedFiles = [
@@ -143,7 +142,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
                     filePath: "",
                     fileSize: file.size,
                     fileType: file.type,
-                    storageLocation: "",
                   }}
                 />
               </div>
@@ -158,7 +156,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
                       filePath: file.filePath,
                       fileSize: file.fileSize,
                       fileType: file.fileType,
-                      storageLocation: file.storageLocation,
                     })
                   }
                   deleteAction={async (f) => {

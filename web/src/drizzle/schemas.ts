@@ -1,4 +1,4 @@
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { AvailabilitySlot } from "@/features/mentore/server/types";
 import {
   Address,
@@ -34,6 +34,19 @@ export const UserRole = pgEnum("role", [
   "MODERATOR",
   "POSTER",
   "SOLVER",
+]);
+export const productFeedbackTypeEnum = pgEnum("product_feedback_type", [
+  "feature_request",
+  "bug_report",
+  "improvement",
+  "general",
+]);
+
+export const supportPriorityEnum = pgEnum("support_priority", [
+  "low",
+  "medium",
+  "high",
+  "urgent",
 ]);
 export const NotificationMethodsEnum = pgEnum("method", ["SYSTEM", "EMAIL"]);
 export const TierEnum = pgEnum("tier", ["POSTER", "SOLVER", "SOLVER++"]);
@@ -94,6 +107,11 @@ export type TaskType = typeof TaskTable.$inferSelect;
 export type taskFileType = typeof TaskFileTable.$inferSelect;
 export type BlockedSolverType = typeof BlockedTasksTable.$inferSelect;
 export type TaskStatusType = (typeof TaskStatusEnum.enumValues)[number];
+export type ProductFeedbackType =
+  (typeof productFeedbackTypeEnum.enumValues)[number];
+
+export type supportPriorityType =
+  (typeof supportPriorityEnum.enumValues)[number];
 export type FileUploadStatusType =
   (typeof fileUploadStatusEnum.enumValues)[number];
 export type MentorChatStatusType = (typeof MentorChatStatus.enumValues)[number];
@@ -118,7 +136,7 @@ export const UserTable = pgTable(
     role: UserRole("role").default("POSTER").notNull().$type<UserRoleType>(),
     stripeCustomerId: text("stripe_customer_id"),
     stripeAccountId: text("stripe_account_id"),
-    emailVerified: boolean("emailVerified").notNull().default(false),
+    emailVerified: boolean("email_verified").notNull().default(false),
     image: text("image"),
     createdAt: timestamp("created_at", {
       mode: "date",
@@ -189,7 +207,7 @@ export const AccountTable = pgTable("account", {
 });
 
 export const VerificationTable = pgTable("verification", {
-  id: uuid().defaultRandom().notNull(),
+  id: uuid("id").primaryKey().defaultRandom(),
   identifier: text("identifier").notNull(),
   value: text("value").notNull(),
 
@@ -340,6 +358,32 @@ export const FeedbackTable = pgTable(
     ),
   }),
 );
+export const SupportRequestsTable = pgTable("support_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  priority: supportPriorityEnum("priority").notNull().default("low"),
+  subject: text("subject").notNull(),
+  description: text("description").notNull(),
+  status: text("status").notNull().default("open"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const ProductFeedbackTable = pgTable("product_feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id")
+    .notNull()
+    .references(() => UserTable.id, { onDelete: "cascade" }),
+  type: productFeedbackTypeEnum("type").notNull(),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
 
 export const TaskTable = pgTable(
   "tasks",
@@ -452,7 +496,6 @@ export const TaskFileTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
     filePath: text("file_path").notNull(),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
@@ -464,14 +507,13 @@ export const TaskFileTable = pgTable(
     index("task_files_filePath_idx").on(taskFiles.filePath),
   ],
 );
-export const GlobalMediaFiles = pgTable(
-  "global_media_files",
+export const EditorFiles = pgTable(
+  "editor_files",
   {
     id: uuid("id").primaryKey().defaultRandom(),
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
     filePath: text("file_path").notNull(),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
@@ -599,7 +641,6 @@ export const WorkspaceFilesTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
     filePath: text("file_path").notNull(),
     isDraft: boolean("is_draft").default(true),
     uploadedAt: timestamp("uploaded_at", {
@@ -797,8 +838,8 @@ export const MentorshipChatFilesTable = pgTable(
     fileName: text("file_name").notNull(),
     fileType: text("file_type").notNull(),
     fileSize: integer("file_size").notNull(),
-    storageLocation: text("file_location").notNull(),
     filePath: text("file_path").notNull(),
+    isDeleted: boolean("is_deleted").default(false),
     uploadedAt: timestamp("uploaded_at", {
       mode: "date",
       withTimezone: true,
@@ -829,7 +870,7 @@ export const RulesTable = pgTable("ai_rules", {
 });
 
 export const AiFlagsTable = pgTable("ai_flags", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
   hashedContent: text("hashed_content").notNull(),
   reason: text("reason").notNull(),
   confidenceScore: integer("confidence_score").notNull(),
@@ -841,7 +882,7 @@ export const AiFlagsTable = pgTable("ai_flags", {
     .notNull(),
 });
 export const AiTestSandboxTable = pgTable("ai_test_sandbox", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
   content: text("content").notNull().default(""),
   adminId: uuid("admin_id")
     .notNull()
@@ -878,7 +919,7 @@ export const BlogTable = pgTable("blogs", {
 });
 
 export const notifications = pgTable("notifications", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: uuid("id").defaultRandom().primaryKey().notNull(),
   senderId: text("sender_id").notNull(),
   receiverId: text("receiver_id").notNull(),
   subject: text("subject"),
@@ -946,6 +987,12 @@ export const userRlations = relations(UserTable, ({ many, one }) => ({
   postedBlogs: many(BlogTable, {
     relationName: "postedBlogs",
   }),
+  productFeedbackOwner: many(BlogTable, {
+    relationName: "productFeedbackOwner",
+  }),
+  supportRequestsOwner: many(BlogTable, {
+    relationName: "supportRequestsOwner",
+  }),
 }));
 export const blogsRelation = relations(BlogTable, ({ one }) => ({
   blogAuthor: one(UserTable, {
@@ -954,6 +1001,26 @@ export const blogsRelation = relations(BlogTable, ({ one }) => ({
     relationName: "postedBlogs",
   }),
 }));
+export const productFeedbackRelation = relations(
+  ProductFeedbackTable,
+  ({ one }) => ({
+    user: one(UserTable, {
+      fields: [ProductFeedbackTable.userId],
+      references: [UserTable.id],
+      relationName: "productFeedbackOwner",
+    }),
+  }),
+);
+export const supportRequestsRelation = relations(
+  SupportRequestsTable,
+  ({ one }) => ({
+    user: one(UserTable, {
+      fields: [SupportRequestsTable.userId],
+      references: [UserTable.id],
+      relationName: "supportRequestsOwner",
+    }),
+  }),
+);
 
 export const accountRelations = relations(AccountTable, ({ one }) => ({
   user: one(UserTable, {

@@ -1,9 +1,9 @@
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { EditorUploadedFileType } from "@/features/media/media-types";
 import { Node } from "@tiptap/pm/model"; // Added for correct typing
 import { Plugin } from "@tiptap/pm/state";
 import { ResizableImage } from "tiptap-extension-resizable-image";
 
-type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
+type UploadFunction = (file: File) => Promise<EditorUploadedFileType>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
 
 export const CustomImageExtension = (
@@ -52,9 +52,9 @@ export const CustomImageExtension = (
                 .run();
 
               uploadMedia(file)
-                .then(({ storageLocation, filePath, fileName, fileType }) => {
-                  const publicUrl = storageLocation;
-
+                .then(({ filePath, fileName, url }) => {
+                  const publicUrl = url;
+                  console.log(filePath);
                   editor.state.doc.descendants((node, pos) => {
                     if (
                       node.type.name === "image" &&

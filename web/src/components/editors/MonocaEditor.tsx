@@ -4,7 +4,7 @@ import type React from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { useFileStream } from "@/hooks/useFile";
 import { getMonocaSupportedLanguage } from "@/lib/utils/utils";
 import { Editor } from "@monaco-editor/react";
@@ -208,16 +208,6 @@ export function MonacoEditor({
       setActiveFile(currentFile);
     }
   }, [currentFile, activeFile]);
-
-  // useEffect(() => {
-  //   if (editorRef.current) {
-  //     const timer = setTimeout(() => {
-  //       editorRef.current.layout();
-  //     }, 50);
-
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [activeFile, fileContent, isLoading]);
 
   const handleFileSelect = (filename: string) => {
     setActiveFile(filename);

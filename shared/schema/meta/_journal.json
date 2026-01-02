@@ -5,15 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1766226879468,
-      "tag": "0000_abnormal_the_order",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1766605717024,
-      "tag": "0001_faithful_sinister_six",
+      "when": 1767349950204,
+      "tag": "0000_red_queen_noir",
       "breakpoints": true
     }
   ]

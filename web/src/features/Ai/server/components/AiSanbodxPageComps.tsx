@@ -49,6 +49,13 @@ export default function AIRuleSandboxPage({
           adminMode: true,
         });
       },
+      onSuccess: (result) => {
+        if (result.error) {
+          toast.error(result.error.message);
+          return;
+        }
+        setResult(result);
+      },
     },
   );
   useAutoSave({
@@ -72,13 +79,12 @@ export default function AIRuleSandboxPage({
   const handleTest = async () => {
     if (!sampleMessage.trim()) return;
     try {
-      const [result] = await Promise.all([
+      await Promise.all([
         testContentWithAi(sampleMessage),
         saveAdminAiSandboxTests({
           content: sampleMessage,
         }),
       ]);
-      setResult(result);
     } catch (error) {
       if (error instanceof Error) {
         toast.error("failed to request," + error.message);

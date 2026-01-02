@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github/abdallemo/solveit-saas/internal/api"
 	"github/abdallemo/solveit-saas/internal/database"
+	"github/abdallemo/solveit-saas/internal/file"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
@@ -45,7 +45,7 @@ func (w *Worker) StartDraftMediaCleanupJob(ctx context.Context, timeBetweenCheck
 
 func runCleanup(wg *sync.WaitGroup, store *database.Queries, s3client *s3.Client, draftTask database.TaskDraft) {
 	defer wg.Done()
-	files := []api.FileMeta{}
+	files := []file.FileMeta{}
 	_, err := json.Marshal(draftTask.UploadedFiles)
 	if err != nil {
 		log.Println("unable to marshel uploadeed Files")

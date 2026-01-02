@@ -98,7 +98,21 @@ export type supportedExtentionTypes =
   | CodeType
   | PdfType
   | ThreeDType;
-
+export function extToFileName(ext: supportedExtentionTypes) {
+  if (isAudio(ext)) {
+    return "Audio";
+  }
+  if (isVideo(ext)) {
+    return "Vidoe";
+  }
+  if (isPDF(ext)) {
+    return "PDF";
+  }
+  if (isDoc(ext)) {
+    return "Doc";
+  }
+  return "File";
+}
 const imageExtensions: ImageType[] = ["jpg", "jpeg", "png", "gif", "svg"];
 const videoExtensions: VideoType[] = ["mp4", "mov"];
 const audioExtensions: AudioType[] = ["mp3", "wav"];
@@ -252,10 +266,8 @@ export const getIconForFileExtension = (extension: supportedExtentionTypes) => {
 export function browserFileDownload({
   fileName,
   blob,
-  storageLocation,
 }: {
   fileName: string;
-  storageLocation?: string;
   blob?: Blob;
 }) {
   if (blob) {
@@ -265,15 +277,6 @@ export function browserFileDownload({
     a.download = fileName;
     a.click();
     URL.revokeObjectURL(url);
-  }
-  if (storageLocation) {
-    const link = document.createElement("a");
-    link.href = storageLocation;
-    link.download = fileName;
-    link.rel = "noopener";
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
   }
 }
 

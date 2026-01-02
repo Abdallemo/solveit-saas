@@ -115,10 +115,10 @@ func (w *Worker) removeMissingS3FileRecords(ctx context.Context) {
 		fetch  func(ctx context.Context) ([]string, error)
 		delete func(ctx context.Context, filePath string) error
 	}{
-		{"TaskFiles", w.store.GetAllTaskFilePaths, w.store.RemoveTaskFile},
-		{"WorkspaceFiles", w.store.GetAllWorkspaceFilePaths, w.store.RemoveWorkspaceFile},
-		{"ChatFiles", w.store.GetAllChatFilePaths, w.store.RemoveChatFile},
-		{"GlobalMediaFiles", w.store.GetAllMediaFilePaths, w.store.RemoveMediaFile},
+		{"TaskFiles", w.store.GetAllTaskFilePaths, w.store.DeleteTaskFileByPath},
+		{"WorkspaceFiles", w.store.GetAllWorkspaceFilePaths, w.store.DeleteWorkspaceFileByPath},
+		{"ChatFiles", w.store.GetAllChatFilePaths, w.store.DeleteChatFileByPath},
+		{"EditorFiles", w.store.GetAllMediaFilePaths, w.store.DeleteEditorFile},
 	}
 	for _, table := range tables {
 		deleteCount := 0

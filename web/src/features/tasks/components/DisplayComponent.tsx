@@ -157,7 +157,7 @@ export default function DisplayListComponent({
             </Button>
             <Button variant="success" size="sm" asChild>
               <Link
-                href={`/dashboard/solver/workspace/start/${task.id}`}
+                href={`/dashboard/solver/workspace/${task.workspace.id}`}
                 className="w-1/2 flex-1"
               >
                 {task.status === "IN_PROGRESS"

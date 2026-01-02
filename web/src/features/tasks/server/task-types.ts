@@ -116,7 +116,6 @@ export type workspaceFileType = {
   fileType: string;
   fileSize: number;
   filePath: string;
-  storageLocation: string;
   workspaceId: string;
   isDraft: boolean;
 };

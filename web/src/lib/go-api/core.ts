@@ -76,10 +76,12 @@ export class GoApiClient {
     init: RequestInit = {},
     responseType: "json" | "text" | "blob" = "json",
   ): Promise<ApiResponse<T>> {
+    const fullURL = this.baseUrl + endpoint;
     try {
       const token = await this.getToken();
-
-      const response = await fetch(`${this.baseUrl}${endpoint}`, {
+      const calledAt = new Date();
+      console.info(`${init.method?.toUpperCase()} ${fullURL} ${calledAt}`);
+      const response = await fetch(fullURL, {
         ...init,
         headers: {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -92,25 +94,25 @@ export class GoApiClient {
       switch (responseType) {
         case "json":
           data = await response.json().catch((e) => {
-            console.log(e);
+            console.log(`GoApiClientJSONError: `, e, `Data: ${data}`);
             return null;
           });
           break;
         case "text":
           data = await response.text().catch((e) => {
-            console.log(e);
+            console.log(`GoApiClientTextError: `, e, `Data: ${data}`);
             return null;
           });
           break;
         case "blob":
           data = await response.blob().catch((e) => {
-            console.log(e);
+            console.log(`GoApiClientBlobError: `, e, `Data: ${data}`);
             return null;
           });
           break;
         default:
           data = await response.json().catch((e) => {
-            console.log(e);
+            console.log(`GoApiClientJSONError: `, e, `Data: ${data}`);
             return null;
           });
       }

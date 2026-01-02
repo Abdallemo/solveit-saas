@@ -2,10 +2,8 @@
 import Loading from "@/app/dashboard/poster/(mentorship)/sessions/[sessionId]/loading";
 import { env } from "@/env/client";
 import MediaPreviewer from "@/features/media/components/MediaPreviewer";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
-import {
-  getMentorSession
-} from "@/features/mentore/server/action";
+import { UploadedFileMeta } from "@/features/media/media-types";
+import { getMentorSession } from "@/features/mentore/server/action";
 import {
   MentorChatSession,
   MentorSession,
@@ -18,6 +16,7 @@ import {
   Dispatch,
   ReactNode,
   SetStateAction,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -34,7 +33,11 @@ type MentorshipSessionContextType = {
   setUploadingFiles: Dispatch<SetStateAction<File[]>>;
   sentTo: string | null;
   send: (
-    msg: MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
+    msg: MentorChatSession & {
+      messageType: "chat_message" | "chat_deleted";
+      deleted_file_paths: string[];
+      is_deleted: boolean;
+    },
   ) => void;
   filePreview: UploadedFileMeta | null;
   setFilePreview: Dispatch<SetStateAction<UploadedFileMeta | null>>;
@@ -57,7 +60,7 @@ export const MentorshipSessionProvider = ({
 }: MentorshipSessionProviderProps) => {
   const [uploadingFiles, setUploadingFiles] = useState<File[]>([]);
   const queryClient = useQueryClient();
-  const queryKey = [sessionId, userId] 
+  const queryKey = [sessionId, userId];
   const {
     data: sessionData,
     isLoading,
@@ -87,9 +90,9 @@ export const MentorshipSessionProvider = ({
       : session.bookedSessions.posterId;
   }, [userId, session?.bookedSessions]);
 
-  const updateSession = (updates: PartialMentorSession) => {
+  const updateSession = useCallback((updates: PartialMentorSession) => {
     setSession((prev) => (prev ? { ...prev, ...updates } : prev));
-  };
+  }, []);
 
   const [filePreview, setFilePreview] = useState<UploadedFileMeta | null>(null);
   const allFiles = useMemo(() => {
@@ -97,50 +100,71 @@ export const MentorshipSessionProvider = ({
   }, [chats]);
 
   const { send } = useWebSocket<
-    MentorChatSession & { messageType: "chat_message" | "chat_deleted" }
+    MentorChatSession & {
+      messageType: "chat_message" | "chat_deleted";
+      deleted_file_paths: string[];
+      is_deleted: boolean;
+    }
   >(
     `${env.NEXT_PUBLIC_GO_API_WS_URL}/mentorship?session_id=${sessionId}:${userId}`,
     {
-      onOpen: ()=> {
+      onOpen: () => {
         queryClient.invalidateQueries({ queryKey });
       },
       onMessage: (msg) => {
         setChats((old) => {
           switch (msg.messageType) {
             case "chat_message":
-              if (old.some((c) => c.id === msg.id)) return old
+              console.log(msg);
+
+              if (old.some((c) => c.id === msg.id)) return old;
               return [
                 ...old,
                 { ...msg, createdAt: new Date(msg.createdAt!), readAt: null },
               ];
             case "chat_deleted":
+              console.log(msg);
+
               return old.map((c) =>
-                c.id === msg.id ? { ...c, isDeleted: true, chatFiles: [] } : c
+                c.id === msg.id
+                  ? {
+                      ...c,
+                      isDeleted: msg.is_deleted,
+                      chatFiles: c.chatFiles.map((ch) => {
+                        return msg.deleted_file_paths.includes(ch.filePath)
+                          ? { ...ch, isDeleted: true }
+                          : ch;
+                      }),
+                    }
+                  : c,
               );
             default:
               return old;
           }
         });
       },
-    }
+    },
+  );
+  const contextValue = useMemo(
+    () => ({
+      mentorshipSession: session,
+      chats,
+      updateSession,
+      setChats,
+      uploadingFiles,
+      setUploadingFiles,
+      sentTo,
+      send,
+      filePreview,
+      setFilePreview,
+    }),
+    [session, chats, updateSession, uploadingFiles, sentTo, send, filePreview],
   );
 
   if (isLoading || !session) return <Loading />;
 
   return (
-    <MentorshipSessionContext.Provider
-      value={{
-        mentorshipSession: session,
-        chats,
-        updateSession,
-        setChats,
-        uploadingFiles,
-        setUploadingFiles,
-        sentTo,
-        send,
-        filePreview,
-        setFilePreview,
-      }}>
+    <MentorshipSessionContext.Provider value={contextValue}>
       {children}
       <MediaPreviewer
         fileRecords={allFiles}

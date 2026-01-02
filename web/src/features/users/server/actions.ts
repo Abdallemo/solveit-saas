@@ -4,6 +4,7 @@ import db from "@/drizzle/db";
 import {
   BlogTable,
   PaymentTable,
+  ProductFeedbackTable,
   RefundTable,
   TaskTable,
   UserDetails,

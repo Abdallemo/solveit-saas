@@ -7,8 +7,9 @@ import {
   MonacoEditor,
 } from "@/components/editors/MonocaEditor";
 import { CodeEditorDialog } from "@/components/editors/MonocaWraper";
-import { useDownloadFile } from "@/hooks/useFile";
+import { useDownloadFile, useFileUrl } from "@/hooks/useFile";
 import {
+  extToFileName,
   fileExtention,
   // isArchive,
   isAudio,
@@ -23,7 +24,7 @@ import {
 import dynamic from "next/dynamic";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
-import { UploadedFileMeta } from "../server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { AudioPlayer } from "./AudioPlayer";
 import { ThreeDPlayerLoading } from "./ThreeDPlayerLoading";
 
@@ -103,11 +104,42 @@ export default function MediaPreviewer({
       return newFiles;
     });
   };
-
+  const { url, isError, isLoading } = useFileUrl(filePreview?.filePath || null);
   if (!filePreview) return null;
 
   const ext = fileExtention(filePreview.fileName);
-
+  if (isLoading) {
+    return (
+      <FileDialogDialog
+        isOpen={isFileOpen}
+        onClose={handleClose}
+        activeFile={{
+          name: filePreview.fileName,
+          type: filePreview.fileType,
+        }}
+      >
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p>Loading {extToFileName(ext)}...</p>
+        </div>
+      </FileDialogDialog>
+    );
+  }
+  if (isError) {
+    return (
+      <FileDialogDialog
+        isOpen={isFileOpen}
+        onClose={handleClose}
+        activeFile={{
+          name: filePreview.fileName,
+          type: filePreview.fileType,
+        }}
+      >
+        <div className="flex items-center justify-center h-full text-muted-foreground">
+          <p>failed to load</p>
+        </div>
+      </FileDialogDialog>
+    );
+  }
   if (isVideo(ext)) {
     return (
       <FileDialogDialog
@@ -118,10 +150,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <VideoPlayer
-          src={filePreview.storageLocation}
-          className="w-full h-full aspect-video"
-        />
+        <VideoPlayer src={url!} className="w-full h-full aspect-video" />
       </FileDialogDialog>
     );
   }
@@ -136,7 +165,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <AudioPlayer src={filePreview.storageLocation} />
+        <AudioPlayer src={url!} />
       </FileDialogDialog>
     );
   }
@@ -151,10 +180,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <ZoomableImage
-          alt={filePreview.fileName}
-          src={filePreview.storageLocation}
-        />
+        <ZoomableImage alt={filePreview.fileName} src={url!} />
       </FileDialogDialog>
     );
   }
@@ -199,7 +225,7 @@ export default function MediaPreviewer({
       >
         <iframe
           src={`https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(
-            filePreview?.storageLocation!,
+            url!,
           )}`}
           className="w-full h-full rounded-lg shadow-md border object-cover"
         />
@@ -216,10 +242,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <iframe
-          src={filePreview.storageLocation}
-          className="w-full h-full rounded-lg border-none"
-        />
+        <iframe src={url!} className="w-full h-full rounded-lg border-none" />
       </FileDialogDialog>
     );
   }
@@ -234,10 +257,7 @@ export default function MediaPreviewer({
           type: filePreview.fileType,
         }}
       >
-        <ThreeDPlayer
-          src={filePreview.storageLocation}
-          alt={filePreview.fileName}
-        />
+        <ThreeDPlayer src={url!} alt={filePreview.fileName} />
       </FileDialogDialog>
     );
   }

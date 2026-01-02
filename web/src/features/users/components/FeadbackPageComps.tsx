@@ -31,20 +31,12 @@ import * as z from "zod";
 
 import { Bug, Lightbulb, MessageSquare, Sparkles } from "lucide-react";
 import { toast } from "sonner";
-
-const feedbackSchema = z.object({
-  type: z.string().min(1, "Please select a feedback type"),
-  title: z
-    .string()
-    .min(3, "Title must be at least 3 characters")
-    .max(100, "Title must be less than 100 characters"),
-  description: z
-    .string()
-    .min(10, "Description must be at least 10 characters")
-    .max(1000, "Description must be less than 1000 characters"),
-});
-
-type FeedbackFormValues = z.infer<typeof feedbackSchema>;
+import {
+  FeedbackFormValues,
+  feedbackSchema,
+} from "@/features/feadback/server/types";
+import { useMutation } from "@tanstack/react-query";
+import { createProductFeedback } from "@/features/feadback/server/action";
 
 export default function FeedbackPage() {
   const form = useForm<FeedbackFormValues>({
@@ -55,6 +47,17 @@ export default function FeedbackPage() {
       description: "",
     },
   });
+  const { mutateAsync: createProductFeedbackMutation } = useMutation({
+    mutationFn: createProductFeedback,
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error, { id: "prod-feedback" });
+        return;
+      }
+      toast.success(SuccessDiv, { id: "prod-feedback" });
+      form.reset();
+    },
+  });
   const SuccessDiv = () => (
     <div className="flex flex-col">
       <p>Feedback submitted!</p>
@@ -62,12 +65,7 @@ export default function FeedbackPage() {
     </div>
   );
   const onSubmit = async (values: FeedbackFormValues) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast.success("Feedback submitted!");
-
-    form.reset();
+    await createProductFeedbackMutation(values);
   };
 
   return (
@@ -154,14 +152,17 @@ export default function FeedbackPage() {
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                          <SelectItem value="feature">
+                          <SelectItem value="feature_request">
                             Feature Request
                           </SelectItem>
                           <SelectItem value="bug">Bug Report</SelectItem>
+                          <SelectItem value="bug_report">Bug</SelectItem>
                           <SelectItem value="improvement">
                             Improvement
                           </SelectItem>
-                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="general">
+                            General Feedback
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                       <FormMessage />

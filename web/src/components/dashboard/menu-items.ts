@@ -91,7 +91,7 @@ export const MenuItemsModerator: MenuItem[] = [
   {
     type: "link",
     title: "User Reports",
-    url: "/dashboard/moderator/reports",
+    url: "/dashboard/moderator/user-reports",
     icon: LucideFileQuestion,
   },
 ];

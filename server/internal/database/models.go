@@ -273,6 +273,50 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 	return string(ns.PaymentStatus), nil
 }
 
+type ProductFeedbackType string
+
+const (
+	ProductFeedbackTypeFeatureRequest ProductFeedbackType = "feature_request"
+	ProductFeedbackTypeBugReport      ProductFeedbackType = "bug_report"
+	ProductFeedbackTypeImprovement    ProductFeedbackType = "improvement"
+	ProductFeedbackTypeGeneral        ProductFeedbackType = "general"
+)
+
+func (e *ProductFeedbackType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductFeedbackType(s)
+	case string:
+		*e = ProductFeedbackType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductFeedbackType: %T", src)
+	}
+	return nil
+}
+
+type NullProductFeedbackType struct {
+	ProductFeedbackType ProductFeedbackType `json:"product_feedback_type"`
+	Valid               bool                `json:"valid"` // Valid is true if ProductFeedbackType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductFeedbackType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductFeedbackType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductFeedbackType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductFeedbackType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductFeedbackType), nil
+}
+
 type RefundStatus string
 
 const (
@@ -403,6 +447,50 @@ func (ns NullStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.Status), nil
+}
+
+type SupportPriority string
+
+const (
+	SupportPriorityLow    SupportPriority = "low"
+	SupportPriorityMedium SupportPriority = "medium"
+	SupportPriorityHigh   SupportPriority = "high"
+	SupportPriorityUrgent SupportPriority = "urgent"
+)
+
+func (e *SupportPriority) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SupportPriority(s)
+	case string:
+		*e = SupportPriority(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SupportPriority: %T", src)
+	}
+	return nil
+}
+
+type NullSupportPriority struct {
+	SupportPriority SupportPriority `json:"support_priority"`
+	Valid           bool            `json:"valid"` // Valid is true if SupportPriority is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSupportPriority) Scan(value interface{}) error {
+	if value == nil {
+		ns.SupportPriority, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SupportPriority.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSupportPriority) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SupportPriority), nil
 }
 
 type TaskStatus string
@@ -536,20 +624,20 @@ func (ns NullVisibility) Value() (driver.Value, error) {
 }
 
 type Account struct {
-	ID                    uuid.UUID   `json:"id"`
-	UserId                uuid.UUID   `json:"userId"`
-	AccountId             string      `json:"accountId"`
-	ProviderId            string      `json:"providerId"`
-	AccessToken           pgtype.Text `json:"accessToken"`
-	RefreshToken          pgtype.Text `json:"refreshToken"`
-	AccessTokenExpiresAt  *time.Time  `json:"accessTokenExpiresAt"`
-	RefreshTokenExpiresAt *time.Time  `json:"refreshTokenExpiresAt"`
-	Scope                 pgtype.Text `json:"scope"`
-	IdToken               pgtype.Text `json:"idToken"`
-	Password              pgtype.Text `json:"password"`
-	CreatedAt             *time.Time  `json:"createdAt"`
-	UpdatedAt             *time.Time  `json:"updatedAt"`
-	SessionState          pgtype.Text `json:"session_state"`
+	ID                    uuid.UUID  `json:"id"`
+	UserId                uuid.UUID  `json:"userId"`
+	AccountId             string     `json:"accountId"`
+	ProviderId            string     `json:"providerId"`
+	AccessToken           *string    `json:"accessToken"`
+	RefreshToken          *string    `json:"refreshToken"`
+	AccessTokenExpiresAt  *time.Time `json:"accessTokenExpiresAt"`
+	RefreshTokenExpiresAt *time.Time `json:"refreshTokenExpiresAt"`
+	Scope                 *string    `json:"scope"`
+	IdToken               *string    `json:"idToken"`
+	Password              *string    `json:"password"`
+	CreatedAt             *time.Time `json:"createdAt"`
+	UpdatedAt             *time.Time `json:"updatedAt"`
+	SessionState          *string    `json:"session_state"`
 }
 
 type AiFlag struct {
@@ -580,11 +668,11 @@ type AiTestSandbox struct {
 }
 
 type BlockedTask struct {
-	ID        uuid.UUID   `json:"id"`
-	UserID    uuid.UUID   `json:"user_id"`
-	TaskID    uuid.UUID   `json:"task_id"`
-	Reason    pgtype.Text `json:"reason"`
-	CreatedAt time.Time   `json:"created_at"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	TaskID    uuid.UUID `json:"task_id"`
+	Reason    *string   `json:"reason"`
+	CreatedAt time.Time `json:"created_at"`
 }
 
 type Blog struct {
@@ -599,6 +687,15 @@ type Blog struct {
 	ReadTime    int32     `json:"readTime"`
 }
 
+type EditorFile struct {
+	ID         uuid.UUID  `json:"id"`
+	FileName   string     `json:"file_name"`
+	FileType   string     `json:"file_type"`
+	FileSize   int32      `json:"file_size"`
+	FilePath   string     `json:"file_path"`
+	UploadedAt *time.Time `json:"uploaded_at"`
+}
+
 type Feedback struct {
 	ID              uuid.UUID        `json:"id"`
 	PosterID        uuid.UUID        `json:"poster_id"`
@@ -607,18 +704,8 @@ type Feedback struct {
 	MentorBookingID *uuid.UUID       `json:"mentor_booking_id"`
 	TaskID          *uuid.UUID       `json:"task_id"`
 	Rating          int32            `json:"rating"`
-	Comment         pgtype.Text      `json:"comment"`
+	Comment         *string          `json:"comment"`
 	CreatedAt       time.Time        `json:"created_at"`
-}
-
-type GlobalMediaFile struct {
-	ID           uuid.UUID  `json:"id"`
-	FileName     string     `json:"file_name"`
-	FileType     string     `json:"file_type"`
-	FileSize     int32      `json:"file_size"`
-	FileLocation string     `json:"file_location"`
-	FilePath     string     `json:"file_path"`
-	UploadedAt   *time.Time `json:"uploaded_at"`
 }
 
 type Jwk struct {
@@ -630,11 +717,11 @@ type Jwk struct {
 }
 
 type Log struct {
-	ID        uuid.UUID   `json:"id"`
-	CreatedAt time.Time   `json:"createdAt"`
-	Level     string      `json:"level"`
-	Message   string      `json:"message"`
-	Error     pgtype.Text `json:"error"`
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"createdAt"`
+	Level     string    `json:"level"`
+	Message   string    `json:"message"`
+	Error     *string   `json:"error"`
 }
 
 type MentorSession struct {
@@ -651,23 +738,23 @@ type MentorshipBooking struct {
 	ID        uuid.UUID     `json:"id"`
 	SolverID  uuid.UUID     `json:"solver_id"`
 	StudentID uuid.UUID     `json:"student_id"`
-	Price     pgtype.Int4   `json:"price"`
+	Price     *int32        `json:"price"`
 	Status    BookingStatus `json:"status"`
 	PaymentID *uuid.UUID    `json:"payment_id"`
-	Notes     pgtype.Text   `json:"notes"`
+	Notes     *string       `json:"notes"`
 	CreatedAt time.Time     `json:"created_at"`
 }
 
 type MentorshipChat struct {
-	ID        uuid.UUID   `json:"id"`
-	SeesionID uuid.UUID   `json:"seesion_id"`
-	Message   pgtype.Text `json:"message"`
-	SentBy    uuid.UUID   `json:"sent_by"`
-	SentTo    uuid.UUID   `json:"sent_to"`
-	ReadAt    *time.Time  `json:"read_at"`
-	Pending   pgtype.Bool `json:"pending"`
-	IsDeleted pgtype.Bool `json:"is_deleted"`
-	CreatedAt *time.Time  `json:"created_at"`
+	ID        uuid.UUID  `json:"id"`
+	SeesionID uuid.UUID  `json:"seesion_id"`
+	Message   *string    `json:"message"`
+	SentBy    uuid.UUID  `json:"sent_by"`
+	SentTo    uuid.UUID  `json:"sent_to"`
+	ReadAt    *time.Time `json:"read_at"`
+	Pending   *bool      `json:"pending"`
+	IsDeleted *bool      `json:"is_deleted"`
+	CreatedAt *time.Time `json:"created_at"`
 }
 
 type MentorshipChatFile struct {
@@ -677,8 +764,8 @@ type MentorshipChatFile struct {
 	FileName     string     `json:"file_name"`
 	FileType     string     `json:"file_type"`
 	FileSize     int32      `json:"file_size"`
-	FileLocation string     `json:"file_location"`
 	FilePath     string     `json:"file_path"`
+	IsDeleted    *bool      `json:"is_deleted"`
 	UploadedAt   *time.Time `json:"uploaded_at"`
 }
 
@@ -697,14 +784,14 @@ type MentorshipProfile struct {
 }
 
 type Notification struct {
-	ID         uuid.UUID   `json:"id"`
-	SenderID   string      `json:"sender_id"`
-	ReceiverID string      `json:"receiver_id"`
-	Subject    pgtype.Text `json:"subject"`
-	Content    string      `json:"content"`
-	Method     Method      `json:"method"`
-	Read       bool        `json:"read"`
-	CreatedAt  *time.Time  `json:"created_at"`
+	ID         uuid.UUID  `json:"id"`
+	SenderID   string     `json:"sender_id"`
+	ReceiverID string     `json:"receiver_id"`
+	Subject    *string    `json:"subject"`
+	Content    string     `json:"content"`
+	Method     Method     `json:"method"`
+	Read       bool       `json:"read"`
+	CreatedAt  *time.Time `json:"created_at"`
 }
 
 type Payment struct {
@@ -713,45 +800,54 @@ type Payment struct {
 	Amount                int32             `json:"amount"`
 	Status                NullPaymentStatus `json:"status"`
 	StripePaymentIntentID string            `json:"stripe_payment_intent_id"`
-	StripeChargeID        pgtype.Text       `json:"stripe_charge_id"`
-	Purpose               pgtype.Text       `json:"purpose"`
+	StripeChargeID        *string           `json:"stripe_charge_id"`
+	Purpose               *string           `json:"purpose"`
 	CreatedAt             time.Time         `json:"created_at"`
 	ReleaseDate           *time.Time        `json:"release_date"`
+}
+
+type ProductFeedback struct {
+	ID        uuid.UUID           `json:"id"`
+	UserID    uuid.UUID           `json:"user_id"`
+	Type      ProductFeedbackType `json:"type"`
+	Subject   string              `json:"subject"`
+	Content   string              `json:"content"`
+	CreatedAt time.Time           `json:"created_at"`
 }
 
 type Refund struct {
 	ID             uuid.UUID        `json:"id"`
 	PaymentID      uuid.UUID        `json:"payment_id"`
 	TaskID         *uuid.UUID       `json:"task_id"`
-	RefundReason   pgtype.Text      `json:"refund_reason"`
+	RefundReason   *string          `json:"refund_reason"`
 	RefundStatus   NullRefundStatus `json:"refundStatus"`
 	ModeratorId    *uuid.UUID       `json:"moderatorId"`
 	RefundedAt     *time.Time       `json:"refunded_at"`
-	StripeRefundID pgtype.Text      `json:"stripe_refund_id"`
+	StripeRefundID *string          `json:"stripe_refund_id"`
 	CreatedAt      time.Time        `json:"created_at"`
 	UpdatedAt      *time.Time       `json:"updated_at"`
 }
 
 type Session struct {
-	ID        uuid.UUID   `json:"id"`
-	UserID    uuid.UUID   `json:"user_id"`
-	Token     string      `json:"token"`
-	ExpiresAt time.Time   `json:"expires_at"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
-	IpAddress pgtype.Text `json:"ip_address"`
-	UserAgent pgtype.Text `json:"user_agent"`
+	ID        uuid.UUID `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	Token     string    `json:"token"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	IpAddress *string   `json:"ip_address"`
+	UserAgent *string   `json:"user_agent"`
 }
 
 type Solution struct {
-	ID          uuid.UUID   `json:"id"`
-	WorkspaceID uuid.UUID   `json:"workspace_id"`
-	TaskID      uuid.UUID   `json:"task_id"`
-	Content     []byte      `json:"content"`
-	FileUrl     pgtype.Text `json:"file_url"`
-	IsFinal     pgtype.Bool `json:"is_final"`
-	CreatedAt   *time.Time  `json:"created_at"`
-	UpdatedAt   *time.Time  `json:"updated_at"`
+	ID          uuid.UUID  `json:"id"`
+	WorkspaceID uuid.UUID  `json:"workspace_id"`
+	TaskID      uuid.UUID  `json:"task_id"`
+	Content     []byte     `json:"content"`
+	FileUrl     *string    `json:"file_url"`
+	IsFinal     *bool      `json:"is_final"`
+	CreatedAt   *time.Time `json:"created_at"`
+	UpdatedAt   *time.Time `json:"updated_at"`
 }
 
 type SolutionFile struct {
@@ -776,9 +872,8 @@ type SolutionWorkspaceFile struct {
 	FileName     string         `json:"file_name"`
 	FileType     string         `json:"file_type"`
 	FileSize     int32          `json:"file_size"`
-	FileLocation string         `json:"file_location"`
 	FilePath     string         `json:"file_path"`
-	IsDraft      pgtype.Bool    `json:"is_draft"`
+	IsDraft      *bool          `json:"is_draft"`
 	UploadedAt   time.Time      `json:"uploaded_at"`
 	Status       NullFileStatus `json:"status"`
 	UpdatedAt    time.Time      `json:"updated_at"`
@@ -786,10 +881,10 @@ type SolutionWorkspaceFile struct {
 
 type SolverProfile struct {
 	UserID       uuid.UUID      `json:"user_id"`
-	PortfolioUrl pgtype.Text    `json:"portfolio_url"`
+	PortfolioUrl *string        `json:"portfolio_url"`
 	Skills       []string       `json:"skills"`
 	AvgRating    pgtype.Numeric `json:"avg_rating"`
-	TaskSolved   pgtype.Int4    `json:"task_solved"`
+	TaskSolved   *int32         `json:"task_solved"`
 	CreatedAt    time.Time      `json:"created_at"`
 	UpdatedAt    *time.Time     `json:"updated_at"`
 }
@@ -797,8 +892,8 @@ type SolverProfile struct {
 type Subscription struct {
 	ID                       uuid.UUID        `json:"id"`
 	UserId                   uuid.UUID        `json:"userId"`
-	StripeSubscriptionItemID pgtype.Text      `json:"stripe_subscription_item_id"`
-	StripeSubscriptionID     pgtype.Text      `json:"stripe_subscription_id"`
+	StripeSubscriptionItemID *string          `json:"stripe_subscription_item_id"`
+	StripeSubscriptionID     *string          `json:"stripe_subscription_id"`
 	Tier                     Tier             `json:"tier"`
 	CancelAt                 pgtype.Timestamp `json:"cancel_at"`
 	IsCancelScheduled        bool             `json:"is_cancel_scheduled"`
@@ -807,6 +902,18 @@ type Subscription struct {
 	NextBilling              pgtype.Timestamp `json:"next_billing"`
 	Price                    int32            `json:"price"`
 	CreatedAt                time.Time        `json:"created_at"`
+}
+
+type SupportRequest struct {
+	ID          uuid.UUID        `json:"id"`
+	UserID      uuid.UUID        `json:"user_id"`
+	Category    string           `json:"category"`
+	Priority    SupportPriority  `json:"priority"`
+	Subject     string           `json:"subject"`
+	Description string           `json:"description"`
+	Status      string           `json:"status"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
 type Task struct {
@@ -863,35 +970,34 @@ type TaskDraft struct {
 }
 
 type TaskFile struct {
-	ID           uuid.UUID  `json:"id"`
-	TaskID       uuid.UUID  `json:"task_id"`
-	FileName     string     `json:"file_name"`
-	FileType     string     `json:"file_type"`
-	FileSize     int32      `json:"file_size"`
-	FileLocation string     `json:"file_location"`
-	FilePath     string     `json:"file_path"`
-	UploadedAt   *time.Time `json:"uploaded_at"`
+	ID         uuid.UUID  `json:"id"`
+	TaskID     uuid.UUID  `json:"task_id"`
+	FileName   string     `json:"file_name"`
+	FileType   string     `json:"file_type"`
+	FileSize   int32      `json:"file_size"`
+	FilePath   string     `json:"file_path"`
+	UploadedAt *time.Time `json:"uploaded_at"`
 }
 
 type User struct {
-	ID               uuid.UUID   `json:"id"`
-	Name             string      `json:"name"`
-	Email            string      `json:"email"`
-	Password         pgtype.Text `json:"password"`
-	Role             Role        `json:"role"`
-	StripeCustomerID pgtype.Text `json:"stripe_customer_id"`
-	StripeAccountID  pgtype.Text `json:"stripe_account_id"`
-	EmailVerified    bool        `json:"emailVerified"`
-	Image            pgtype.Text `json:"image"`
-	CreatedAt        time.Time   `json:"created_at"`
-	UpdatedAt        time.Time   `json:"updated_at"`
-	Metadata         []byte      `json:"metadata"`
+	ID               uuid.UUID `json:"id"`
+	Name             string    `json:"name"`
+	Email            string    `json:"email"`
+	Password         *string   `json:"password"`
+	Role             Role      `json:"role"`
+	StripeCustomerID *string   `json:"stripe_customer_id"`
+	StripeAccountID  *string   `json:"stripe_account_id"`
+	EmailVerified    bool      `json:"email_verified"`
+	Image            *string   `json:"image"`
+	CreatedAt        time.Time `json:"created_at"`
+	UpdatedAt        time.Time `json:"updated_at"`
+	Metadata         []byte    `json:"metadata"`
 }
 
 type UserDetail struct {
 	UserID      uuid.UUID   `json:"user_id"`
-	FirstName   pgtype.Text `json:"first_name"`
-	LastName    pgtype.Text `json:"last_name"`
+	FirstName   *string     `json:"first_name"`
+	LastName    *string     `json:"last_name"`
 	DateOfBirth pgtype.Date `json:"date_of_birth"`
 	Address     []byte      `json:"address"`
 	Business    []byte      `json:"business"`

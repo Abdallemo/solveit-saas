@@ -9,7 +9,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5/pgtype"
 )
 
 const addSolverToTaskBlockList = `-- name: AddSolverToTaskBlockList :one
@@ -19,9 +18,9 @@ RETURNING id, user_id, task_id, reason, created_at
 `
 
 type AddSolverToTaskBlockListParams struct {
-	UserID uuid.UUID   `json:"user_id"`
-	TaskID uuid.UUID   `json:"task_id"`
-	Reason pgtype.Text `json:"reason"`
+	UserID uuid.UUID `json:"user_id"`
+	TaskID uuid.UUID `json:"task_id"`
+	Reason *string   `json:"reason"`
 }
 
 func (q *Queries) AddSolverToTaskBlockList(ctx context.Context, arg AddSolverToTaskBlockListParams) (BlockedTask, error) {
@@ -38,7 +37,7 @@ func (q *Queries) AddSolverToTaskBlockList(ctx context.Context, arg AddSolverToT
 }
 
 const getUsers = `-- name: GetUsers :many
-SELECT id, name, email, password, role, stripe_customer_id, stripe_account_id, "emailVerified", image, created_at, updated_at, metadata
+SELECT id, name, email, password, role, stripe_customer_id, stripe_account_id, email_verified, image, created_at, updated_at, metadata
 FROM users
 `
 
@@ -89,11 +88,11 @@ RETURNING id, sender_id, receiver_id, subject, content, method, read, created_at
 `
 
 type ProcessSystemNotificationParams struct {
-	SenderID   string      `json:"sender_id"`
-	ReceiverID string      `json:"receiver_id"`
-	Subject    pgtype.Text `json:"subject"`
-	Content    string      `json:"content"`
-	Read       bool        `json:"read"`
+	SenderID   string  `json:"sender_id"`
+	ReceiverID string  `json:"receiver_id"`
+	Subject    *string `json:"subject"`
+	Content    string  `json:"content"`
+	Read       bool    `json:"read"`
 }
 
 func (q *Queries) ProcessSystemNotification(ctx context.Context, arg ProcessSystemNotificationParams) (Notification, error) {

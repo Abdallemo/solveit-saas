@@ -3,7 +3,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { FileChatCardComps } from "@/features/media/components/FileHelpers";
-import { UploadedFileMeta } from "@/features/media/server/media-types";
+import { UploadedFileMeta } from "@/features/media/media-types";
 import { User2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -79,7 +79,7 @@ export function MentorChatArea({
       const { scrollHeight, scrollTop, clientHeight } = el;
 
       const distanceFromBottom = scrollHeight - scrollTop - clientHeight;
-      const nearBottom = distanceFromBottom < 150;
+      const nearBottom = distanceFromBottom < 250;
       setIsNearBottom(nearBottom);
     };
 
@@ -146,7 +146,6 @@ export function MentorChatArea({
                       filePath: "",
                       fileSize: file.size,
                       fileType: file.type,
-                      storageLocation: "",
                     }}
                   />
                 </div>
@@ -174,7 +173,7 @@ export function MentorChatArea({
           }
           className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-primary text-white px-3 py-1.5 rounded-full shadow-md"
         >
-          ↓ New messages
+          ↓ Scroll Down
         </button>
       )}
     </ScrollArea>

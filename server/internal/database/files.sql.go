@@ -7,7 +7,123 @@ package database
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
+
+const createEditorFile = `-- name: CreateEditorFile :one
+INSERT INTO editor_files (
+  file_name, file_type, file_size, file_path
+) VALUES (
+  $1, $2, $3, $4
+)
+RETURNING id, file_name, file_type, file_size, file_path, uploaded_at
+`
+
+type CreateEditorFileParams struct {
+	FileName string `json:"file_name"`
+	FileType string `json:"file_type"`
+	FileSize int32  `json:"file_size"`
+	FilePath string `json:"file_path"`
+}
+
+func (q *Queries) CreateEditorFile(ctx context.Context, arg CreateEditorFileParams) (EditorFile, error) {
+	row := q.db.QueryRow(ctx, createEditorFile,
+		arg.FileName,
+		arg.FileType,
+		arg.FileSize,
+		arg.FilePath,
+	)
+	var i EditorFile
+	err := row.Scan(
+		&i.ID,
+		&i.FileName,
+		&i.FileType,
+		&i.FileSize,
+		&i.FilePath,
+		&i.UploadedAt,
+	)
+	return i, err
+}
+
+const createWorkspaceFiles = `-- name: CreateWorkspaceFiles :exec
+INSERT INTO solution_workspace_files (
+workspace_id,
+uploaded_by_id,
+file_name,
+file_type,
+file_size,
+file_path)
+SELECT
+  $1,
+  $2,
+  unnest($3::text[]),
+  unnest($4::text[]),
+  unnest($5::int[]),
+  unnest($6::text[])
+`
+
+type CreateWorkspaceFilesParams struct {
+	WorkspaceID  uuid.UUID `json:"workspace_id"`
+	UploadedByID uuid.UUID `json:"uploaded_by_id"`
+	FileName     []string  `json:"file_name"`
+	FileType     []string  `json:"file_type"`
+	FileSize     []int32   `json:"file_size"`
+	FilePath     []string  `json:"file_path"`
+}
+
+func (q *Queries) CreateWorkspaceFiles(ctx context.Context, arg CreateWorkspaceFilesParams) error {
+	_, err := q.db.Exec(ctx, createWorkspaceFiles,
+		arg.WorkspaceID,
+		arg.UploadedByID,
+		arg.FileName,
+		arg.FileType,
+		arg.FileSize,
+		arg.FilePath,
+	)
+	return err
+}
+
+const deleteEditorFile = `-- name: DeleteEditorFile :exec
+DELETE FROM editor_files WHERE file_path = $1
+`
+
+func (q *Queries) DeleteEditorFile(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, deleteEditorFile, filePath)
+	return err
+}
+
+const deleteTaskFileByPath = `-- name: DeleteTaskFileByPath :exec
+DELETE FROM task_files WHERE file_path = $1
+`
+
+func (q *Queries) DeleteTaskFileByPath(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, deleteTaskFileByPath, filePath)
+	return err
+}
+
+const deleteWorkspaceFile = `-- name: DeleteWorkspaceFile :exec
+DELETE FROM solution_workspace_files WHERE file_path = $1 AND workspace_id = $2
+`
+
+type DeleteWorkspaceFileParams struct {
+	FilePath    string    `json:"file_path"`
+	WorkspaceID uuid.UUID `json:"workspace_id"`
+}
+
+func (q *Queries) DeleteWorkspaceFile(ctx context.Context, arg DeleteWorkspaceFileParams) error {
+	_, err := q.db.Exec(ctx, deleteWorkspaceFile, arg.FilePath, arg.WorkspaceID)
+	return err
+}
+
+const deleteWorkspaceFileByPath = `-- name: DeleteWorkspaceFileByPath :exec
+DELETE FROM solution_workspace_files WHERE file_path = $1
+`
+
+func (q *Queries) DeleteWorkspaceFileByPath(ctx context.Context, filePath string) error {
+	_, err := q.db.Exec(ctx, deleteWorkspaceFileByPath, filePath)
+	return err
+}
 
 const getAllChatFilePaths = `-- name: GetAllChatFilePaths :many
 SELECT file_path FROM mentorship_chat_files
@@ -34,7 +150,7 @@ func (q *Queries) GetAllChatFilePaths(ctx context.Context) ([]string, error) {
 }
 
 const getAllMediaFilePaths = `-- name: GetAllMediaFilePaths :many
-SELECT file_path FROM global_media_files
+SELECT file_path FROM editor_files
 `
 
 func (q *Queries) GetAllMediaFilePaths(ctx context.Context) ([]string, error) {
@@ -103,40 +219,4 @@ func (q *Queries) GetAllWorkspaceFilePaths(ctx context.Context) ([]string, error
 		return nil, err
 	}
 	return items, nil
-}
-
-const removeChatFile = `-- name: RemoveChatFile :exec
-DELETE FROM mentorship_chat_files WHERE file_path = $1
-`
-
-func (q *Queries) RemoveChatFile(ctx context.Context, filePath string) error {
-	_, err := q.db.Exec(ctx, removeChatFile, filePath)
-	return err
-}
-
-const removeMediaFile = `-- name: RemoveMediaFile :exec
-DELETE FROM global_media_files WHERE file_path = $1
-`
-
-func (q *Queries) RemoveMediaFile(ctx context.Context, filePath string) error {
-	_, err := q.db.Exec(ctx, removeMediaFile, filePath)
-	return err
-}
-
-const removeTaskFile = `-- name: RemoveTaskFile :exec
-DELETE FROM task_files WHERE file_path = $1
-`
-
-func (q *Queries) RemoveTaskFile(ctx context.Context, filePath string) error {
-	_, err := q.db.Exec(ctx, removeTaskFile, filePath)
-	return err
-}
-
-const removeWorkspaceFile = `-- name: RemoveWorkspaceFile :exec
-DELETE FROM solution_workspace_files WHERE file_path = $1
-`
-
-func (q *Queries) RemoveWorkspaceFile(ctx context.Context, filePath string) error {
-	_, err := q.db.Exec(ctx, removeWorkspaceFile, filePath)
-	return err
 }

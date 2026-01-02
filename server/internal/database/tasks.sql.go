@@ -12,6 +12,31 @@ import (
 	"github.com/google/uuid"
 )
 
+const deleteDraftTaskFile = `-- name: DeleteDraftTaskFile :exec
+WITH definition AS (
+  SELECT
+    $1::text as target_path ,
+    $2::uuid as target_user_id
+)
+UPDATE task_drafts
+SET "uploadedFiles" = (
+  SELECT COALESCE(jsonb_agg(elem), '[]'::jsonb)
+  FROM jsonb_array_elements("uploadedFiles") AS elem
+  WHERE elem->>'filePath' <> (SELECT target_path FROM definition)
+)
+WHERE user_id = (SELECT target_user_id FROM definition)
+`
+
+type DeleteDraftTaskFileParams struct {
+	FilePath string    `json:"file_path"`
+	UserID   uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) DeleteDraftTaskFile(ctx context.Context, arg DeleteDraftTaskFileParams) error {
+	_, err := q.db.Exec(ctx, deleteDraftTaskFile, arg.FilePath, arg.UserID)
+	return err
+}
+
 const getAllTaskDrafts = `-- name: GetAllTaskDrafts :many
 SELECT id, user_id, title, description, content, "contentText", category, deadline, updated_at, "uploadedFiles", visibility, price
 FROM task_drafts
@@ -160,47 +185,5 @@ type SaveDraftTaskFilesParams struct {
 
 func (q *Queries) SaveDraftTaskFiles(ctx context.Context, arg SaveDraftTaskFilesParams) error {
 	_, err := q.db.Exec(ctx, saveDraftTaskFiles, arg.Column1, arg.UserID)
-	return err
-}
-
-const saveFileToWorkspaceDB = `-- name: SaveFileToWorkspaceDB :exec
-INSERT INTO solution_workspace_files (
-workspace_id,
-uploaded_by_id,
-file_name,
-file_type,
-file_size,
-file_location,
-file_path)
-SELECT
-  $1,
-  $2,
-  unnest($3::text[]),
-  unnest($4::text[]),
-  unnest($5::int[]),
-  unnest($6::text[]),
-  unnest($7::text[])
-`
-
-type SaveFileToWorkspaceDBParams struct {
-	WorkspaceID  uuid.UUID `json:"workspace_id"`
-	UploadedByID uuid.UUID `json:"uploaded_by_id"`
-	Column3      []string  `json:"column_3"`
-	Column4      []string  `json:"column_4"`
-	Column5      []int32   `json:"column_5"`
-	Column6      []string  `json:"column_6"`
-	Column7      []string  `json:"column_7"`
-}
-
-func (q *Queries) SaveFileToWorkspaceDB(ctx context.Context, arg SaveFileToWorkspaceDBParams) error {
-	_, err := q.db.Exec(ctx, saveFileToWorkspaceDB,
-		arg.WorkspaceID,
-		arg.UploadedByID,
-		arg.Column3,
-		arg.Column4,
-		arg.Column5,
-		arg.Column6,
-		arg.Column7,
-	)
 	return err
 }

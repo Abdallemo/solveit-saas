@@ -3,7 +3,7 @@ import db from "@/drizzle/db";
 import { notifications } from "@/drizzle/schemas";
 import { createTransporter } from "@/lib/email/createTransporter";
 import { generateSystemEmailTemplate } from "@/lib/email/templates/basicSystem";
-import { goServerApi } from "@/lib/go-api/server";
+import { goApiClient } from "@/lib/go-api/server";
 import { logger } from "@/lib/logging/winston";
 import { and, eq } from "drizzle-orm";
 import { revalidatePath } from "next/cache";
@@ -41,7 +41,7 @@ export async function processSystemNotification({
     })
     .returning();
 
-  await goServerApi.request("/send-notification", {
+  await goApiClient.request("/send-notification", {
     method: "POST",
     body: JSON.stringify(result[0]),
   });

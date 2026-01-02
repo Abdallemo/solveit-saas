@@ -9,7 +9,6 @@ import { User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { sendMentorMessages } from "@/features/mentore/server/action";
 import { FloatingVideo } from "../floating-video";
 import ChatInput from "./ChatInput";
 import ChatSideBar from "./ChatSideBar";
@@ -49,19 +48,6 @@ export default function MentorshipWorkspace({
     endCall,
   } = useMentorshipCall(user?.id!, session?.id!);
 
-  const { mutate: sendMessage } = useMutation({
-    mutationFn: sendMentorMessages,
-    onError: (e) => {
-      toast.error(e.message);
-    },
-    onSuccess: (data) => {
-      if (data) {
-        setChats((prev) => [...prev, data]);
-        send({ ...data, messageType: "chat_message" });
-      }
-    },
-  });
-
   const allFiles = useMemo(() => {
     return chats.flatMap((chat) => chat.chatFiles);
   }, [chats]);
@@ -87,36 +73,24 @@ export default function MentorshipWorkspace({
   const handleSendMessage = async () => {
     if ((!messageInput.trim() && selectedFiles.length === 0) || isPostSession)
       return;
-    const text = messageInput;
+
     const files = selectedFiles;
     setMessageInput("");
     setSelectedFiles([]);
+    setUploadingFiles(files);
     try {
-      if (text.trim()) {
-        sendMessage({
-          message: text,
+      await uploadMutate({
+        files,
+        url: "/chats",
+        extraBody: {
+          message: messageInput,
           sessionId: session.id,
           sentBy: user?.id!,
           sentTo: sentTo!,
-          uploadedFiles: [],
-        });
-      }
-      if (files.length > 0) {
-        setUploadingFiles(files);
-        const uploadedMeta = await uploadMutate({
-          files,
-          scope: "mentorship",
-          url: "/media",
-        });
-        sendMessage({
-          message: "",
-          sessionId: session.id,
-          sentBy: user?.id!,
-          sentTo: sentTo!,
-          uploadedFiles: uploadedMeta,
-        });
-        setUploadingFiles([]);
-      }
+        },
+      });
+
+      setUploadingFiles([]);
     } catch (err) {
       toast.error("Failed to send message");
       setUploadingFiles([]);
