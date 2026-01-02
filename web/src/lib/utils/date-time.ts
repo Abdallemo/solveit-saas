@@ -44,7 +44,9 @@ export const timeOptions = [
   "21:00",
   "22:00",
 ];
-
+/**
+ * Time is a Go like Compatible time Package
+ */
 export enum Time {
   Nanosecond = 1,
   Microsecond = 1000 * Nanosecond,
@@ -61,17 +63,37 @@ export enum Time {
 }
 
 export namespace Time {
+  /** Returns the duration of N seconds in nanoseconds */
+  export function Seconds(n: number): number {
+    return n * Time.Second;
+  }
+
+  /** Returns the duration of N minutes in nanoseconds */
+  export function Minutes(n: number): number {
+    return n * Time.Minute;
+  }
+
+  /** Returns the duration of N hours in nanoseconds */
+  export function Hours(n: number): number {
+    return n * Time.Hour;
+  }
+
+  /** Returns the duration of N days in nanoseconds */
+  export function Days(n: number): number {
+    return n * Time.Day;
+  }
+
   /**
    * Converts a duration (in Nanoseconds) to Milliseconds.
    */
   export function toMs(durationNs: number): number {
-    return durationNs / Time.Millisecond;
+    return Math.max(0, durationNs / Time.Millisecond);
   }
   /**
    * Converts a duration (in Nanoseconds) to Seconds.
    */
   export function toSec(durationNs: number): number {
-    return durationNs / Time.Second;
+    return Math.max(0, durationNs / Time.Second);
   }
 }
 

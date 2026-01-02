@@ -1,7 +1,7 @@
 "use client";
 import "@/components/tiptap-node/blockquote-node/blockquote-node.scss";
 import "@/components/tiptap-node/paragraph-node/paragraph-node.scss";
-import { UploadedFileMeta } from "@/features/media/media-types";
+import { EditorUploadedFileType } from "@/features/media/media-types";
 import { useDeleteFileGeneric, useFileUpload } from "@/hooks/useFile";
 import { cn } from "@/lib/utils/cn";
 import { Transaction } from "@tiptap/pm/state";
@@ -30,18 +30,18 @@ export default function PostingEditor({
   showMenuBar = true,
   editorOptions = { editable: true },
 }: TiptapEditorProps) {
-  const { uploadMutate } = useFileUpload({});
+  const { uploadMutate } = useFileUpload<EditorUploadedFileType>({});
 
   const { mutateAsync: deleteFile } = useDeleteFileGeneric("editor");
   const myMediaUploadFunction = async (
     file: File,
-  ): Promise<UploadedFileMeta> => {
+  ): Promise<EditorUploadedFileType> => {
     const res = await uploadMutate({
       files: [file],
       url: "/editor/files",
     });
     console.log(res);
-    return res[0];
+    return res;
   };
   const myMediaCleanupFunction = async (resourceId: string): Promise<void> => {
     await deleteFile({ filePath: resourceId });

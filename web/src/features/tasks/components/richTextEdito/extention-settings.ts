@@ -1,7 +1,7 @@
 import { CustomImageExtension } from "@/components/editors/tiptap/custome-node/CustomImageExtension";
 // We will fix the ModernTableExtension import in the next file
 import { ModernTableExtension } from "@/components/editors/tiptap/custome-node/ModernTableExtension";
-import { UploadedFileMeta } from "@/features/media/media-types";
+import { EditorUploadedFileType } from "@/features/media/media-types";
 import { BubbleMenu } from "@tiptap/extension-bubble-menu";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
 import Highlight from "@tiptap/extension-highlight";
@@ -13,7 +13,7 @@ import { createLowlight } from "lowlight";
 
 // Removed: TableRow, TableHeader, TableCell imports (handled by ModernTableExtension internally now)
 
-type UploadFunction = (file: File) => Promise<UploadedFileMeta>;
+type UploadFunction = (file: File) => Promise<EditorUploadedFileType>;
 type CleanupFunction = (resourceId: string) => Promise<void>;
 
 interface CustomExtensionDependencies {
@@ -36,7 +36,7 @@ export const createBlogExtensions = ({
 
     Link,
 
-    // ModernTableExtension extends Table, so it includes Row/Header/Cell automatically
+    // ModernTableExtension extends Table,
     ModernTableExtension.configure({ resizable: true }),
     TableCell,
     TableHeader,

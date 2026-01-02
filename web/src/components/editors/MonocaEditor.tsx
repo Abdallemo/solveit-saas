@@ -209,16 +209,6 @@ export function MonacoEditor({
     }
   }, [currentFile, activeFile]);
 
-  // useEffect(() => {
-  //   if (editorRef.current) {
-  //     const timer = setTimeout(() => {
-  //       editorRef.current.layout();
-  //     }, 50);
-
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [activeFile, fileContent, isLoading]);
-
   const handleFileSelect = (filename: string) => {
     setActiveFile(filename);
     onFileChange?.(filename);

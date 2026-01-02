@@ -1,17 +1,18 @@
 import { UploadOptions, UploadResponse } from "@/features/media/media-types";
 import { UploadedFileMeta } from "@/features/media/media-types";
 import { goApiClient } from "@/lib/go-api/client";
+import { Time } from "@/lib/utils/date-time";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { toast } from "sonner";
-type FileUploadProps = {
+type FileUploadProps<T> = {
   successMsg?: boolean;
-  onSucessAction?: (data: UploadedFileMeta[], variables: UploadOptions) => void;
+  onSucessAction?: (data: T, variables: UploadOptions) => void;
 };
 
-export function useFileUpload({
+export function useFileUpload<T = UploadedFileMeta[]>({
   onSucessAction,
   successMsg = true,
-}: FileUploadProps) {
+}: FileUploadProps<T>) {
   const {
     mutateAsync: uploadMutate,
     isPending: isUploading,
@@ -20,67 +21,72 @@ export function useFileUpload({
   } = useMutation({
     mutationFn: async ({ files, url, extraBody }: UploadOptions) => {
       const formData = new FormData();
-      files.forEach((file) => {
-        formData.append("files", file);
-      });
+      files.forEach((file) => formData.append("files", file));
 
       if (extraBody) {
         Object.entries(extraBody).forEach(([key, value]) => {
           formData.append(key, String(value));
         });
       }
-      const res = await goApiClient.request<UploadResponse>(url, {
+
+      const res = await goApiClient.request<T>(url, {
         method: "POST",
         body: formData,
       });
 
-      console.log("from uplload , res:", res);
       if (res.error || !res.data) {
         throw new Error(res.error || "failed to upload");
       }
-      const response = res.data;
 
-      if (response.failed_files && response.failed_files.length > 0) {
-        response.failed_files.forEach((failedFile) => {
-          toast.error(
-            `${failedFile.file.fileName} failed : ${failedFile.error}`,
-            { id: failedFile.file.fileName },
-          );
-        });
+      const data = res.data;
+
+      const isStandardResponse = (val: any): val is UploadResponse => {
+        return val && "uploadedFiles" in val && "failedFiles" in val;
+      };
+
+      if (isStandardResponse(data)) {
+        if (data.failedFiles && data.failedFiles.length > 0) {
+          data.failedFiles.forEach((failedFile) => {
+            toast.error(
+              `${failedFile.file.fileName} failed: ${failedFile.error}`,
+              { id: failedFile.file.fileName },
+            );
+          });
+        }
+        return data.uploadedFiles as unknown as T;
       }
-      return response.uploaded_files;
+
+      return data;
     },
-    onSuccess: onSucessAction
-      ? (data: UploadedFileMeta[], variables: UploadOptions) =>
-          onSucessAction(data, variables)
-      : (uploadedFiles, variables) => {
-          const successFiles = uploadedFiles ? uploadedFiles.length : 0;
+    onSuccess: (data, variables) => {
+      if (onSucessAction) {
+        return onSucessAction(data, variables);
+      }
+
+      if (successMsg) {
+        if (Array.isArray(data)) {
+          const successFiles = data.length;
           const failedCount = variables.files.length - successFiles;
 
-          if (successMsg && uploadedFiles && uploadedFiles.length > 0) {
-            toast.success(
-              `${uploadedFiles.length} uploaded / ${failedCount} failed`,
-              {
-                id: "file-upload",
-              },
-            );
+          if (successFiles > 0) {
+            toast.success(`${successFiles} uploaded / ${failedCount} failed`, {
+              id: "file-upload",
+            });
           }
-        },
+        } else {
+          toast.success("Upload successful", { id: "file-upload" });
+        }
+      }
+    },
     onError: (error) => {
-      toast.error(`uploaded Process Failed To Start: ${error.message}`, {
+      toast.error(`Upload Process Failed: ${error.message}`, {
         id: "file-upload",
       });
     },
   });
 
-  return {
-    uploadMutate,
-    isUploading,
-    uploadedFilesData,
-    uploadError,
-  };
+  return { uploadMutate, isUploading, uploadedFilesData, uploadError };
 }
-
 type DeleteMediaEndpointScope =
   | "draft_task"
   | "task"
@@ -166,7 +172,7 @@ export function useDownloadFile() {
       fileName: string;
     }) => {
       const res = await goApiClient.request<Blob>(
-        `/media/${encodeURIComponent(key)}?download=true`,
+        `/media/${encodeURIComponent(key)}?type=download`,
         {
           method: "GET",
           headers: {},
@@ -232,4 +238,44 @@ export function useFileStream(key: string | null) {
       return content;
     },
   });
+}
+
+export function useFileUrl(key: string | null) {
+  const {
+    data: res,
+    isLoading,
+    isError,
+  } = useQuery({
+    queryKey: ["filePresigned", key],
+    queryFn: async () => {
+      const response = await goApiClient.request<{
+        url: string;
+        validTime: number;
+      }>(
+        `/media/${encodeURIComponent(key!)}?type=presigned`,
+        { method: "GET" },
+        "json",
+      );
+
+      if (response.error || !response.data) {
+        throw new Error("Failed to fetch presigned URL");
+      }
+
+      return response.data;
+    },
+    enabled: !!key,
+
+    staleTime: (query) => {
+      const validTimeNs = query.state.data?.validTime;
+      if (!validTimeNs) return 0;
+
+      return Time.toMs(validTimeNs - Time.Seconds(30));
+    },
+  });
+
+  return {
+    url: res?.url || null,
+    isLoading,
+    isError,
+  };
 }

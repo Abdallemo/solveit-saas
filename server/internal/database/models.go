@@ -273,6 +273,50 @@ func (ns NullPaymentStatus) Value() (driver.Value, error) {
 	return string(ns.PaymentStatus), nil
 }
 
+type ProductFeedbackType string
+
+const (
+	ProductFeedbackTypeFeatureRequest ProductFeedbackType = "feature_request"
+	ProductFeedbackTypeBugReport      ProductFeedbackType = "bug_report"
+	ProductFeedbackTypeImprovement    ProductFeedbackType = "improvement"
+	ProductFeedbackTypeGeneral        ProductFeedbackType = "general"
+)
+
+func (e *ProductFeedbackType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ProductFeedbackType(s)
+	case string:
+		*e = ProductFeedbackType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ProductFeedbackType: %T", src)
+	}
+	return nil
+}
+
+type NullProductFeedbackType struct {
+	ProductFeedbackType ProductFeedbackType `json:"product_feedback_type"`
+	Valid               bool                `json:"valid"` // Valid is true if ProductFeedbackType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullProductFeedbackType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ProductFeedbackType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ProductFeedbackType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullProductFeedbackType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ProductFeedbackType), nil
+}
+
 type RefundStatus string
 
 const (
@@ -403,6 +447,50 @@ func (ns NullStatus) Value() (driver.Value, error) {
 		return nil, nil
 	}
 	return string(ns.Status), nil
+}
+
+type SupportPriority string
+
+const (
+	SupportPriorityLow    SupportPriority = "low"
+	SupportPriorityMedium SupportPriority = "medium"
+	SupportPriorityHigh   SupportPriority = "high"
+	SupportPriorityUrgent SupportPriority = "urgent"
+)
+
+func (e *SupportPriority) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = SupportPriority(s)
+	case string:
+		*e = SupportPriority(s)
+	default:
+		return fmt.Errorf("unsupported scan type for SupportPriority: %T", src)
+	}
+	return nil
+}
+
+type NullSupportPriority struct {
+	SupportPriority SupportPriority `json:"support_priority"`
+	Valid           bool            `json:"valid"` // Valid is true if SupportPriority is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullSupportPriority) Scan(value interface{}) error {
+	if value == nil {
+		ns.SupportPriority, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.SupportPriority.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullSupportPriority) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.SupportPriority), nil
 }
 
 type TaskStatus string
@@ -600,13 +688,12 @@ type Blog struct {
 }
 
 type EditorFile struct {
-	ID              uuid.UUID  `json:"id"`
-	FileName        string     `json:"file_name"`
-	FileType        string     `json:"file_type"`
-	FileSize        int32      `json:"file_size"`
-	StorageLocation string     `json:"storage_location"`
-	FilePath        string     `json:"file_path"`
-	UploadedAt      *time.Time `json:"uploaded_at"`
+	ID         uuid.UUID  `json:"id"`
+	FileName   string     `json:"file_name"`
+	FileType   string     `json:"file_type"`
+	FileSize   int32      `json:"file_size"`
+	FilePath   string     `json:"file_path"`
+	UploadedAt *time.Time `json:"uploaded_at"`
 }
 
 type Feedback struct {
@@ -671,16 +758,15 @@ type MentorshipChat struct {
 }
 
 type MentorshipChatFile struct {
-	ID              uuid.UUID  `json:"id"`
-	ChatID          uuid.UUID  `json:"chat_id"`
-	UploadedByID    uuid.UUID  `json:"uploaded_by_id"`
-	FileName        string     `json:"file_name"`
-	FileType        string     `json:"file_type"`
-	FileSize        int32      `json:"file_size"`
-	StorageLocation string     `json:"storage_location"`
-	FilePath        string     `json:"file_path"`
-	UploadedAt      *time.Time `json:"uploaded_at"`
-	IsDeleted       *bool      `json:"is_deleted"`
+	ID           uuid.UUID  `json:"id"`
+	ChatID       uuid.UUID  `json:"chat_id"`
+	UploadedByID uuid.UUID  `json:"uploaded_by_id"`
+	FileName     string     `json:"file_name"`
+	FileType     string     `json:"file_type"`
+	FileSize     int32      `json:"file_size"`
+	FilePath     string     `json:"file_path"`
+	IsDeleted    *bool      `json:"is_deleted"`
+	UploadedAt   *time.Time `json:"uploaded_at"`
 }
 
 type MentorshipProfile struct {
@@ -718,6 +804,15 @@ type Payment struct {
 	Purpose               *string           `json:"purpose"`
 	CreatedAt             time.Time         `json:"created_at"`
 	ReleaseDate           *time.Time        `json:"release_date"`
+}
+
+type ProductFeedback struct {
+	ID        uuid.UUID           `json:"id"`
+	UserID    uuid.UUID           `json:"user_id"`
+	Type      ProductFeedbackType `json:"type"`
+	Subject   string              `json:"subject"`
+	Content   string              `json:"content"`
+	CreatedAt time.Time           `json:"created_at"`
 }
 
 type Refund struct {
@@ -771,18 +866,17 @@ type SolutionWorkspace struct {
 }
 
 type SolutionWorkspaceFile struct {
-	ID              uuid.UUID      `json:"id"`
-	WorkspaceID     uuid.UUID      `json:"workspace_id"`
-	UploadedByID    uuid.UUID      `json:"uploaded_by_id"`
-	FileName        string         `json:"file_name"`
-	FileType        string         `json:"file_type"`
-	FileSize        int32          `json:"file_size"`
-	StorageLocation string         `json:"storage_location"`
-	FilePath        string         `json:"file_path"`
-	IsDraft         *bool          `json:"is_draft"`
-	UploadedAt      time.Time      `json:"uploaded_at"`
-	Status          NullFileStatus `json:"status"`
-	UpdatedAt       time.Time      `json:"updated_at"`
+	ID           uuid.UUID      `json:"id"`
+	WorkspaceID  uuid.UUID      `json:"workspace_id"`
+	UploadedByID uuid.UUID      `json:"uploaded_by_id"`
+	FileName     string         `json:"file_name"`
+	FileType     string         `json:"file_type"`
+	FileSize     int32          `json:"file_size"`
+	FilePath     string         `json:"file_path"`
+	IsDraft      *bool          `json:"is_draft"`
+	UploadedAt   time.Time      `json:"uploaded_at"`
+	Status       NullFileStatus `json:"status"`
+	UpdatedAt    time.Time      `json:"updated_at"`
 }
 
 type SolverProfile struct {
@@ -808,6 +902,18 @@ type Subscription struct {
 	NextBilling              pgtype.Timestamp `json:"next_billing"`
 	Price                    int32            `json:"price"`
 	CreatedAt                time.Time        `json:"created_at"`
+}
+
+type SupportRequest struct {
+	ID          uuid.UUID        `json:"id"`
+	UserID      uuid.UUID        `json:"user_id"`
+	Category    string           `json:"category"`
+	Priority    SupportPriority  `json:"priority"`
+	Subject     string           `json:"subject"`
+	Description string           `json:"description"`
+	Status      string           `json:"status"`
+	CreatedAt   pgtype.Timestamp `json:"created_at"`
+	UpdatedAt   pgtype.Timestamp `json:"updated_at"`
 }
 
 type Task struct {
@@ -864,14 +970,13 @@ type TaskDraft struct {
 }
 
 type TaskFile struct {
-	ID              uuid.UUID  `json:"id"`
-	TaskID          uuid.UUID  `json:"task_id"`
-	FileName        string     `json:"file_name"`
-	FileType        string     `json:"file_type"`
-	FileSize        int32      `json:"file_size"`
-	StorageLocation string     `json:"storage_location"`
-	FilePath        string     `json:"file_path"`
-	UploadedAt      *time.Time `json:"uploaded_at"`
+	ID         uuid.UUID  `json:"id"`
+	TaskID     uuid.UUID  `json:"task_id"`
+	FileName   string     `json:"file_name"`
+	FileType   string     `json:"file_type"`
+	FileSize   int32      `json:"file_size"`
+	FilePath   string     `json:"file_path"`
+	UploadedAt *time.Time `json:"uploaded_at"`
 }
 
 type User struct {

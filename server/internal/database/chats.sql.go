@@ -62,7 +62,6 @@ uploaded_by_id,
 file_name,
 file_type,
 file_size,
-storage_location,
 file_path)
 SELECT
   $1,
@@ -70,18 +69,16 @@ SELECT
   unnest($3::text[]),
   unnest($4::text[]),
   unnest($5::int[]),
-  unnest($6::text[]),
-  unnest($7::text[])
+  unnest($6::text[])
 `
 
 type CreateChatFilesParams struct {
-	ChatID          uuid.UUID `json:"chat_id"`
-	UploadedByID    uuid.UUID `json:"uploaded_by_id"`
-	FileName        []string  `json:"file_name"`
-	FileType        []string  `json:"file_type"`
-	FileSize        []int32   `json:"file_size"`
-	StorageLocation []string  `json:"storage_location"`
-	FilePath        []string  `json:"file_path"`
+	ChatID       uuid.UUID `json:"chat_id"`
+	UploadedByID uuid.UUID `json:"uploaded_by_id"`
+	FileName     []string  `json:"file_name"`
+	FileType     []string  `json:"file_type"`
+	FileSize     []int32   `json:"file_size"`
+	FilePath     []string  `json:"file_path"`
 }
 
 func (q *Queries) CreateChatFiles(ctx context.Context, arg CreateChatFilesParams) error {
@@ -91,7 +88,6 @@ func (q *Queries) CreateChatFiles(ctx context.Context, arg CreateChatFilesParams
 		arg.FileName,
 		arg.FileType,
 		arg.FileSize,
-		arg.StorageLocation,
 		arg.FilePath,
 	)
 	return err
@@ -213,7 +209,6 @@ SELECT
           'fileName', f.file_name,
           'fileType', f.file_type,
           'fileSize', f.file_size,
-          'storageLocation', f.storage_location,
           'filePath', f.file_path,
           'uploadedAt', f.uploaded_at,
           'uploadedById', f.uploaded_by_id,

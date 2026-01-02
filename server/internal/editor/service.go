@@ -26,27 +26,39 @@ func NewService(
 	}
 }
 
-func (s *Service) CreateEditorFiles(ctx context.Context, files []*multipart.FileHeader, scope string) (file.UploadFileRes, error) {
+type editorFileResp struct {
+	FileName string `json:"fileName"`
+	FilePath string `json:"filePath"`
+	Url      string `json:"url"`
+}
+
+func (s *Service) CreateEditorFiles(ctx context.Context, files []*multipart.FileHeader, scope string) (editorFileResp, error) {
 	id := uuid.New()
 
 	uploaded, failed := s.fileService.ProcessBatchUpload(files, scope, id)
 
 	if len(failed) > 0 {
-		return file.UploadFileRes{}, errors.New("failed to upload")
+		return editorFileResp{}, errors.New("failed to upload")
 	}
 
-	_, err := s.store.CreateEditorFile(ctx, database.CreateEditorFileParams{
-		FileName:        uploaded[0].FileName,
-		FileType:        uploaded[0].FilePath,
-		FilePath:        uploaded[0].FilePath,
-		FileSize:        int32(uploaded[0].FileSize),
-		StorageLocation: uploaded[0].StorageLocation,
+	editorFile, err := s.store.CreateEditorFile(ctx, database.CreateEditorFileParams{
+		FileName: uploaded[0].FileName,
+		FileType: uploaded[0].FilePath,
+		FilePath: uploaded[0].FilePath,
+		FileSize: int32(uploaded[0].FileSize),
 	})
+
 	if err != nil {
-		return file.UploadFileRes{}, errors.New("failed to upload")
+		return editorFileResp{}, errors.New("failed to upload")
 	}
 
-	return file.UploadFileRes{UploadedFiles: uploaded, FailedFiles: failed}, nil
+	presinged, err := s.fileService.GetPresignedURL(ctx, editorFile.FilePath)
+
+	if err != nil {
+		return editorFileResp{}, errors.New("failed to fetch")
+	}
+
+	return editorFileResp{FileName: editorFile.FileName, FilePath: editorFile.FilePath, Url: presinged.Url}, nil
 
 }
 

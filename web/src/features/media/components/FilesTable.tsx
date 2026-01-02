@@ -54,7 +54,6 @@ interface FileData {
   fileName: string;
   fileType: string;
   fileSize: number;
-  storageLocation: string;
   filePath: string;
   uploadedAt: Date | null;
 }
@@ -126,7 +125,6 @@ export function FilesTable({ files, scope, scopeType }: FilesTablePropss) {
         handleFileDownload({ key: file.filePath, fileName: file.fileName });
         break;
       case "copy":
-        await navigator.clipboard.writeText(file.storageLocation);
         toast.success("Link copied to clipboard", { duration: 2000 });
         break;
       case "delete":

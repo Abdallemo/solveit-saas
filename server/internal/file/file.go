@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"time"
 
 	"mime/multipart"
 
@@ -22,23 +23,20 @@ func NewService(s3Client *s3.Client) *Service {
 	}
 }
 
-const PublicS3Location = "https://pub-c60addcb244c4d23b18a98d686f3195e.r2.dev"
-
 type FailedFileError struct {
 	File  FileMeta `json:"file"`
 	Error string   `json:"error"`
 }
 type UploadFileRes struct {
-	FailedFiles   []FailedFileError `json:"failed_files"`
-	UploadedFiles []FileMeta        `json:"uploaded_files"`
+	FailedFiles   []FailedFileError `json:"failedFiles"`
+	UploadedFiles []FileMeta        `json:"uploadedFiles"`
 }
 
 type FileMeta struct {
-	FileName        string  `json:"fileName"`
-	FileType        string  `json:"fileType"`
-	FileSize        float64 `json:"fileSize"`
-	FilePath        string  `json:"filePath"`
-	StorageLocation string  `json:"storageLocation"`
+	FileName string  `json:"fileName"`
+	FileType string  `json:"fileType"`
+	FileSize float64 `json:"fileSize"`
+	FilePath string  `json:"filePath"`
 }
 type DownloadedFile struct {
 	Body          io.ReadCloser
@@ -47,21 +45,19 @@ type DownloadedFile struct {
 }
 
 type FileBatch struct {
-	Names     []string
-	Types     []string
-	Locations []string
-	Paths     []string
-	Sizes     []int32
+	Names []string
+	Types []string
+	Paths []string
+	Sizes []int32
 }
 
 // Helper
-func BuildFileMeta(fh *multipart.FileHeader, key, publicURL string) FileMeta {
+func BuildFileMeta(fh *multipart.FileHeader, key string) FileMeta {
 	return FileMeta{
-		FileName:        fh.Filename,
-		FileType:        fh.Header.Get("Content-Type"),
-		FileSize:        float64(fh.Size),
-		FilePath:        key,
-		StorageLocation: publicURL,
+		FileName: fh.Filename,
+		FileType: fh.Header.Get("Content-Type"),
+		FileSize: float64(fh.Size),
+		FilePath: key,
 	}
 }
 
@@ -70,17 +66,15 @@ func NewFileBatch(files []FileMeta) FileBatch {
 
 	n := len(files)
 	batch := FileBatch{
-		Names:     make([]string, 0, n),
-		Types:     make([]string, 0, n),
-		Locations: make([]string, 0, n),
-		Paths:     make([]string, 0, n),
-		Sizes:     make([]int32, 0, n),
+		Names: make([]string, 0, n),
+		Types: make([]string, 0, n),
+		Paths: make([]string, 0, n),
+		Sizes: make([]int32, 0, n),
 	}
 
 	for _, f := range files {
 		batch.Names = append(batch.Names, f.FileName)
 		batch.Types = append(batch.Types, f.FileType)
-		batch.Locations = append(batch.Locations, f.StorageLocation)
 		batch.Paths = append(batch.Paths, f.FilePath)
 		batch.Sizes = append(batch.Sizes, int32(f.FileSize))
 	}
@@ -137,22 +131,22 @@ func (s *Service) ProcessBatchUpload(files []*multipart.FileHeader,
 	for _, fileHeader := range files {
 		if err := validateSize(fileHeader); err != nil {
 			failed = append(failed, FailedFileError{
-				File:  BuildFileMeta(fileHeader, "", ""),
+				File:  BuildFileMeta(fileHeader, ""),
 				Error: err.Error(),
 			})
 			continue
 		}
 
-		key, publicURL, err := s.UploadFileToS3(fileHeader, scope, id)
+		key, err := s.UploadFileToS3(fileHeader, scope, id)
 		if err != nil {
 			failed = append(failed, FailedFileError{
-				File:  BuildFileMeta(fileHeader, "", ""),
+				File:  BuildFileMeta(fileHeader, ""),
 				Error: fmt.Sprintf("upload error: %v", err),
 			})
 			continue
 		}
 
-		uploaded = append(uploaded, BuildFileMeta(fileHeader, key, publicURL))
+		uploaded = append(uploaded, BuildFileMeta(fileHeader, key))
 	}
 
 	return uploaded, failed
@@ -162,11 +156,11 @@ func (s *Service) UploadFileToS3(
 	fh *multipart.FileHeader,
 	scope string,
 	id uuid.UUID,
-) (key string, publicURL string, err error) {
+) (key string, err error) {
 
 	file, err := fh.Open()
 	if err != nil {
-		return "", "", fmt.Errorf("file open error: %v", err)
+		return "", fmt.Errorf("file open error: %v", err)
 	}
 	defer file.Close()
 
@@ -179,11 +173,10 @@ func (s *Service) UploadFileToS3(
 		ContentType: aws.String(fh.Header.Get("Content-Type")),
 	})
 	if err != nil {
-		return "", "", err
+		return "", err
 	}
 
-	publicURL = fmt.Sprintf("%s/%s", PublicS3Location, key)
-	return key, publicURL, nil
+	return key, nil
 }
 
 // Helper
@@ -192,4 +185,25 @@ func validateSize(fh *multipart.FileHeader) error {
 		return fmt.Errorf("Exceeded server limit (50MB)")
 	}
 	return nil
+}
+
+type PresignedResp struct {
+	Url       string        `json:"url"`
+	ValidTime time.Duration `json:"validTime"`
+}
+
+func (s *Service) GetPresignedURL(ctx context.Context, key string) (PresignedResp, error) {
+	validTime := time.Minute * 5
+
+	presignClient := s3.NewPresignClient(s.s3Client)
+
+	request, err := presignClient.PresignGetObject(ctx, &s3.GetObjectInput{
+		Bucket: aws.String("solveit"),
+		Key:    aws.String(key),
+	}, s3.WithPresignExpires(validTime))
+
+	if err != nil {
+		return PresignedResp{}, err
+	}
+	return PresignedResp{Url: request.URL, ValidTime: validTime}, nil
 }

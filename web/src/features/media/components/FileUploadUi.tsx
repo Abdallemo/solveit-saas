@@ -142,7 +142,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
                     filePath: "",
                     fileSize: file.size,
                     fileType: file.type,
-                    storageLocation: "",
                   }}
                 />
               </div>
@@ -157,7 +156,6 @@ export default function FileUploadUi({ className }: FileUploadUiProps) {
                       filePath: file.filePath,
                       fileSize: file.fileSize,
                       fileType: file.fileType,
-                      storageLocation: file.storageLocation,
                     })
                   }
                   deleteAction={async (f) => {

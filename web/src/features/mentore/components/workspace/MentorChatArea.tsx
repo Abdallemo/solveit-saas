@@ -146,7 +146,6 @@ export function MentorChatArea({
                       filePath: "",
                       fileSize: file.size,
                       fileType: file.type,
-                      storageLocation: "",
                     }}
                   />
                 </div>

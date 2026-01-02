@@ -145,7 +145,6 @@ export default function MentorChatBuble({
                           filePath: file.filePath,
                           fileSize: file.fileSize,
                           fileType: file.fileType,
-                          storageLocation: file.storageLocation,
                         }}
                         action={() => {
                           setFilePreview(file);

@@ -13,19 +13,18 @@ import (
 
 const createEditorFile = `-- name: CreateEditorFile :one
 INSERT INTO editor_files (
-  file_name, file_type, file_size,storage_location, file_path
+  file_name, file_type, file_size, file_path
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4
 )
-RETURNING id, file_name, file_type, file_size, storage_location, file_path, uploaded_at
+RETURNING id, file_name, file_type, file_size, file_path, uploaded_at
 `
 
 type CreateEditorFileParams struct {
-	FileName        string `json:"file_name"`
-	FileType        string `json:"file_type"`
-	FileSize        int32  `json:"file_size"`
-	StorageLocation string `json:"storage_location"`
-	FilePath        string `json:"file_path"`
+	FileName string `json:"file_name"`
+	FileType string `json:"file_type"`
+	FileSize int32  `json:"file_size"`
+	FilePath string `json:"file_path"`
 }
 
 func (q *Queries) CreateEditorFile(ctx context.Context, arg CreateEditorFileParams) (EditorFile, error) {
@@ -33,7 +32,6 @@ func (q *Queries) CreateEditorFile(ctx context.Context, arg CreateEditorFilePara
 		arg.FileName,
 		arg.FileType,
 		arg.FileSize,
-		arg.StorageLocation,
 		arg.FilePath,
 	)
 	var i EditorFile
@@ -42,7 +40,6 @@ func (q *Queries) CreateEditorFile(ctx context.Context, arg CreateEditorFilePara
 		&i.FileName,
 		&i.FileType,
 		&i.FileSize,
-		&i.StorageLocation,
 		&i.FilePath,
 		&i.UploadedAt,
 	)
@@ -56,7 +53,6 @@ uploaded_by_id,
 file_name,
 file_type,
 file_size,
-storage_location,
 file_path)
 SELECT
   $1,
@@ -64,18 +60,16 @@ SELECT
   unnest($3::text[]),
   unnest($4::text[]),
   unnest($5::int[]),
-  unnest($6::text[]),
-  unnest($7::text[])
+  unnest($6::text[])
 `
 
 type CreateWorkspaceFilesParams struct {
-	WorkspaceID     uuid.UUID `json:"workspace_id"`
-	UploadedByID    uuid.UUID `json:"uploaded_by_id"`
-	FileName        []string  `json:"file_name"`
-	FileType        []string  `json:"file_type"`
-	FileSize        []int32   `json:"file_size"`
-	StorageLocation []string  `json:"storage_location"`
-	FilePath        []string  `json:"file_path"`
+	WorkspaceID  uuid.UUID `json:"workspace_id"`
+	UploadedByID uuid.UUID `json:"uploaded_by_id"`
+	FileName     []string  `json:"file_name"`
+	FileType     []string  `json:"file_type"`
+	FileSize     []int32   `json:"file_size"`
+	FilePath     []string  `json:"file_path"`
 }
 
 func (q *Queries) CreateWorkspaceFiles(ctx context.Context, arg CreateWorkspaceFilesParams) error {
@@ -85,7 +79,6 @@ func (q *Queries) CreateWorkspaceFiles(ctx context.Context, arg CreateWorkspaceF
 		arg.FileName,
 		arg.FileType,
 		arg.FileSize,
-		arg.StorageLocation,
 		arg.FilePath,
 	)
 	return err

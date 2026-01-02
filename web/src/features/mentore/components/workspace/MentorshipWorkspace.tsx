@@ -9,7 +9,6 @@ import { User } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
-import { sendMentorMessages } from "@/features/mentore/server/action";
 import { FloatingVideo } from "../floating-video";
 import ChatInput from "./ChatInput";
 import ChatSideBar from "./ChatSideBar";

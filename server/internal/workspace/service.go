@@ -29,13 +29,12 @@ func (s *Service) CreateFiles(ctx context.Context, workspaceID, userID uuid.UUID
 	if len(uploaded) > 0 {
 		batch := file.NewFileBatch(uploaded)
 		err := s.store.CreateWorkspaceFiles(ctx, database.CreateWorkspaceFilesParams{
-			WorkspaceID:     workspaceID,
-			UploadedByID:    userID,
-			FileName:        batch.Names,
-			FileType:        batch.Types,
-			FileSize:        batch.Sizes,
-			StorageLocation: batch.Locations,
-			FilePath:        batch.Paths,
+			WorkspaceID:  workspaceID,
+			UploadedByID: userID,
+			FileName:     batch.Names,
+			FileType:     batch.Types,
+			FileSize:     batch.Sizes,
+			FilePath:     batch.Paths,
 		})
 		if err != nil {
 			return nil, nil, err

@@ -1,1 +1,0 @@
-ALTER TABLE "global_media_files" RENAME TO "editor_files";

@@ -25,26 +25,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { createSupportRequest } from "@/features/feadback/server/action";
+import {
+  SupportFormValues,
+  supportSchema,
+} from "@/features/feadback/server/types";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { HelpCircle, Users, Zap } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { toast } from "sonner";
-import * as z from "zod";
-
-const supportSchema = z.object({
-  category: z.string().min(1, "Please select a category"),
-  priority: z.string().min(1, "Please select a priority level"),
-  subject: z
-    .string()
-    .min(5, "Subject must be at least 5 characters")
-    .max(150, "Subject must be less than 150 characters"),
-  description: z
-    .string()
-    .min(20, "Description must be at least 20 characters")
-    .max(2000, "Description must be less than 2000 characters"),
-});
-
-type SupportFormValues = z.infer<typeof supportSchema>;
 
 export default function SupportPage() {
   const form = useForm<SupportFormValues>({
@@ -57,12 +47,26 @@ export default function SupportPage() {
     },
   });
 
+  const { mutateAsync: createSupportRequestMutation } = useMutation({
+    mutationFn: createSupportRequest,
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error, { id: "support-req" });
+        return;
+      }
+      toast.success(SuccessDiv, { id: "support-req" });
+      form.reset();
+    },
+  });
   const onSubmit = async (values: SupportFormValues) => {
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    toast.success("Support request submitted!");
-    form.reset();
+    await createSupportRequestMutation(values);
   };
+  const SuccessDiv = () => (
+    <div className="flex flex-col">
+      <p>Support Request submitted!</p>
+      <p>We Will look </p>
+    </div>
+  );
 
   return (
     <div className="w-full flex flex-col p-6">
@@ -154,7 +158,8 @@ export default function SupportPage() {
                           <SelectContent>
                             <SelectItem value="low">Low</SelectItem>
                             <SelectItem value="medium">Medium</SelectItem>
-                            <SelectItem value="high">High - Urgent</SelectItem>
+                            <SelectItem value="high">High</SelectItem>
+                            <SelectItem value="urgent">Urgent</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />

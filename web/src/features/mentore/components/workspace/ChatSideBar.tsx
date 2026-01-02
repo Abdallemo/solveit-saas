@@ -6,7 +6,6 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useDeleteFileGeneric, useDownloadFile } from "@/hooks/useFile";
 import { FileText } from "lucide-react";
 
-import { useMentorshipSession } from "@/contexts/MentorSessionContext";
 import { User } from "@/features/users/server/user-types";
 import { MentorChatSession } from "../../server/types";
 
@@ -15,7 +14,6 @@ type allFilesType = {
   fileName: string;
   fileType: string;
   fileSize: number;
-  storageLocation: string;
   filePath: string;
   uploadedAt: Date | null;
   uploadedById: string;
@@ -77,7 +75,6 @@ export default function ChatSideBar({
                         filePath: file.filePath,
                         fileSize: file.fileSize,
                         fileType: file.fileType,
-                        storageLocation: file.storageLocation,
                       }}
                       action={() => {
                         setFilePreview(file);

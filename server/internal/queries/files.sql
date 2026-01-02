@@ -9,9 +9,9 @@ SELECT file_path FROM editor_files;
 
 -- name: CreateEditorFile :one
 INSERT INTO editor_files (
-  file_name, file_type, file_size,storage_location, file_path
+  file_name, file_type, file_size, file_path
 ) VALUES (
-  $1, $2, $3, $4, $5
+  $1, $2, $3, $4
 )
 RETURNING *;
 
@@ -22,7 +22,6 @@ uploaded_by_id,
 file_name,
 file_type,
 file_size,
-storage_location,
 file_path)
 SELECT
   $1,
@@ -30,7 +29,6 @@ SELECT
   unnest(sqlc.arg(file_name)::text[]),
   unnest(sqlc.arg(file_type)::text[]),
   unnest(sqlc.arg(file_size)::int[]),
-  unnest(sqlc.arg(storage_location)::text[]),
   unnest(sqlc.arg(file_path)::text[]);
 
 

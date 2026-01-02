@@ -33,15 +33,14 @@ func NewService(store *database.Queries,
 }
 
 type ChatFile struct {
-	ID              string     `json:"id"`
-	FileName        string     `json:"fileName"`
-	FileType        string     `json:"fileType"`
-	FileSize        float64    `json:"fileSize"`
-	StorageLocation string     `json:"storageLocation"`
-	FilePath        string     `json:"filePath"`
-	UploadedAt      *time.Time `json:"uploadedAt"`
-	UploadedByID    string     `json:"uploadedById"`
-	ChatID          string     `json:"chatId"`
+	ID           string     `json:"id"`
+	FileName     string     `json:"fileName"`
+	FileType     string     `json:"fileType"`
+	FileSize     float64    `json:"fileSize"`
+	FilePath     string     `json:"filePath"`
+	UploadedAt   *time.Time `json:"uploadedAt"`
+	UploadedByID string     `json:"uploadedById"`
+	ChatID       string     `json:"chatId"`
 }
 
 type ChatWithFiles struct {
@@ -119,13 +118,12 @@ func (s *Service) CreateChatWithFiles(
 	if len(files) > 0 {
 		batch := file.NewFileBatch(files)
 		err = qtx.CreateChatFiles(ctx, database.CreateChatFilesParams{
-			ChatID:          chat.ID,
-			UploadedByID:    sentBy,
-			FileName:        batch.Names,
-			FileType:        batch.Types,
-			FileSize:        batch.Sizes,
-			StorageLocation: batch.Locations,
-			FilePath:        batch.Paths,
+			ChatID:       chat.ID,
+			UploadedByID: sentBy,
+			FileName:     batch.Names,
+			FileType:     batch.Types,
+			FileSize:     batch.Sizes,
+			FilePath:     batch.Paths,
 		})
 		if err != nil {
 			log.Printf("failed to save file metadata: %v", err)

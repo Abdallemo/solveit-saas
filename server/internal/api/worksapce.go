@@ -2,6 +2,7 @@ package api
 
 import (
 	"fmt"
+	"github/abdallemo/solveit-saas/internal/file"
 	"github/abdallemo/solveit-saas/internal/middleware"
 	"log"
 	"net/http"
@@ -32,7 +33,7 @@ func (s *Server) handleCreateWorkspaceFiles(w http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	WriteJSON(w, uploadResp{UploadedFiles: uploaded, FailedFiles: failed}, 200)
+	WriteJSON(w, file.UploadFileRes{UploadedFiles: uploaded, FailedFiles: failed}, 200)
 }
 
 func (s *Server) handleDeleteWorkspaceFiles(w http.ResponseWriter, r *http.Request) {

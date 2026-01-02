@@ -17,7 +17,6 @@ export type WorkspaceUploadedFileMeta = {
   fileType: string;
   fileSize: number;
   filePath: string;
-  storageLocation: string;
   uploadedAt: Date | null;
   uploadedById: string;
   isDraft: boolean | null;
@@ -30,7 +29,11 @@ export type UploadedFileMeta = {
   fileType: string;
   fileSize: number;
   filePath: string;
-  storageLocation: string;
+};
+export type EditorUploadedFileType = {
+  fileName: string;
+  filePath: string;
+  url: string;
 };
 
 type ExtraBody = Record<string, string | number | boolean>;
@@ -41,6 +44,6 @@ export type UploadOptions = {
   extraBody?: ExtraBody;
 };
 export type UploadResponse = {
-  uploaded_files: UploadedFileMeta[];
-  failed_files: { file: UploadedFileMeta; error: string }[];
+  uploadedFiles: UploadedFileMeta[];
+  failedFiles: { file: UploadedFileMeta; error: string }[];
 };

@@ -42,10 +42,7 @@ import type {
   SolutionById,
   WorkpaceWithRelationType,
 } from "@/features/tasks/server/task-types";
-import {
-  taskRefundSchema,
-  workspaceFileType,
-} from "@/features/tasks/server/task-types";
+import { taskRefundSchema } from "@/features/tasks/server/task-types";
 import {
   createStripeCustomer,
   getServerUserSubscriptionById,
@@ -177,7 +174,6 @@ export async function createTaskAction(
             fileType: file.fileType,
             fileSize: file.fileSize,
             filePath: file.filePath,
-            storageLocation: file.storageLocation,
           })),
         );
       }
@@ -592,33 +588,6 @@ export async function autoSaveDraftWorkspace(
   }
 }
 
-export async function saveFileToWorkspaceDB({
-  fileName,
-  fileType,
-  fileSize,
-  filePath,
-  storageLocation,
-  workspaceId,
-  isDraft,
-  uploadedById,
-}: workspaceFileType) {
-  if (isDraft == false) return;
-
-  const newFile = await db
-    .insert(WorkspaceFilesTable)
-    .values({
-      fileName,
-      filePath,
-      fileSize,
-      fileType,
-      storageLocation,
-      workspaceId,
-      isDraft,
-      uploadedById,
-    })
-    .returning();
-  return newFile[0];
-}
 export async function publishSolution(values: {
   workspaceId: string;
   content: JSONContent;

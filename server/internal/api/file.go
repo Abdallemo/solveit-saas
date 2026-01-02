@@ -2,8 +2,8 @@ package api
 
 import (
 	"fmt"
-	"github/abdallemo/solveit-saas/internal/file"
 	"io"
+	"log"
 	"net/http"
 	"path/filepath"
 	"strconv"
@@ -16,16 +16,24 @@ type JSONError struct {
 	Message string `json:"message"`
 }
 
-type uploadResp struct {
-	FailedFiles   []file.FailedFileError `json:"failed_files"`
-	UploadedFiles []file.FileMeta        `json:"uploaded_files"`
-}
-
 // All Resources
 func (s *Server) handleGetFiles(w http.ResponseWriter, r *http.Request) {
 	filePath := r.PathValue("filePath")
+	respType := r.URL.Query().Get("type")
+
 	if filePath == "" {
 		http.Error(w, "Missing File Id", http.StatusBadRequest)
+		return
+	}
+
+	if respType == "presigned" {
+		res, err := s.FileService.GetPresignedURL(r.Context(), filePath)
+		log.Println("requested presigned ur")
+		if err != nil {
+			http.Error(w, "Error generating link", http.StatusInternalServerError)
+			return
+		}
+		WriteJSON(w, res, http.StatusOK)
 		return
 	}
 
@@ -39,7 +47,7 @@ func (s *Server) handleGetFiles(w http.ResponseWriter, r *http.Request) {
 	defer fileData.Body.Close()
 
 	disposition := "inline"
-	if r.URL.Query().Get("download") == "true" {
+	if respType == "download" {
 		disposition = "attachment"
 	}
 

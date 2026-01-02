@@ -223,21 +223,13 @@ export default function SolutionPageComps({
   const [comment, setComment] = useState("");
   const latestCommentRef = useRef<HTMLDivElement>(null);
   const files = solution.solutionFiles.map((f) => {
-    const {
-      id,
-      fileName,
-      filePath,
-      fileSize,
-      fileType,
-      storageLocation,
-      uploadedAt,
-    } = f.solutionFile;
+    const { id, fileName, filePath, fileSize, fileType, uploadedAt } =
+      f.solutionFile;
     return {
       id,
       fileName,
       fileType,
       fileSize,
-      storageLocation,
       filePath,
       uploadedAt,
     };

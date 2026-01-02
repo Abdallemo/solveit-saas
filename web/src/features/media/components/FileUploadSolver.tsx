@@ -150,7 +150,6 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
                   filePath: "",
                   fileSize: file.size,
                   fileType: file.type,
-                  storageLocation: "",
                 }}
               />
             ))}
@@ -163,7 +162,6 @@ export default function FileUploadSolver({ className }: FileUploadProps) {
                       filePath: file.filePath,
                       fileSize: file.fileSize,
                       fileType: file.fileType,
-                      storageLocation: file.storageLocation,
                     });
                   }}
                   key={file.id}

@@ -5,7 +5,6 @@ uploaded_by_id,
 file_name,
 file_type,
 file_size,
-storage_location,
 file_path)
 SELECT
   $1,
@@ -13,9 +12,7 @@ SELECT
   unnest(sqlc.arg(file_name)::text[]),
   unnest(sqlc.arg(file_type)::text[]),
   unnest(sqlc.arg(file_size)::int[]),
-  unnest(sqlc.arg(storage_location)::text[]),
   unnest(sqlc.arg(file_path)::text[]);
-
 
 
 -- name: CreateChat :one
@@ -59,7 +56,6 @@ SELECT
           'fileName', f.file_name,
           'fileType', f.file_type,
           'fileSize', f.file_size,
-          'storageLocation', f.storage_location,
           'filePath', f.file_path,
           'uploadedAt', f.uploaded_at,
           'uploadedById', f.uploaded_by_id,
