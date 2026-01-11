@@ -243,7 +243,7 @@ export default function TaskCreationPage({
           type="submit"
           form="task-form"
           disabled={isDisabled || isPending || isAutoSeggesting}
-          className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-[140px]"
+          className="hover:cursor-pointer flex items-center justify-center gap-2 min-w-35"
         >
           Publish Task
         </Button>

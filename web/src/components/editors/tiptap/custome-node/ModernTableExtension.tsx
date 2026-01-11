@@ -7,7 +7,7 @@ import { Editor, isNodeSelection } from "@tiptap/react";
 import { Plus } from "lucide-react";
 import { createRoot } from "react-dom/client";
 
-export const tableUIKey = new PluginKey("modern-table-ui");
+const tableUIKey = new PluginKey("modern-table-ui");
 
 function findActiveTable(state: EditorState) {
   const { selection } = state;

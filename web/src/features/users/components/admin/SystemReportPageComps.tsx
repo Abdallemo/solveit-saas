@@ -136,7 +136,7 @@ const LoadingStatsContent = () => (
 );
 
 const LoadingChartContent = () => (
-  <CardContent className="flex items-center justify-center h-[300px]">
+  <CardContent className="flex items-center justify-center h-75">
     <div className="text-muted-foreground flex flex-col items-center">
       <Loader2 className="h-8 w-8 animate-spin" />
       <span className="mt-2">Loading Chart...</span>
@@ -422,7 +422,7 @@ export default function SystemReportsPage({}: {}) {
               <CardContent>
                 <ChartContainer
                   config={userGrowthConfig}
-                  className="h-[300px] w-full"
+                  className="h-75 w-full"
                 >
                   <LineChart accessibilityLayer data={userGrowthData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -466,10 +466,7 @@ export default function SystemReportsPage({}: {}) {
               <LoadingChartContent />
             ) : (
               <CardContent>
-                <ChartContainer
-                  config={revenueConfig}
-                  className="h-[300px] w-full"
-                >
+                <ChartContainer config={revenueConfig} className="h-75 w-full">
                   <BarChart accessibilityLayer data={revenueData.data}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis
@@ -515,7 +512,7 @@ export default function SystemReportsPage({}: {}) {
               <CardContent>
                 <ChartContainer
                   config={dynamicTaskCategoriesConfig}
-                  className="h-[300px] w-full"
+                  className="h-75 w-full"
                 >
                   <PieChart>
                     <ChartTooltip content={<ChartTooltipContent />} />
@@ -553,10 +550,7 @@ export default function SystemReportsPage({}: {}) {
               <LoadingChartContent />
             ) : (
               <CardContent>
-                <ChartContainer
-                  config={aiFlagsConfig}
-                  className="h-[300px] w-full"
-                >
+                <ChartContainer config={aiFlagsConfig} className="h-75 w-full">
                   <AreaChart accessibilityLayer data={aiFlagsData}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} />
                     <XAxis

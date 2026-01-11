@@ -121,34 +121,6 @@ export const testimonials = [
   },
 ];
 
-export const plans = [
-  {
-    name: "Poster",
-    price: "$0",
-    teir: "POSTER" as const,
-    features: [
-      "Post unlimited tasks",
-      "AI-powered solver matching",
-      "Secure escrow payments",
-      "Basic chat support",
-      "Task history & analytics",
-    ],
-  },
-  {
-    name: "Solver",
-    price: "$9.99",
-    teir: "SOLVER" as const,
-    features: [
-      "Everything in Poster",
-      "Priority in search results",
-      "Lower platform fees",
-      "Advanced analytics dashboard",
-      "Verified solver badge",
-      "Video call integration",
-    ],
-  },
-];
-
 export const faqs = [
   {
     question: "What is SolveIt?",
