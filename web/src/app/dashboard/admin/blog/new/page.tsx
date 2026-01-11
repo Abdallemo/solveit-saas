@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -47,6 +47,8 @@ import {
 import { autoSuggestBlogWithAi } from "@/features/Ai/server/action";
 import { useDebouncedCallback } from "@/hooks/useAutoDraftSave";
 import { CustomeTextSerializersForAi } from "@/features/tasks/components/richTextEdito/tiptap-ai-content-selized";
+import { calculateEditorTextLength } from "@/lib/utils/ui-data";
+import { MIN_CONTENT_LENGTH } from "@/features/tasks/server/task-types";
 
 const PostingEditor = dynamic(
   () => import("@/features/tasks/components/richTextEdito/MainTiptapEditor"),
@@ -60,6 +62,7 @@ export default function NewBlogPostPage() {
   const router = useRouter();
   const [contentText, setContentText] = useState("");
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isDisabled, setIsDisabled] = useState(true);
 
   const form = useForm({
     resolver: zodResolver(blogPostSchema),
@@ -140,6 +143,12 @@ export default function NewBlogPostPage() {
   async function onSubmit(data: BlogPostFormData) {
     await publishBlogMutation(data);
   }
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const textLength = calculateEditorTextLength(content as JSONContent);
+    setIsDisabled(textLength <= MIN_CONTENT_LENGTH);
+  }, [content]);
+
   function onError(errors: FieldErrors<BlogPostFormData>) {
     console.warn("Validation errors ", errors);
     setSheetOpen(true);
@@ -329,7 +338,13 @@ export default function NewBlogPostPage() {
               <SheetHeader className="text-left">
                 <div className="p-4 border-b bg-background flex justify-between items-center">
                   <h2 className="text-lg">Blog Details</h2>
-                  <Button className="text-xs" type="button" variant={"outline"}>
+                  <Button
+                    className="text-xs"
+                    type="button"
+                    variant={"outline"}
+                    onClick={handleBlogAutosuggestion}
+                    disabled={isAutoSeggesting || isDisabled}
+                  >
                     <Wand2 /> Auto Suggest with Ai
                   </Button>
                 </div>
@@ -374,7 +389,7 @@ export default function NewBlogPostPage() {
                   type="button"
                   variant={"outline"}
                   onClick={handleBlogAutosuggestion}
-                  disabled={isAutoSeggesting}
+                  disabled={isAutoSeggesting || isDisabled}
                 >
                   <Wand2 /> Auto Suggest with Ai
                 </Button>
