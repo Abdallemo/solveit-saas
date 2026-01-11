@@ -36,6 +36,7 @@ import { UserRole } from "@/features/users/server/user-types";
 import { NavSecondary } from "./NavSecondary";
 import { NavUser } from "./User_nav_bar";
 import Logo from "@/components/marketing/logo";
+import { hasAccess } from "@/features/auth/server/auth-uitls";
 
 const roleMenuMap: Record<UserRole, MenuItem[]> = {
   POSTER: MenuItemsPoster,
@@ -117,8 +118,9 @@ export default function DashboardSidebar({ user }: { user: User }) {
       </SidebarContent>
 
       <SidebarFooter>
-        <NavSecondary items={navSecondary} />
-
+        {hasAccess(user.role, ["POSTER", "SOLVER"]) && (
+          <NavSecondary items={navSecondary} />
+        )}
         <Suspense fallback={<ProfileSkeleton />}>
           <NavUser {...user} />
         </Suspense>
