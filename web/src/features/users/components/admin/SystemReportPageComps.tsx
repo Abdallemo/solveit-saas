@@ -156,11 +156,7 @@ async function downloadExcel() {
   const blob = await res.blob();
   browserFileDownload({ fileName: "solveit-report.xlsx", blob });
 }
-export default function SystemReportsPage({
-  reportsData,
-}: {
-  reportsData: reportDataType[];
-}) {
+export default function SystemReportsPage({}: {}) {
   const today = new Date();
   const [searchQuery, setSearchQuery] = useState("");
   const [reportType, setReportType] = useState("all");
@@ -285,7 +281,7 @@ export default function SystemReportsPage({
             Generate and export analytical reports across the SolveIt platform.
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        {/*<div className="flex flex-wrap gap-2">
           <Button onClick={handleGenerateReport}>
             <FileText className="mr-2 h-4 w-4" />
             Generate Report
@@ -298,7 +294,7 @@ export default function SystemReportsPage({
             <FileSpreadsheet className="mr-2 h-4 w-4" />
             Export Excel
           </Button>
-        </div>
+        </div>*/}
       </div>
       <Card>
         <CardContent className="pt-6">
@@ -594,7 +590,7 @@ export default function SystemReportsPage({
         )}
       </div>
 
-      <Card>
+      {/*<Card>
         <CardHeader>
           <CardTitle>Detailed Reports</CardTitle>
           <CardDescription>
@@ -633,7 +629,7 @@ export default function SystemReportsPage({
             </TableBody>
           </Table>
         </CardContent>
-      </Card>
+      </Card>*/}
 
       <div className="text-center text-sm text-muted-foreground py-4">
         Reports are generated based on system activity logs and user
