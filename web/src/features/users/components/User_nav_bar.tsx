@@ -34,6 +34,7 @@ import { useStripeSubscription } from "@/hooks/provider/stripe-subscription-prov
 import { signOut } from "@/lib/auth-client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { hasAccess } from "@/features/auth/server/auth-uitls";
 
 export function NavUser({ image, name, email, role, id }: User) {
   const { subTier } = useStripeSubscription();
@@ -126,11 +127,14 @@ export function NavUser({ image, name, email, role, id }: User) {
                   Account
                 </Link>
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <Link href={`${urlPrfx}/billings`} className="cursor-pointer">
-                  <Banknote /> Billings
-                </Link>
-              </DropdownMenuItem>
+              {hasAccess(role, ["POSTER", "SOLVER"]) && (
+                <DropdownMenuItem asChild>
+                  <Link href={`${urlPrfx}/billings`} className="cursor-pointer">
+                    <Banknote /> Billings
+                  </Link>
+                </DropdownMenuItem>
+              )}
+
               <DropdownMenuItem asChild>
                 <Link
                   href={`/dashboard/notifications`}
