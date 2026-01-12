@@ -32,6 +32,14 @@ export async function getServerReturnUrl() {
   }
   return referer;
 }
+export async function getReturnUrl(defaulUrl: string) {
+  const headersList = await headers();
+  let referer = headersList.get("referer");
+  if (!referer || referer === "") {
+    return `${env.NEXTAUTH_URL}/${defaulUrl}`;
+  }
+  return referer;
+}
 
 export async function createStripeCheckoutSession(tier: TierType) {
   const referer = await getServerReturnUrl();

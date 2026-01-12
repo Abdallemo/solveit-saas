@@ -534,6 +534,17 @@ export async function getAllOwnerBlog() {
   }
   return blogs;
 }
+export async function deleteBlogByID(id: string): ServiceLayerErrorType {
+  if (!id) {
+    return { error: "No such Blog to Delete" };
+  }
+
+  const [_, err] = await to(db.delete(BlogTable).where(eq(BlogTable.id, id)));
+  if (err != null) {
+    return { error: "Failed To Delete! try again" };
+  }
+  return { error: null };
+}
 export async function getBlogBySlug(url: string) {
   const [blog, error] = await to(
     db.query.BlogTable.findFirst({

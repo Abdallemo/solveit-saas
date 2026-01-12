@@ -39,14 +39,19 @@ import {
   ChevronRight,
   Loader2,
   LucideIcon,
+  Mail,
+  Building,
+  Building2,
 } from "lucide-react";
 import {
   getProductFeedback,
   getSupportRequest,
+  getContact,
 } from "@/features/feadback/server/data";
 import {
   ProductFeedbackType,
   SupportRequestType,
+  ContactType,
 } from "@/features/feadback/server/types";
 
 const priorityConfig = {
@@ -104,13 +109,14 @@ export function ReportViewer() {
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedReport, setSelectedReport] = useState<
-    SupportRequestType | ProductFeedbackType | null
+    SupportRequestType | ProductFeedbackType | ContactType | null
   >(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("support");
 
   const [supportPage, setSupportPage] = useState(0);
   const [feedbackPage, setFeedbackPage] = useState(0);
+  const [contactPage, setContactPage] = useState(0);
   const limit = 4;
 
   const {
@@ -129,6 +135,15 @@ export function ReportViewer() {
   } = useQuery({
     queryKey: ["product-feedback", feedbackPage],
     queryFn: () => getProductFeedback(limit, feedbackPage * limit),
+  });
+
+  const {
+    data: contactRequests = [],
+    isLoading: isContactLoading,
+    isError: isContactError,
+  } = useQuery({
+    queryKey: ["contact-requests", contactPage],
+    queryFn: () => getContact(limit, contactPage * limit),
   });
 
   const filterSupportRequests = (requests: SupportRequestType[]) => {
@@ -161,8 +176,22 @@ export function ReportViewer() {
     });
   };
 
+  // NEW: Contact Filter
+  const filterContacts = (contacts: ContactType[]) => {
+    return contacts.filter((item) => {
+      const matchesSearch =
+        item.subject.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.message.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (item.company &&
+          item.company.toLowerCase().includes(searchQuery.toLowerCase()));
+
+      return matchesSearch;
+    });
+  };
+
   const handleReportClick = (
-    report: SupportRequestType | ProductFeedbackType,
+    report: SupportRequestType | ProductFeedbackType | ContactType,
   ) => {
     setSelectedReport(report);
     setIsDetailOpen(true);
@@ -179,13 +208,14 @@ export function ReportViewer() {
   };
 
   const isSupportRequest = (
-    report: SupportRequestType | ProductFeedbackType,
+    report: SupportRequestType | ProductFeedbackType | ContactType,
   ): report is SupportRequestType => {
     return "priority" in report;
   };
 
   const filteredSupportRequests = filterSupportRequests(supportRequests);
   const filteredProductFeedback = filterProductFeedback(productFeedback);
+  const filteredContacts = filterContacts(contactRequests);
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -198,7 +228,6 @@ export function ReportViewer() {
         </p>
       </div>
 
-      {/* Filters */}
       <Card className="p-6 mb-6">
         <div className="flex flex-col gap-4">
           <div className="flex items-center gap-2">
@@ -252,42 +281,43 @@ export function ReportViewer() {
               </Select>
             )}
 
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {activeTab === "support" ? (
-                  <>
-                    <SelectItem value="technical">Technical</SelectItem>
-                    <SelectItem value="billing">Billing</SelectItem>
-                    <SelectItem value="bug_report">Bug Report</SelectItem>
-                    <SelectItem value="feature_request">
-                      Feature Request
-                    </SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </>
-                ) : (
-                  <>
-                    <SelectItem value="feature_request">
-                      Feature Request
-                    </SelectItem>
-                    <SelectItem value="bug_report">Bug Report</SelectItem>
-                    <SelectItem value="improvement">Improvement</SelectItem>
-                    <SelectItem value="general">General Feedback</SelectItem>
-                  </>
-                )}
-              </SelectContent>
-            </Select>
+            {activeTab !== "contact" && (
+              <Select
+                value={selectedCategory}
+                onValueChange={setSelectedCategory}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  {activeTab === "support" ? (
+                    <>
+                      <SelectItem value="technical">Technical</SelectItem>
+                      <SelectItem value="billing">Billing</SelectItem>
+                      <SelectItem value="bug_report">Bug Report</SelectItem>
+                      <SelectItem value="feature_request">
+                        Feature Request
+                      </SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </>
+                  ) : (
+                    <>
+                      <SelectItem value="feature_request">
+                        Feature Request
+                      </SelectItem>
+                      <SelectItem value="bug_report">Bug Report</SelectItem>
+                      <SelectItem value="improvement">Improvement</SelectItem>
+                      <SelectItem value="general">General Feedback</SelectItem>
+                    </>
+                  )}
+                </SelectContent>
+              </Select>
+            )}
           </div>
         </div>
       </Card>
 
-      {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="support">
@@ -295,6 +325,9 @@ export function ReportViewer() {
           </TabsTrigger>
           <TabsTrigger value="feedback">
             Product Feedback ({filteredProductFeedback.length})
+          </TabsTrigger>
+          <TabsTrigger value="contact">
+            Contact Data ({filteredContacts.length})
           </TabsTrigger>
         </TabsList>
 
@@ -314,7 +347,6 @@ export function ReportViewer() {
               <div className="flex-1">
                 <div className="grid gap-4">
                   {filteredSupportRequests.map((request) => {
-                    const Icon = categoryIcons[request.category];
                     const statusInfo =
                       statusConfig[request.status as keyof typeof statusConfig];
                     const StatusIcon = statusInfo?.icon || Clock;
@@ -328,9 +360,7 @@ export function ReportViewer() {
                         <div className="flex flex-col gap-4">
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex items-start gap-3 flex-1">
-                              <div className="p-2 bg-muted rounded-md">
-                                {/*<Icon className="h-5 w-5 text-foreground" />*/}
-                              </div>
+                              <div className="p-2 bg-muted rounded-md"></div>
                               <div className="flex-1 min-w-0">
                                 <h3 className="font-semibold text-foreground mb-1 text-balance">
                                   {request.subject}
@@ -415,6 +445,7 @@ export function ReportViewer() {
           )}
         </TabsContent>
 
+        {/* Existing Feedback Tab */}
         <TabsContent value="feedback" className="min-h-[400px] flex flex-col">
           {isFeedbackLoading ? (
             <div className="flex items-center justify-center py-12">
@@ -514,6 +545,107 @@ export function ReportViewer() {
             </>
           )}
         </TabsContent>
+
+        <TabsContent value="contact" className="min-h-[400px] flex flex-col">
+          {isContactLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </div>
+          ) : isContactError ? (
+            <Card className="p-6 text-center">
+              <p className="text-destructive">
+                Failed to load contact requests. Please try again.
+              </p>
+            </Card>
+          ) : (
+            <>
+              <div className="flex-1">
+                <div className="grid gap-4">
+                  {filteredContacts.map((contact) => {
+                    return (
+                      <Card
+                        key={contact.id}
+                        className="p-6 hover:border-primary cursor-pointer transition-colors"
+                        onClick={() => handleReportClick(contact)}
+                      >
+                        <div className="flex flex-col gap-4">
+                          <div className="flex items-start gap-4">
+                            <div className="p-2 bg-muted rounded-md">
+                              <Mail className="h-5 w-5 text-foreground" />
+                            </div>
+                            <div className="flex-1 min-w-0 flex flex-col gap-2">
+                              <h3 className="font-semibold text-foreground mb-1 text-balance">
+                                {contact.subject}
+                              </h3>
+                              <p className="text-sm text-muted-foreground line-clamp-2">
+                                {contact.message}
+                              </p>
+                              {contact.company && (
+                                <div className="flex items-center gap-1 mt-1 text-xs text-muted-foreground">
+                                  <Building2 className="h-4 w-4" />
+                                  {contact.company}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback>
+                                  {contact.name.charAt(0).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div className="flex flex-col">
+                                <span className="text-foreground font-medium">
+                                  {contact.name}
+                                </span>
+                                <span className="text-muted-foreground text-xs">
+                                  {contact.email}
+                                </span>
+                              </div>
+                            </div>
+                            <span className="text-muted-foreground">
+                              {contact.createdAt.toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {contactRequests.length > 0 && (
+                <div className="flex items-center justify-between mt-6">
+                  <p className="text-sm text-muted-foreground">
+                    Page {contactPage + 1}
+                  </p>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setContactPage((p) => Math.max(0, p - 1))}
+                      disabled={contactPage === 0}
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setContactPage((p) => p + 1)}
+                      disabled={contactRequests.length <= limit}
+                    >
+                      Next
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </TabsContent>
       </Tabs>
 
       <Dialog open={isDetailOpen} onOpenChange={setIsDetailOpen}>
@@ -529,20 +661,28 @@ export function ReportViewer() {
             <div className="space-y-6">
               <div className="flex items-center gap-3 pb-4 border-b">
                 <Avatar className="h-12 w-12">
-                  <AvatarImage
-                    src={selectedReport.user.image || undefined}
-                    alt={selectedReport.user.name}
-                  />
+                  {"user" in selectedReport && selectedReport.user.image ? (
+                    <AvatarImage
+                      src={selectedReport.user.image}
+                      alt={selectedReport.user.name}
+                    />
+                  ) : null}
                   <AvatarFallback className="text-lg">
-                    {selectedReport.user.name.charAt(0).toUpperCase()}
+                    {"user" in selectedReport
+                      ? selectedReport.user.name.charAt(0).toUpperCase()
+                      : selectedReport.name.charAt(0).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
                 <div>
                   <p className="font-semibold text-foreground">
-                    {selectedReport.user.name}
+                    {"user" in selectedReport
+                      ? selectedReport.user.name
+                      : selectedReport.name}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {selectedReport.user.email}
+                    {"user" in selectedReport
+                      ? selectedReport.user.email
+                      : selectedReport.email}
                   </p>
                 </div>
               </div>
@@ -560,7 +700,9 @@ export function ReportViewer() {
                   <p className="text-foreground mt-1 leading-relaxed">
                     {"description" in selectedReport
                       ? selectedReport.description
-                      : selectedReport.content}
+                      : "content" in selectedReport
+                        ? selectedReport.content
+                        : selectedReport.message}
                   </p>
                 </div>
 
@@ -571,25 +713,39 @@ export function ReportViewer() {
                       {selectedReport.id}
                     </p>
                   </div>
-                  <div>
-                    <Label className="text-muted-foreground">User ID</Label>
-                    <p className="text-foreground mt-1 font-mono text-sm">
-                      {selectedReport.userId}
-                    </p>
-                  </div>
+                  {"userId" in selectedReport && (
+                    <div>
+                      <Label className="text-muted-foreground">User ID</Label>
+                      <p className="text-foreground mt-1 font-mono text-sm">
+                        {selectedReport.userId}
+                      </p>
+                    </div>
+                  )}
+                  {"company" in selectedReport && selectedReport.company && (
+                    <div>
+                      <Label className="text-muted-foreground">Company</Label>
+                      <p className="text-foreground mt-1">
+                        {selectedReport.company}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label className="text-muted-foreground">
-                      {"category" in selectedReport ? "Category" : "Type"}
-                    </Label>
-                    <p className="text-foreground mt-1 capitalize">
-                      {"category" in selectedReport
-                        ? selectedReport.category.replace("_", " ")
-                        : selectedReport.type.replace("_", " ")}
-                    </p>
-                  </div>
+                  {("category" in selectedReport ||
+                    "type" in selectedReport) && (
+                    <div>
+                      <Label className="text-muted-foreground">
+                        {"category" in selectedReport ? "Category" : "Type"}
+                      </Label>
+                      <p className="text-foreground mt-1 capitalize">
+                        {"category" in selectedReport
+                          ? selectedReport.category.replace("_", " ")
+                          : selectedReport.type.replace("_", " ")}
+                      </p>
+                    </div>
+                  )}
+
                   {"priority" in selectedReport && (
                     <div>
                       <Label className="text-muted-foreground">Priority</Label>
@@ -663,7 +819,7 @@ export function ReportViewer() {
                       <Textarea
                         id="notes"
                         placeholder="Add notes visible only to moderators..."
-                        className="mt-2 min-h-[100px]"
+                        className="mt-2 min-h-25"
                       />
                     </div>
 

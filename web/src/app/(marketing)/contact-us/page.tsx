@@ -12,10 +12,19 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { createContact } from "@/features/feadback/server/action";
+import {
+  ContactFormValues,
+  contactSchema,
+} from "@/features/feadback/server/types";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useMutation } from "@tanstack/react-query";
 import { motion } from "framer-motion";
-import { Mail, MessageSquare, Phone, Send } from "lucide-react";
+import { Loader2, Mail, MessageSquare, Phone, Send } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
+import { toast } from "sonner";
+import { z } from "zod";
 
 const fadeInUp = {
   initial: { opacity: 0, y: 20 },
@@ -31,22 +40,26 @@ const staggerContainer = {
   },
 };
 
-type ContactFormValues = {
-  name: string;
-  email: string;
-  company?: string;
-  subject: string;
-  message: string;
-};
-
 export default function ContactPage() {
   const form = useForm<ContactFormValues>({
+    resolver: zodResolver(contactSchema),
     defaultValues: {
       name: "",
       email: "",
       company: "",
       subject: "",
       message: "",
+    },
+  });
+  const { mutateAsync: handleCreateContact, isPending } = useMutation({
+    mutationFn: createContact,
+    onSuccess: ({ error }) => {
+      if (error) {
+        toast.error(error);
+        return;
+      }
+      toast.success("Thank you for the contact");
+      form.reset();
     },
   });
   const router = useRouter();
@@ -57,12 +70,6 @@ export default function ContactPage() {
       description: "Send us an email anytime",
       contact: "admsolveit@gmail.com",
     },
-    // {
-    //   icon: MessageSquare,
-    //   title: "Live Chat",
-    //   description: "Available Mon-Fri, 9am-5pm",
-    //   contact: "Start a conversation",
-    // },
     {
       icon: Phone,
       title: "Call Us",
@@ -71,7 +78,9 @@ export default function ContactPage() {
     },
   ];
 
-  function onSubmit(data: ContactFormValues) {}
+  async function onSubmit(data: ContactFormValues) {
+    await handleCreateContact(data);
+  }
 
   return (
     <div className="relative overflow-hidden w-full">
@@ -168,7 +177,6 @@ export default function ContactPage() {
                     <FormField
                       control={form.control}
                       name="name"
-                      rules={{ required: "Name is required" }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Name *</FormLabel>
@@ -183,13 +191,6 @@ export default function ContactPage() {
                     <FormField
                       control={form.control}
                       name="email"
-                      rules={{
-                        required: "Email is required",
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Invalid email address",
-                        },
-                      }}
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Email *</FormLabel>
@@ -226,7 +227,6 @@ export default function ContactPage() {
                   <FormField
                     control={form.control}
                     name="subject"
-                    rules={{ required: "Subject is required" }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Subject *</FormLabel>
@@ -241,7 +241,6 @@ export default function ContactPage() {
                   <FormField
                     control={form.control}
                     name="message"
-                    rules={{ required: "Message is required" }}
                     render={({ field }) => (
                       <FormItem>
                         <FormLabel>Message *</FormLabel>
@@ -262,8 +261,9 @@ export default function ContactPage() {
                     whileTap={{ scale: 0.98 }}
                   >
                     <Button
+                      disabled={isPending}
                       type="submit"
-                      className="w-full h-11 text-base"
+                      className="w-full h-11 text-base relative"
                       size="lg"
                     >
                       <Send className="w-4 h-4 mr-2" />
