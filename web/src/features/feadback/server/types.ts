@@ -1,5 +1,5 @@
 import z from "zod";
-import { getProductFeedback, getSupportRequest } from "./data";
+import { getContact, getProductFeedback, getSupportRequest } from "./data";
 
 export const supportSchema = z.object({
   category: z.string().min(1, "Please select a category"),
@@ -27,12 +27,25 @@ export const feedbackSchema = z.object({
     .min(10, "Description must be at least 10 characters")
     .max(1000, "Description must be less than 1000 characters"),
 });
+export const contactSchema = z.object({
+  name: z.string().min(2, { message: "Name is required (min 2 characters)" }),
+  email: z.string().email({ message: "Invalid email address" }),
+  company: z.string().optional(),
+  subject: z
+    .string()
+    .min(5, { message: "Subject is required (min 5 characters)" }),
+  message: z
+    .string()
+    .min(10, { message: "Message is required (min 10 characters)" }),
+});
 
 export type FeedbackFormValues = z.infer<typeof feedbackSchema>;
 
+export type ContactFormValues = z.infer<typeof contactSchema>;
 export type SupportRequestType = Awaited<
   ReturnType<typeof getSupportRequest>
 >[number];
+export type ContactType = Awaited<ReturnType<typeof getContact>>[number];
 export type ProductFeedbackType = Awaited<
   ReturnType<typeof getProductFeedback>
 >[number];

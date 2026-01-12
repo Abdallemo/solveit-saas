@@ -384,6 +384,17 @@ export const ProductFeedbackTable = pgTable("product_feedback", {
     .defaultNow()
     .notNull(),
 });
+export const ContactTable = pgTable("contact", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  company: text("company"),
+  subject: text("subject").notNull(),
+  message: text("message").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .defaultNow()
+    .notNull(),
+});
 
 export const TaskTable = pgTable(
   "tasks",
