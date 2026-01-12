@@ -77,7 +77,8 @@ const getStatusBadge = (status: string) => {
       return (
         <Badge
           variant="secondary"
-          className="bg-blue-600 hover:bg-blue-700 text-white">
+          className="bg-blue-600 hover:bg-blue-700 text-white"
+        >
           Trial
         </Badge>
       );
@@ -159,7 +160,8 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       return (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Amount
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
@@ -195,7 +197,8 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
       return (
         <Button
           variant="ghost"
-          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
+          onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        >
           Next Billing
           <ArrowUpDown className="ml-2 h-4 w-4" />
         </Button>
@@ -215,18 +218,6 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
     cell: ({ row }) => {
       const subscription = row.original;
 
-      const handleCancelSubscription = async (subscriptionId: string) => {
-        // TODO: Implement Stripe API call to cancel subscription
-        console.log("Canceling subscription:", subscriptionId);
-        toast.success("Subscription canceled");
-      };
-
-      const handleReactivateSubscription = async (subscriptionId: string) => {
-        // TODO: Implement Stripe API call to reactivate subscription
-        console.log("Reactivating subscription:", subscriptionId);
-        toast.success("Subscription reactivated");
-      };
-
       return (
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -241,27 +232,21 @@ export const subscriptionColumns: ColumnDef<Subscription>[] = [
               onClick={() => {
                 navigator.clipboard.writeText(subscription.id);
                 toast.success("Subscription ID copied to clipboard");
-              }}>
+              }}
+            >
               Copy subscription ID
             </DropdownMenuItem>
             <DropdownMenuItem
               onClick={() => {
                 navigator.clipboard.writeText(subscription.customerId!);
                 toast.success("Customer ID copied to clipboard");
-              }}>
+              }}
+            >
               Copy customer ID
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
+            {/*<DropdownMenuSeparator />
             <DropdownMenuItem>View customer</DropdownMenuItem>
-            <DropdownMenuItem>View invoices</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            {subscription.status === "active" && (
-              <DropdownMenuItem
-                className="text-red-600"
-                onClick={() => handleCancelSubscription(subscription.id)}>
-                Cancel subscription
-              </DropdownMenuItem>
-            )}
+            <DropdownMenuItem>View invoices</DropdownMenuItem>*/}
           </DropdownMenuContent>
         </DropdownMenu>
       );
@@ -303,7 +288,7 @@ export function SubscriptionTable<TData, TValue>({
   });
 
   return (
-    <div>
+    <div className="space-y-10">
       <div className="flex items-center py-1">
         <Input
           placeholder="Filter customers..."
@@ -334,7 +319,8 @@ export function SubscriptionTable<TData, TValue>({
                     checked={column.getIsVisible()}
                     onCheckedChange={(value) =>
                       column.toggleVisibility(!!value)
-                    }>
+                    }
+                  >
                     {column.id}
                   </DropdownMenuCheckboxItem>
                 );
@@ -342,7 +328,7 @@ export function SubscriptionTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-hidden rounded-md border grid grid-cols-1">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -353,7 +339,7 @@ export function SubscriptionTable<TData, TValue>({
                       ? null
                       : flexRender(
                           header.column.columnDef.header,
-                          header.getContext()
+                          header.getContext(),
                         )}
                   </TableHead>
                 ))}
@@ -365,12 +351,13 @@ export function SubscriptionTable<TData, TValue>({
               table.getRowModel().rows.map((row) => (
                 <TableRow
                   key={row.id}
-                  data-state={row.getIsSelected() && "selected"}>
+                  data-state={row.getIsSelected() && "selected"}
+                >
                   {row.getVisibleCells().map((cell) => (
                     <TableCell key={cell.id}>
                       {flexRender(
                         cell.column.columnDef.cell,
-                        cell.getContext()
+                        cell.getContext(),
                       )}
                     </TableCell>
                   ))}
@@ -380,7 +367,8 @@ export function SubscriptionTable<TData, TValue>({
               <TableRow>
                 <TableCell
                   colSpan={columns.length}
-                  className="h-24 text-center">
+                  className="h-24 text-center"
+                >
                   No results.
                 </TableCell>
               </TableRow>
@@ -397,14 +385,16 @@ export function SubscriptionTable<TData, TValue>({
           variant="outline"
           size="sm"
           onClick={() => table.previousPage()}
-          disabled={!table.getCanPreviousPage()}>
+          disabled={!table.getCanPreviousPage()}
+        >
           Previous
         </Button>
         <Button
           variant="outline"
           size="sm"
           onClick={() => table.nextPage()}
-          disabled={!table.getCanNextPage()}>
+          disabled={!table.getCanNextPage()}
+        >
           Next
         </Button>
       </div>
@@ -418,7 +408,7 @@ export function SubscriptionManagement({
   subscription: Subscription[];
 }) {
   return (
-    <div className="container mx-auto py-6 px-4 flex flex-col gap-2">
+    <div className="container mx-auto py-6 px-4 flex flex-col gap-5">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">
@@ -428,69 +418,9 @@ export function SubscriptionManagement({
             Manage and monitor all customer subscription
           </p>
         </div>
-        <Button variant="outline" className="gap-2 bg-transparent">
-          <Download className="h-4 w-4" />
-          Export
-        </Button>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-4">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              Total Subscription
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{subscription.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active</CardTitle>
-          </CardHeader>
-          {/* <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {subscription.filter((s) => s.status === "active" && !s.cancelAtPeriodEnd).length}
-            </div>
-          </CardContent> */}
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Trialing</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-blue-600">
-              {subscription.filter((s) => s.status === "trialing").length}
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Past Due</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-600">
-              {subscription.filter((s) => s.status === "past_due").length}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Subscription</CardTitle>
-          <CardDescription>
-            A list of all customer subscription and their current status
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <SubscriptionTable
-            columns={subscriptionColumns}
-            data={subscription}
-          />
-        </CardContent>
-      </Card>
+      <SubscriptionTable columns={subscriptionColumns} data={subscription} />
     </div>
   );
 }

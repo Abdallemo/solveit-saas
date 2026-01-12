@@ -88,9 +88,7 @@ export function GetPaymentStatusBadge(status: PaymentStatusType) {
   }
 }
 
-function NewPaymentColumns(
-  handleOpenDialog: (payment: paymentType) => void,
-): ColumnDef<paymentType>[] {
+function NewPaymentColumns(): ColumnDef<paymentType>[] {
   return [
     {
       id: "select",
@@ -226,20 +224,6 @@ function NewPaymentColumns(
               >
                 Copy Payment ID
               </DropdownMenuItem>
-              <DropdownMenuSeparator />
-              {payment.status === "HOLD" && (
-                <DropdownMenuItem
-                  onSelect={(e) => {
-                    e.preventDefault();
-                  }}
-                  onClick={() => handleOpenDialog(payment)}
-                >
-                  <span className="text-yellow-400 font-semibold">
-                    Release Payment
-                  </span>
-                </DropdownMenuItem>
-              )}
-              <DropdownMenuItem>View payment details</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         );
@@ -258,24 +242,9 @@ export function PaymentTable({ data }: PaymentTableProps) {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedPayment, setSelectedPayment] = useState<paymentType | null>(
-    null,
-  );
-  const [confirmInput, setConfirmInput] = useState("");
-
   const columns = useMemo(() => {
-    const handleOpenDialog = (payment: paymentType) => {
-      setSelectedPayment(payment);
-      setIsDialogOpen(true);
-      setConfirmInput("");
-    };
-    return NewPaymentColumns(handleOpenDialog);
+    return NewPaymentColumns();
   }, []);
-
-  const handleReleasePayment = () => {
-    setIsDialogOpen(false);
-  };
 
   const table = useReactTable({
     data,
@@ -401,64 +370,6 @@ export function PaymentTable({ data }: PaymentTableProps) {
           Next
         </Button>
       </div>
-
-      {selectedPayment && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="text-2xl">
-                Are you absolutely sure?
-              </DialogTitle>
-              <DialogDescription>
-                This action cannot be undone. This will permanently release this
-                fund to the payer <span className="font-bold">with in 48h</span>
-                .
-              </DialogDescription>
-
-              <div className="flex flex-col space-y-4">
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    By typing
-                    <span className="font-semibold text-foreground">
-                      {" "}
-                      "I confirm"{" "}
-                    </span>
-                    below, you authorize the release of the payment for
-                    <span className="font-semibold text-foreground">
-                      {" "}
-                      {selectedPayment.purpose?.toLocaleLowerCase()}{" "}
-                    </span>
-                    to
-                    <span className="font-semibold text-foreground">
-                      {" "}
-                      {selectedPayment.name?.toLocaleLowerCase()}{" "}
-                    </span>
-                    . This action is irreversible.
-                  </p>
-                </div>
-                <Input
-                  value={confirmInput}
-                  onChange={(e) => setConfirmInput(e.target.value)}
-                  className="mt-2"
-                />
-              </div>
-            </DialogHeader>
-            <DialogFooter>
-              <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
-              </DialogClose>
-              <Button
-                type="submit"
-                variant={"success"}
-                disabled={confirmInput !== "I confirm"}
-                onClick={handleReleasePayment}
-              >
-                Release
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
     </div>
   );
 }
