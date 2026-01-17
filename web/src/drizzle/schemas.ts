@@ -12,6 +12,7 @@ import {
   boolean,
   check,
   date,
+  decimal,
   index,
   integer,
   jsonb,
@@ -302,7 +303,11 @@ export const PaymentTable = pgTable(
     userId: uuid("user_id")
       .notNull()
       .references(() => UserTable.id, { onDelete: "cascade" }),
-    amount: integer("amount").notNull(),
+    amount: decimal("amount", {
+      scale: 2,
+      precision: 10,
+      mode: "number",
+    }).notNull(),
     status: PaymentStatus("status").default("HOLD"),
     stripePaymentIntentId: text("stripe_payment_intent_id").unique().notNull(),
     stripeChargeId: text("stripe_charge_id"),
@@ -765,7 +770,7 @@ export const MentorshipSessionTable = pgTable(
     timeSlot: jsonb("time_slot").notNull().$type<AvailabilitySlot>(),
     sessionStart: timestamp("session_start", { withTimezone: true }).notNull(),
     sessionEnd: timestamp("session_end", { withTimezone: true }).notNull(),
-
+    paymentId: uuid("payment_id").references(() => PaymentTable.id),
     createdAt: timestamp("created_at", {
       mode: "date",
       withTimezone: true,
@@ -790,9 +795,7 @@ export const MentorshipBookingTable = pgTable(
       .references(() => UserTable.id, { onDelete: "cascade" }),
     price: integer("price"),
     status: BookingSatatusEnum().default("PENDING").notNull(),
-    paymentId: uuid("payment_id").references(() => PaymentTable.id, {
-      onDelete: "cascade",
-    }),
+
     notes: text("notes"),
     createdAt: timestamp("created_at", {
       mode: "date",
@@ -804,7 +807,6 @@ export const MentorshipBookingTable = pgTable(
   (mentorshipBookings) => [
     index("mentorship_bookings_solverId_idx").on(mentorshipBookings.solverId),
     index("mentorship_bookings_posterId_idx").on(mentorshipBookings.posterId),
-    index("mentorship_bookings_paymentId_idx").on(mentorshipBookings.paymentId),
     index("mentorship_bookings_status_idx").on(mentorshipBookings.status),
   ],
 );

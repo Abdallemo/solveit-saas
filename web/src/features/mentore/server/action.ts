@@ -7,6 +7,8 @@ import {
   MentorshipChatTable,
   MentorshipProfileTable,
   MentorshipSessionTable,
+  PaymentPorposeEnumType,
+  PaymentTable,
 } from "@/drizzle/schemas";
 import { env } from "@/env/server";
 import {
@@ -374,17 +376,12 @@ export async function createMentorBookingPaymentCheckout(values: {
 
 export async function updateMentorBooking(
   bookingId: string,
-  paymentId: string,
+  totalAmount: number,
+  userId: string,
+  stripeChargeId: string,
+  stripePaymentIntentId: string,
 ) {
   try {
-    await db
-      .update(MentorshipBookingTable)
-      .set({
-        status: "PAID",
-        paymentId,
-      })
-      .where(eq(MentorshipBookingTable.id, bookingId));
-
     const res = await db.query.MentorshipBookingTable.findFirst({
       where: (tb, fn) => fn.eq(tb.id, bookingId),
       with: {
@@ -392,14 +389,43 @@ export async function updateMentorBooking(
           columns: { displayName: true },
           with: { mentorSystemDetail: { columns: { email: true } } },
         },
+        bookedSessions: true,
       },
     });
     if (!res) {
       throw new Error("failed to update Mentor Temperory Booking");
     }
+
+    const amountPerSession = totalAmount / res.bookedSessions.length;
+
+    for (const session of res.bookedSessions) {
+      const [payment] = await db
+        .insert(PaymentTable)
+        .values({
+          amount: amountPerSession,
+          userId,
+          purpose: "Mentor Booking",
+          status: "HOLD",
+          stripeChargeId,
+          stripePaymentIntentId,
+        })
+        .returning({ paymentId: PaymentTable.id });
+      await db
+        .update(MentorshipSessionTable)
+        .set({ paymentId: payment.paymentId })
+        .where(eq(MentorshipSessionTable.id, session.id));
+    }
+    await db
+      .update(MentorshipBookingTable)
+      .set({
+        status: "PAID",
+      })
+      .where(eq(MentorshipBookingTable.id, bookingId));
+
     if (res.status === "PAID") {
       logger.info("Succesfully updated Temperory Mentor Booking");
     }
+
     Notifier()
       .system({
         receiverId: res.solverId,

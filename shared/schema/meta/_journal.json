@@ -29,6 +29,20 @@
       "when": 1768203132411,
       "tag": "0003_lethal_banshee",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1768647647201,
+      "tag": "0004_minor_shadow_king",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1768650140527,
+      "tag": "0005_fresh_betty_brant",
+      "breakpoints": true
     }
   ]
 }
