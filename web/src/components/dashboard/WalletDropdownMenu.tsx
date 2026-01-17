@@ -45,6 +45,7 @@ export default function WalletDropdownMenu({ user }: { user: User }) {
         }
         if (success) {
           toast.success(success, { id: "withdraw" });
+          queryClient.invalidateQueries({ queryKey: queryKey });
         }
       },
     },
