@@ -587,7 +587,7 @@ export async function requestWithdraw() {
     }
 
     await stripe.transfers.create({
-      amount: available * 100,
+      amount: Math.round(available * 100),
       currency: "myr",
       destination: user.stripeAccountId,
     });

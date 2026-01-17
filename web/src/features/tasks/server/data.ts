@@ -35,7 +35,7 @@ import { publicUserColumns } from "@/features/users/server/user-types";
 import { withCache } from "@/lib/cache";
 import { logger } from "@/lib/logging/winston";
 import { to } from "@/lib/utils/async";
-import { toYMD } from "@/lib/utils/utils";
+import { getCurrentServerTime, toYMD } from "@/lib/utils/utils";
 import { formatDistance, isPast, subDays } from "date-fns";
 import {
   and,
@@ -124,32 +124,26 @@ export async function getAllCategoryMap(): Promise<Record<string, string>> {
   return Object.fromEntries(categories.map((cat) => [cat.id, cat.name]));
 }
 
-export async function getWalletInfo(solverId: string) {
-  if (!solverId) {
-    throw new Error("error! user id is empty");
-  }
-  const [wallet] = await db
+async function getTaskWallet(solverId: string) {
+  return await db
     .select({
       pending: sum(sql<number>`
-      CASE
-        WHEN ${PaymentTable.status} = 'HOLD'
-        THEN ${PaymentTable.amount}
-
-        WHEN ${TaskTable.status} IN ('ASSIGNED','IN_PROGRESS','SUBMITTED')
-        THEN ${PaymentTable.amount}
-
-        ELSE 0
-      END
-    `).mapWith(Number),
-
+     CASE
+       WHEN ${PaymentTable.status} = 'HOLD'
+       THEN ${PaymentTable.amount}
+       WHEN ${TaskTable.status} IN ('ASSIGNED','IN_PROGRESS','SUBMITTED')
+       THEN ${PaymentTable.amount}
+       ELSE 0
+     END
+   `).mapWith(Number),
       available: sum(sql<number>`
-      CASE
-        WHEN ${PaymentTable.status} = 'PENDING_USER_ACTION'
-        THEN ${PaymentTable.amount}
+     CASE
+       WHEN ${PaymentTable.status} = 'PENDING_USER_ACTION'
+       THEN ${PaymentTable.amount}
+       ELSE 0
+     END
 
-        ELSE 0
-      END
-    `).mapWith(Number),
+   `).mapWith(Number),
       nextReleaseDate: min(PaymentTable.releaseDate),
       paymentIds: sql<
         string[]
@@ -167,10 +161,82 @@ export async function getWalletInfo(solverId: string) {
       ),
     )
     .where(and(eq(TaskTable.solverId, solverId), isNull(RefundTable.id)));
-
-  return wallet;
 }
 
+async function getMentorshipWallet(solverId: string) {
+  return await db
+    .select({
+      pending: sum(sql<number>`
+        CASE
+          WHEN ${MentorshipSessionTable.sessionEnd} > NOW()
+               AND ${PaymentTable.status} != 'RELEASED'
+          THEN ${PaymentTable.amount}
+          ELSE 0
+        END
+      `).mapWith(Number),
+      available: sum(sql<number>`
+        CASE
+          WHEN ${MentorshipSessionTable.sessionEnd} <= NOW()
+               AND ${PaymentTable.status} != 'RELEASED'
+          THEN ${PaymentTable.amount}
+          ELSE 0
+        END
+      `).mapWith(Number),
+      nextReleaseDate: min(PaymentTable.releaseDate),
+
+      paymentIds: sql<string[]>`
+        STRING_AGG(
+          CASE
+            WHEN ${MentorshipSessionTable.sessionEnd} <= NOW()
+                 AND ${PaymentTable.status} != 'RELEASED'
+            THEN ${PaymentTable.id}::text
+            ELSE NULL
+          END,
+          ','
+        )
+      `.mapWith((s: string) => (s ? s.split(",") : [])),
+    })
+    .from(MentorshipSessionTable)
+    .innerJoin(
+      PaymentTable,
+      eq(MentorshipSessionTable.paymentId, PaymentTable.id),
+    )
+    .innerJoin(
+      MentorshipBookingTable,
+      eq(MentorshipSessionTable.bookingId, MentorshipBookingTable.id),
+    )
+    .where(eq(MentorshipBookingTable.solverId, solverId));
+}
+
+export async function getWalletInfo(solverId: string) {
+  if (!solverId) {
+    throw new Error("error! user id is empty");
+  }
+
+  const [taskWallet] = await getTaskWallet(solverId);
+
+  const [mentorshipWallet] = await getMentorshipWallet(solverId);
+
+  const date1 = taskWallet?.nextReleaseDate;
+
+  const date2 = mentorshipWallet?.nextReleaseDate;
+
+  let nextDate = getCurrentServerTime();
+
+  if (date1 && date2) nextDate = date1 < date2 ? date1 : date2;
+  else if (date1) nextDate = date1;
+  else if (date2) nextDate = date2;
+  return {
+    pending: (taskWallet?.pending || 0) + (mentorshipWallet?.pending || 0),
+    available:
+      (taskWallet?.available || 0) + (mentorshipWallet?.available || 0),
+    nextReleaseDate: nextDate,
+    paymentIds: [
+      ...(taskWallet?.paymentIds || []),
+      ...(mentorshipWallet?.paymentIds || []),
+    ],
+  };
+}
 export async function getUserTasksbyId(userId: string) {
   const userTasks = await db.query.TaskTable.findMany({
     where: (table, fn) => fn.eq(table.posterId, userId),

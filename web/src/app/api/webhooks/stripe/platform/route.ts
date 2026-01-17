@@ -215,25 +215,25 @@ async function handleCheckout(event: Stripe.Event) {
       return;
     }
     const amount = session.amount_total! / 100;
-    const paymentId = await taskPaymentInsetion(
-      "HOLD",
-      amount,
-      userId,
-      paymentIntentId,
-      type,
-      chargeId,
-    );
-    if (!paymentId) {
-      logger.warn("unable to insert paymentIntent for the payment table ");
-      return;
-    }
 
     switch (type) {
       case "Task Payment":
+        const paymentId = await taskPaymentInsetion(
+          "HOLD",
+          amount,
+          userId,
+          paymentIntentId,
+          type,
+          chargeId,
+        );
+        if (!paymentId) {
+          logger.warn("unable to insert paymentIntent for the payment table ");
+          return;
+        }
         await handleTaskCreate(session, paymentId);
         break;
       case "Mentor Booking":
-        await handleMentorBooking(session, paymentId);
+        await handleMentorBooking(session, amount, chargeId, paymentIntentId);
         break;
       default:
         logger.warn("no task type associated with this session: " + session.id);
@@ -308,7 +308,9 @@ async function handleTaskCreate(
 
 async function handleMentorBooking(
   session: Stripe.Checkout.Session,
-  paymentId: string,
+  amount: number,
+  chargeId: string,
+  paymentIntent: string,
 ) {
   const bookingId = session.metadata?.bookingId;
   const userId = session.metadata?.userId;
@@ -318,5 +320,5 @@ async function handleMentorBooking(
     );
     return;
   }
-  await updateMentorBooking(bookingId, paymentId);
+  await updateMentorBooking(bookingId, amount, userId, chargeId, paymentIntent);
 }
